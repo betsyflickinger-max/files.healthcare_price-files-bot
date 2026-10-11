@@ -4,7 +4,7 @@ Uses the Anthropic API (secret ANTHROPIC_API_KEY) with a small model. Reads the 
 picks unnamed CPT codes (most prices first), asks for names in batches, checks them, and appends to
 site/plain_names_auto.tsv. Hand-written names in site/plain_names_cpt.tsv always win.
 Then patches the live page (site/deploy/price-finder.html + current.tgz in R2) so the names show right away.
-env: MAX_CODES (default 1500), BATCH (default 150), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
+env: MAX_CODES (default 1500), BATCH (default 40), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
 """
 import io, json, os, re, sys, tarfile, time, urllib.request
 import boto3
@@ -12,7 +12,7 @@ import boto3
 E = {k: v.strip() for k, v in os.environ.items()}
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 HAND, AUTO = f"{ROOT}/site/plain_names_cpt.tsv", f"{ROOT}/site/plain_names_auto.tsv"
-MAX, BATCH, MODEL = int(E.get("MAX_CODES", "1500")), int(E.get("BATCH", "150")), E.get("MODEL", "claude-haiku-5-5")
+MAX, BATCH, MODEL = int(E.get("MAX_CODES", "1500")), int(E.get("BATCH", "40")), E.get("MODEL", "claude-haiku-5-5")
 s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
 B = E["R2_BUCKET"]
@@ -35,7 +35,7 @@ Rules:
 Return ONLY a JSON object mapping each code to its name or null."""
 
 def ask(lines):
-    body = json.dumps({"model": MODEL, "max_tokens": 8000, "system": PROMPT,
+    body = json.dumps({"model": MODEL, "max_tokens": 16000, "system": PROMPT,
                        "messages": [{"role": "user", "content": "\n".join(lines)}]}).encode()
     for attempt in range(4):
         try:
