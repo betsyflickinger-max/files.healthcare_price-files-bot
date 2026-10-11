@@ -28,7 +28,7 @@ PROMPT = """You write short plain-English names for US medical billing codes (CP
 Each input line is: code<TAB>insurer's abbreviated description.
 Rules:
 - Write each name in your own everyday words that a patient understands (e.g. "Knee MRI without contrast", "Rapid strep test").
-- Keep important details that change the price: body part, with/without contrast, size ranges, number of views, first vs each extra, age group, time.
+- Keep important details that change the price: body part, with/without contrast, under anesthesia, size ranges, number of levels or segments, number of views, first vs each extra (add-on), age group, time.
 - Never copy the official CPT descriptor wording; never use ALL CAPS abbreviations.
 - 3 to 12 words, at most 90 characters. No trailing period.
 - If you are not confident what the code is, return null for it.
@@ -85,11 +85,11 @@ if summ:
     open(summ, "a").write(f"Named {len(new)} codes, {skipped} left with the insurer's wording. Tokens: {tin} in, {tout} out.\n")
 
 if E.get("APPLY") == "1" and new:
-    names = {**load(AUTO), **load(HAND)}
+    hand = load(HAND); names = {**load(AUTO), **hand}
     def patch(html):
         a, b, D = page_data(html); n = 0
         for c, C in D["codes"].items():
-            if c in names and "name as written" in C.get("cat", ""):
+            if c in names and ("name as written" in C.get("cat", "") or (c in hand and C.get("name") != hand[c])):
                 C["name"] = names[c]; C["cat"] = C["cat"].replace(" · name as written in the insurer file", ""); C.pop("d", None); n += 1
         return html[:a] + json.dumps(D, separators=(",", ":"), ensure_ascii=False).replace("</", "<\\/") + html[b:], n
     s2, n = patch(s)
