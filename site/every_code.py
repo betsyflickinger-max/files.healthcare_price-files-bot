@@ -196,6 +196,10 @@ def work(k):
             if not mine(kk_.rsplit('/', 1)[1]): continue
             dst = xd / kk_.rsplit('/', 1)[1]
             if not dst.exists(): s3.download_file(B, kk_, str(dst))
+    if not glob.glob(f'{D}/xpart/bucket={k}/*.parquet'):   # small areas (El Paso) can have empty buckets
+        res = (k, 0, {}, {})
+        s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
+        return res
     c = duckdb.connect()
     c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{k}'")
     if FLAT is None:
