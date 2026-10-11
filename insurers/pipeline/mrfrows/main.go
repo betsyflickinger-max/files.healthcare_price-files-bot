@@ -64,21 +64,26 @@ type who struct{ npi, tin, ttype string }
 
 var codeRe = regexp.MustCompile(`"billing_code"\s*:\s*"?([^",}\s]+)`)
 
-func readLines(p string) []string {
+// eachLine streams a text file line by line (never holds the whole file in memory).
+func eachLine(p string, fn func(string)) {
 	if p == "" {
-		return nil
+		return
 	}
-	b, err := os.ReadFile(p)
+	f, err := os.Open(p)
 	if err != nil {
 		panic(err)
 	}
-	var out []string
-	for _, l := range strings.Split(string(b), "\n") {
-		if l = strings.TrimSpace(l); l != "" {
-			out = append(out, l)
+	defer f.Close()
+	sc := bufio.NewScanner(bufio.NewReaderSize(f, 8<<20))
+	sc.Buffer(make([]byte, 1<<20), 64<<20)
+	for sc.Scan() {
+		if l := strings.TrimSpace(sc.Text()); l != "" {
+			fn(l)
 		}
 	}
-	return out
+	if err := sc.Err(); err != nil {
+		panic(err)
+	}
 }
 
 func main() {
@@ -89,23 +94,40 @@ func main() {
 	outF := flag.String("out", "", "output .csv.gz")
 	flag.Parse()
 
-	refs := map[string][]who{}
-	for _, l := range readLines(*refF) {
+	// Provider references: each distinct (npi, tin, tin_type) is stored once and referenced by index,
+	// so a statewide roster (hundreds of millions of group x provider pairs) fits in memory.
+	refs := map[string][]uint32{}
+	whoIdx := map[who]uint32{}
+	var whos []who
+	eachLine(*refF, func(l string) {
 		p := strings.Split(l, "\t")
-		if len(p) >= 4 {
-			refs[p[0]] = append(refs[p[0]], who{p[1], p[2], p[3]})
+		if len(p) < 4 {
+			return
 		}
-	}
+		w := who{p[1], p[2], p[3]}
+		i, ok := whoIdx[w]
+		if !ok {
+			i = uint32(len(whos))
+			w = who{strings.Clone(p[1]), strings.Clone(p[2]), strings.Clone(p[3])}
+			whoIdx[w] = i
+			whos = append(whos, w)
+		}
+		r, ok := refs[p[0]]
+		if !ok {
+			r = make([]uint32, 0, 4)
+			refs[strings.Clone(p[0])] = r
+		}
+		refs[p[0]] = append(r, i)
+	})
+	whoIdx = nil
+	runtime.GC()
+	fmt.Fprintf(os.Stderr, "    refmap: %d groups, %d distinct providers\n", len(refs), len(whos))
 	npis := map[string]bool{}
-	for _, n := range readLines(*npiF) {
-		npis[n] = true
-	}
+	eachLine(*npiF, func(n string) { npis[n] = true })
 	var codes map[string]bool
 	if *codeF != "" {
 		codes = map[string]bool{}
-		for _, c := range readLines(*codeF) {
-			codes[c] = true
-		}
+		eachLine(*codeF, func(c string) { codes[c] = true })
 	}
 
 	f, err := os.Open(*in)
@@ -152,7 +174,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for b := range work {
-				process(b, refs, npis, func(o [][]string) { rowsCh <- o })
+				process(b, refs, whos, npis, func(o [][]string) { rowsCh <- o })
 			}
 		}()
 	}
@@ -269,7 +291,7 @@ func main() {
 		items, float64(total)/1e9, nrows, time.Since(t0).Minutes())
 }
 
-func process(b []byte, refs map[string][]who, npis map[string]bool, emit func([][]string)) {
+func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]bool, emit func([][]string)) {
 	var it item
 	if err := json.Unmarshal(b, &it); err != nil {
 		fmt.Fprintln(os.Stderr, "    ! decode error:", err)
@@ -280,7 +302,8 @@ func process(b []byte, refs map[string][]who, npis map[string]bool, emit func([]
 		seen := map[who]bool{}
 		var ws []who
 		for _, ref := range nr.Refs {
-			for _, w := range refs[string(ref)] {
+			for _, wi := range refs[string(ref)] {
+				w := whos[wi]
 				if !seen[w] {
 					seen[w] = true
 					ws = append(ws, w)
