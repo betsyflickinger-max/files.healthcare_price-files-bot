@@ -9,7 +9,7 @@ from collections import Counter
 from datetime import datetime, timezone
 import boto3
 
-E = os.environ
+E = {k: v.strip() for k, v in os.environ.items()}  # secrets may carry a trailing newline
 out = {"generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
