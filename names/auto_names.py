@@ -44,7 +44,11 @@ def ask(lines):
             out = json.load(urllib.request.urlopen(r, timeout=300))
             txt = "".join(c.get("text", "") for c in out["content"])
             m = re.search(r"\{.*\}", txt, re.S)
+            if not m:
+                raise ValueError(f"no JSON in reply (stop={out.get('stop_reason')}, model={out.get('model')}): {txt[:300]!r}")
             return json.loads(m.group(0)), out.get("usage", {})
+        except urllib.error.HTTPError as e:
+            print("  retry", attempt + 1, e.code, e.read()[:300], flush=True); time.sleep(10 * (attempt + 1))
         except Exception as e:
             print("  retry", attempt + 1, str(e)[:200], flush=True); time.sleep(10 * (attempt + 1))
     return {}, {}
