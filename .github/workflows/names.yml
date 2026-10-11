@@ -1,0 +1,60 @@
+name: Plain code names (auto)
+
+on:
+  schedule:
+    - cron: "37 9 * * *"   # daily 4:37am Central; stops costing anything once every code is named
+  workflow_dispatch:
+    inputs:
+      max_codes:
+        description: "How many unnamed codes to try this run"
+        default: "1500"
+
+concurrency:
+  group: names
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  names:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MAX_CODES: ${{ inputs.max_codes || '1500' }}
+      APPLY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the API key
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "::warning::ANTHROPIC_API_KEY is not set; add it under Settings > Secrets > Actions."; echo "SKIP=1" >> "$GITHUB_ENV"; fi
+      - uses: actions/setup-python@v5
+        if: env.SKIP != '1'
+        with:
+          python-version: "3.12"
+          cache: pip
+      - if: env.SKIP != '1'
+        run: pip install boto3==1.35.36
+      - if: env.SKIP != '1'
+        run: python names/auto_names.py
+      - name: Save the names
+        if: env.SKIP != '1'
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add site/plain_names_auto.tsv 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Auto plain names $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
+      - name: Publish the preview site
+        if: env.SKIP != '1'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          [ -d /tmp/site/site ] || { echo "No page changes to publish."; exit 0; }
+          export CLOUDFLARE_API_TOKEN=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')
+          export CLOUDFLARE_ACCOUNT_ID=$(echo -n "$R2_ACCOUNT_ID" | tr -d '[:space:]')
+          cd /tmp/site && npx -y wrangler@4 pages deploy site --project-name upfront-dfw-preview --branch main --commit-dirty=true

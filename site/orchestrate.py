@@ -30,6 +30,18 @@ SIZE_INS, SIZE_HOSP, SIZE_H2 = 's-8vcpu-16gb-amd', 's-4vcpu-8gb-intel', 's-8vcpu
 REGIONS = ['nyc3', 'sfo3', 'nyc1']
 
 
+
+def _names_file():
+    """hand-written names (plain_names_cpt.tsv) override machine-written ones (plain_names_auto.tsv)"""
+    out = '/tmp/pub/plain_names_all.tsv'
+    rows = {}
+    for f in (f'{HERE}/plain_names_auto.tsv', f'{HERE}/plain_names_cpt.tsv'):
+        if os.path.exists(f):
+            for l in open(f):
+                if '\t' in l: c, n = l.rstrip('\n').split('\t', 1); rows[c] = n
+    open(out, 'w').write(''.join(f'{c}\t{n}\n' for c, n in rows.items()))
+    return out
+
 def log(*a): print(time.strftime('%H:%M:%S'), *a, flush=True)
 def exists(k):
     try: s3.head_object(Bucket=B, Key=k); return True
@@ -225,7 +237,7 @@ def publish(st):
     import shutil; shutil.copy('/tmp/pub/old.html', '/tmp/pub/new.html')
     py = sys.executable
     subprocess.run([py, f'{HERE}/merge_page.py', '/tmp/pub/new.html', '/tmp/pub/embed.json', '/tmp/pub/hosp.json'], check=True)
-    subprocess.run([py, f'{HERE}/apply_names_med.py', '/tmp/pub/new.html', '/tmp/pub/med.json', f'{HERE}/plain_names_cpt.tsv', '/tmp/pub/t5.txt'], check=True)
+    subprocess.run([py, f'{HERE}/apply_names_med.py', '/tmp/pub/new.html', '/tmp/pub/med.json', _names_file(), '/tmp/pub/t5.txt'], check=True)
     chk = subprocess.run([py, f'{HERE}/check_build.py', '/tmp/pub/old.html', '/tmp/pub/new.html'], capture_output=True, text=True)
     print(chk.stdout)
     s3.upload_file('/tmp/pub/new.html', B, SP + 'page_new.html')

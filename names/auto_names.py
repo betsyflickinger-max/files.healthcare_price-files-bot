@@ -1,0 +1,101 @@
+"""Write plain-English names for Price Finder CPT codes that still show the insurer's wording.
+
+Uses the Anthropic API (secret ANTHROPIC_API_KEY) with a small model. Reads the live Price Finder page from R2,
+picks unnamed CPT codes (most prices first), asks for names in batches, checks them, and appends to
+site/plain_names_auto.tsv. Hand-written names in site/plain_names_cpt.tsv always win.
+Then patches the live page (site/deploy/price-finder.html + current.tgz in R2) so the names show right away.
+env: MAX_CODES (default 1500), BATCH (default 150), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
+"""
+import io, json, os, re, sys, tarfile, time, urllib.request
+import boto3
+
+E = {k: v.strip() for k, v in os.environ.items()}
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
+HAND, AUTO = f"{ROOT}/site/plain_names_cpt.tsv", f"{ROOT}/site/plain_names_auto.tsv"
+MAX, BATCH, MODEL = int(E.get("MAX_CODES", "1500")), int(E.get("BATCH", "150")), E.get("MODEL", "claude-haiku-5-5")
+s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+                  aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+B = E["R2_BUCKET"]
+
+def load(p):
+    return dict(l.rstrip("\n").split("\t", 1) for l in open(p) if "\t" in l) if os.path.exists(p) else {}
+
+def page_data(s):
+    i = s.find('id="data"'); a = s.find(">", i) + 1; b = s.find("</script>", i)
+    return a, b, json.loads(s[a:b])
+
+PROMPT = """You write short plain-English names for US medical billing codes (CPT) for a public healthcare price website.
+Each input line is: code<TAB>insurer's abbreviated description.
+Rules:
+- Write each name in your own everyday words that a patient understands (e.g. "Knee MRI without contrast", "Rapid strep test").
+- Keep important details that change the price: body part, with/without contrast, size ranges, number of views, first vs each extra, age group, time.
+- Never copy the official CPT descriptor wording; never use ALL CAPS abbreviations.
+- 3 to 12 words, at most 90 characters. No trailing period.
+- If you are not confident what the code is, return null for it.
+Return ONLY a JSON object mapping each code to its name or null."""
+
+def ask(lines):
+    body = json.dumps({"model": MODEL, "max_tokens": 8000, "system": PROMPT,
+                       "messages": [{"role": "user", "content": "\n".join(lines)}]}).encode()
+    for attempt in range(4):
+        try:
+            r = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body, headers={
+                "x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"})
+            out = json.load(urllib.request.urlopen(r, timeout=300))
+            txt = "".join(c.get("text", "") for c in out["content"])
+            m = re.search(r"\{.*\}", txt, re.S)
+            return json.loads(m.group(0)), out.get("usage", {})
+        except Exception as e:
+            print("  retry", attempt + 1, str(e)[:200], flush=True); time.sleep(10 * (attempt + 1))
+    return {}, {}
+
+def ok(code, name, insurer):
+    if not isinstance(name, str): return False
+    n = name.strip()
+    return (8 <= len(n) <= 90 and not n.isupper() and n.upper() != (insurer or "").upper()
+            and not re.search(r"\b(W/O|W/|EA|ADDL|SQ CM/<)\b", n))
+
+s = s3.get_object(Bucket=B, Key="site/deploy/price-finder.html")["Body"].read().decode()
+a, b, D = page_data(s)
+hand, auto = load(HAND), load(AUTO)
+todo = sorted([(v.get("n") or 0, c, v["name"]) for c, v in D["codes"].items()
+               if "name as written" in v.get("cat", "") and v["type"] == "CPT" and c not in hand and c not in auto],
+              key=lambda x: -int(x[0] or 0))[:MAX]
+print(f"unnamed CPT codes to try: {len(todo)}", flush=True)
+new, skipped, tin, tout = {}, 0, 0, 0
+for k in range(0, len(todo), BATCH):
+    chunk = todo[k:k + BATCH]
+    res, use = ask([f"{c}\t{nm}" for _, c, nm in chunk])
+    tin += use.get("input_tokens", 0); tout += use.get("output_tokens", 0)
+    for _, c, nm in chunk:
+        v = res.get(c)
+        if ok(c, v, nm): new[c] = v.strip().rstrip(".")
+        else: skipped += 1
+    print(f"batch {k // BATCH + 1}: {len(new)} named so far, {skipped} left as is", flush=True)
+if new:
+    with open(AUTO, "a") as f:
+        for c, v in new.items(): f.write(f"{c}\t{v}\n")
+print(f"named {len(new)}, left {skipped} with the insurer's wording; tokens in {tin}, out {tout}")
+summ = os.environ.get("GITHUB_STEP_SUMMARY")
+if summ:
+    open(summ, "a").write(f"Named {len(new)} codes, {skipped} left with the insurer's wording. Tokens: {tin} in, {tout} out.\n")
+
+if E.get("APPLY") == "1" and new:
+    names = {**load(AUTO), **load(HAND)}
+    def patch(html):
+        a, b, D = page_data(html); n = 0
+        for c, C in D["codes"].items():
+            if c in names and "name as written" in C.get("cat", ""):
+                C["name"] = names[c]; C["cat"] = C["cat"].replace(" · name as written in the insurer file", ""); C.pop("d", None); n += 1
+        return html[:a] + json.dumps(D, separators=(",", ":"), ensure_ascii=False).replace("</", "<\\/") + html[b:], n
+    s2, n = patch(s)
+    s3.put_object(Bucket=B, Key="site/deploy/price-finder.html", Body=s2.encode(), ContentType="text/html")
+    tgz = s3.get_object(Bucket=B, Key="site/deploy/current.tgz")["Body"].read()
+    os.makedirs("/tmp/site", exist_ok=True)
+    tarfile.open(fileobj=io.BytesIO(tgz)).extractall("/tmp/site")
+    open("/tmp/site/site/price-finder/index.html", "w").write(s2)
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as t:
+        for name in sorted(os.listdir("/tmp/site")): t.add(f"/tmp/site/{name}", arcname=name)
+    s3.put_object(Bucket=B, Key="site/deploy/current.tgz", Body=buf.getvalue())
+    print(f"patched live page: {n} codes renamed; deploy next", flush=True)
