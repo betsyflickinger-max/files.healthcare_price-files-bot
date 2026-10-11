@@ -22,7 +22,7 @@ BID = E.get('BUILD') or time.strftime('%Y-%m')
 SP = f'site/builds/{BID}/'
 TOUT = f'site/every/{BID}/'
 HPFX = 'data/hosp_every/'
-LIMIT, RESERVE = 10, 1
+RESERVE = 1
 SIZE_INS, SIZE_HOSP, SIZE_H2 = 's-8vcpu-16gb-amd', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'
 REGIONS = ['nyc3', 'sfo3', 'nyc1']
 
@@ -44,7 +44,7 @@ def do(method, path, body=None):
                                  headers={'Authorization': 'Bearer ' + E['DIGITALOCEAN_TOKEN'], 'Content-Type': 'application/json'})
     with urllib.request.urlopen(req) as r: return json.loads(r.read() or b'{}')
 def droplets(): return do('GET', '/droplets?per_page=200')['droplets']
-def free_slots(): return LIMIT - RESERVE - len(droplets())
+def free_slots(): return int(do('GET', '/account')['account']['droplet_limit']) - RESERVE - len(droplets())
 
 ENV_KEYS = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']
 def userdata(script, env):
