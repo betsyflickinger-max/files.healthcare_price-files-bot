@@ -85,7 +85,7 @@ for ii, (key, size) in enumerate(files):
     K = max(1, math.ceil(size / (PIECE_GB * 1e9))) if size > float(E.get('MINSPLIT', '0.8e9')) else 1
     loc, locm = D / 'in/r.parquet', D / 'in/m.parquet'
     s3.download_file(B, key, str(loc))
-    try: s3.download_file(B, key.replace('/full/rates/', '/full/membership/'), str(locm)); mj = True
+    try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
     except Exception: mj = False
     total = 0
     for p in range(K):
