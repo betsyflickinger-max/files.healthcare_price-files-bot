@@ -192,7 +192,10 @@ def work(k):
     global FLAT
     if E.get('NOXPART'):
         xd = D / f'xpart/bucket={k}'; xd.mkdir(parents=True, exist_ok=True)
-        for kk_, _ in ls(f'{AC}xpart/bucket={k}/'):
+        listed = ls(f'{AC}xpart/bucket={k}/')
+        if listed and not any(mine(kk_.rsplit('/', 1)[1]) for kk_, _ in listed):
+            raise RuntimeError(f'bucket {k}: {len(listed)} stage-A files but none match this build (insurer tables changed since stage A?)')
+        for kk_, _ in listed:
             if not mine(kk_.rsplit('/', 1)[1]): continue
             dst = xd / kk_.rsplit('/', 1)[1]
             if not dst.exists(): s3.download_file(B, kk_, str(dst))
@@ -285,6 +288,7 @@ for k_, _ in ls(WK + 'B/'):
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
 if nb < NB: log(f'{nb}/{NB} buckets in; another machine will write embed.json'); LOGFLUSH(); sys.exit(0)
+if not summary: log('ERROR 0 codes across all buckets; not writing embed.json'); LOGFLUSH(); sys.exit(0)
 codes = {}
 for c_, n_ in summary.items():
     t_, nm = NAMES.get(c_, ('CPT', ''))
