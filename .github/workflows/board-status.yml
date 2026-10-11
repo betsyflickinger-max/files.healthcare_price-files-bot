@@ -1,6 +1,9 @@
 name: Board status (hourly)
 
 on:
+  workflow_run:   # GitHub's hourly schedule can lag or skip, so also refresh after each bot run
+    workflows: ["Insurer price files", "Hospital price files"]
+    types: [completed]
   schedule:
     - cron: "15 * * * *"   # every hour at :15; the Claude board update runs at :29
   workflow_dispatch:
