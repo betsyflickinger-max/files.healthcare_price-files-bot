@@ -40,6 +40,23 @@ BIN = HERE / "mrfrows" / "mrfrows"
 RATES, MEMB = DATA / "rates", DATA / "membership"
 
 
+def duck():
+    """DuckDB connection that spills to disk instead of running out of memory on billion-row tables
+    (Cigna Texas files were killed at the default 80%-of-RAM limit while Python also held the roster)."""
+    con = duckdb.connect()
+    try:
+        ram_gb = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30
+    except (ValueError, OSError):
+        ram_gb = 8
+    spill = DATA / "duckdb_spill"
+    spill.mkdir(parents=True, exist_ok=True)
+    con.execute(f"set memory_limit='{max(1, int(ram_gb * 0.4))}GB'")
+    con.execute("set threads=2")
+    con.execute("set preserve_insertion_order=false")
+    con.execute(f"set temp_directory='{spill}'")
+    return con
+
+
 def load_scope(scope):
     p = Path(scope)
     if p.suffix == ".parquet":
@@ -158,7 +175,7 @@ def extract(path, ctx):
         "reporting_entity_name": meta.get("reporting_entity_name", ""), "file_label": label,
         "last_updated_on": meta.get("last_updated_on", ""), "source_file": source_file,
         "source_url": ctx.get("source_url", ""), "checked_on": today})
-    con = duckdb.connect()
+    con = duck()
     lit = lambda s: "'" + str(s or "").replace("'", "''") + "'"
     n_rows = con.execute(f"select count(*) from '{RATES / (st + '.parquet')}'").fetchone()[0]
 
@@ -198,7 +215,7 @@ def membership_only(path, ctx):
             for n, tt, t, biz in s6.groups_in_scope(pr.get("provider_groups"), ctx["npis"]):
                 m = members.setdefault((n, t.replace("-", "")), {"tin_type": tt, "biz": biz, "nets": set()})
                 m["nets"].update(x for x in nets if x)
-    con = duckdb.connect()
+    con = duck()
     counts = dict(((r[0], r[1]), r[2]) for r in con.execute(
         f"select npi, tin, count(*) from '{RATES / (st + '.parquet')}' group by 1,2").fetchall())
     import pyarrow as pa
