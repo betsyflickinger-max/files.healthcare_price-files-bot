@@ -4,7 +4,7 @@ Uses the Anthropic API (secret ANTHROPIC_API_KEY) with a small model. Reads the 
 picks unnamed CPT codes (most prices first), asks for names in batches, checks them, and appends to
 site/plain_names_auto.tsv. Hand-written names in site/plain_names_cpt.tsv always win.
 Then patches the live page (site/deploy/price-finder.html + current.tgz in R2) so the names show right away.
-env: MAX_CODES (default 1500), BATCH (default 40), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
+env: MAX_CODES (default 20000), WORKERS (default 6), STOP_AFTER_MIN (default 300), BATCH (default 40), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
 """
 import io, json, os, re, sys, tarfile, time, urllib.request
 import boto3
@@ -12,7 +12,7 @@ import boto3
 E = {k: v.strip() for k, v in os.environ.items()}
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 HAND, AUTO = f"{ROOT}/site/plain_names_cpt.tsv", f"{ROOT}/site/plain_names_auto.tsv"
-MAX, BATCH, MODEL = int(E.get("MAX_CODES", "1500")), int(E.get("BATCH", "40")), E.get("MODEL", "claude-haiku-5-5")
+MAX, BATCH, MODEL = int(E.get("MAX_CODES", "20000")), int(E.get("BATCH", "40")), E.get("MODEL", "claude-haiku-5-5")
 s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
 B = E["R2_BUCKET"]
@@ -37,7 +37,7 @@ Return ONLY a JSON object mapping each code to its name or null."""
 def ask(lines):
     body = json.dumps({"model": MODEL, "max_tokens": 16000, "system": PROMPT,
                        "messages": [{"role": "user", "content": "\n".join(lines)}]}).encode()
-    for attempt in range(4):
+    for attempt in range(8):
         try:
             r = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body, headers={
                 "x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"})
@@ -48,7 +48,9 @@ def ask(lines):
                 raise ValueError(f"no JSON in reply (stop={out.get('stop_reason')}, model={out.get('model')}): {txt[:300]!r}")
             return json.loads(m.group(0)), out.get("usage", {})
         except urllib.error.HTTPError as e:
-            print("  retry", attempt + 1, e.code, e.read()[:300], flush=True); time.sleep(10 * (attempt + 1))
+            wait = float(e.headers.get("retry-after") or 10 * (attempt + 1)) if e.code in (429, 529) else 10 * (attempt + 1)
+            if e.code not in (429, 529): print("  retry", attempt + 1, e.code, e.read()[:300], flush=True)
+            time.sleep(min(wait, 120))
         except Exception as e:
             print("  retry", attempt + 1, str(e)[:200], flush=True); time.sleep(10 * (attempt + 1))
     return {}, {}
@@ -67,18 +69,27 @@ todo = sorted([(v.get("n") or 0, c, v["name"]) for c, v in D["codes"].items()
               key=lambda x: -int(x[0] or 0))[:MAX]
 print(f"unnamed CPT codes to try: {len(todo)}", flush=True)
 new, skipped, tin, tout = {}, 0, 0, 0
-for k in range(0, len(todo), BATCH):
+import threading, concurrent.futures as cf
+lock, t0 = threading.Lock(), time.time()
+WORKERS, STOP = int(E.get("WORKERS", "6")), float(E.get("STOP_AFTER_MIN", "300")) * 60
+def work(k):
+    global skipped, tin, tout
+    if time.time() - t0 > STOP: return
     chunk = todo[k:k + BATCH]
     res, use = ask([f"{c}\t{nm}" for _, c, nm in chunk])
-    tin += use.get("input_tokens", 0); tout += use.get("output_tokens", 0)
-    for _, c, nm in chunk:
-        v = res.get(c)
-        if ok(c, v, nm): new[c] = v.strip().rstrip(".")
-        else: skipped += 1
-    print(f"batch {k // BATCH + 1}: {len(new)} named so far, {skipped} left as is", flush=True)
-if new:
-    with open(AUTO, "a") as f:
-        for c, v in new.items(): f.write(f"{c}\t{v}\n")
+    with lock:
+        tin += use.get("input_tokens", 0); tout += use.get("output_tokens", 0)
+        got = {}
+        for _, c, nm in chunk:
+            v = res.get(c)
+            if ok(c, v, nm): got[c] = v.strip().rstrip(".")
+            else: skipped += 1
+        new.update(got)
+        with open(AUTO, "a") as f:   # save as we go so a stop never loses work
+            for c, v in got.items(): f.write(f"{c}\t{v}\n")
+        print(f"batch {k // BATCH + 1}: {len(new)} named so far, {skipped} left as is", flush=True)
+with cf.ThreadPoolExecutor(WORKERS) as ex:
+    list(ex.map(work, range(0, len(todo), BATCH)))
 print(f"named {len(new)}, left {skipped} with the insurer's wording; tokens in {tin}, out {tout}")
 summ = os.environ.get("GITHUB_STEP_SUMMARY")
 if summ:
