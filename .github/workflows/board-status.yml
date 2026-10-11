@@ -2,7 +2,7 @@ name: Board status (hourly)
 
 on:
   schedule:
-    - cron: "50 * * * *"   # every hour at :50, so the Claude board update at the top of the hour sees fresh numbers
+    - cron: "15 * * * *"   # every hour at :15; the Claude board update runs at :29
   workflow_dispatch:
 
 concurrency:
