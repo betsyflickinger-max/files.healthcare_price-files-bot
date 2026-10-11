@@ -45,4 +45,5 @@ jobs:
         with:
           node-version: "20"
       - run: pip install boto3==1.35.36
-      - run: python site/orchestrate.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - shell: bash  # pipefail, so a crash fails the run instead of hiding behind tee
+        run: python site/orchestrate.py | tee -a "$GITHUB_STEP_SUMMARY"

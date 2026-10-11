@@ -14,6 +14,9 @@ import csv, io, json, os, subprocess, sys, tarfile, time, urllib.request
 import boto3
 
 E = os.environ
+for _k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'DIGITALOCEAN_TOKEN', 'CLOUDFLARE_API_TOKEN'):
+    if _k in E:  # pasted secrets can carry a line break; strip it (same as bot/store.env) so every step and machine gets clean values
+        E[_k] = ''.join(E[_k].split())
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
 s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
