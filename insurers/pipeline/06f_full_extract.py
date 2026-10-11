@@ -62,6 +62,8 @@ def stream_to_parquet(cmd, dest, consts):
     import threading
     p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
     reader = pcsv.open_csv(p.stdout, read_options=pcsv.ReadOptions(block_size=16 << 20),
+                           # names like BCBSTX's sometimes contain a line break (quoted by mrfrows)
+                           parse_options=pcsv.ParseOptions(newlines_in_values=True),
                            convert_options=pcsv.ConvertOptions(column_types={c: pa.string() for c in COLS},
                                                                strings_can_be_null=False))
     tmpdest = Path(str(dest) + ".part")
