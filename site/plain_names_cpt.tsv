@@ -636,3 +636,303 @@
 73200	CT scan of the arm, without contrast
 93931	Arm artery ultrasound, one side or limited
 99427	Principal care management by staff, each extra 30 min
+92552	Hearing test (tones, air conduction)
+64612	Nerve-blocking injection for facial muscle spasm (such as Botox)
+77073	Bone length X-rays
+21931	Removing a growth under the skin of the back, 3 cm or more
+51784	Pelvic floor muscle test (EMG)
+29540	Ankle taping or strapping
+84157	Protein test on a body fluid other than blood or urine
+87077	Identifying bacteria grown in a culture
+73020	Shoulder X-ray, 1 view
+43247	Upper endoscopy to remove a swallowed object
+74170	CT scan of the abdomen, without and then with contrast
+10121	Removing a foreign object under the skin, complicated
+92587	Hearing test using ear sounds (otoacoustic emissions), limited
+10080	Draining a pilonidal cyst, simple
+11422	Removing a non-cancerous skin growth on the scalp, neck, hands, feet or genitals (1.1-2 cm)
+84165	Serum protein electrophoresis
+98980	Remote therapy monitoring treatment management, first 20 min
+82270	Stool test for hidden blood (screening)
+73501	Hip X-ray, one side, 1 view
+31624	Bronchoscopy with lung washing (BAL)
+32555	Draining fluid around the lung with a needle, using imaging
+98940	Chiropractic adjustment, 1-2 spine regions
+29405	Short leg cast
+75574	CT angiogram of the heart arteries
+96125	Standardized thinking and memory test
+73218	MRI of the arm (not a joint), without contrast
+22840	Spinal rods and screws (add-on to spine surgery)
+70220	Sinus X-rays
+87081	Bacterial screening culture
+76981	Liver stiffness ultrasound (elastography)
+72200	Sacroiliac joint X-rays, fewer than 3 views
+96113	Developmental testing, each extra 30 min
+72128	CT scan of the upper back spine, without contrast
+86780	Syphilis antibody test
+11046	Removing damaged tissue down to muscle, each extra 20 sq cm
+87661	Trichomonas DNA test
+76641	Breast ultrasound, complete
+97165	Occupational therapy evaluation (low complexity)
+74022	Belly X-ray series (acute abdomen)
+94375	Breathing flow-volume loop test
+11055	Trimming a corn or callus, one
+74174	CT angiogram of the abdomen and pelvis
+87631	Respiratory virus panel (3-5 viruses), PCR
+90658	Flu shot (3-strain), 0.5 mL
+86200	Anti-CCP (rheumatoid arthritis) antibody test
+22842	Spinal rods and screws, 3-6 vertebrae (add-on)
+64400	Trigeminal nerve block (face)
+22614	Spinal fusion from the back, each extra level
+99460	Newborn hospital care, first day (normal newborn)
+57454	Colposcopy with cervical biopsy
+49593	Belly-wall hernia repair, first time, 3-10 cm, reducible
+63685	Implanting a spinal cord stimulator battery
+38222	Bone marrow biopsy and aspiration
+51741	Complex urine flow test
+88307	Pathologist exam of tissue (complex)
+70544	MR angiogram of the head, without contrast
+90632	Hepatitis A vaccine for adults
+13160	Delayed closure of a reopened wound
+76706	Ultrasound screening for abdominal aortic aneurysm
+74160	CT scan of the abdomen, with contrast
+17111	Destroying warts or other benign skin growths, 15 or more
+11200	Removing skin tags, up to 15
+32551	Chest tube insertion
+44120	Removing part of the small intestine
+58661	Laparoscopic removal of ovary or fallopian tube
+83037	A1C blood sugar test (point-of-care device)
+95924	Autonomic nerve testing with tilt table
+91010	Esophagus pressure test (manometry)
+99491	Chronic care management by a doctor, first 30 min in a month
+91110	Capsule endoscopy (swallowed camera)
+56405	Draining a vulvar or perineal abscess
+58662	Laparoscopic removal of lesions in the pelvis or abdomen
+92002	Eye exam, new patient (intermediate)
+14301	Skin flap to close a wound, 30-60 sq cm
+87088	Urine bacteria culture with identification
+86703	HIV-1 and HIV-2 antibody test
+86696	Herpes simplex type 2 antibody test
+88313	Special tissue stain (non-immune), each
+51701	Straight bladder catheter (in and out)
+20606	Medium joint injection or draining, with ultrasound
+92950	CPR
+86160	Complement protein blood test
+11406	Removing a non-cancerous skin growth on the trunk, arms or legs (over 4 cm)
+99315	Nursing facility discharge, 30 min or less
+85060	Blood smear review by a doctor
+93280	Pacemaker check in person (dual lead)
+86225	Anti-dsDNA (lupus) antibody test
+74230	Swallow study with video X-ray
+72192	CT scan of the pelvis, without contrast
+70487	CT scan of the face and sinuses, with contrast
+95992	Repositioning ear crystals for vertigo (Epley maneuver)
+84484	Troponin (heart damage) blood test
+64491	Neck or upper back facet joint injection, second level
+93246	Wearable heart monitor (8-15 days): recording
+99483	Cognitive impairment assessment and care plan
+76872	Ultrasound through the rectum
+12034	Layered stitches for a cut on the scalp, trunk, arms or legs (7.6-12.5 cm)
+82105	Alpha-fetoprotein blood test
+19083	Breast biopsy with ultrasound guidance, first spot
+86762	Rubella antibody test
+15002	Preparing a wound for a skin graft on the trunk, arms or legs, first 100 sq cm
+93227	Heart monitor up to 48 hours: review and report
+90739	Hepatitis B vaccine for adults (2-dose series)
+87500	Vancomycin-resistance gene test
+49592	Belly-wall hernia repair, first time, under 3 cm, trapped or strangulated
+13101	Complex stitches for a wound on the trunk (2.6-7.5 cm)
+44180	Laparoscopic release of scar tissue in the abdomen
+76811	Detailed pregnancy ultrasound (anatomy scan), one baby
+76820	Umbilical artery Doppler ultrasound
+64455	Foot nerve injection (plantar or Morton's neuroma)
+45381	Colonoscopy with injection
+11404	Removing a non-cancerous skin growth on the trunk, arms or legs (3.1-4 cm)
+43249	Upper endoscopy with balloon stretching of the esophagus
+97026	Infrared light therapy
+97763	Brace or prosthetic follow-up visit
+46040	Draining a rectal abscess
+93295	Remote defibrillator check (review)
+98977	Remote therapy monitoring device supply, 16-30 days
+91035	Wireless esophagus acid test (pH capsule)
+64418	Shoulder nerve block (suprascapular)
+93244	Wearable heart monitor (3-7 days): review and report
+93294	Remote pacemaker check (review)
+27829	Treating an ankle joint injury (syndesmosis) with surgery
+97166	Occupational therapy evaluation (moderate complexity)
+99183	Hyperbaric oxygen therapy supervision
+83516	Immunoassay blood test (not antibody)
+11105	Skin punch biopsy, each extra spot
+29880	Knee arthroscopy with meniscus trimming (both sides)
+92960	Heart rhythm reset by electric shock (cardioversion)
+75820	Leg or arm vein X-ray with contrast (venogram), one side
+90681	Rotavirus vaccine (2-dose series)
+25600	Treating a broken wrist without surgery
+73720	MRI of the leg (not a joint), without and then with contrast
+99469	Newborn intensive care, each later day
+49320	Diagnostic laparoscopy
+90653	Flu shot with adjuvant (for seniors)
+29581	Multi-layer compression wrap, lower leg
+43246	Placing a feeding tube through endoscopy (PEG)
+86704	Hepatitis B core antibody test
+74181	MRI of the abdomen, without contrast
+65205	Removing an object from the surface of the eye
+76818	Fetal biophysical profile with non-stress test
+57500	Cervical biopsy
+12004	Simple stitches for a cut on the scalp, neck, trunk, arms or legs (7.6-12.5 cm)
+11983	Removing and reinserting a drug implant
+92134	Retina scan (OCT)
+93351	Stress echocardiogram, complete
+84630	Zinc blood test
+82542	Chromatography lab test
+71047	Chest X-ray, 3 views
+22853	Spine cage or spacer device (add-on)
+11400	Removing a non-cancerous skin growth on the trunk, arms or legs (0.5 cm or less)
+43264	ERCP to remove bile duct stones
+90713	Polio vaccine
+92133	Optic nerve scan (OCT)
+13131	Complex stitches for a wound on the face, neck, hands, feet or genitals (1.1-2.5 cm)
+20612	Draining or injecting a ganglion cyst
+71110	Rib X-rays, both sides, 3 views
+99367	Care team meeting without the patient (by a doctor)
+75710	Arm or leg artery angiogram, one side
+82044	Urine albumin screen
+97168	Occupational therapy re-evaluation
+95720	EEG with video, each extra 2 hours (doctor review)
+11976	Removing a birth control implant
+92588	Hearing test using ear sounds (otoacoustic emissions), complete
+90868	TMS treatment for depression, per session
+52332	Cystoscopy with ureteral stent placement
+72084	Whole spine X-rays, 6 or more views
+64479	Epidural steroid injection at a neck or upper back nerve root, first level
+99409	Alcohol or drug screening with counseling, over 30 min
+11103	Skin biopsy, shave method, each extra spot
+10005	Fine-needle biopsy with ultrasound, first spot
+11720	Trimming nails, 1-5
+20604	Small joint injection or draining, with ultrasound
+83013	H. pylori breath test
+86480	TB blood test (QuantiFERON)
+82530	Free cortisol test
+29065	Long arm cast
+80074	Acute hepatitis panel
+17004	Destroying precancerous skin spots, 15 or more
+11306	Shaving a skin growth on the scalp, neck, hands, feet or genitals (0.6-1 cm)
+97167	Occupational therapy evaluation (high complexity)
+90621	Meningitis B vaccine (Trumenba)
+63048	Lower back decompression surgery, each extra level
+29130	Finger splint
+92550	Tympanometry and reflex test
+82950	Glucose test after a sugar drink (one sample)
+29505	Long leg splint
+12052	Layered stitches for a cut on the face (2.6-5 cm)
+87486	Chlamydia pneumoniae DNA test
+92540	Basic balance (vestibular) testing
+11606	Removing skin cancer on the trunk, arms or legs (over 4 cm)
+15851	Stitch removal under anesthesia
+10180	Draining an infected surgical wound, complex
+90474	Giving an oral or nasal vaccine, each extra
+98943	Chiropractic adjustment outside the spine
+58150	Abdominal hysterectomy
+70250	Skull X-rays, fewer than 4 views
+51700	Bladder irrigation
+86039	ANA titer blood test
+87653	Group B strep DNA test
+72120	Lower back X-rays, bending views only
+85379	D-dimer (blood clot) test
+77003	Fluoroscopy guidance for a spine injection
+29823	Shoulder arthroscopy with extensive cleanup
+74328	X-ray of bile ducts during ERCP
+71270	CT scan of the chest, without and then with contrast
+62328	Spinal tap with fluoroscopy or CT guidance
+29085	Hand and wrist cast
+71111	Rib X-rays, both sides, with chest X-ray
+99341	Home visit, new patient (straightforward)
+12041	Layered stitches for a cut on the neck, hands, feet or genitals (2.5 cm or less)
+86708	Hepatitis A antibody test
+84445	Thyroid-stimulating immunoglobulin test
+70160	Nose bone X-rays
+99448	Doctor-to-doctor consult by phone or online, 21-30 min
+14040	Skin flap to close a wound on the forehead, cheeks, chin, mouth, neck, hands or feet (up to 10 sq cm)
+92083	Visual field test (extended)
+27524	Surgery for a broken kneecap
+43762	Replacing a feeding tube (G-tube)
+77012	CT guidance for a needle procedure
+99452	Doctor-to-doctor referral consult, 30 min
+86800	Thyroglobulin antibody test
+64488	Belly wall nerve block (TAP), both sides
+25605	Treating a broken wrist with manipulation, no surgery
+11603	Removing skin cancer on the trunk, arms or legs (2.1-3 cm)
+92523	Speech and language evaluation
+99445	Remote patient monitoring device supply, 2-15 days
+46600	Anoscopy
+82172	Apolipoprotein blood test
+93750	Heart pump (VAD) check in person
+70470	CT scan of the head, without and then with contrast
+99316	Nursing facility discharge, over 30 min
+99468	Newborn intensive care, first day
+10030	Draining a fluid collection with imaging guidance
+43244	Upper endoscopy with banding of veins
+60220	Removing half of the thyroid
+33249	Implanting or replacing a defibrillator with leads
+77049	Breast MRI, both breasts, without and then with contrast
+45330	Flexible sigmoidoscopy
+57288	Sling surgery for bladder leakage
+11423	Removing a non-cancerous skin growth on the scalp, neck, hands, feet or genitals (2.1-3 cm)
+44143	Removing part of the colon with a colostomy
+95937	Nerve-muscle junction test
+71271	Low-dose lung cancer screening CT
+73723	MRI of a leg joint, without and then with contrast
+74420	Kidney and ureter X-ray with contrast (retrograde)
+87529	Herpes simplex DNA test
+84425	Vitamin B1 blood test
+92504	Ear exam with a microscope
+93990	Dialysis access ultrasound
+99472	Child intensive care, each later day
+36800	Inserting a cannula for dialysis
+11056	Trimming corns or calluses, 2-4
+26010	Draining a finger abscess, simple
+90694	Flu shot with adjuvant (4-strain)
+80051	Electrolyte panel
+93454	Heart catheterization for coronary angiogram only
+92235	Eye blood vessel photography with dye (fluorescein angiogram)
+97130	Cognitive therapy, each extra 15 min
+46050	Draining an abscess near the anus, simple
+27759	Surgery for a broken shinbone with a rod
+11305	Shaving a skin growth on the scalp, neck, hands, feet or genitals (0.5 cm or less)
+84590	Vitamin A blood test
+93798	Cardiac rehab session with monitoring
+97606	Wound vacuum therapy, over 50 sq cm
+86334	Immunofixation blood test
+74240	Upper GI X-ray with contrast
+15271	Skin substitute graft on the trunk, arms or legs, first 25 sq cm
+92285	Outer eye photography
+99415	Extended care by clinical staff, first hour
+78815	PET/CT scan, skull base to mid-thigh
+93303	Heart ultrasound for a congenital heart defect, complete
+37252	Ultrasound inside a blood vessel (non-heart), first vessel
+63047	Lower back decompression surgery (laminectomy), first level
+61781	Computer-guided navigation for brain surgery
+58571	Laparoscopic hysterectomy with tubes and/or ovaries (uterus 250 g or less)
+93653	Heart electrical study and ablation for fast heart rhythm (SVT)
+32554	Draining fluid around the lung with a needle, without imaging
+72083	Whole spine X-rays, 4-5 views
+29828	Shoulder arthroscopy with biceps tendon repair
+13151	Complex stitches for a wound on the eyelids, nose, ears or lips (1.1-2.5 cm)
+56605	Vulvar biopsy
+82952	Glucose tolerance test, each extra sample
+96402	Hormone cancer treatment shot under the skin or in a muscle
+49082	Draining fluid from the belly with a needle, without imaging
+72074	Upper and middle back X-rays, 4 or more views
+93283	Defibrillator check in person (dual lead)
+11300	Shaving a skin growth on the trunk, arms or legs (0.5 cm or less)
+11012	Cleaning skin, muscle and bone at an open fracture
+62272	Spinal tap to drain spinal fluid
+88175	Pap test, automated screening
+99462	Newborn hospital care, each later day
+87624	HPV test (high-risk types)
+59430	Postpartum care only
+86593	Syphilis test (RPR), quantity
+70490	CT scan of the neck, without contrast
+15275	Skin substitute graft on the face, neck, hands, feet or genitals, first 25 sq cm
+36245	Catheter placement in a belly or leg artery, first branch
+27786	Treating a broken ankle without surgery
