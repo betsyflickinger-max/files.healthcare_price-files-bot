@@ -105,7 +105,7 @@ def launch(role, size, script, env):
     return False
 
 
-RUN_INS = "for t in $(seq 1 10); do /root/v/bin/python /root/h/every_code.py >> /root/run.log 2>&1 && break; sleep 5; done"
+RUN_INS = "for t in $(seq 1 40); do /root/v/bin/python /root/h/every_code.py >> /root/run.log 2>&1 && break; sleep 5; done"
 RUN_HOSP = "for t in 1 2 3; do /root/v/bin/python /root/h/hosp_every.py >> /root/run.log 2>&1 && break; sleep 5; done"
 RUN_H2 = """/root/v/bin/python - >> /root/run.log 2>&1 <<'PY'
 import boto3, os, json
