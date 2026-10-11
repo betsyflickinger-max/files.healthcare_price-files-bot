@@ -219,6 +219,15 @@ def launch(s3, b, man, now, dry):
         n = PER_MACHINE.get(g, 2)
         loads += [(f"{g}{i // n + 1}" if len(ms) > n else g, g, ms[i:i + n]) for i in range(0, len(ms), n)]
     loads.sort(key=lambda x: (x[1] not in ("uhc", "aetna"), x[0]))  # biggest first: they take longest
+    try:  # a website build reads these tables; new ones landing mid-build would make it stop and start over
+        building = [n for n in droplets.names() if n.startswith("upfront-site-")]
+    except Exception:
+        building = []
+    if building and queued and not dry:
+        for m in queued:
+            m["detail"] = f"waiting: a website build is running ({len(building)} machines); starts when it finishes"
+        print(f"Website build running ({len(building)} machines): {len(queued)} queued files wait")
+        return []
     try:  # stay inside both our own cap and the account's limit (other jobs may be using machines)
         free = min(MAX_MACHINES - len(droplets.mine()), droplets.room() - RESERVE) if not dry else MAX_MACHINES
     except Exception:

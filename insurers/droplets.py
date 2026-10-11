@@ -46,6 +46,13 @@ def delete(droplet_id):
     return False
 
 
+def names():
+    """Names of every machine on the account, including other jobs' (e.g. website builds)."""
+    r = requests.get(f"{API}/droplets", params={"per_page": 200}, headers=_h(), timeout=60)
+    r.raise_for_status()
+    return [d["name"] for d in r.json()["droplets"]]
+
+
 def room():
     """Free machine slots on the account (DigitalOcean caps how many can exist at once)."""
     acct = requests.get(f"{API}/account", headers=_h(), timeout=60).json()["account"]
