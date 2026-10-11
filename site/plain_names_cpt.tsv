@@ -316,3 +316,163 @@
 84443	TSH thyroid blood test
 81001	Urinalysis with microscope
 81003	Urinalysis, automated, without microscope
+85651	Sed rate blood test (manual method)
+49083	Draining fluid from the belly with a needle, using imaging
+95165	Preparing allergy shot doses
+11102	Skin biopsy, shave method, one spot
+90633	Hepatitis A vaccine for children and teens (2-dose series)
+97016	Physical therapy: compression pump for swelling
+86580	TB skin test
+76881	Ultrasound of one joint, complete
+99453	Remote patient monitoring: device setup and teaching
+95957	Computer analysis of a brain wave test (EEG)
+99310	Nursing facility visit, follow-up (high complexity)
+62270	Spinal tap (lumbar puncture) to test spinal fluid
+73650	Heel X-ray
+99492	Mental health care managed with your doctor, first month
+76801	Pregnancy ultrasound through the belly, first trimester
+76817	Pregnancy ultrasound through the vagina
+97810	Acupuncture without electrical stimulation, first 15 min
+12011	Simple stitches for a cut on the face, ears, eyes, nose or lips (small)
+99366	Care team meeting with the patient present
+96413	Chemotherapy by IV, first hour
+90785	Add-on for a therapy session with complex communication needs
+11043	Removing damaged tissue down to muscle, first 20 sq cm
+86376	Thyroid antibody blood test
+87389	HIV screening test (antigen and antibody)
+12032	Layered stitches for a cut on the scalp, trunk, arms or legs (medium)
+88342	Special tissue stain for a biopsy, first stain
+58300	IUD insertion
+90750	Shingles vaccine (Shingrix)
+36590	Removing an implanted IV port
+99454	Remote patient monitoring: device supply, 16+ days a month
+12001	Simple stitches for a small cut on the scalp, neck, trunk, arms or legs
+96158	Health behavior counseling, one person, first 30 min
+92014	Eye exam, returning patient (comprehensive)
+99487	Complex chronic care management, first hour in a month
+87428	Combined COVID and flu rapid antigen test
+62321	Epidural steroid injection in the neck or upper back, with imaging
+90714	Tetanus and diphtheria (Td) booster
+87430	Rapid strep test
+64635	Nerve ablation for low back joint pain, first level
+94060	Breathing test before and after an inhaler
+90901	Biofeedback training
+10160	Draining an abscess, cyst or blood pocket with a needle
+84702	Pregnancy hormone (hCG) blood test, amount
+74183	MRI of the abdomen, without and then with contrast
+84479	Thyroid hormone uptake test
+12031	Layered stitches for a cut on the scalp, trunk, arms or legs (small)
+97163	Physical therapy evaluation (high complexity)
+71275	CT scan of chest blood vessels (CT angiogram)
+70491	CT scan of the neck with contrast
+73522	Hip X-rays, both hips, 3-4 views
+95819	Brain wave test (EEG) awake and asleep
+36410	Blood draw by a doctor or nurse when a routine draw isn't possible
+97164	Physical therapy re-evaluation
+86141	High-sensitivity CRP (heart inflammation) blood test
+99422	Online visit through a patient portal, 11-20 min over 7 days
+95800	Home sleep test
+90716	Chickenpox vaccine
+31575	Scope exam of the voice box
+70486	CT scan of the face and sinuses, without contrast
+77336	Radiation therapy physics check, weekly
+87205	Gram stain of a sample
+95909	Nerve conduction test, 5-6 nerves
+86803	Hepatitis C antibody test
+76775	Kidney or abdominal back-wall ultrasound, limited
+10120	Removing a foreign object under the skin, simple
+76604	Chest ultrasound
+96415	Chemotherapy by IV, each extra hour
+76857	Pelvic ultrasound, limited
+16020	Burn care: dressing or cleaning, small area
+64493	Low back facet joint injection, first level
+96360	IV fluids for hydration, first hour
+90838	Therapy session with a medical visit, 60 min
+72114	Lower back X-rays including bending views
+95907	Nerve conduction test, 1-2 nerves
+99348	Home visit, returning patient (low complexity)
+76376	3D image processing of a scan (on a regular workstation)
+88341	Special tissue stain for a biopsy, each extra stain
+99381	Well-baby checkup, new patient, under 1 year
+76816	Pregnancy ultrasound follow-up through the belly
+97150	Group physical or occupational therapy
+82150	Amylase (pancreas enzyme) blood test
+73565	Knee X-rays, both knees standing
+76377	3D image processing of a scan (on a separate workstation)
+72190	Pelvis X-rays, 3 or more views
+72072	Upper and middle back X-rays, 3 views
+87807	Rapid RSV test
+36561	Implanting an IV port under the skin, age 5+
+90688	Flu shot (4-strain), 0.5 mL
+94729	Lung gas transfer test (diffusing capacity)
+84520	BUN (kidney) blood test
+82274	Stool test for hidden blood (immunochemical)
+98925	Osteopathic manipulation, 1-2 body regions
+96367	IV medicine infusion, each extra different drug
+93248	Wearable heart monitor (8-15 days): review and report
+92551	Hearing screening test
+84295	Sodium blood test
+99489	Complex chronic care management, each extra 30 min
+82533	Cortisol (stress hormone) blood test
+76000	Fluoroscopy (live X-ray), up to 1 hour
+98926	Osteopathic manipulation, 3-4 body regions
+36416	Finger or heel stick blood collection
+58301	IUD removal
+49650	Laparoscopic inguinal hernia repair, first time
+93015	Heart stress test (full service)
+84450	AST liver enzyme blood test
+84144	Progesterone blood test
+83615	LDH enzyme blood test
+85007	Blood smear with manual white cell count
+82247	Bilirubin blood test, total
+99493	Mental health care managed with your doctor, later months
+76870	Scrotum ultrasound
+20526	Carpal tunnel steroid injection
+97010	Hot or cold packs (physical therapy)
+93975	Ultrasound of belly, pelvis or scrotum blood flow, complete
+93016	Heart stress test: doctor supervision only
+94618	Six-minute walk breathing test
+86901	Rh blood type test
+95251	Continuous glucose monitor data review
+85045	Reticulocyte (young red blood cell) count
+44970	Laparoscopic appendix removal
+84155	Total protein blood test
+64636	Nerve ablation for low back joint pain, each extra level
+90674	Flu shot (4-strain, cell-based, preservative-free)
+87070	Bacterial culture (other than urine, blood or stool)
+11403	Removing a non-cancerous skin growth on the trunk, arms or legs (2.1-3 cm)
+99382	Well-child checkup, new patient, age 1-4
+64405	Nerve block for headache (occipital nerve)
+11106	Skin biopsy, cut-out method, one spot
+72197	MRI of the pelvis, without and then with contrast
+82310	Calcium blood test
+93312	Heart ultrasound through the esophagus (TEE)
+90648	Hib vaccine (4-dose series)
+86318	Rapid antibody test for an infection
+87798	DNA/RNA test for an infection not otherwise listed
+87481	Yeast (Candida) DNA test
+97035	Ultrasound treatment (physical therapy), each 15 min
+93926	Leg artery ultrasound, one side or limited
+95812	Brain wave test (EEG), 41-60 min
+27096	Sacroiliac joint injection, with imaging
+99403	Preventive counseling, about 45 min
+99418	Extended hospital or observation visit, each extra 15 min
+95908	Nerve conduction test, 3-4 nerves
+73523	Hip X-rays, both hips, 5 or more views
+90746	Hepatitis B vaccine for adults (3-dose series)
+95115	Allergy shot, one injection
+82627	DHEA-sulfate hormone blood test
+72020	Spine X-ray, 1 view
+36589	Removing a tunneled central IV line (no port)
+99426	Principal care management by staff, first 30 min in a month
+86431	Rheumatoid factor blood test
+93356	Heart muscle strain imaging (add-on to a heart ultrasound)
+88304	Pathologist exam of tissue (moderate)
+15853	Stitch or staple removal under anesthesia
+96401	Chemotherapy shot under the skin or in a muscle
+72195	MRI of the pelvis, without contrast
+76642	Breast ultrasound, limited
+95911	Nerve conduction test, 9-10 nerves
+15734	Muscle flap of the trunk
+93930	Arm artery ultrasound, both sides
+99459	Pelvic exam
