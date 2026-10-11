@@ -46,16 +46,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A && git commit -qm "Board status $(date -u +%FT%TZ)"
           git push -f "https://x-access-token:${DATA_TOKEN}@github.com/betsyflickinger-max/price-dashboard-data.git" board-status
-      - name: Encrypted copy for the board's update task (public repo, branch board-enc)
-        # The Claude task that updates the status board can't reach the private repo, so it reads this
-        # encrypted copy instead. Key = first 40 hex of sha256("board:" + R2 secret); only the task knows it.
+      - name: Public copy for the board's update task (this repo, branch board-status)
+        # Betsy OK'd posting these status numbers publicly (Oct 11, 2026) so the board's Claude task can read them.
         run: |
-          K=$(printf 'board:%s' "$(printf '%s' "$R2_SECRET_ACCESS_KEY" | tr -d ' "\r\n')" | sha256sum | cut -c1-40)
-          mkdir -p /tmp/enc && cd /tmp/enc
-          openssl enc -aes-256-cbc -pbkdf2 -salt -a -pass "pass:$K" -in "$GITHUB_WORKSPACE/out/board/status.json" -out status.json.enc
-          printf 'Encrypted board snapshot. Decrypt: openssl enc -d -aes-256-cbc -pbkdf2 -a -pass pass:KEY -in status.json.enc\n' > README.txt
-          git init -q -b board-enc
+          mkdir -p /tmp/pub && cd /tmp/pub
+          cp "$GITHUB_WORKSPACE/out/board/status.json" .
+          git init -q -b board-status
           git config user.name "price-files-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A && git commit -qm "Board status (encrypted) $(date -u +%FT%TZ)"
-          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" board-enc
+          git add -A && git commit -qm "Board status $(date -u +%FT%TZ)"
+          git push -f "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" board-status
+          git push "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" --delete board-enc 2>/dev/null || true
