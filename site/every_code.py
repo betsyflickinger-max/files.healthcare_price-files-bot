@@ -263,6 +263,9 @@ for k_, _ in ls(WK + 'B/'):
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
 if E.get('BORDER') == 'desc': buckets = buckets[::-1]
+h_ = len(buckets) // 2   # 3rd/4th machines start in the middle and work outward; done buckets are skipped in work()
+if E.get('BORDER') == 'mid': buckets = buckets[h_:] + buckets[:h_]
+if E.get('BORDER') == 'middesc': buckets = buckets[:h_][::-1] + buckets[h_:][::-1]
 if not buckets: log('all buckets already done')
 log('stage B', len(buckets), 'buckets to do', len(summary), 'codes already done')
 con.close()
