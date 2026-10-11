@@ -31,13 +31,29 @@ def candidate_dates(since, today):
 _CACHE = {}
 
 
-def _get(url, **kw):
+def _get(url, tries=3, **kw):
+    """Fetch a file list, trying up to 3 times (waits 10s, then 30s) so one hiccup at the insurer
+    doesn't fail every network that depends on that list."""
+    import time
     import requests
     if url not in _CACHE:
-        r = requests.get(url, headers={"User-Agent": check.UA}, timeout=600, **kw)
-        r.raise_for_status()
-        _CACHE[url] = r.text
+        for i in range(tries):
+            try:
+                r = requests.get(url, headers={"User-Agent": check.UA}, timeout=600, **kw)
+                r.raise_for_status()
+                _CACHE[url] = r.text
+                break
+            except requests.RequestException:
+                if i == tries - 1:
+                    raise
+                time.sleep(10 * 3 ** i)
     return _CACHE[url]
+
+
+def _why(e):
+    """Short reason for a failed file-list read, with the HTTP code when there is one (403 = refused)."""
+    code = getattr(getattr(e, "response", None), "status_code", None)
+    return f"{type(e).__name__} {code}" if code else type(e).__name__
 
 
 def cigna_toc(arg):
@@ -83,7 +99,7 @@ def find(row, today, since):
         if finder == "azure_list":
             return azure_list(row["finder_arg"])
     except Exception as e:
-        return dict(url=row["current_url"], how=f"could not read the file list: {type(e).__name__}", http="",
+        return dict(url=row["current_url"], how=f"could not read the file list: {_why(e)}", http="",
                     error=str(e)[:200], found=False)
     t = row["url_template"]
     if "{" not in t:
