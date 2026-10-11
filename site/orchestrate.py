@@ -194,6 +194,26 @@ def main():
     putj(SP + 'state.json', st)
 
 
+def cleanup(prev):
+    """After a build is live: delete only build leftovers. Kept forever: raw/ (original price files), data/ insurer and
+    hospital tables, work/retired/ (last month's tables), site/deploy/, site/builds/ (state + logs), the A cache.
+    Kept: the live build and the one before it (rollback). Deleted: older site/every/<build>/ folders and
+    work/every/<build>/ scratch for builds other than the live one."""
+    import re
+    keep = {BID, prev}
+    gone = 0
+    for k in ls('site/every/') + ls('work/every/'):
+        m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?)/', k)
+        if not m: continue                       # CURRENT, Acache/ and anything unexpected are left alone
+        b = m.group(2)
+        if (m.group(1) == 'site' and b not in keep) or (m.group(1) == 'work' and b != BID):
+            s3.delete_object(Bucket=B, Key=k); gone += 1
+    for k in ls('data/2026-10-10/hosp_every/rows/'):   # copied to data/hosp_every/rows/ on Oct 11
+        if exists('data/hosp_every/rows/' + k.rsplit('/', 1)[1]): s3.delete_object(Bucket=B, Key=k); gone += 1
+    log('cleanup: deleted', gone, 'leftover build files')
+    return gone
+
+
 def publish(st):
     os.makedirs('/tmp/pub', exist_ok=True)
     for k, f in [(SP + 'page_before.html', 'old.html'), (TOUT + 'embed.json', 'embed.json'), (SP + 'hosp_index.json', 'hosp.json'),
@@ -233,6 +253,7 @@ def publish(st):
     with tarfile.open('/tmp/pub/site.tgz', 'w:gz') as t: t.add('/tmp/pub/deploy', arcname='.')
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
+    st['cleanup'] = cleanup(prev)
     issue(f'Website refresh {BID} is live', '```\n' + chk.stdout + '\n```')
 
 

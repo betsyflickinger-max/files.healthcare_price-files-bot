@@ -10,6 +10,7 @@ insurer bot has read the month's new files) it rebuilds the Price Finder and dep
    with the live page (networks, codes, providers, rate lines, hospital files must not drop), then R2
    `site/every/CURRENT` is pointed at the new build and the site is deployed with wrangler.
    Any failed check → nothing goes live and an issue opens.
+   After a build is live, `cleanup()` deletes only build leftovers (older `site/every/<build>/` beyond the live one and the one before it, and `work/every/<build>/` scratch). It never touches `raw/`, `data/`, `work/retired/`, `site/deploy/` or `site/builds/`.
 
 Needs the `CLOUDFLARE_API_TOKEN` secret to deploy (without it the build stops at "ready" and opens an issue).
 The site's files are kept in R2 (`site/deploy/current.tgz`), not in this public repo.
