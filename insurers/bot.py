@@ -40,7 +40,7 @@ FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date"
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
           "run_id", "droplet_id", "launched_at", "fails", "problem", "next_url"]
 SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
-PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 2, "cigna": 2, "small": 12}  # files per machine
+PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 1, "cigna": 1, "small": 12}  # files per machine
 RESERVE = 0  # slots to leave free for other jobs; 0 = use every free machine
 SCOPE = "dfw"  # biggest files; anything else: 4 vCPU / 8 GB
 MAX_MACHINES = 9
