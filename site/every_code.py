@@ -47,8 +47,29 @@ NET = """case when reporting_entity_name ilike '%aetna%' then replace(replace(fi
 KEY = """case when billing_code_type ilike '%drg%' then ltrim(trim(billing_code), '0') else upper(trim(billing_code)) end"""
 TYPE = """case when billing_code_type ilike '%drg%' then 'MS-DRG' when billing_code_type ilike 'hcpcs%' then 'HCPCS' else 'CPT' end"""
 
+# Rate tables come in two layouts (Oct 12, 2026; see insurers/pipeline/common.py). "flat": one row per NPI x price.
+# "lines": one row per price x provider group with an npiset number, the group's NPIs in npisets/<same name>.parquet.
+# rates_src() gives flat rows for either, so everything below is unchanged.
+FLAT_COLS = ["reporting_entity_name", "file_label", "last_updated_on", "billing_code_type", "billing_code", "name",
+             "negotiation_arrangement", "npi", "tin", "tin_type", "negotiated_type", "negotiated_rate", "billing_class",
+             "setting", "service_code", "billing_code_modifier", "expiration_date", "source_file", "source_url", "checked_on"]
+def rates_src(path, sets):
+    if 'npiset' not in {r[0] for r in con.execute(f"describe select * from read_parquet('{path}')").fetchall()}:
+        return f"read_parquet('{path}')"
+    cols = ", ".join("s.npi" if c == "npi" else f"l.{c}" for c in FLAT_COLS)
+    return f"(select {cols} from read_parquet('{path}') l join (select npiset, unnest(npis) npi from read_parquet('{sets}')) s using (npiset))"
+def table_meta(key):
+    try: return s3.head_object(Bucket=B, Key=key).get('Metadata', {})
+    except Exception: return {}
+
 # ---------- Stage A: one pass per insurer file ----------
-files = sorted(ls(E.get('RATES', 'data/full/rates/')), key=lambda x: x[1])
+files = ls(E.get('RATES', 'data/full/rates/'))
+META = {k: table_meta(k) for k, _ in files}
+# Work size: a "lines" table is many times smaller on disk than the rows it stands for, so pieces (K) and the
+# small-to-large order use the flat size it would have had (~4.5 bytes per flat row, from the Oct 2026 Aetna tables).
+EQ = {k: int(int(META[k]['flat-rows']) * 4.5) if META[k].get('layout') == 'lines' and META[k].get('flat-rows', '').isdigit() else size
+      for k, size in files}
+files = sorted(files, key=lambda x: EQ[x[0]])
 if E.get('AORDER') == 'desc': files = files[::-1]
 if E.get('ONLY'): files = [f for f in files if E['ONLY'] in f[0]]
 if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_:] + files[:r_]   # machines start at different tables
@@ -99,10 +120,10 @@ for ii, (key, size) in enumerate(files):
     if E.get('ONLYIDX') and ii != int(E['ONLYIDX']): continue
     if str(i) in doneA or isdone(i):
         restore_a(i); log(f'A {ii+1}/{len(files)} restored from saved work', key.rsplit('/', 1)[1]); continue
-    K = max(1, math.ceil(size / (PIECE_GB * 1e9))) if size > float(E.get('MINSPLIT', '0.8e9')) else 1
+    K = max(1, math.ceil(EQ[key] / (PIECE_GB * 1e9))) if EQ[key] > float(E.get('MINSPLIT', '0.8e9')) else 1
     if K == 1 and E.get('ACLAIM') and not claim(i):   # big tables are shared piece by piece instead
         waiting.append((ii, key, i, K)); continue
-    loc, locm = D / 'in/r.parquet', D / 'in/m.parquet'
+    loc, locm, locs = D / 'in/r.parquet', D / 'in/m.parquet', D / 'in/s.parquet'
     got = False; others = False
     total = 0
     for p in range(K):
@@ -114,11 +135,13 @@ for ii, (key, size) in enumerate(files):
             s3.download_file(B, key, str(loc))
             try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
             except Exception: mj = False
+            if META[key].get('layout') == 'lines': s3.download_file(B, key.replace('/rates/', '/npisets/'), str(locs))
+            SRC = rates_src(loc, locs)
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
         con.execute(f"""create or replace temp view r0 as
-          select r.*, coalesce(m.network_name, r.file_label) network_name from (select * from read_parquet('{loc}') where {pf}) r left join {mem} m using (npi, tin)
+          select r.*, coalesce(m.network_name, r.file_label) network_name from (select * from {SRC} where {pf}) r left join {mem} m using (npi, tin)
           where (billing_code_type ilike 'cpt%' or billing_code_type ilike 'hcpcs%' or billing_code_type ilike 'ms-drg%' or billing_code_type ilike 'drg%')
             and lower(negotiated_type) in ('negotiated','fee schedule','derived','percentage') and try_cast(negotiated_rate as double) >= 0""")
         con.execute(f"""create or replace temp view r1 as select {SHORT} ins, {NET} net, {KEY} code, {TYPE} ctype, name, npi, tin,
@@ -145,7 +168,7 @@ for ii, (key, size) in enumerate(files):
             save_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} done')
             NEWP[0] += 1
             if E.get('MAXPIECES') and NEWP[0] >= int(E['MAXPIECES']): log('MAXPIECES reached, restarting fresh'); LOGFLUSH(); os._exit(3)
-    loc.unlink(missing_ok=True); locm.unlink(missing_ok=True)
+    loc.unlink(missing_ok=True); locm.unlink(missing_ok=True); locs.unlink(missing_ok=True)
     if K > 1 and others and not all(isdone(f'{i}_{p}') for p in range(K)):
         waiting.append((ii, key, i, K)); continue   # other machines still have pieces of this table
     gl = f'{D}/xpart/bucket=*/{i}.parquet' if K == 1 else f'{D}/xpart/bucket=*/{i}_*.parquet'

@@ -5,9 +5,12 @@ Same idea as step 6, sized for the whole market:
     built from the federal NPI Registry file), or any CSV/Parquet with an npi column (--scope).
   - Codes: all of them (or --codes FILE to limit).
   - Pass 1 (Python) reads only the roster at the top of the file and stops when the prices begin.
-  - Pass 2 (Go, pipeline/mrfrows) streams the prices once and writes one row per provider x price.
+  - Pass 2 (Go, pipeline/mrfrows) streams the prices once and writes the Parquet itself (no CSV step).
   - Output is one Parquet file per source file, so a re-run replaces just that file:
-      data/rates/<source>.parquet        billing code, provider, TIN, rate, type, class, setting, ...
+      data/rates/<source>.parquet        billing code, TIN, rate, type, class, setting, ... In the default
+                                         "lines" layout each price is stored once per provider group with an
+                                         npiset number; data/npisets/<source>.parquet lists that group's NPIs.
+                                         --format flat writes one row per NPI x price instead (npi column).
       data/membership/<source>.parquet   every in-scope NPI+TIN on the roster, its network name(s),
                                          and how many priced rows point at it (0 = listed, no prices)
     Both carry reporting entity, file date, source file, source URL and checked_on.
@@ -16,7 +19,7 @@ Run:
   python pipeline/06f_full_extract.py FILE_OR_URL [--network "BCBSTX Blue Choice PPO"] [--source-url URL]
   python pipeline/06f_full_extract.py data/payer_files_bcbstx.csv          # every file in a step-6a list
   python pipeline/06f_full_extract.py FILE --scope data/dfw_facilities_npi.csv --codes pipeline/codes.csv
-Query later with DuckDB:  select * from 'data/rates/*.parquet' where billing_code='45378'
+Query later with DuckDB: common.rates_sql() gives flat rows for either layout.
 """
 import argparse
 import csv
@@ -30,14 +33,14 @@ from pathlib import Path
 
 import duckdb
 
-from common import DATA, USER_AGENT
+from common import DATA, USER_AGENT, rates_sql
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("s6", HERE / "06_filter_payer_file.py")
 s6 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s6)
 BIN = HERE / "mrfrows" / "mrfrows"
-RATES, MEMB = DATA / "rates", DATA / "membership"
+RATES, MEMB, SETS = DATA / "rates", DATA / "membership", DATA / "npisets"
 
 
 def duck():
@@ -63,67 +66,6 @@ def load_scope(scope):
         return {r[0] for r in duckdb.sql(f"select npi from '{p}'").fetchall()}
     with open(p, encoding="utf-8") as f:
         return {r["npi"].strip() for r in csv.DictReader(f) if r.get("npi")}
-
-
-COLS = ["billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
-        "negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier",
-        "expiration_date"]
-
-
-def stream_to_parquet(cmd, dest, consts):
-    """Run mrfrows with CSV on stdout and write Parquet batch by batch: no big temporary file."""
-    import pyarrow as pa
-    import pyarrow.csv as pcsv
-    import pyarrow.parquet as pq
-    import queue
-    import threading
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-    reader = pcsv.open_csv(p.stdout, read_options=pcsv.ReadOptions(block_size=16 << 20),
-                           # names like BCBSTX's sometimes contain a line break (quoted by mrfrows)
-                           parse_options=pcsv.ParseOptions(newlines_in_values=True),
-                           convert_options=pcsv.ConvertOptions(column_types={c: pa.string() for c in COLS},
-                                                               strings_can_be_null=False))
-    tmpdest = Path(str(dest) + ".part")
-    # Parquet compression runs on its own thread so it overlaps with CSV parsing (pyarrow releases the GIL).
-    q, err, state = queue.Queue(maxsize=4), [], {"writer": None}
-
-    def write_loop():
-        try:
-            while (tbl := q.get()) is not None:
-                if state["writer"] is None:
-                    state["writer"] = pq.ParquetWriter(tmpdest, tbl.schema, compression="zstd")
-                state["writer"].write_table(tbl)
-        except Exception as e:  # keep draining so the reader never blocks
-            err.append(e)
-            while q.get() is not None:
-                pass
-
-    th = threading.Thread(target=write_loop, daemon=True)
-    th.start()
-    # The six per-file values are the same on every row: build them with pa.repeat, not a Python list per batch.
-    const = lambda k, n: pa.repeat(pa.scalar(str(consts[k] or ""), pa.string()), n)
-    try:
-        for batch in reader:
-            if err:
-                break
-            n = batch.num_rows
-            tbl = pa.Table.from_batches([batch]).cast(pa.schema([(f.name, pa.string()) for f in batch.schema]))
-            for i, k in enumerate(("reporting_entity_name", "file_label", "last_updated_on")):
-                tbl = tbl.add_column(i, k, const(k, n))
-            for k in ("source_file", "source_url", "checked_on"):
-                tbl = tbl.append_column(k, const(k, n))
-            q.put(tbl)
-    finally:
-        q.put(None)
-        th.join()
-    if err:
-        p.kill()
-        raise err[0]
-    if p.wait() != 0:
-        raise RuntimeError("mrfrows failed")
-    if state["writer"]:
-        state["writer"].close()
-        tmpdest.replace(dest)
 
 
 def stem(name):
@@ -164,24 +106,38 @@ def extract(path, ctx):
     print(f"  roster: {n_refs:,} provider groups include in-scope providers; {len({k[0] for k in members}):,} NPIs", flush=True)
     (tmp / "npis.txt").write_text("\n".join(npis))
 
-    RATES.mkdir(parents=True, exist_ok=True)
-    MEMB.mkdir(parents=True, exist_ok=True)
+    for d in (RATES, MEMB, SETS):
+        d.mkdir(parents=True, exist_ok=True)
     st = stem(source_file)
     today = date.today().isoformat()
-    cmd = [str(BIN), "-in", str(path), "-refmap", str(tmp / "refmap.tsv"), "-npis", str(tmp / "npis.txt"), "-out", "-"]
+    rates, sets = RATES / (st + ".parquet"), SETS / (st + ".parquet")
+    rates.unlink(missing_ok=True)
+    sets.unlink(missing_ok=True)
+    fmt = ctx.get("format") or "lines"
+    # Go writes the Parquet directly (Oct 12, 2026): the old CSV -> Python -> Parquet step was ~60% of the run time.
+    cmd = [str(BIN), "-in", str(path), "-refmap", str(tmp / "refmap.tsv"), "-npis", str(tmp / "npis.txt"),
+           "-out", str(rates), "-format", fmt]
+    if fmt == "lines":
+        cmd += ["-npisets", str(sets)]
     if ctx.get("codes"):
         cmd += ["-codes", ctx["codes"]]
-    stream_to_parquet(cmd, RATES / (st + ".parquet"), {
-        "reporting_entity_name": meta.get("reporting_entity_name", ""), "file_label": label,
-        "last_updated_on": meta.get("last_updated_on", ""), "source_file": source_file,
-        "source_url": ctx.get("source_url", ""), "checked_on": today})
+    consts = {"reporting_entity_name": meta.get("reporting_entity_name", ""), "file_label": label,
+              "last_updated_on": meta.get("last_updated_on", ""), "source_file": source_file,
+              "source_url": ctx.get("source_url", ""), "checked_on": today}
+    for k, v in consts.items():
+        cmd += ["-const", f"{k}={'' if v is None else v}"]
+    if subprocess.run(cmd).returncode != 0:
+        raise RuntimeError("mrfrows failed")
+    if not rates.exists():  # no in-scope prices: same as before, no table is written
+        raise RuntimeError("no in-scope prices in this file")
     con = duck()
     lit = lambda s: "'" + str(s or "").replace("'", "''") + "'"
-    n_rows = con.execute(f"select count(*) from '{RATES / (st + '.parquet')}'").fetchone()[0]
+    src = rates_sql(con, rates, sets)
+    n_rows = con.execute(f"select count(*) from {src}").fetchone()[0]
 
-    # Membership with priced-row counts
+    # Membership with priced-row counts (flat rows per NPI + TIN, the same numbers as before)
     counts = dict(((r[0], r[1]), r[2]) for r in con.execute(
-        f"select npi, tin, count(*) from '{RATES / (st + '.parquet')}' group by 1,2").fetchall())
+        f"select npi, tin, count(*) from {src} group by 1,2").fetchall())
     with open(tmp / "memb.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["npi", "tin", "tin_type", "tin_business_name", "network_name", "priced_rows"])
@@ -217,7 +173,7 @@ def membership_only(path, ctx):
                 m["nets"].update(x for x in nets if x)
     con = duck()
     counts = dict(((r[0], r[1]), r[2]) for r in con.execute(
-        f"select npi, tin, count(*) from '{RATES / (st + '.parquet')}' group by 1,2").fetchall())
+        f"select npi, tin, count(*) from {rates_sql(con, RATES / (st + '.parquet'), SETS / (st + '.parquet'))} group by 1,2").fetchall())
     import pyarrow as pa
     import pyarrow.parquet as pq
     rows = [(n, t, m["tin_type"], m["biz"], " | ".join(sorted(m["nets"])) or label, counts.get((n, t), 0))
@@ -275,10 +231,13 @@ if __name__ == "__main__":
     ap.add_argument("--codes", default="", help="file of billing codes (default: all)")
     ap.add_argument("--network", default="")
     ap.add_argument("--source-url", default="")
+    ap.add_argument("--format", default="lines", choices=["lines", "flat"],
+                    help="lines (default): each price once per provider group + NPI lists; flat: one row per NPI x price")
     a = ap.parse_args()
     codes = ""
     if a.codes:
         cs = [r["code"] for r in csv.DictReader(open(a.codes))] if a.codes.endswith(".csv") else open(a.codes).read().split()
         codes = str(Path(tempfile.mkdtemp()) / "codes.txt")
         Path(codes).write_text("\n".join(cs))
-    run(a.source, {"npis": load_scope(a.scope), "codes": codes, "network": a.network, "source_url": a.source_url})
+    run(a.source, {"npis": load_scope(a.scope), "codes": codes, "network": a.network, "source_url": a.source_url,
+                     "format": a.format})
