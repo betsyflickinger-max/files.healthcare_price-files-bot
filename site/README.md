@@ -16,5 +16,16 @@ Needs the `CLOUDFLARE_API_TOKEN` secret to deploy (without it the build stops at
 The site's files are kept in R2 (`site/deploy/current.tgz`), not in this public repo.
 State: R2 `site/builds/<YYYY-MM>/state.json`. Start early: run the workflow by hand with "force".
 
+## Texas city pages
+
+`.github/workflows/city-page.yml` (run by hand; pick a city) runs `city_page.py`. It takes the live DFW page as the layout,
+puts in the city's finished insurer build (newest R2 `site/every-tx/<city>/<build>/embed.json`), sets the Medicare doctor
+fees to the city's Medicare locality (and first checks that the same formula reproduces every Dallas figure on the DFW page),
+and changes the words that name DFW. Hospital price files, posted cash prices, quality ratings and the map are DFW only for
+now; the city page says "not on the El Paso page yet" rather than "none found". Any expected wording that is missing stops
+the build, so a half-edited page never goes out. The page goes to `/<city>/price-finder/` on the preview site with a small
+function that serves the city's per-code files. A copy is kept in R2 `site/deploy/cities/<city>/price-finder.html`.
+Offline test: `python site/city_page.py el-paso --template PAGE --embed EMBED --rvu RVU_ZIP --med-all MED --t5 T5 [--quality Q]`.
+
 Names: `plain_names_cpt.tsv` (plain-English names written for the most common codes), HCPCS Level II official
 descriptions and MS-DRG titles (public CMS files), Medicare 2026 benchmarks (`build_med_all.py`, CMS fee schedules).
