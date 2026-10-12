@@ -44,6 +44,7 @@ GEO = os.path.join(O.HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv')
 CITY_PAGES = ['el-paso', 'austin', 'san-antonio', 'houston']
 RUN_SPLIT = "for t in 1 2 3; do /root/v/bin/python /root/h/tx_split.py >> /root/run.log 2>&1 && break; sleep 5; done"
 SPLIT_MACHINES = 4
+REST_MACHINES = 8                             # extra machines for the one-time October re-split of the rest-of-Texas tables
 
 
 def tx_bot_busy():
@@ -135,6 +136,16 @@ def main():
         rleft = [t for t in st.get('rest_job', []) if t not in rdone]
         if st.get('rest_job'):
             ensure(st, 'split-rest', SIZE, RUN_SPLIT, dict(SRC='rest', TABLES=','.join(st['rest_job']), MEM='24GB', THREADS='8', WORK='/d'), not rleft)
+            if 'rest_jobs' not in st:   # Oct 12: one machine was ~25 min per table; spread the rest over more machines.
+                # split-rest works through rest_job front to back; the extra machines take the tables from the back, so the
+                # two only meet near the end (a table done twice is harmless: same output, and done markers are skipped)
+                back = [t for t in reversed(st['rest_job']) if t not in rdone][:-1]
+                jobs = [[] for _ in range(min(REST_MACHINES, len(back)))]
+                for i, t in enumerate(back): jobs[i % len(jobs)].append(t)
+                st['rest_jobs'] = [j for j in jobs if j]
+            for i, job in enumerate(st['rest_jobs']):
+                ensure(st, f'split-rest-{i + 2}', SIZE, RUN_SPLIT, dict(SRC='rest', TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'),
+                       not [t for t in job if t not in rdone])
         log(len(todo), 'Texas tables left to split;', len(rleft), 'rest-of-Texas tables left to re-split')
         if not todo and not rleft:
             st['retired_split_tables'] = retire_stale()
