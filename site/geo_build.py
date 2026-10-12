@@ -12,7 +12,8 @@ Where locations come from (all public):
 - Hospitals and surgery centers the Census can't match: OpenStreetMap Nominatim structured search (1 request/second).
 - Hospital price files and posted cash prices (no NPI on the page): matched by name and city to a placed facility; if no
   confident match, Nominatim search by name + city. Results kept only inside the DFW map area.
-- ZIP codes for "near me": Census 2024 Gazetteer ZCTA internal points (R2 reference/geo/zcta_tx.json).
+- ZIP codes for "near me": Census 2024 Gazetteer ZCTA internal points for all of Texas (R2 reference/geo/zcta_tx.json),
+  kept to the map's area.
 Cache: R2 reference/geo/cache.csv (address lookups) and reference/geo/names.json (name lookups), so each month only new
 addresses are sent. Nothing about site visitors is involved.
 """
@@ -145,7 +146,8 @@ for c in {(c['name'], c['city']) for c in D['cash']}:
     if g: cash[f'{c[0]}|{c[1]}'.lower()] = loc(*g); nc += 1
 s3.put_object(Bucket=B, Key='reference/geo/names.json', Body=json.dumps(names, indent=0).encode())
 
-zips = json.loads(get('reference/geo/zcta_tx.json') or b'{}')
+zips = json.loads(get('reference/geo/zcta_tx.json') or b'{}')   # every Texas ZIP (Census 2024 Gazetteer), kept to this map's area
+zips = {z: v for z, v in zips.items() if BBOX[1] - .3 <= v[0] <= BBOX[3] + .3 and BBOX[0] - .3 <= v[1] <= BBOX[2] + .3}
 geo = dict(build=BID, made=time.strftime('%Y-%m-%d'), locs=locs, p=p, hn=hn, cash=cash, zips=zips,
            stats=dict(providers=len(npis), placed=placed, hospital_files=len(D['hosp']['src']), hospital_files_placed=nh,
                       cash_places=len({(c['name'], c['city']) for c in D['cash']}), cash_places_placed=nc,
