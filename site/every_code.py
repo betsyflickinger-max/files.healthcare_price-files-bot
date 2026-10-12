@@ -24,6 +24,9 @@ def ls(pfx):
     out = []
     for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=pfx): out += [(o['Key'], o['Size']) for o in pg.get('Contents', [])]
     return out
+# a crashed earlier attempt on this machine leaves DuckDB spill files (and, with NOXPART, downloaded buckets) behind; clear them
+shutil.rmtree(D / 'tmp', ignore_errors=True)
+if E.get('NOXPART'): shutil.rmtree(D / 'xpart', ignore_errors=True)
 for sub in ('xpart', 'stage', 'aux', 'flat', 'names', 'tmp', 'in'): (D / sub).mkdir(parents=True, exist_ok=True)
 con = duckdb.connect()
 con.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('MEM','12GB')}'; set threads={E.get('THREADS','8')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp'; set partitioned_write_max_open_files=8")
@@ -57,8 +60,8 @@ doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
 def isdone(tag): 
     try: s3.head_object(Bucket=B, Key=AC + f'{tag}.done'); return True
     except Exception: return False
-def mine(fn):  # a cached A file belongs to this build's tables
-    return fn.split('_')[0] in TAGS
+def mine(fn):  # a cached A file ('<tag>.parquet' or '<tag>_<piece>.parquet') belongs to this build's tables
+    return fn.rsplit('.', 1)[0].split('_')[0] in TAGS   # Oct 12, 2026 fix: '.parquet' was left on unsplit tables, so they were never downloaded
 import math
 def save_a(i):
     outs = glob.glob(f'{D}/xpart/bucket=*/{i}.parquet') + [p for p in (f'{D}/flat/{i}.parquet', f'{D}/names/{i}.parquet', f'{D}/aux/{i}.parquet') if os.path.exists(p)]
@@ -182,6 +185,13 @@ Q = """with md as (select code, fee, median(v) m, count(*) n from x where t=0 an
     (select *, row_number() over (partition by code, npi, ins, net, fee, t order by v) rn from x where v>0) where rn<=9 group by all)
   select g.*, o.ot from g left join o using (code, npi, ins, net, fee, t) order by code"""
 FLAT = None
+# Stage B sorts on small integer ids instead of the long text columns (url, npi, insurer|network, date). Oct 12, 2026:
+# (1) DuckDB 1.1.3 returned rows OUT OF ORDER when sorting on these 13 text-heavy columns (27,965 of 8.3M rows in an
+#     El Paso test), so the "lowest rate" headline and the count of other rates could be wrong; the integer sort is exact;
+# (2) the text sort spilled 50+ GB per Houston batch and filled the disk.
+# npis/dates/urls are already sorted (AUX query), so a list position sorts like the text; networks get their (ins, net) rank.
+NETS2 = sorted(tuple((k_.split('|', 1) + [''])[:2]) for k_ in nets)
+SORTV = E.get('SORTV', '2')
 def work(k):
     """One bucket. DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
@@ -208,8 +218,20 @@ def work(k):
     if FLAT is None:
         FLAT = set(c.execute(f"select distinct npi, ins, net, v from read_parquet('{D}/flat/*.parquet')").fetchall())
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
+    if SORTV == '2':
+        c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
+        c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])
+        c.execute("create temp table un as select unnest(?::varchar[]) url, unnest(range(?::bigint))::int ui", [urls, len(urls)])
+        c.execute("create temp table nn as select unnest(?::varchar[]) ins, unnest(?::varchar[]) net, unnest(range(?::bigint))::int ni",
+                  [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
     MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
-    cur = c.execute(f"""select code, npi, ins, net, fee, t, v, tin, modi, st, nt, dt, url from {src}
+    if SORTV == '2':
+        cur = c.execute(f"""select x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, x.modi, x.st, x.nt, dn.di, un.ui from {src} x
+                       left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
+                       left join dn on dn.dt = x.dt left join un on un.url = x.url
+                       order by x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.modi, x.tin, x.st, x.nt, dn.di, un.ui""")
+    else:
+        cur = c.execute(f"""select code, npi, ins, net, fee, t, v, tin, modi, st, nt, dt, url from {src}
                        order by code, npi, ins, net, fee, t, v, modi, tin, st, nt, dt, url""")
     summ, scp = {}, {}; nx = 0
     pool = ThreadPoolExecutor(8); futs = []
@@ -220,6 +242,7 @@ def work(k):
         summ[code] = sum(len(v) for v in f.values())
         body = base64.b64encode(gzip.compress(json.dumps({'f': f}, separators=(',', ':')).encode(), 6))
         futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{TOUT}t/{code}.txt', Body=body, ContentType='text/plain'))
+    D0 = didx.get('', 0); U0 = uidx.get('', 0)
     def emit(f, g, rows):
         code, npi, ins, net, fee, t = g
         nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
@@ -231,10 +254,14 @@ def work(k):
             m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
             rest = [r for r in pos[:9] if r is not h]
             others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
-            row = [n, fee, t, float(v), (1 if isflat else 0) | (2 if islow else 0), didx.get(dt or '', 0), uidx.get(url or '', 0), len(pos) - 1, others, zeros, lab(modi, st, nt, tin, tin)]
+            if SORTV == '2': di_, ui_ = (D0 if dt is None else dt), (U0 if url is None else url)
+            else: di_, ui_ = didx.get(dt or '', 0), uidx.get(url or '', 0)
+            row = [n, fee, t, float(v), (1 if isflat else 0) | (2 if islow else 0), di_, ui_, len(pos) - 1, others, zeros, lab(modi, st, nt, tin, tin)]
         else:
             r0 = rows[0]
-            row = [n, fee, t, 0, 4, didx.get(r0[5] or '', 0), uidx.get(r0[6] or '', 0), 0, [], zeros, -1]
+            if SORTV == '2': di_, ui_ = (D0 if r0[5] is None else r0[5]), (U0 if r0[6] is None else r0[6])
+            else: di_, ui_ = didx.get(r0[5] or '', 0), uidx.get(r0[6] or '', 0)
+            row = [n, fee, t, 0, 4, di_, ui_, 0, [], zeros, -1]
         f.setdefault(str(pidx[npi]), []).append(row)
     curcode, f, g0, grp = None, {}, None, []; prev = None
     while True:
@@ -243,7 +270,11 @@ def work(k):
         nx += len(batch)
         for rw in batch:
             if rw == prev: continue
-            prev = rw; code, npi, ins, net, fee, t, v, tin, modi, st, nt, dt, url = rw
+            prev = rw
+            if SORTV == '2':
+                code, pi, ni, fee, t, v, tin, modi, st, nt, dt, url = rw
+                npi = npis[pi]; ins, net = NETS2[ni]
+            else: code, npi, ins, net, fee, t, v, tin, modi, st, nt, dt, url = rw
             g = (code, npi, ins, net, fee, t)
             if g != g0:
                 if g0: emit(f, g0, grp)
@@ -269,10 +300,12 @@ for k_, _ in ls(WK + 'B/'):
     if kb in buckets: buckets.remove(kb)
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
+if E.get('BONLY'): buckets = [b for b in buckets if str(b) in E['BONLY'].split(',')]   # testing: just these buckets
 if E.get('BORDER') == 'desc': buckets = buckets[::-1]
 h_ = len(buckets) // 2   # 3rd/4th machines start in the middle and work outward; done buckets are skipped in work()
 if E.get('BORDER') == 'mid': buckets = buckets[h_:] + buckets[:h_]
 if E.get('BORDER') == 'middesc': buckets = buckets[:h_][::-1] + buckets[h_:][::-1]
+if E.get('BSTART'): s_ = int(E['BSTART']); buckets = [b for b in buckets if b >= s_] + [b for b in buckets if b < s_]   # extra machines: start at a chosen bucket
 if not buckets: log('all buckets already done')
 log('stage B', len(buckets), 'buckets to do', len(summary), 'codes already done')
 con.close()
