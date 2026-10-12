@@ -1,4 +1,4 @@
-"""Hourly status snapshot for the "Price Project Status" board.
+"""Status snapshot (every 15 min) for the "Price Project Status" board.
 
 Writes out/board/status.json with: rented machines + DigitalOcean spend, Texas and DFW insurer-file progress,
 hospital-file coverage, R2 storage size, and recent GitHub workflow runs. A scheduled Claude task reads it
@@ -33,6 +33,21 @@ try:
     out["insurer_hold"] = bool(s3.list_objects_v2(Bucket=B, Prefix="bot/insurers/hold.txt").get("KeyCount"))
 except Exception: pass
 
+# every other insurer batch (bot/insurers/<scope>/manifest.csv), e.g. the national batches once they start reading files
+try:
+    out["insurer_scopes"] = {}
+    for p in s3.list_objects_v2(Bucket=B, Prefix="bot/insurers/", Delimiter="/").get("CommonPrefixes", []):
+        sc = p["Prefix"].split("/")[2]
+        if sc in ("runs", "tx"):
+            continue
+        try:
+            m = manifest(p["Prefix"] + "manifest.csv")
+            out["insurer_scopes"][sc] = {"active": m["active"], "processed": m["status"].get("processed", 0), "status": m["status"]}
+        except Exception:
+            pass
+except Exception as e:
+    out["insurer_scopes"] = {"error": str(e)[:200]}
+
 # hospital coverage from the bot's latest status
 try:
     rows = list(csv.DictReader(io.StringIO(get("bot/status/latest.csv"))))
@@ -40,12 +55,44 @@ try:
     out["hospitals"] = {"listed": len(rows), "status": dict(st.most_common(12))}
 except Exception as e:
     out["hospitals"] = {"error": str(e)[:200]}
+# hospitals with a price file on record, out of all hospitals (the dashboard's latest daily count)
+try:
+    hk = sorted(o["Key"] for o in s3.list_objects_v2(Bucket=B, Prefix="bot/dashboard/history/").get("Contents", []) if o["Key"].endswith(".json"))
+    allrow = next(r for r in json.loads(get(hk[-1])) if r["state"] == "ALL")
+    out.setdefault("hospitals", {}).update(total=allrow["hospitals"], have_file=allrow["have"], as_of=allrow["date"])
+except Exception as e:
+    out.setdefault("hospitals", {})["total_error"] = str(e)[:200]
 
-# R2 size by top-level folder
-tot, n, top = 0, 0, Counter()
+# plain-English names: CPT codes on the live Price Finder that still show the insurer's wording
+# (same rule as names/auto_names.py: hand-written and auto names both count as named)
+try:
+    s = get("site/deploy/price-finder.html")
+    i = s.find('id="data"'); a = s.find(">", i) + 1; b = s.find("</script>", i)
+    codes = json.loads(s[a:b])["codes"]
+    def tsv(p):
+        return {l.split("\t", 1)[0] for l in open(p) if "\t" in l} if os.path.exists(p) else set()
+    named = tsv("site/plain_names_cpt.tsv") | tsv("site/plain_names_auto.tsv")
+    cpt = {c: v for c, v in codes.items() if v.get("type") == "CPT"}
+    left = sum(1 for c, v in cpt.items() if "name as written" in v.get("cat", "") and c not in named)
+    out["code_names"] = {"cpt_codes": len(cpt), "named": len(cpt) - left, "left": left}
+except Exception as e:
+    out["code_names"] = {"error": str(e)[:200]}
+
+# R2 size by top-level folder; the same pass counts finished Texas city-build batches
+# (work/every-tx/<city>/<run>/B/<n>.json; each city build has TX_BATCHES batches, newest run counts)
+TX_BATCHES = 256
+tot, n, top, txb = 0, 0, Counter(), Counter()
 for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B):
     for o in p.get("Contents", []):
         tot += o["Size"]; n += 1; top["/".join(o["Key"].split("/")[:2])] += o["Size"]
+        k = o["Key"].split("/")
+        if len(k) == 6 and k[:2] == ["work", "every-tx"] and k[4] == "B" and k[5].endswith(".json") and k[3][:1] == "v":
+            txb[(k[2], k[3])] += 1
+cities = {}
+for (city, run), cnt in txb.items():
+    if city not in cities or int(run[1:] or 0) > int(cities[city]["run"][1:] or 0):
+        cities[city] = {"run": run, "done": min(cnt, TX_BATCHES), "total": TX_BATCHES}
+out["tx_cities"] = cities
 out["r2"] = {"objects": n, "gb": round(tot / 1e9, 1),
              "est_usd_month": round(max(tot / 1e9 - 10, 0) * 0.015, 2),
              "largest": [[k, round(v / 1e9, 1)] for k, v in top.most_common(6)]}
