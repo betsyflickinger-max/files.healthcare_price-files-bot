@@ -25,6 +25,10 @@ and changes the words that name DFW. Hospital price files, posted cash prices, q
 now; the city page says "not on the El Paso page yet" rather than "none found". Any expected wording that is missing stops
 the build, so a half-edited page never goes out. The page goes to `/<city>/price-finder/` on the preview site with a small
 function that serves the city's per-code files. A copy is kept in R2 `site/deploy/cities/<city>/price-finder.html`.
+Each published city is added to `site/cities.json` in the site (the list behind the "Area" picker on every Price Finder page).
+After the monthly DFW refresh goes live, `orchestrate.py` rebuilds every city in that list with the new layout and the city's
+newest finished build; a city that fails keeps its previous page and opens an issue. New Texas city builds themselves
+(insurer files split by metro, then built on rented machines) are still started by hand.
 Offline test: `python site/city_page.py el-paso --template PAGE --embed EMBED --rvu RVU_ZIP --med-all MED --t5 T5 [--quality Q]`.
 
 Names: `plain_names_cpt.tsv` (plain-English names written for the most common codes), HCPCS Level II official
