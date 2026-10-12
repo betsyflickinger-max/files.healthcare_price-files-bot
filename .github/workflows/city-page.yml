@@ -1,0 +1,49 @@
+name: Texas city page
+
+# Builds the Price Finder page for one Texas city from its finished insurer build and puts it on the preview site
+# at /<city>/price-finder/. Run by hand. Shares the website build's lock, so it never deploys while the monthly
+# refresh is deploying. See site/city_page.py.
+
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: "City"
+        type: choice
+        options: [el-paso, austin, san-antonio, houston]
+        default: el-paso
+      deploy:
+        description: "Put it on the preview site (off = build and check only; the page is saved to R2 either way)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: site-build
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  page:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CITY: ${{ inputs.city }}
+      DEPLOY: ${{ inputs.deploy && '--deploy' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install boto3==1.35.36
+      - shell: bash
+        run: python site/city_page.py "$CITY" $DEPLOY | tee -a "$GITHUB_STEP_SUMMARY"
