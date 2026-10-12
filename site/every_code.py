@@ -239,7 +239,7 @@ FLAT = None
 # (2) the text sort spilled 50+ GB per Houston batch and filled the disk.
 # npis/dates/urls are already sorted (AUX query), so a list position sorts like the text; networks get their (ins, net) rank.
 NETS2 = sorted(tuple((k_.split('|', 1) + [''])[:2]) for k_ in nets)
-SORTV = E.get('SORTV', '2')
+SORTV = E.get('SORTV', '3')   # 3 = per-group SQL (Oct 12, 2026), 2 = integer sort + Python walk, 1 = original text sort
 def work(k):
     """One bucket. DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
@@ -264,13 +264,15 @@ def work(k):
     if FLAT is None:
         FLAT = set(c.execute(f"select distinct npi, ins, net, v from read_parquet('{D}/flat/*.parquet')").fetchall())
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
-    if SORTV == '2':
+    if SORTV in ('2', '3'):
         c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
         c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])
         c.execute("create temp table un as select unnest(?::varchar[]) url, unnest(range(?::bigint))::int ui", [urls, len(urls)])
         c.execute("create temp table nn as select unnest(?::varchar[]) ins, unnest(?::varchar[]) net, unnest(range(?::bigint))::int ni",
                   [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
     MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
+    if SORTV == '3':
+        return work3(k, c, src, MD)
     if SORTV == '2':
         cur = c.execute(f"""select x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, x.modi, x.st, x.nt, dn.di, un.ui from {src} x
                        left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
@@ -330,6 +332,64 @@ def work(k):
                 g0, grp = g, []
             grp.append((v, tin, modi or '', st or '', nt or '', dt, url))
     if g0: emit(f, g0, grp)
+    if curcode: put(curcode, f)
+    for fu in futs: fu.result()
+    c.close(); shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True); shutil.rmtree(D / f'tmp/w{k}', ignore_errors=True)
+    res = (k, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+    s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
+    return res
+def work3(k, c, src, MD):
+    """Stage B, SORTV=3: DuckDB does the per-row work (dedupe, order, $0 count, headline = lowest positive rate with no
+    modifier else lowest positive, up to 8 other rates) and returns one row per provider/network/fee/type group; Python
+    only formats them. Same output as SORTV=2 (tested Oct 12, 2026), about 5x fewer rows cross into Python."""
+    c.execute("create temp table pk as select unnest(range(?::bigint))::int pi, unnest(?::varchar[]) kind", [len(KIND), KIND])
+    nx = c.execute(f"select count(*) from {src}").fetchone()[0]
+    cur = c.execute(f"""
+      with d as (select distinct x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, x.modi, x.st, x.nt, dn.di, un.ui from {src} x
+                 left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
+                 left join dn on dn.dt = x.dt left join un on un.url = x.url),
+      r as (select d.*, pk.kind <> 'P' keep,
+                   row_number() over (partition by code, pi, ni, fee, t, v > 0 order by v, modi, tin, st, nt, di, ui) rp
+            from d join pk using (pi))
+      select code, pi, ni, fee, t, count(*) filter (where v = 0) zeros, count(*) filter (where v > 0) npos,
+             arg_min(struct_pack(v := v, tin := tin, modi := modi, st := st, nt := nt, di := di, ui := ui, rp := rp),
+                     case when v > 0 and modi = '' then rp when v > 0 then 1e8 + rp else 2e8 + rp end) h,
+             list(struct_pack(v := v, tin := tin, modi := modi, st := st, nt := nt, rp := rp) order by rp) filter (where keep and v > 0 and rp <= 9) ot
+      from r group by all order by code, pi, ni, fee, t""")
+    summ, scp = {}, {}
+    pool = ThreadPoolExecutor(8); futs = []
+    D0 = didx.get('', 0); U0 = uidx.get('', 0); LC = {}
+    def labc(modi, st, nt, other):
+        key = (modi, st, nt, other)
+        if key not in LC:
+            x = label_str(modi or '', st or '', nt or '', other); LC[key] = lidx.get(x, -1) if x else -1
+        return LC[key]
+    def put(code, f):
+        for kk, rows in f.items():
+            cap = 0 if KIND[int(kk)] == 'P' else 4
+            for r in rows: r[8] = r[8][:cap]
+        summ[code] = sum(len(v) for v in f.values())
+        body = base64.b64encode(gzip.compress(json.dumps({'f': f}, separators=(',', ':')).encode(), 6))
+        futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{TOUT}t/{code}.txt', Body=body, ContentType='text/plain'))
+    curcode, f = None, {}
+    while True:
+        batch = cur.fetchmany(100000)
+        if not batch: break
+        for code, pi, ni, fee, t, zeros, npos, h, ot in batch:
+            v, tin, modi, st, nt, di, ui, hrp = h['v'], h['tin'], h['modi'], h['st'], h['nt'], h['di'], h['ui'], h['rp']
+            if code != curcode:
+                if curcode: put(curcode, f)
+                curcode, f = code, {}
+            ins, net = NETS2[ni]; nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
+            di_, ui_ = (D0 if di is None else di), (U0 if ui is None else ui)
+            if npos:
+                isflat = fee == 0 and t == 0 and not modi and (npis[pi], ins, net, v) in FLAT
+                m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
+                others = [[float(o_['v']), labc(o_['modi'], o_['st'], o_['nt'], o_['tin'] != tin)] for o_ in [o_ for o_ in (ot or []) if o_['rp'] != hrp][:8]]
+                row = [n, fee, t, float(v), (1 if isflat else 0) | (2 if islow else 0), di_, ui_, npos - 1, others, zeros, labc(modi, st, nt, False)]
+            else:
+                row = [n, fee, t, 0, 4, di_, ui_, 0, [], zeros, -1]
+            f.setdefault(str(pi), []).append(row)
     if curcode: put(curcode, f)
     for fu in futs: fu.result()
     c.close(); shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True); shutil.rmtree(D / f'tmp/w{k}', ignore_errors=True)
