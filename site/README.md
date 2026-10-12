@@ -27,8 +27,16 @@ the build, so a half-edited page never goes out. The page goes to `/<city>/price
 function that serves the city's per-code files. A copy is kept in R2 `site/deploy/cities/<city>/price-finder.html`.
 Each published city is added to `site/cities.json` in the site (the list behind the "Area" picker on every Price Finder page).
 After the monthly DFW refresh goes live, `orchestrate.py` rebuilds every city in that list with the new layout and the city's
-newest finished build; a city that fails keeps its previous page and opens an issue. New Texas city builds themselves
-(insurer files split by metro, then built on rented machines) are still started by hand.
+newest finished build; a city that fails keeps its previous page and opens an issue. 
+## Texas city builds (monthly, automatic from November 2026)
+
+`site/orchestrate_tx.py` runs right after `orchestrate.py` in the same workflow. One build per month (`tx-YYYY-MM`, state in
+R2 `site/builds/tx-YYYY-MM/state.json`): from the 8th, once the month's DFW refresh is live and no Texas insurer file is still
+being read, it splits every new Texas insurer table by metro (`tx_split.py`, up to 4 machines), moves split tables whose insurer
+table was retired to `work/retired/<month>/tx_metro/`, rebuilds each metro's provider list from `data/scope/tx_npis_all.parquet`,
+then runs `every_code.py` per metro (Houston 5 machines, rest of Texas 4, San Antonio 2, Austin 2, El Paso 1; 8 vCPU / 32 GB)
+into `site/every-tx/<metro>/<YYYY-MM>/`. When every metro has its `embed.json`, it publishes the four city pages with
+`city_page.py --deploy`. Run the workflow by hand with "force_tx" to start early. October 2026 was built by hand.
 Offline test: `python site/city_page.py el-paso --template PAGE --embed EMBED --rvu RVU_ZIP --med-all MED --t5 T5 [--quality Q]`.
 
 Names: `plain_names_cpt.tsv` (plain-English names written for the most common codes), HCPCS Level II official
