@@ -417,8 +417,21 @@ if E.get('BSTART'): s_ = int(E['BSTART']); buckets = [b for b in buckets if b >=
 if not buckets: log('all buckets already done')
 log('stage B', len(buckets), 'buckets to do', len(summary), 'codes already done')
 con.close()
+# Oct 12, 2026: when a worker is killed (e.g. for memory), the pool starts a new one but the lost part never returns,
+# so the machine waits forever (three Austin machines sat silent for an hour with every part already done). Watchdog: if no
+# part finishes for STALL_MIN minutes (default 60, and at least 3x the slowest part so far), exit with an error so the
+# machine's retry loop restarts this script; it skips finished parts and writes embed.json when all are in.
+import multiprocessing.context as mpc
+STALL = float(E.get('STALL_MIN', '60')) * 60
 with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=int(E.get('MAXTASKS', '4'))) as P:
-    for done, (k, nx, summ, scp) in enumerate(P.imap_unordered(work, buckets), 1):
+    it, done, last, slowest = P.imap_unordered(work, buckets), 0, time.time(), 0.0
+    while done < len(buckets):
+        try: k, nx, summ, scp = it.next(timeout=60)
+        except mpc.TimeoutError:
+            if time.time() - last > max(STALL, 3 * slowest):
+                log(f'no part finished for {round((time.time() - last) / 60)} min; a worker likely died. Restarting.'); LOGFLUSH(); P.terminate(); sys.exit(5)
+            continue
+        done += 1; slowest = max(slowest, time.time() - last); last = time.time()
         summary.update(summ)
         for kk, v in scp.items(): scope.setdefault(kk, set()).update(v)
         log(f'B {done}/{len(buckets)}', f'bucket {k}', f'{nx:,} rows', len(summary), 'codes so far')
