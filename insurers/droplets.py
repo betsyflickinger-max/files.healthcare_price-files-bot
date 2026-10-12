@@ -18,13 +18,21 @@ def _h():
     return {"Authorization": f"Bearer {tok}", "Content-Type": "application/json"}
 
 
+FALLBACK_REGIONS = ["nyc1", "sfo3"]  # same list the website build uses when nyc3 has no room
+
+
 def create(name, user_data, size=DEFAULT_SIZE):
-    body = dict(name=name, region=REGION, size=size, image=IMAGE, tags=["upfront", TAG], user_data=user_data,
-                monitoring=False, ipv6=False)
-    r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
-    if r.status_code == 422 and size != DEFAULT_SIZE:  # size not available to this account: use the default
-        body["size"] = DEFAULT_SIZE
+    """Rent a machine in nyc3; if DigitalOcean has no room for that size there (422), try nyc1, then sfo3."""
+    r = None
+    for region in [REGION] + FALLBACK_REGIONS:
+        body = dict(name=name, region=region, size=size, image=IMAGE, tags=["upfront", TAG], user_data=user_data,
+                    monitoring=False, ipv6=False)
         r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
+        if r.status_code == 422 and size != DEFAULT_SIZE:  # size not available to this account: use the default
+            body["size"] = DEFAULT_SIZE
+            r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
+        if r.status_code != 422:
+            break
     if r.status_code >= 300:
         raise RuntimeError(f"DigitalOcean {r.status_code}: {r.text[:300]}")
     return r.json()["droplet"]
