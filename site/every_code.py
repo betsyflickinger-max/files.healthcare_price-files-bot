@@ -51,6 +51,7 @@ TYPE = """case when billing_code_type ilike '%drg%' then 'MS-DRG' when billing_c
 files = sorted(ls(E.get('RATES', 'data/full/rates/')), key=lambda x: x[1])
 if E.get('AORDER') == 'desc': files = files[::-1]
 if E.get('ONLY'): files = [f for f in files if E['ONLY'] in f[0]]
+if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_:] + files[:r_]   # machines start at different tables
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
@@ -65,7 +66,7 @@ def mine(fn):  # a cached A file ('<tag>.parquet' or '<tag>_<piece>.parquet') be
 import math
 def save_a(i):
     outs = glob.glob(f'{D}/xpart/bucket=*/{i}.parquet') + [p for p in (f'{D}/flat/{i}.parquet', f'{D}/names/{i}.parquet', f'{D}/aux/{i}.parquet') if os.path.exists(p)]
-    for p in outs: s3.upload_file(p, B, AC + os.path.relpath(p, D))
+    with ThreadPoolExecutor(16) as P_: list(P_.map(lambda p: s3.upload_file(p, B, AC + os.path.relpath(p, D)), outs))   # ~260 files per table
     s3.put_object(Bucket=B, Key=AC + f'{i}.done', Body=b'1')
 _LA = None
 def restore_a(i):
@@ -80,21 +81,40 @@ def restore_a(i):
 NEWP = [0]
 def LOGFLUSH(): s3.put_object(Bucket=B, Key=OUTP + 'log.txt', Body='\n'.join(LOG).encode())
 PIECE_GB = float(E.get('PIECE_GB', '0.4'))
+# ACLAIM=1: many machines share stage A. Each table is claimed (AC/<tag>.claim) before it is read, so machines take
+# different tables; a claim older than CLAIM_H hours (machine died) can be taken over. After its own tables, a
+# machine waits for the others' tables and then moves on to stage B with all of them.
+ROLE = E.get('ROLE', 'local'); CLAIM_S = float(E.get('CLAIM_H', '2')) * 3600
+def claim(i):
+    try:
+        o = s3.get_object(Bucket=B, Key=AC + f'{i}.claim'); who = o['Body'].read().decode()
+        if who != ROLE and time.time() - o['LastModified'].timestamp() < CLAIM_S: return False
+    except Exception: pass
+    s3.put_object(Bucket=B, Key=AC + f'{i}.claim', Body=ROLE.encode()); time.sleep(3)   # two machines can claim at once:
+    try: return s3.get_object(Bucket=B, Key=AC + f'{i}.claim')['Body'].read().decode() == ROLE   # the last write wins
+    except Exception: return True
+waiting = []
 for ii, (key, size) in enumerate(files):
     i = TAG[key]
     if E.get('ONLYIDX') and ii != int(E['ONLYIDX']): continue
     if str(i) in doneA or isdone(i):
         restore_a(i); log(f'A {ii+1}/{len(files)} restored from saved work', key.rsplit('/', 1)[1]); continue
     K = max(1, math.ceil(size / (PIECE_GB * 1e9))) if size > float(E.get('MINSPLIT', '0.8e9')) else 1
+    if K == 1 and E.get('ACLAIM') and not claim(i):   # big tables are shared piece by piece instead
+        waiting.append((ii, key, i, K)); continue
     loc, locm = D / 'in/r.parquet', D / 'in/m.parquet'
-    s3.download_file(B, key, str(loc))
-    try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
-    except Exception: mj = False
+    got = False; others = False
     total = 0
     for p in range(K):
         tag = f'{i}' if K == 1 else f'{i}_{p}'
         if K > 1 and (tag in doneA or isdone(tag)):
             restore_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} restored'); continue
+        if K > 1 and E.get('ACLAIM') and not claim(tag): others = True; continue
+        if not got:   # download only once this machine has work in the table
+            s3.download_file(B, key, str(loc))
+            try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
+            except Exception: mj = False
+            got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
         con.execute(f"""create or replace temp view r0 as
@@ -125,13 +145,27 @@ for ii, (key, size) in enumerate(files):
             save_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} done')
             NEWP[0] += 1
             if E.get('MAXPIECES') and NEWP[0] >= int(E['MAXPIECES']): log('MAXPIECES reached, restarting fresh'); LOGFLUSH(); os._exit(3)
-    loc.unlink(); locm.unlink(missing_ok=True)
+    loc.unlink(missing_ok=True); locm.unlink(missing_ok=True)
+    if K > 1 and others and not all(isdone(f'{i}_{p}') for p in range(K)):
+        waiting.append((ii, key, i, K)); continue   # other machines still have pieces of this table
     gl = f'{D}/xpart/bucket=*/{i}.parquet' if K == 1 else f'{D}/xpart/bucket=*/{i}_*.parquet'
     n = con.execute(f"select sum(num_rows) from (select distinct file_name, row_group_id, row_group_num_rows num_rows from parquet_metadata('{gl}'))").fetchone()[0] if glob.glob(gl) else 0
     if K == 1: save_a(i)
     else: s3.put_object(Bucket=B, Key=AC + f'{i}.done', Body=b'1')
     log(f'A {ii+1}/{len(files)}', f'{(n or 0):,} rows' + (f' in {K} pieces' if K > 1 else ''), key.rsplit('/', 1)[1], f'disk {shutil.disk_usage(str(D)).used/1e9:.0f} GB')
 
+if waiting:
+    log('A waiting for', len(waiting), 'tables other machines are reading'); LOGFLUSH()
+    while waiting:
+        time.sleep(60)
+        for w in list(waiting):
+            ii_, key_, i_, K_ = w
+            if K_ > 1 and not isdone(i_) and all(isdone(f'{i_}_{p}') for p in range(K_)):
+                s3.put_object(Bucket=B, Key=AC + f'{i_}.done', Body=b'1')   # last piece came in: mark the whole table
+            if isdone(i_):
+                _LA = None; restore_a(i_); waiting.remove(w); log(f'A {ii_+1}/{len(files)} read by other machines', key_.rsplit('/', 1)[1])
+            elif any(claim(t_) for t_ in ([i_] if K_ == 1 else [f'{i_}_{p}' for p in range(K_) if not isdone(f'{i_}_{p}')])):
+                log('A taking over', key_.rsplit('/', 1)[1]); LOGFLUSH(); os._exit(4)   # its machine stopped: restart and read it here
 if E.get('STOPA'): log('STOPA'); sys.exit(0)
 # ---------- lookups ----------
 s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), str(D / 'npis.parquet'))
@@ -205,10 +239,8 @@ def work(k):
         listed = ls(f'{AC}xpart/bucket={k}/')
         if listed and not any(mine(kk_.rsplit('/', 1)[1]) for kk_, _ in listed):
             raise RuntimeError(f'bucket {k}: {len(listed)} stage-A files but none match this build (insurer tables changed since stage A?)')
-        for kk_, _ in listed:
-            if not mine(kk_.rsplit('/', 1)[1]): continue
-            dst = xd / kk_.rsplit('/', 1)[1]
-            if not dst.exists(): s3.download_file(B, kk_, str(dst))
+        todo_ = [kk_ for kk_, _ in listed if mine(kk_.rsplit('/', 1)[1]) and not (xd / kk_.rsplit('/', 1)[1]).exists()]
+        with ThreadPoolExecutor(8) as P_: list(P_.map(lambda kk_: s3.download_file(B, kk_, str(xd / kk_.rsplit('/', 1)[1])), todo_))
     if not glob.glob(f'{D}/xpart/bucket={k}/*.parquet'):   # small areas (El Paso) can have empty buckets
         res = (k, 0, {}, {})
         s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
