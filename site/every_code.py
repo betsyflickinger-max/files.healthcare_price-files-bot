@@ -71,7 +71,7 @@ def save_a(i):
 _LA = None
 def restore_a(i):
     global _LA
-    if _LA is None: _LA = ls(AC)
+    if _LA is None: _LA = [x for sub in ('aux/', 'flat/', 'names/') for x in ls(AC + sub)] if E.get('NOXPART') else ls(AC)
     for k, _ in _LA:
         rel = k[len(AC):]
         fn = rel.rsplit('/', 1)[-1][:-8] if rel.endswith('.parquet') else None
@@ -166,6 +166,14 @@ if waiting:
                 _LA = None; restore_a(i_); waiting.remove(w); log(f'A {ii_+1}/{len(files)} read by other machines', key_.rsplit('/', 1)[1])
             elif any(claim(t_) for t_ in ([i_] if K_ == 1 else [f'{i_}_{p}' for p in range(K_) if not isdone(f'{i_}_{p}')])):
                 log('A taking over', key_.rsplit('/', 1)[1]); LOGFLUSH(); os._exit(4)   # its machine stopped: restart and read it here
+if E.get('ACLAIM'):
+    # Oct 12, 2026 fix: the file listing used by restore_a was taken when the first table was restored, so tables other
+    # machines finished later were missing their lookup files here and machines built different provider lists.
+    # Restore every table's lookup files again from a fresh listing before building the lookups.
+    _LA = None
+    for sub in ('aux', 'flat', 'names'): shutil.rmtree(D / sub, ignore_errors=True); (D / sub).mkdir(parents=True, exist_ok=True)
+    for t_ in sorted(TAGS): restore_a(t_)
+    log('A all', len(TAGS), 'tables restored from a fresh listing')
 if E.get('STOPA'): log('STOPA'); sys.exit(0)
 # ---------- lookups ----------
 s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), str(D / 'npis.parquet'))
@@ -203,6 +211,12 @@ nets, dates, urls, npis = AUX.get('n', []), AUX.get('d', []), AUX.get('u', []), 
 ptab = [provider(n_) for n_ in npis]
 labs = sorted({x for m in AUX.get('m', []) for o in (0, 1) for x in [label_str(*(m.split('~') + [''] * 3)[:3], o)] if x})
 log('index', len(nets), 'networks', len(dates), 'dates', len(urls), 'urls', len(ptab), 'providers', len(labs), 'labels')
+# every machine of a build must use the same lookup lists, or their batches won't match embed.json: the first machine
+# records a fingerprint, the others refuse to run stage B with a different one
+FP = hashlib.sha1(json.dumps([nets, dates, urls, npis, labs]).encode()).hexdigest()[:16]
+try: FP0 = s3.get_object(Bucket=B, Key=WK + 'index.fp')['Body'].read().decode()
+except Exception: FP0 = None; s3.put_object(Bucket=B, Key=WK + 'index.fp', Body=FP.encode())
+if FP0 and FP0 != FP: log('ERROR lookup lists differ from the other machines', FP, FP0); LOGFLUSH(); sys.exit(5)
 nidx = {k_: i_ for i_, k_ in enumerate(nets)}; didx = {k_: i_ for i_, k_ in enumerate(dates)}; uidx = {k_: i_ for i_, k_ in enumerate(urls)}
 pidx = {k_: i_ for i_, k_ in enumerate(npis)}; lidx = {k_: i_ for i_, k_ in enumerate(labs)}; KIND = [p_[2] for p_ in ptab]
 def lab(modi, st, nt, tin, tin0):
