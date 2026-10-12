@@ -11,7 +11,8 @@ Reads (R2):
   reference/2026-09-29/cms/rvu26d-*.zip           CMS 2026 physician fee schedule, for the city's Medicare doctor-fee locality
 Writes the page to OUT/page.html. With --deploy: adds it to the preview site at /<city>/price-finder/ together with a small
 function that serves the city's per-code rate files (R2 <build>/t/<code>.txt), deploys with wrangler, and saves the site
-back to R2 site/deploy/current.tgz (the same steps as the monthly refresh).
+back to R2 site/deploy/current.tgz (the same steps as the monthly refresh). It also adds the city to site/cities.json, the list of
+live pages that the area picker shows and that the monthly refresh rebuilds.
 
 What changes from the DFW page: the city's providers, networks and rates; doctor fees in the Medicare benchmark use the
 city's Medicare locality; DFW-only parts are left out (hospital price files, posted cash prices, the map, the plan
@@ -202,6 +203,18 @@ export async function onRequestGet({{ params, env }}) {{
 """
 
 
+def live_list(d, slug, name):
+    """site/cities.json: every live Price Finder page, read by the page's area picker and by the monthly refresh (orchestrate.py)."""
+    f = f'{d}/site/cities.json'
+    try: L = json.load(open(f, encoding='utf-8'))
+    except Exception: L = []
+    if not any(c['slug'] == 'dfw' for c in L): L.append({'slug': 'dfw', 'name': 'Dallas–Fort Worth', 'path': '/price-finder/'})
+    L = [c for c in L if c['slug'] != slug] + [{'slug': slug, 'name': name, 'path': f'/{slug}/price-finder/'}]
+    order = ['dfw'] + list(CITIES)
+    L.sort(key=lambda c: order.index(c['slug']) if c['slug'] in order else len(order))
+    json.dump(L, open(f, 'w', encoding='utf-8'), ensure_ascii=False)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('city'); ap.add_argument('--deploy', action='store_true'); ap.add_argument('--out', default='/tmp/city')
@@ -248,6 +261,7 @@ def main():
     os.makedirs(f'{d}/site/{A.city}/price-finder/pf/q', exist_ok=True)
     dq = f'{d}/site/price-finder/pf/q/quality.txt'
     empty_quality(dq if os.path.isfile(dq) else None, f'{d}/site/{A.city}/price-finder/pf/q/quality.txt')
+    live_list(d, A.city, name)
     fn = f'{d}/functions/{A.city}/price-finder/pf/t'; os.makedirs(fn, exist_ok=True)
     open(f'{fn}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(prefix)))
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])

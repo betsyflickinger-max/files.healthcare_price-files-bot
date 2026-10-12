@@ -275,7 +275,26 @@ def publish(st):
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
     st['cleanup'] = cleanup(prev)
-    issue(f'Website refresh {BID} is live', '```\n' + chk.stdout + '\n```')
+    st['cities'] = refresh_cities('/tmp/pub/deploy/site/cities.json')
+    issue(f'Website refresh {BID} is live', '```\n' + chk.stdout + '\n```' + ''.join(f'\n{c}: {v}' for c, v in st['cities'].items()))
+
+
+def refresh_cities(cities_json):
+    """After DFW goes live, rebuild every live Texas city page on the new layout, names and Medicare figures, with that city's
+    newest finished insurer build. One at a time (each deploy adds to the site DFW just published). A city that fails keeps
+    last month's page and opens an issue; it never touches the DFW page."""
+    try: live = [c for c in json.load(open(cities_json, encoding='utf-8')) if c['slug'] != 'dfw']
+    except Exception: live = []
+    out = {}
+    for c in live:
+        try: r = subprocess.run([sys.executable, f'{HERE}/city_page.py', c['slug'], '--deploy', '--out', f"/tmp/city-{c['slug']}"],
+                                capture_output=True, text=True, timeout=1200)
+        except subprocess.TimeoutExpired: r = subprocess.CompletedProcess([], 1, '', 'timed out after 20 minutes')
+        print(r.stdout[-1500:], r.stderr[-1500:])
+        out[c['slug']] = 'rebuilt' if r.returncode == 0 else 'kept last version (failed)'
+        if r.returncode != 0:
+            issue(f"Website refresh {BID}: {c['name']} page not rebuilt", "The page keeps its previous version.\n\n```\n" + (r.stdout + r.stderr)[-3000:] + "\n```")
+    return out
 
 
 if __name__ == '__main__':
