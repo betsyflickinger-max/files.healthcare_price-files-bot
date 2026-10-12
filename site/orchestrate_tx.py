@@ -5,34 +5,42 @@ first automatic build is November 2026. Stages:
   wait     from the 8th: this month's DFW refresh is live (DFW gets the machines first), no Texas insurer file is still
            being read, and at least 2 machines are free
   split    tx_split.py on rented machines for every Texas insurer table not split by metro yet (insurers re-post monthly
-           under new names, and the insurer bot retires last month's tables). Split tables whose insurer table was retired
-           are moved to work/retired/<YYYY-MM>/tx_metro/, and each metro's provider list is rebuilt from the Texas list.
+           under new names, and the insurer bot retires last month's tables), plus one machine that re-splits the October
+           "rest of Texas" tables into the metro-area pages (tx_split.py SRC=rest; once per table). Split tables whose insurer
+           table was retired are moved to work/retired/<YYYY-MM>/tx_metro/, and each metro's provider list is rebuilt from the Texas list.
   build    every_code.py per metro on several machines that share the work (same settings as the October hand run,
            v2/v3 code). A metro is done when site/every-tx/<metro>/<YYYY-MM>/embed.json exists.
-  publish  city_page.py --deploy for each city page (El Paso, Austin, San Antonio, Houston). A city that fails keeps its
-           previous page and opens an issue. "rest" (the rest of Texas) feeds the dashboard only.
+  publish  city_page.py --deploy for each page: El Paso, Austin, San Antonio, Houston, then the 18 metro areas and small towns
+           (Oct 12, 2026: they replace the single "rest of Texas" build). A page that fails keeps its previous version and opens an issue.
+Before November, "force_tx" starts build tx-YYYY-MM-metros: only the 18 metro areas + small towns (the four cities were built
+by hand). Once started, it carries on by itself on the 6-hourly runs.
 Dead machines are relaunched up to 3 times per role; machines delete themselves when done.
 Env: as orchestrate.py, plus [FORCE_TX=1] (skip the 8th / DFW / insurer-bot waits) and [TX_BUILD=YYYY-MM]."""
 import csv, io, os, subprocess, sys, time
 
 MONTH = os.environ.get('TX_BUILD') or time.strftime('%Y-%m')
-os.environ['BUILD'] = 'tx-' + MONTH          # orchestrate.py names machines, logs and the bundle after BUILD
+FIRST = '2026-11'
+EARLY = MONTH < FIRST   # the four cities were built by hand: a forced run builds only the metro-area pages
+os.environ['BUILD'] = 'tx-' + MONTH + ('-metros' if EARLY else '')   # orchestrate.py names machines, logs and the bundle after BUILD
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import orchestrate as O
 from orchestrate import B, s3, log, exists, getj, putj, ls, ensure, free_slots, issue
+from city_page import CITIES
 
 E = os.environ
-FIRST = '2026-11'
 SP = O.SP                                     # site/builds/tx-YYYY-MM/
 SIZE = 's-8vcpu-32gb-amd'                     # 400 GB disk: the biggest Texas tables are ~38 GB before splitting
-# machines per metro, biggest first, and stage B settings from the October run (Oct 12 v2 relaunch)
-METROS = [('houston', 5, dict(WORKERS='2', WMEM='13GB', WTHREADS='4')),   # Oct 12 test: ~3x the parts per hour of 4 x 6 GB on Houston's 60-90M-row parts
-          ('rest', 4, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
-          ('san-antonio', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
-          ('austin', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
-          ('el-paso', 1, dict(WORKERS='5', WMEM='5GB', WTHREADS='2'))]
+# machines per city, biggest first, and stage B settings from the October run (Oct 12 v2 relaunch)
+BIG = [('houston', 5, dict(WORKERS='2', WMEM='13GB', WTHREADS='4')),   # Oct 12 test: ~3x the parts per hour of 4 x 6 GB on Houston's 60-90M-row parts
+       ('san-antonio', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
+       ('austin', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
+       ('el-paso', 1, dict(WORKERS='5', WMEM='5GB', WTHREADS='2'))]
 ZIP3 = {'houston': ('770', '775'), 'san-antonio': ('780', '782'), 'austin': ('786', '787'), 'el-paso': ('798', '799')}  # as tx_split.py
 DFW3 = [('750', '753'), ('760', '762')]
+AREAS = [m for m in CITIES if m not in ZIP3]   # the rest of Texas: 18 metro areas + small-towns, by reference/geo/tx_zip_metro.csv
+AREA_W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')   # as the October rest-of-Texas build
+GB_PER_MACHINE, AREA_MAX = 20, 3              # metro-area machines: one per 20 GB of its split tables, 1 to 3
+GEO = os.path.join(O.HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv')
 CITY_PAGES = ['el-paso', 'austin', 'san-antonio', 'houston']
 RUN_SPLIT = "for t in 1 2 3; do /root/v/bin/python /root/h/tx_split.py >> /root/run.log 2>&1 && break; sleep 5; done"
 SPLIT_MACHINES = 4
@@ -52,10 +60,15 @@ def sizes(prefix):
             for o in pg.get('Contents', []) if o['Key'].endswith('.parquet')}
 
 
+def metros():
+    """(metro, machines, stage B settings) built this month; metro-area machine counts are set after the split"""
+    return ([] if EARLY else BIG) + [(m, None, AREA_W) for m in AREAS]
+
+
 def retire_stale():
     """split tables whose Texas insurer table is gone (retired by the insurer bot) leave the metro inputs"""
     current, moved = set(tables('data/tx/rates/')), 0
-    for m, _, _ in METROS:
+    for m in [m for m, _, _ in metros()] + ['rest']:
         for sub in ('rates', 'membership'):
             for t, k in tables(f'data/tx/metro/{m}/{sub}/').items():
                 if t not in current:
@@ -69,26 +82,34 @@ def metro_npis():
     import duckdb
     s3.download_file(B, 'data/scope/tx_npis_all.parquet', '/tmp/tx_npis_all.parquet')
     c = duckdb.connect(); out = {}
-    for m, _, _ in METROS:
-        if m == 'rest':
-            cond = ' and '.join(f"not (left(zip5, 3) between '{a}' and '{b}')" for a, b in [ZIP3[x] for x in ZIP3] + DFW3)
+    c.execute(f"create table g as select zip5, slug from read_csv('{GEO}', all_varchar=true)")
+    city = ' or '.join(f"left(n.zip5, 3) between '{a}' and '{b}'" for a, b in list(ZIP3.values()) + DFW3)
+    for m, _, _ in metros():
+        if m in ZIP3:
+            a, b = ZIP3[m]; cond = f"left(n.zip5, 3) between '{a}' and '{b}'"
         else:
-            a, b = ZIP3[m]; cond = f"left(zip5, 3) between '{a}' and '{b}'"
-        c.execute(f"copy (select * from read_parquet('/tmp/tx_npis_all.parquet') where {cond}) to '/tmp/npis_{m}.parquet' (format parquet, compression zstd)")
+            cond = f"not ({city}) and coalesce(g.slug, 'small-towns') = '{m}'"
+        c.execute(f"""copy (select n.* from read_parquet('/tmp/tx_npis_all.parquet') n left join g on g.zip5 = left(n.zip5, 5) where {cond})
+                      to '/tmp/npis_{m}.parquet' (format parquet, compression zstd)""")
         out[m] = c.execute(f"select count(*) from read_parquet('/tmp/npis_{m}.parquet')").fetchone()[0]
-        if out[m] < 1000: raise SystemExit(f'STOP: only {out[m]} providers for {m}; nothing changed')
+        if out[m] < (1000 if m in ZIP3 else 100): raise SystemExit(f'STOP: only {out[m]} providers for {m}; nothing changed')
     for m in out: s3.upload_file(f'/tmp/npis_{m}.parquet', B, f'data/tx/metro/{m}/npis.parquet')
     return out
+
+
+def area_machines():
+    return {m: min(AREA_MAX, max(1, -(-sum(sizes(f'data/tx/metro/{m}/rates/').values()) // int(GB_PER_MACHINE * 1e9)))) for m in AREAS}
 
 
 def tout(m): return f'site/every-tx/{m}/{MONTH}/'
 
 
 def main():
-    if MONTH < FIRST: log('Texas', MONTH, 'was built by hand; automatic builds start', FIRST); return
+    force = E.get('FORCE_TX')
+    if EARLY and not force and not exists(SP + 'state.json'):
+        log('Texas', MONTH, 'was built by hand; automatic builds start', FIRST, '("force_tx" builds the metro-area pages now)'); return
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': [], 'log': []})
     log('Texas build', MONTH, 'stage', st['stage'])
-    force = E.get('FORCE_TX')
     if st['stage'] == 'wait':
         if int(time.strftime('%d')) < 8 and not force: log('waiting for the 8th'); return
         dfw = getj(f'site/builds/{MONTH}/state.json', {}).get('stage')
@@ -106,19 +127,25 @@ def main():
             jobs = [[] for _ in range(min(SPLIT_MACHINES, max(1, len(todo))))]
             for i, t in enumerate(todo): jobs[i % len(jobs)].append(t)
             st['split_jobs'] = [j for j in jobs if j]
+            st['rest_job'] = [t for t in tables('data/tx/metro/rest/rates/') if t in sz]   # October "rest" tables still current
         for i, job in enumerate(st['split_jobs']):
             left = [t for t in job if t not in done]
             ensure(st, f'split-{i + 1}', SIZE, RUN_SPLIT, dict(TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), not left)
-        log(len(todo), 'Texas tables left to split')
-        if not todo:
+        rdone = {k.rsplit('/', 1)[1][:-5] for k in ls('data/tx/metro/_done_rest/')}
+        rleft = [t for t in st.get('rest_job', []) if t not in rdone]
+        if st.get('rest_job'):
+            ensure(st, 'split-rest', SIZE, RUN_SPLIT, dict(SRC='rest', TABLES=','.join(st['rest_job']), MEM='24GB', THREADS='8', WORK='/d'), not rleft)
+        log(len(todo), 'Texas tables left to split;', len(rleft), 'rest-of-Texas tables left to re-split')
+        if not todo and not rleft:
             st['retired_split_tables'] = retire_stale()
             st['providers'] = metro_npis()
+            st['machines'] = area_machines()
             st['stage'] = 'build'
     if st['stage'] == 'build':
         left = []
-        for m, n, w in METROS:
+        for m, n, w in metros():
             if exists(tout(m) + 'embed.json'): continue
-            left.append(m)
+            left.append(m); n = n or st['machines'][m]
             for i in range(n):
                 env = dict(RATES=f'data/tx/metro/{m}/rates/', NPIS=f'data/tx/metro/{m}/npis.parquet', TOUT=tout(m), OUTP=f'{SP}{m}-c{i + 1}/',
                            WK=f"work/every-tx/{m}/v{MONTH.replace('-', '')}/", ACACHE=f'work/every-tx/{m}/Acache/', NOXPART='1', ACLAIM='1',
@@ -127,13 +154,15 @@ def main():
         log('metros still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'publish'
     if st['stage'] == 'publish':
-        res = {}
-        for m in CITY_PAGES:
+        res = st.setdefault('cities', {})
+        for m in ([] if EARLY else CITY_PAGES) + AREAS:
+            if m in res: continue   # a run stopped by the workflow's time limit carries on with the next page
             r = subprocess.run([sys.executable, f'{O.HERE}/city_page.py', m, '--deploy', '--out', f'/tmp/txcity-{m}'], capture_output=True, text=True, timeout=3600)
             print(r.stdout[-1500:], r.stderr[-1500:])
             res[m] = 'live' if r.returncode == 0 else 'kept previous page (failed)'
             if r.returncode: issue(f'Texas {MONTH}: {m} page not rebuilt', 'The page keeps its previous version.\n\n```\n' + (r.stdout + r.stderr)[-3000:] + '\n```')
-        st.update(stage='live', live_at=time.strftime('%Y-%m-%d %H:%M'), cities=res)
+            putj(SP + 'state.json', st)
+        st.update(stage='live', live_at=time.strftime('%Y-%m-%d %H:%M'))
         issue(f'Texas city pages {MONTH} are live', '\n'.join(f'{m}: {v}' for m, v in res.items()))
     putj(SP + 'state.json', st)
 

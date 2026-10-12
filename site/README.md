@@ -38,9 +38,16 @@ newest finished build; a city that fails keeps its previous page and opens an is
 R2 `site/builds/tx-YYYY-MM/state.json`): from the 8th, once the month's DFW refresh is live and no Texas insurer file is still
 being read, it splits every new Texas insurer table by metro (`tx_split.py`, up to 4 machines), moves split tables whose insurer
 table was retired to `work/retired/<month>/tx_metro/`, rebuilds each metro's provider list from `data/scope/tx_npis_all.parquet`,
-then runs `every_code.py` per metro (Houston 5 machines, rest of Texas 4, San Antonio 2, Austin 2, El Paso 1; 8 vCPU / 32 GB)
-into `site/every-tx/<metro>/<YYYY-MM>/`. When every metro has its `embed.json`, it publishes the four city pages with
+then runs `every_code.py` per metro (Houston 5 machines, San Antonio 2, Austin 2, El Paso 1, each metro area 1-3 by size;
+8 vCPU / 32 GB) into `site/every-tx/<metro>/<YYYY-MM>/`. When every metro has its `embed.json`, it publishes the pages with
 `city_page.py --deploy`. Run the workflow by hand with "force_tx" to start early. October 2026 was built by hand.
+
+Rest of Texas (Oct 12, 2026): instead of one "rest" build, every Texas ZIP outside the five big areas goes to one of 18
+Census metro areas (McAllen, Killeen–Temple, Brownsville–Harlingen, Corpus Christi, Beaumont–Port Arthur, Lubbock, Waco,
+Longview, College Station–Bryan, Amarillo, Tyler, Abilene, Midland, Odessa, Wichita Falls, Texarkana, San Angelo, Victoria)
+or to `small-towns`, by `reference/geo/tx_zip_metro.csv` (Census ZIP → county → metro; sources in `reference/geo/README.md`).
+Each is its own page, built like the cities. `tx_split.py SRC=rest` re-splits the October `data/tx/metro/rest/` tables once.
+In October 2026, "force_tx" builds only these 19 pages (build `tx-2026-10-metros`).
 Offline test: `python site/city_page.py el-paso --template PAGE --embed EMBED --rvu RVU_ZIP --med-all MED --t5 T5 [--quality Q]`.
 
 Names: `plain_names_cpt.tsv` (plain-English names written for the most common codes), HCPCS Level II official
