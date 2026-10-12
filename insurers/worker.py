@@ -2,9 +2,11 @@
 
 Job list: R2 bot/insurers/runs/<RUN_ID>/<GROUP>.csv  (slot, url, network_label, prev_table)
 For each file:
-  1. 06f_full_extract.py (unchanged pipeline code): download, read the roster, stream every price for
-     every in-scope provider into data/rates/<name>.parquet and data/membership/<name>.parquet.
-  2. Upload both to R2 data/full/rates/ and data/full/membership/.
+  1. 06f_full_extract.py: download, read the roster, stream every price for every in-scope provider into
+     data/rates/<name>.parquet, data/npisets/<name>.parquet and data/membership/<name>.parquet. Since Oct 12, 2026
+     rates are in the "lines" layout (each price once per provider group; the group's NPIs in npisets/), see
+     pipeline/common.py rates_sql(). The R2 rates object carries metadata layout=lines and flat-rows=<count>.
+  2. Upload to R2 data/full/npisets/ (first, so a reader never sees lines without their NPI lists), rates/, membership/.
   3. Double-count fix: if this network's previous table had a different name (insurers date their file
      names), move the old tables to work/retired/<yyyy-mm>/ so a build over data/full/rates/*.parquet
      counts each network once. The old table is only moved after the new one is safely uploaded.
@@ -19,6 +21,9 @@ import sys
 import time
 from datetime import date
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent / "pipeline"))
+from common import is_lines, rates_sql  # noqa: E402
 
 import boto3
 import duckdb
@@ -74,7 +79,7 @@ def one(job):
         src, extra = unpack_7z(url), ["--source-url", url.split("?")[0]]
     new = stem(Path(src.split("?")[0]).name)
     res = dict(slot=job["slot"], url=url, table=new, prev_table=job.get("prev_table", ""), ok=False)
-    for sub in ("rates", "membership"):
+    for sub in ("rates", "membership", "npisets"):
         (DATA / sub / f"{new}.parquet").unlink(missing_ok=True)
     p = subprocess.run([sys.executable, str(PIPE / "06f_full_extract.py"), src, "--network", label,
                         "--scope", str(DATA / "scope.parquet")] + extra, cwd=PIPE, capture_output=True, text=True)
@@ -91,18 +96,28 @@ def one(job):
     if p.returncode != 0 or not rates.exists() or not memb.exists():
         res["error"] = " | ".join(tail)[-1500:] or f"06f exit {p.returncode}"
         return res
+    sets = DATA / "npisets" / f"{new}.parquet"
     con = duckdb.connect()
-    res["rows"] = con.execute(f"select count(*) from '{rates}'").fetchone()[0]
+    lines = is_lines(con, rates)
+    res["rows"] = con.execute(f"select count(*) from {rates_sql(con, rates, sets)}").fetchone()[0]  # flat rows, as before
+    res["stored_rows"] = con.execute(f"select count(*) from '{rates}'").fetchone()[0]
+    res["layout"] = "lines" if lines else "flat"
     res["roster_rows"] = con.execute(f"select count(*) from '{memb}'").fetchone()[0]
     meta = con.execute(f"select any_value(reporting_entity_name), any_value(last_updated_on) from '{memb}'").fetchone()
     res["reporting_entity_name"], res["file_last_updated_on"] = meta[0] or "", meta[1] or ""
-    s3.upload_file(str(rates), B, f"{OUT}rates/{new}.parquet")
+    if lines:
+        s3.upload_file(str(sets), B, f"{OUT}npisets/{new}.parquet")
+    elif exists(f"{OUT}npisets/{new}.parquet"):  # a flat table must not sit next to an older table's NPI lists
+        s3.delete_object(Bucket=B, Key=f"{OUT}npisets/{new}.parquet")
+    s3.upload_file(str(rates), B, f"{OUT}rates/{new}.parquet",
+                   ExtraArgs={"Metadata": {"layout": res["layout"], "flat-rows": str(res["rows"])}})
     s3.upload_file(str(memb), B, f"{OUT}membership/{new}.parquet")
-    rates.unlink(); memb.unlink()
+    for p_ in (rates, memb, sets):
+        p_.unlink(missing_ok=True)
     old = job.get("prev_table", "")
     if old and old != new:
         month = date.today().strftime("%Y-%m")
-        for sub in ("rates", "membership"):
+        for sub in ("rates", "membership", "npisets"):
             k = f"{OUT}{sub}/{old}.parquet"
             if exists(k):
                 move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")
@@ -154,8 +169,8 @@ def self_delete():
 def main():
     body = s3.get_object(Bucket=B, Key=RUN + f"{E['GROUP']}.csv")["Body"].read().decode()
     jobs = list(csv.DictReader(io.StringIO(body)))
-    (DATA / "rates").mkdir(parents=True, exist_ok=True)
-    (DATA / "membership").mkdir(parents=True, exist_ok=True)
+    for sub in ("rates", "membership", "npisets"):
+        (DATA / sub).mkdir(parents=True, exist_ok=True)
     s3.download_file(B, SCOPE_KEY, str(DATA / "scope.parquet"))
     log(f"group {E['GROUP']}: {len(jobs)} files")
     for job in jobs:

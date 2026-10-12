@@ -17,6 +17,8 @@ tables = [k.rsplit('/', 1)[1][:-8] for k, _ in sorted(ls('data/tx/rates/'), key=
 done = {k.split('/')[3] for k, _ in ls('data/tx/shrunk/') if k.endswith('stats.json')}
 for t in tables:
     if t in done: print('skip', t, flush=True); continue
+    if s3.head_object(Bucket=B, Key=f'data/tx/rates/{t}.parquet').get('Metadata', {}).get('layout') == 'lines':
+        print('skip', t, '(already stored once per provider group by the insurer bot, Oct 12, 2026 layout)', flush=True); continue
     t0 = time.time(); src = f'{W}/in.parquet'
     s3.download_file(B, f'data/tx/rates/{t}.parquet', src)
     try: s3.download_file(B, f'data/tx/membership/{t}.parquet', f'{W}/m.parquet'); mj = True

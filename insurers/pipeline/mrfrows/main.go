@@ -1,20 +1,23 @@
 // mrfrows: turn a Transparency in Coverage in-network file into flat price rows for a set of providers.
 // Streams the file once, splits the top-level "in_network" array into items, decodes items on worker
 // goroutines, keeps rates that point at a provider_reference in -refmap (or list an NPI from -npis inline),
-// and writes one gzip CSV row per provider x price. -codes limits billing codes (omit for all codes);
+// and writes the prices out (see sink.go): flat CSV (-out - or x.csv.gz, the original output), flat Parquet
+// (-out x.parquet -format flat), or each price once per provider group with its NPI list stored separately
+// (-out x.parquet -format lines -npisets y.parquet). -codes limits billing codes (omit for all codes);
 // items for other codes are skipped byte-by-byte without decoding.
 package main
 
 import (
 	"bufio"
 	"bytes"
-	"encoding/csv"
+	"crypto/sha256"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -91,7 +94,11 @@ func main() {
 	refF := flag.String("refmap", "", "TSV: provider_group_id, npi, tin, tin_type")
 	npiF := flag.String("npis", "", "NPIs to keep when listed inline")
 	codeF := flag.String("codes", "", "billing codes to keep (omit = all)")
-	outF := flag.String("out", "", "output .csv.gz")
+	outF := flag.String("out", "", "output: - (CSV on stdout), x.csv.gz, or x.parquet")
+	format := flag.String("format", "flat", "Parquet layout: flat or lines")
+	setsF := flag.String("npisets", "", "with -format lines: where to write the NPI lists")
+	var kv multiFlag
+	flag.Var(&kv, "const", "column=value written on every Parquet row (repeatable)")
 	flag.Parse()
 
 	// Provider references: each distinct (npi, tin, tin_type) is stored once and referenced by index,
@@ -144,29 +151,10 @@ func main() {
 	}
 	br := bufio.NewReaderSize(r, 32<<20)
 
-	var sink io.WriteCloser
-	var gz *gzip.Writer
-	if *outF == "-" { // plain CSV on stdout, for streaming straight into Parquet
-		sink = os.Stdout
-	} else {
-		of, err := os.Create(*outF)
-		if err != nil {
-			panic(err)
-		}
-		gz = gzip.NewWriter(of)
-		sink = of
-	}
-	var w io.Writer = sink
-	if gz != nil {
-		w = gz
-	}
-	bw := bufio.NewWriterSize(w, 8<<20)
-	cw := csv.NewWriter(bw)
-	cw.Write([]string{"billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
-		"negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier", "expiration_date"})
+	out := newSink(*outF, *format, *setsF, kv)
 
 	work := make(chan []byte, 4)
-	rowsCh := make(chan [][]string, 4)
+	rowsCh := make(chan []line, 4)
 	var wg sync.WaitGroup
 	nw := runtime.NumCPU()
 	for i := 0; i < nw; i++ {
@@ -174,16 +162,16 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for b := range work {
-				process(b, refs, whos, npis, func(o [][]string) { rowsCh <- o })
+				process(b, refs, whos, npis, func(o []line) { rowsCh <- o })
 			}
 		}()
 	}
-	var nrows int64
+	var nrows int64 // flat rows written so far (read by the progress line only)
 	done := make(chan bool)
 	go func() {
-		for rs := range rowsCh {
-			cw.WriteAll(rs)
-			nrows += int64(len(rs))
+		for ls := range rowsCh {
+			out.write(ls)
+			nrows, _, _ = out.counts()
 		}
 		done <- true
 	}()
@@ -281,48 +269,79 @@ func main() {
 	wg.Wait()
 	close(rowsCh)
 	<-done
-	cw.Flush()
-	bw.Flush()
-	if gz != nil {
-		gz.Close()
-	}
-	sink.Close()
+	out.close()
+	flat, stored, sets := out.counts()
 	fmt.Fprintf(os.Stderr, "    done: %d items, %.1f GB uncompressed, %d price rows (%.0f min)\n",
-		items, float64(total)/1e9, nrows, time.Since(t0).Minutes())
+		items, float64(total)/1e9, flat, time.Since(t0).Minutes())
+	if stored != flat {
+		fmt.Fprintf(os.Stderr, "    stored as %d lines + %d NPI lists (%.1fx fewer rows)\n", stored, sets, float64(flat)/float64(max(stored, 1)))
+	}
 }
 
-func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]bool, emit func([][]string)) {
+type multiFlag []string
+
+func (m *multiFlag) String() string     { return strings.Join(*m, ",") }
+func (m *multiFlag) Set(v string) error { *m = append(*m, v); return nil }
+
+// process turns one in_network item into lines: for each negotiated_rates entry, its in-scope providers are
+// grouped by (TIN, TIN type) with the NPIs sorted, and each negotiated price becomes one line per group.
+// Expanding every line by its NPIs gives exactly the rows the original flat output had.
+func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]bool, emit func([]line)) {
 	var it item
 	if err := json.Unmarshal(b, &it); err != nil {
 		fmt.Fprintln(os.Stderr, "    ! decode error:", err)
 		return
 	}
-	var out [][]string
+	var out []line
+	var flat int
 	for _, nr := range it.Rates {
 		seen := map[who]bool{}
-		var ws []who
+		type grp struct {
+			tin, ttype string
+			npis       []string
+		}
+		var gs []*grp
+		gi := map[[2]string]*grp{}
+		add := func(w who) {
+			if seen[w] {
+				return
+			}
+			seen[w] = true
+			k := [2]string{w.tin, w.ttype}
+			g := gi[k]
+			if g == nil {
+				g = &grp{tin: w.tin, ttype: w.ttype}
+				gi[k] = g
+				gs = append(gs, g)
+			}
+			g.npis = append(g.npis, w.npi)
+		}
 		for _, ref := range nr.Refs {
 			for _, wi := range refs[string(ref)] {
-				w := whos[wi]
-				if !seen[w] {
-					seen[w] = true
-					ws = append(ws, w)
-				}
+				add(whos[wi])
 			}
 		}
 		for _, g := range nr.Groups {
 			for _, n := range g.NPI {
 				if npis[string(n)] {
-					w := who{string(n), strings.ReplaceAll(string(g.TIN.Value), "-", ""), g.TIN.Type}
-					if !seen[w] {
-						seen[w] = true
-						ws = append(ws, w)
-					}
+					add(who{string(n), strings.ReplaceAll(string(g.TIN.Value), "-", ""), g.TIN.Type})
 				}
 			}
 		}
-		if len(ws) == 0 {
+		if len(gs) == 0 {
 			continue
+		}
+		sets := make([]*npiSet, len(gs))
+		for i, g := range gs {
+			sort.Strings(g.npis)
+			h := sha256.New()
+			for _, n := range g.npis {
+				h.Write([]byte(n))
+				h.Write([]byte{0})
+			}
+			s := &npiSet{npis: g.npis}
+			copy(s.key[:], h.Sum(nil))
+			sets[i] = s
 		}
 		for _, p := range nr.Prices {
 			mods := make([]string, len(p.Modifier))
@@ -333,12 +352,14 @@ func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]boo
 			if v, err := strconv.ParseFloat(rate, 64); err == nil {
 				rate = strconv.FormatFloat(v, 'f', -1, 64)
 			}
-			for _, w := range ws {
-				out = append(out, []string{it.CodeType, string(it.Code), it.Name, it.Arrangement, w.npi, w.tin, w.ttype,
-					p.Type, rate, p.Class, p.Setting, strings.Join(p.ServiceCode, ","), strings.Join(mods, ","), p.Expiration})
-				if len(out) >= 50000 {
+			svc, mod := strings.Join(p.ServiceCode, ","), strings.Join(mods, ",")
+			for i, g := range gs {
+				out = append(out, line{it.CodeType, string(it.Code), it.Name, it.Arrangement, g.tin, g.ttype,
+					p.Type, rate, p.Class, p.Setting, svc, mod, p.Expiration, sets[i]})
+				flat += len(g.npis)
+				if len(out) >= 20000 || flat >= 200000 {
 					emit(out)
-					out = nil
+					out, flat = nil, 0
 				}
 			}
 		}
