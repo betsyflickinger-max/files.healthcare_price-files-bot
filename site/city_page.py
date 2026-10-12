@@ -132,8 +132,8 @@ def build(slug, template, embed, rvu, med_all, t5, out):
     w.sub('content="https://upfront-dfw-preview.pages.dev/price-finder/"', f'content="https://upfront-dfw-preview.pages.dev/{slug}/price-finder/"')
     w.sub(r'<meta property="og:image[^>]*>', '', n=4, regex=True)   # the share image shows a DFW hospital
     w.sub('content="summary_large_image"', 'content="summary"')
-    w.sub('every DFW hospital, surgery center, doctor, lab and imaging center for 89 procedures,',
-          f'every {name}-area hospital, surgery center, doctor, lab and imaging center,', n=2)
+    w.sub('every DFW hospital, surgery center, doctor, lab and imaging center,',
+          f'every {name}-area hospital, surgery center, doctor, lab and imaging center,', n=2)   # page description (Oct 12 wording)
     w.sub('<div class="eyebrow">Dallas–Fort Worth · published prices</div>', f'<div class="eyebrow">{name} · published prices</div>')
     w.sub(r'<div class="note" id="planNote">.*?</div>',
           f'<div class="note" id="planNote"><b>Have a HealthCare.gov plan?</b> Insurer prices below are not what you pay. Your share '
