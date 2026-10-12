@@ -26,7 +26,7 @@ FIRST = '2026-11'
 SP = O.SP                                     # site/builds/tx-YYYY-MM/
 SIZE = 's-8vcpu-32gb-amd'                     # 400 GB disk: the biggest Texas tables are ~38 GB before splitting
 # machines per metro, biggest first, and stage B settings from the October run (Oct 12 v2 relaunch)
-METROS = [('houston', 5, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
+METROS = [('houston', 5, dict(WORKERS='2', WMEM='13GB', WTHREADS='4')),   # Oct 12 test: ~3x the parts per hour of 4 x 6 GB on Houston's 60-90M-row parts
           ('rest', 4, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
           ('san-antonio', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
           ('austin', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
