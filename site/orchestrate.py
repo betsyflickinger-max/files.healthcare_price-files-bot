@@ -288,7 +288,7 @@ def refresh_cities(cities_json):
     out = {}
     for c in live:
         try: r = subprocess.run([sys.executable, f'{HERE}/city_page.py', c['slug'], '--deploy', '--out', f"/tmp/city-{c['slug']}"],
-                                capture_output=True, text=True, timeout=1200)
+                                capture_output=True, text=True, timeout=3600)
         except subprocess.TimeoutExpired: r = subprocess.CompletedProcess([], 1, '', 'timed out after 20 minutes')
         print(r.stdout[-1500:], r.stderr[-1500:])
         out[c['slug']] = 'rebuilt' if r.returncode == 0 else 'kept last version (failed)'

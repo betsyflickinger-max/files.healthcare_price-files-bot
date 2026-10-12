@@ -3,6 +3,8 @@
 Usage: python site/geo_build.py <page.html> <build-id>
   page.html  the merged Price Finder page for this build (D.fac order = R2 site/every/<build>/npis.json order)
 Writes R2 site/every/<build>/geo.json, served at /price-finder/pf/geo.json by functions/price-finder/pf/geo.js.
+Texas city pages (city_page.py, Oct 12, 2026) set GEO_NPIS_JSON (the city build's npis.json), GEO_OUT (where geo.json goes),
+GEO_BBOX ("west,south,east,north" limits for accepting a location) and NPIS (the city's provider list).
 
 Where locations come from (all public):
 - Providers: practice address in the NPI file used for the build (env NPIS, default data/2026-09-29/dfw_npis_all.parquet),
@@ -23,8 +25,8 @@ page, BID = sys.argv[1], sys.argv[2]
 s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
 B = E['R2_BUCKET']
-UA = {'User-Agent': 'what-it-costs-price-map/1.0 (DFW healthcare price transparency site)'}
-BBOX = (-98.6, 31.6, -95.4, 34.2)          # lon/lat limits for accepting a location (DFW and the surrounding counties)
+UA = {'User-Agent': 'what-it-costs-price-map/1.0 (Texas healthcare price transparency site)'}
+BBOX = tuple(float(x) for x in E['GEO_BBOX'].split(',')) if E.get('GEO_BBOX') else (-98.6, 31.6, -95.4, 34.2)   # lon/lat limits (default: DFW and the surrounding counties)
 inside = lambda lat, lon: BBOX[1] <= lat <= BBOX[3] and BBOX[0] <= lon <= BBOX[2]
 def log(*a): print(time.strftime('%H:%M:%S'), 'geo:', *a, flush=True)
 def get(k):
@@ -32,7 +34,7 @@ def get(k):
     except Exception: return None
 
 D = json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', open(page, encoding='utf-8').read(), re.S).group(1))
-npis = json.loads(get(f'site/every/{BID}/npis.json'))
+npis = json.loads(get(E.get('GEO_NPIS_JSON') or f'site/every/{BID}/npis.json'))
 assert len(npis) == len(D['fac']), f"npis.json ({len(npis)}) and page providers ({len(D['fac'])}) differ"
 os.makedirs('/tmp/geo', exist_ok=True)
 s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), '/tmp/geo/npis.parquet')
@@ -148,5 +150,6 @@ geo = dict(build=BID, made=time.strftime('%Y-%m-%d'), locs=locs, p=p, hn=hn, cas
            stats=dict(providers=len(npis), placed=placed, hospital_files=len(D['hosp']['src']), hospital_files_placed=nh,
                       cash_places=len({(c['name'], c['city']) for c in D['cash']}), cash_places_placed=nc,
                       by_kind={k: [sum(1 for i, f in enumerate(D['fac']) if f[2] == k and p[i] >= 0), sum(1 for f in D['fac'] if f[2] == k)] for k in 'HAGP'}))
-s3.put_object(Bucket=B, Key=f'site/every/{BID}/geo.json', Body=json.dumps(geo, separators=(',', ':')).encode(), ContentType='application/json')
-log('wrote', f'site/every/{BID}/geo.json', 'placed', placed, 'of', len(npis), 'hospital files', nh, 'of', len(D['hosp']['src']), 'cash places', nc, 'locations', len(locs))
+OUT = E.get('GEO_OUT') or f'site/every/{BID}/geo.json'
+s3.put_object(Bucket=B, Key=OUT, Body=json.dumps(geo, separators=(',', ':')).encode(), ContentType='application/json')
+log('wrote', OUT, 'placed', placed, 'of', len(npis), 'hospital files', nh, 'of', len(D['hosp']['src']), 'cash places', nc, 'locations', len(locs))
