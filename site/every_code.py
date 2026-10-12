@@ -239,7 +239,9 @@ FLAT = None
 # (2) the text sort spilled 50+ GB per Houston batch and filled the disk.
 # npis/dates/urls are already sorted (AUX query), so a list position sorts like the text; networks get their (ins, net) rank.
 NETS2 = sorted(tuple((k_.split('|', 1) + [''])[:2]) for k_ in nets)
-SORTV = E.get('SORTV', '3')   # 3 = per-group SQL (Oct 12, 2026), 2 = integer sort + Python walk, 1 = original text sort
+SORTV = E.get('SORTV', '2')   # 2 = integer sort + Python walk (default); 3 = per-group SQL, opt-in only: on Oct 12, 2026 it ran
+# fine on El Paso/San Antonio-size batches but Houston and Austin machines restarted for hours without finishing a batch
+# (most likely memory: the window step can't stream like the plain sort). 1 = original text sort (out-of-order bug).
 def work(k):
     """One bucket. DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
