@@ -245,6 +245,12 @@ def publish(st):
         st['stage'] = 'held'
         issue(f'Website refresh {BID} held: checks failed', f'Nothing went live.\n\n```\n{chk.stdout}\n```\nNew page saved to R2 `{SP}page_new.html`.')
         return
+    # map locations for this build (site/every/<BID>/geo.json). Never blocks the refresh: if it fails, the map
+    # says it is being updated and the rest of the Price Finder works as before.
+    try: g = subprocess.run([py, f'{HERE}/geo_build.py', '/tmp/pub/new.html', BID], capture_output=True, text=True, timeout=1500)
+    except subprocess.TimeoutExpired as e: g = subprocess.CompletedProcess(e.cmd, 1, '', 'timed out after 25 minutes')
+    print(g.stdout[-1500:], g.stderr[-1500:])
+    if g.returncode != 0: issue(f'Website refresh {BID}: map locations not built', 'The prices will still go live; the map will show "being updated" until this is fixed.\n\n```\n' + g.stderr[-3000:] + '\n```')
     if not E.get('CLOUDFLARE_API_TOKEN'):
         st['stage'] = 'ready'
         issue(f'Website refresh {BID} ready, not deployed', 'Checks passed but the CLOUDFLARE_API_TOKEN secret is not set, so it could not deploy.\n\n```\n' + chk.stdout + '\n```')
