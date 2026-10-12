@@ -129,7 +129,7 @@ def main():
     if st['stage'] == 'publish':
         res = {}
         for m in CITY_PAGES:
-            r = subprocess.run([sys.executable, f'{O.HERE}/city_page.py', m, '--deploy', '--out', f'/tmp/txcity-{m}'], capture_output=True, text=True, timeout=1200)
+            r = subprocess.run([sys.executable, f'{O.HERE}/city_page.py', m, '--deploy', '--out', f'/tmp/txcity-{m}'], capture_output=True, text=True, timeout=3600)
             print(r.stdout[-1500:], r.stderr[-1500:])
             res[m] = 'live' if r.returncode == 0 else 'kept previous page (failed)'
             if r.returncode: issue(f'Texas {MONTH}: {m} page not rebuilt', 'The page keeps its previous version.\n\n```\n' + (r.stdout + r.stderr)[-3000:] + '\n```')

@@ -15,8 +15,8 @@ back to R2 site/deploy/current.tgz (the same steps as the monthly refresh). It a
 live pages that the area picker shows and that the monthly refresh rebuilds.
 
 What changes from the DFW page: the city's providers, networks and rates; doctor fees in the Medicare benchmark use the
-city's Medicare locality; DFW-only parts are left out (hospital price files, posted cash prices, the map, the plan
-calculator link); the words that name DFW. Every price shown still comes from an insurer file and links to it.
+city's Medicare locality; DFW-only parts are left out (hospital price files, posted cash prices, the plan calculator link); the map gets the
+city's own provider locations and background (geo_build.py, basemap_build.py); the words that name DFW. Every price shown still comes from an insurer file and links to it.
 Any wording change that no longer matches the DFW page stops the build, so a city page never goes out half-edited."""
 import argparse, csv, io, json, os, re, shutil, subprocess, sys, tarfile, zipfile
 
@@ -26,6 +26,13 @@ CITIES = {'el-paso': ('El Paso', '798–799', '99', 'Rest of Texas'),
           'austin': ('Austin', '786–787', '31', 'Austin'),
           'san-antonio': ('San Antonio', '780–782', '99', 'Rest of Texas'),
           'houston': ('Houston', '770–775', '18', 'Houston')}
+# map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX)
+GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31.3',
+            'san-antonio': '-100.6,27.9,-96.7,30.4', 'houston': '-96.9,28.4,-93.9,31.3'}
+MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
+            'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
+            'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
+            'the page to measure distance and is never saved or sent. <a href="/methodology/#map">How the map works</a>.</p>\n  ')
 TAG = '<script type="application/json" id="data">'
 FEATURED_MIN = 45   # same broken-build test as the dashboard: a finished build needs rates and at least 45 of the 89 featured codes
 FEATURED = {"00811", "00812", "19120", "216", "22551", "27130", "27447", "29826", "29827", "29881", "29888", "42820", "43235", "43239", "43644",
@@ -247,6 +254,30 @@ def main():
                    ('med', 'reference/site/med_all.json'), ('t5', 'reference/site/msdrg_table5.txt')]:
         s3.download_file(B, key, f[k])
     page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out)
+    # map: provider locations (cached per build) and the background (cached per city). If either fails, the page goes
+    # out without its Map button, exactly as before maps existed for cities.
+    gkey, bkey, maps = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', None
+    try:
+        if not written(gkey):
+            env = dict(E, NPIS=f'data/tx/metro/{A.city}/npis.parquet', GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city])
+            r = subprocess.run([sys.executable, f'{HERE}/geo_build.py', page, prefix], env=env, capture_output=True, text=True, timeout=5400)
+            print(r.stdout[-2000:], r.stderr[-2000:])
+            if r.returncode: raise RuntimeError('geo_build.py failed')
+        s3.download_file(B, gkey, f'{A.out}/geo.json')
+        if not written(bkey):
+            r = subprocess.run([sys.executable, f'{HERE}/basemap_build.py', f'{A.out}/geo.json', page, f'{A.out}/basemap.json'], capture_output=True, text=True, timeout=1800)
+            print(r.stdout[-1500:], r.stderr[-1500:])
+            if r.returncode: raise RuntimeError('basemap_build.py failed')
+            s3.upload_file(f'{A.out}/basemap.json', B, bkey)
+        else: s3.download_file(B, bkey, f'{A.out}/basemap.json')
+        g = json.load(open(f'{A.out}/geo.json'))
+        print(f"map: {g['stats']['placed']:,} of {g['stats']['providers']:,} providers placed")
+        s = open(page, encoding='utf-8').read()
+        on = '<button type="button" id="vMap" aria-pressed="false" hidden>Map</button>'
+        if s.count(on) != 1 or s.count('<p>Published prices are not quotes.') != 1: raise RuntimeError('page wording for the map changed')
+        s = s.replace(on, on.replace(' hidden>', '>')).replace('<p>Published prices are not quotes.', MAP_NOTE + '<p>Published prices are not quotes.')
+        open(page, 'w', encoding='utf-8').write(s); maps = True
+    except Exception as e: print('map left off this page:', e)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if not A.deploy: print('built, not deployed (run with deploy on to publish)'); return
     if not E.get('CLOUDFLARE_API_TOKEN'): sys.exit('CLOUDFLARE_API_TOKEN is not set; built but not deployed')
@@ -258,6 +289,10 @@ def main():
         sys.exit('STOP: site/deploy/current.tgz does not have the expected site/ and functions/ folders; nothing deployed')
     os.makedirs(f'{d}/site/{A.city}/price-finder', exist_ok=True)
     shutil.copy(page, f'{d}/site/{A.city}/price-finder/index.html')
+    if maps:
+        os.makedirs(f'{d}/site/{A.city}/price-finder/pf/g', exist_ok=True)
+        shutil.copy(f'{A.out}/geo.json', f'{d}/site/{A.city}/price-finder/pf/g/geo.json')
+        shutil.copy(f'{A.out}/basemap.json', f'{d}/site/{A.city}/price-finder/basemap.json')
     os.makedirs(f'{d}/site/{A.city}/price-finder/pf/q', exist_ok=True)
     dq = f'{d}/site/price-finder/pf/q/quality.txt'
     empty_quality(dq if os.path.isfile(dq) else None, f'{d}/site/{A.city}/price-finder/pf/q/quality.txt')
