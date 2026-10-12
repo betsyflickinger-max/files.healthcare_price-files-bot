@@ -145,6 +145,7 @@ def bundle():
     with tarfile.open(p, 'w:gz') as t:
         for f in os.listdir(HERE):
             if f.endswith(('.py', '.csv', '.tsv')): t.add(os.path.join(HERE, f), arcname=f)
+        t.add(os.path.join(HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv'), arcname='tx_zip_metro.csv')   # Texas metro areas (tx_split.py)
     s3.upload_file(p, B, SP + 'bundle.tgz')
 
 
@@ -275,6 +276,7 @@ def publish(st):
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
     st['cleanup'] = cleanup(prev)
+    putj(SP + 'state.json', st)   # DFW is live; with 23 Texas pages the rebuilds below can outlast the workflow's time limit
     st['cities'] = refresh_cities('/tmp/pub/deploy/site/cities.json')
     issue(f'Website refresh {BID} is live', '```\n' + chk.stdout + '\n```' + ''.join(f'\n{c}: {v}' for c, v in st['cities'].items()))
 

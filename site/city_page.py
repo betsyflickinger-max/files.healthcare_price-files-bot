@@ -21,14 +21,47 @@ Any wording change that no longer matches the DFW page stops the build, so a cit
 import argparse, csv, io, json, os, re, shutil, subprocess, sys, tarfile, zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-# slug -> (name, 3-digit ZIP areas as in tx_split.py, Medicare locality number, locality name)
-CITIES = {'el-paso': ('El Paso', '798–799', '99', 'Rest of Texas'),
-          'austin': ('Austin', '786–787', '31', 'Austin'),
-          'san-antonio': ('San Antonio', '780–782', '99', 'Rest of Texas'),
-          'houston': ('Houston', '770–775', '18', 'Houston')}
-# map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX)
+def _in(*c): return 'in a ZIP code that lies mostly in ' + (', '.join(c[:-1]) + ' or ' if len(c) > 1 else '') + c[-1] + ' County'
+# slug -> (name, where its providers are (shown on the page), Medicare locality number, locality name). Cities by 3-digit ZIP
+# area as in tx_split.py; metro areas (Oct 12, 2026) by county, from reference/geo/tx_zip_metro.csv (Census ZIP -> county -> metro).
+# Localities from CMS 2026 physician fee schedule GPCI2026.csv / 26LOCCO.csv (rvu26d): Beaumont 20 = Jefferson County;
+# outside Austin, Houston and DFW the rest is 99 Rest of Texas.
+CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest of Texas'),
+          'austin': ('Austin', 'in a ZIP code starting 786–787', '31', 'Austin'),
+          'san-antonio': ('San Antonio', 'in a ZIP code starting 780–782', '99', 'Rest of Texas'),
+          'houston': ('Houston', 'in a ZIP code starting 770–775', '18', 'Houston'),
+          'mcallen': ('McAllen–Edinburg–Mission', _in('Hidalgo'), '99', 'Rest of Texas'),
+          'killeen-temple': ('Killeen–Temple', _in('Bell', 'Coryell', 'Lampasas'), '99', 'Rest of Texas'),
+          'brownsville-harlingen': ('Brownsville–Harlingen', _in('Cameron'), '99', 'Rest of Texas'),
+          'corpus-christi': ('Corpus Christi', _in('Aransas', 'Nueces', 'San Patricio'), '99', 'Rest of Texas'),
+          'beaumont-port-arthur': ('Beaumont–Port Arthur', _in('Hardin', 'Jefferson', 'Orange'), '20', 'Beaumont'),
+          'lubbock': ('Lubbock', _in('Cochran', 'Crosby', 'Garza', 'Hockley', 'Lubbock', 'Lynn'), '99', 'Rest of Texas'),
+          'waco': ('Waco', _in('Bosque', 'Falls', 'McLennan'), '99', 'Rest of Texas'),
+          'longview': ('Longview', _in('Gregg', 'Harrison', 'Rusk', 'Upshur'), '99', 'Rest of Texas'),
+          'college-station-bryan': ('College Station–Bryan', _in('Brazos', 'Burleson', 'Robertson'), '99', 'Rest of Texas'),
+          'amarillo': ('Amarillo', _in('Armstrong', 'Carson', 'Oldham', 'Potter', 'Randall'), '99', 'Rest of Texas'),
+          'tyler': ('Tyler', _in('Smith'), '99', 'Rest of Texas'),
+          'abilene': ('Abilene', _in('Callahan', 'Jones', 'Taylor'), '99', 'Rest of Texas'),
+          'midland': ('Midland', _in('Martin', 'Midland'), '99', 'Rest of Texas'),
+          'odessa': ('Odessa', _in('Ector'), '99', 'Rest of Texas'),
+          'wichita-falls': ('Wichita Falls', _in('Archer', 'Clay', 'Wichita'), '99', 'Rest of Texas'),
+          'texarkana': ('Texarkana', _in('Bowie'), '99', 'Rest of Texas'),
+          'san-angelo': ('San Angelo', _in('Irion', 'Tom Green'), '99', 'Rest of Texas'),
+          'victoria': ('Victoria', _in('Goliad', 'Victoria'), '99', 'Rest of Texas'),
+          'small-towns': ('Small towns of Texas', 'in a Texas ZIP code not covered by another Texas Price Finder page', '99', 'Rest of Texas')}
+# how a sentence names the area ("every El Paso-area hospital", "no rate ... in the El Paso area"), when the name doesn't fit
+AREA = {'small-towns': ('small-town Texas', 'small-town Texas')}
+# map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX).
+# Metro areas: their counties' extent (Census TIGERweb) plus 0.3 degrees; small towns: all of Texas.
 GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31.3',
-            'san-antonio': '-100.6,27.9,-96.7,30.4', 'houston': '-96.9,28.4,-93.9,31.3'}
+            'san-antonio': '-100.6,27.9,-96.7,30.4', 'houston': '-96.9,28.4,-93.9,31.3',
+            'mcallen': '-98.9,25.7,-97.5,27.1', 'killeen-temple': '-98.9,30.4,-96.7,32.1', 'brownsville-harlingen': '-98.2,25.5,-96.7,26.8',
+            'corpus-christi': '-98.3,27.2,-96.4,28.7', 'beaumont-port-arthur': '-95.1,29.2,-93.3,30.9', 'lubbock': '-103.4,32.6,-100.7,34.2',
+            'waco': '-98.4,30.6,-96.2,32.6', 'longview': '-95.5,31.5,-93.7,33.3', 'college-station-bryan': '-97.3,29.9,-95.7,31.7',
+            'amarillo': '-103.4,34.4,-100.7,36.0', 'tyler': '-95.9,31.8,-94.6,33.0', 'abilene': '-100.5,31.7,-98.8,33.3',
+            'midland': '-102.6,31.3,-101.3,32.9', 'odessa': '-103.1,31.3,-101.9,32.4', 'wichita-falls': '-99.3,33.0,-97.6,34.6',
+            'texarkana': '-95.1,32.9,-93.7,34.1', 'san-angelo': '-101.6,30.7,-99.8,32.1', 'victoria': '-98.1,28.0,-96.3,29.5',
+            'small-towns': '-106.8,25.7,-93.4,36.7'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
@@ -86,7 +119,8 @@ def pfs_for(rvu_zip, loc, codes):
 
 
 def build(slug, template, embed, rvu, med_all, t5, out):
-    name, zips, loc, locname = CITIES[slug]
+    name, where, loc, locname = CITIES[slug]
+    adj, place = AREA.get(slug, (f'{name}-area', f'the {name} area'))
     os.makedirs(out, exist_ok=True)
     pre, T, post = split(open(template, encoding='utf-8').read())
     E = json.load(open(embed))
@@ -141,20 +175,20 @@ def build(slug, template, embed, rvu, med_all, t5, out):
     w.sub(r'<meta property="og:image[^>]*>', '', n=4, regex=True)   # the share image shows a DFW hospital
     w.sub('content="summary_large_image"', 'content="summary"')
     w.sub('every DFW hospital, surgery center, doctor, lab and imaging center,',
-          f'every {name}-area hospital, surgery center, doctor, lab and imaging center,', n=2)   # page description (Oct 12 wording)
+          f'every {adj} hospital, surgery center, doctor, lab and imaging center,', n=2)   # page description (Oct 12 wording)
     w.sub('<div class="eyebrow">Dallas–Fort Worth · published prices</div>', f'<div class="eyebrow">{name} · published prices</div>')
     w.sub(r'<div class="note" id="planNote">.*?</div>',
           f'<div class="note" id="planNote"><b>Have a HealthCare.gov plan?</b> Insurer prices below are not what you pay. Your share '
-          f'depends on your plan\'s deductible, copay and coinsurance. Our plan calculator doesn\'t cover {name} plans yet.</div>', regex=True)
+          f'depends on your plan\'s deductible, copay and coinsurance. Our plan calculator doesn\'t cover {adj} plans yet.</div>', regex=True)
     w.sub(' If you have a marketplace plan, the <a href="/plan-calculator/">plan calculator</a> works it out for you.', '')
-    w.sub(' DFW providers have a published rate in this network.', f' {name}-area providers have a published rate in this network.')
-    w.sub("'This network has no published rate for this code in DFW.'", f"'This network has no published rate for this code in the {name} area.'")
+    w.sub(' DFW providers have a published rate in this network.', f' {adj[0].upper() + adj[1:]} providers have a published rate in this network.')
+    w.sub("'This network has no published rate for this code in DFW.'", f"'This network has no published rate for this code in {place}.'")
     dates = sorted(d for d in set(D['dates']) if d)
     ins = sorted({n.split('|', 1)[0] for n in D['nets'] if D.get('scope', {}).get(n)}) or sorted({n.split('|', 1)[0] for n in D['nets']})
     w.sub(r'<p><b>Sources\.</b>.*?</p>',
           f'<p><b>Sources.</b> Insurer Transparency in Coverage files dated {dates[0]} to {dates[-1]}: {", ".join(ins)}. Each file was read '
-          f'for every Texas provider, then narrowed to providers whose practice address in the federal NPI Registry is in a ZIP code '
-          f'starting {zips}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
+          f'for every Texas provider, then narrowed to providers whose practice address in the federal NPI Registry is '
+          f'{where}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
           f'insurer\'s own page. Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>', regex=True)
     # hospital files, cash prices and quality ratings aren't on city pages yet: say so instead of "none found"
     notyet = lambda what: f'{what} are not on the {name} page yet.'
@@ -166,7 +200,7 @@ def build(slug, template, embed, rvu, med_all, t5, out):
     w.sub(r'<p><b>Map\.</b>.*?</p>', '', regex=True)
     w.sub('(October release, Dallas locality)', f'(October release, {locname} locality)')
     w.sub('Every DFW provider in the federal NPI Registry is included',
-          f'Every provider in the federal NPI Registry with a practice address in a ZIP code starting {zips} is included')
+          f'Every provider in the federal NPI Registry with a practice address {where} is included')
     w.sub(' Fort Worth amounts differ by a few dollars.', '')
     w.sub("'Dallas area", f"'{locname} Medicare area", n=w.s.count("'Dallas area") or 1)
     w.sub('<button type="button" id="vMap" aria-pressed="false">Map</button>',

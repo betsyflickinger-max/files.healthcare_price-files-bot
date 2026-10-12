@@ -1,0 +1,1092 @@
+zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
+75401,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75402,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75407,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75409,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75410,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75411,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75412,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75413,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75414,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75415,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75416,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75417,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75418,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75420,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75421,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75422,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75423,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75424,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75426,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75428,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75429,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75431,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75432,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75433,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75434,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75435,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75436,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75437,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75438,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75439,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75440,48379,Rains County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75441,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75442,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75446,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75447,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75448,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75449,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75450,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75451,48063,Camp County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75452,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75453,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75454,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75455,48449,Titus County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75457,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75459,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75460,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75462,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75468,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75469,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75470,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75471,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75472,48379,Rains County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75473,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75474,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75475,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75476,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75477,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75478,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75479,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75480,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75481,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75482,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75486,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75487,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75488,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75489,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75490,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75491,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75492,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75493,48449,Titus County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75494,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75495,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75496,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75497,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75501,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75503,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75550,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75551,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75554,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75555,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75556,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75558,48449,Titus County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75559,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75560,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75561,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75562,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75563,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75564,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75565,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75566,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75567,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75568,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75569,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75570,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75571,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75572,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75573,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75574,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75601,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75602,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75603,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75604,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75605,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75630,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75631,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75633,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75638,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75639,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75640,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75641,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75642,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75643,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75644,48459,Upshur County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75645,48459,Upshur County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75647,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75650,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75651,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75652,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75654,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75656,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75657,48315,Marion County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75658,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75659,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75661,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75662,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75667,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75668,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75669,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75670,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75671,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75672,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75680,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75681,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75682,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75683,48459,Upshur County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75684,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75686,48063,Camp County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75687,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75689,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75691,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75692,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75693,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75694,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75701,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75702,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75703,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75704,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75705,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75706,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75707,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75708,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75709,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75711,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75750,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75751,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75752,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75754,48467,Van Zandt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75755,48459,Upshur County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75756,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75757,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75758,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75759,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75760,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75762,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75763,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75764,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75765,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75766,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75770,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75771,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75773,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75778,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75779,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75780,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75782,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75783,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75784,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75785,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75788,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75789,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75790,48467,Van Zandt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75791,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75792,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75801,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75803,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75831,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75833,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75835,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75838,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75839,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75840,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75844,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75845,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75846,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75847,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75848,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75849,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75850,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75851,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75852,48313,Madison County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75853,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75855,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75856,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75858,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75859,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75860,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75861,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75862,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75865,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75884,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75886,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75901,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75903,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75904,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75925,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75926,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75928,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75929,48405,San Augustine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75930,48405,San Augustine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75931,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75932,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75933,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75934,48373,Polk County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75935,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75936,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75937,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75938,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75939,48373,Polk County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75941,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75942,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75943,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75944,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75946,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75948,48403,Sabine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75949,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75951,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75954,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75956,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75959,48403,Sabine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75960,48373,Polk County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75961,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75962,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75964,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75965,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75966,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75968,48403,Sabine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75969,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75972,48405,San Augustine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75973,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75974,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75975,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75976,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75977,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75979,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75980,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76301,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76302,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76305,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76306,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76308,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76309,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76310,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76311,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76351,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76354,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76357,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76360,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76363,48275,Knox County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76364,48487,Wilbarger County,46900,"Vernon, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76365,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76366,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76367,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76370,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76371,48275,Knox County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76372,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76373,48487,Wilbarger County,46900,"Vernon, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76374,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76377,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76379,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76380,48023,Baylor County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76384,48487,Wilbarger County,46900,"Vernon, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76388,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76389,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76401,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76402,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76424,48429,Stephens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76426,48497,Wise County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76427,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76429,48429,Stephens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76430,48417,Shackelford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76431,48497,Wise County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76432,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76433,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76435,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76436,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76437,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76439,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76442,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76443,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76444,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76445,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76446,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76448,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76449,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76450,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76452,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76453,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76454,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76455,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76457,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76458,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76459,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76460,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76462,48221,Hood County,24180,"Granbury, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76463,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76464,48417,Shackelford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76466,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76469,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76470,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76471,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76472,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76474,48093,Comanche County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76475,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76476,48221,Hood County,24180,"Granbury, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76481,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76483,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76484,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76486,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76487,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76490,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76491,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76501,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76502,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76504,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76511,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76513,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76518,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76519,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76520,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76522,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76523,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76524,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76525,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76527,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76528,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76530,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76531,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76534,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76537,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76538,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76539,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76541,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76542,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76543,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76544,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76548,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76549,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76550,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76554,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76556,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76557,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76559,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76561,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76565,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76566,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76567,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76569,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76570,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76571,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76573,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76574,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76577,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76578,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76579,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76596,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76597,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76598,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76599,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76621,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76622,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76623,48139,Ellis County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76624,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76626,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76627,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76628,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76629,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76630,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76631,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76632,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76633,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76634,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76635,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76636,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76637,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76638,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76639,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76640,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76641,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76642,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76643,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76645,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76648,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76649,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76650,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76651,48139,Ellis County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76652,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76653,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76654,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76655,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76656,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76657,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76660,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76661,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76664,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76665,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76666,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76667,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76670,48139,Ellis County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76671,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76673,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76676,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76678,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76679,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76680,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76681,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76682,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76685,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76686,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76687,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76689,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76690,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76691,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76692,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76693,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76701,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76704,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76705,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76706,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76707,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76708,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76710,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76711,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76712,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76798,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76801,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76802,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76820,48319,Mason County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76821,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76823,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76824,48411,San Saba County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76825,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76827,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76828,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76831,48299,Llano County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76832,48411,San Saba County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76834,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76836,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76837,48095,Concho County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76841,48413,Schleicher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76842,48319,Mason County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76844,48333,Mills County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76845,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76848,48327,Menard County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76849,48267,Kimble County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76852,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76853,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76854,48267,Kimble County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76856,48319,Mason County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76857,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76858,48095,Concho County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76859,48327,Menard County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76861,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76862,48095,Concho County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76864,48333,Mills County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76865,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76866,48095,Concho County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76869,48411,San Saba County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76870,48333,Mills County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76871,48411,San Saba County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76872,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76873,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76874,48267,Kimble County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76875,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76877,48411,San Saba County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76878,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76880,48333,Mills County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76882,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76884,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76885,48299,Llano County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76887,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76888,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76890,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76901,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76902,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76903,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76904,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76905,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76908,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76909,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76930,48235,Irion County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76932,48383,Reagan County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76933,48081,Coke County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76934,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76935,48413,Schleicher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76936,48413,Schleicher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76937,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76939,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76940,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76941,48235,Irion County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76943,48105,Crockett County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76945,48081,Coke County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76950,48435,Sutton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76951,48431,Sterling County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76953,48081,Coke County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76955,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76957,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76958,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77611,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77612,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77613,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77614,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77615,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77616,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77617,48167,Galveston County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77619,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77622,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77623,48167,Galveston County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77624,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77625,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77627,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77629,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77630,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77632,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77640,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77642,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77650,48167,Galveston County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77651,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77655,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77656,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77657,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77659,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77660,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77661,48071,Chambers County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77662,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77663,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77664,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77665,48071,Chambers County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77701,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77702,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77703,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77705,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77706,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77707,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77708,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77713,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77801,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77802,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77803,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77807,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77808,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77830,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77831,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77833,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77835,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77836,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77837,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77840,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77843,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77845,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77852,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77853,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77855,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77856,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77857,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77859,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77861,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77863,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77864,48313,Madison County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77865,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77866,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77867,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77868,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77871,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77872,48313,Madison County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77873,48339,Montgomery County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77875,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77876,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77878,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77879,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77880,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77882,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77901,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77904,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77905,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77950,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77951,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77954,48123,DeWitt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77957,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77960,48175,Goliad County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77961,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77962,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77963,48175,Goliad County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77964,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77968,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77969,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77970,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77971,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77973,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77974,48123,DeWitt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77975,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77976,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77977,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77978,48057,Calhoun County,38920,"Port Lavaca, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77979,48057,Calhoun County,38920,"Port Lavaca, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77982,48057,Calhoun County,38920,"Port Lavaca, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77983,48057,Calhoun County,38920,"Port Lavaca, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77984,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77986,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77987,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77988,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77990,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77991,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77993,48175,Goliad County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77994,48123,DeWitt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77995,48123,DeWitt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78330,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78332,48249,Jim Wells County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78336,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78338,48261,Kenedy County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78339,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78340,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78341,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78342,48249,Jim Wells County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78343,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78344,48479,Webb County,29700,"Laredo, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78347,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78349,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78351,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78352,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78353,48047,Brooks County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78355,48047,Brooks County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78357,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78358,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78359,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78360,48247,Jim Hogg County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78361,48247,Jim Hogg County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78362,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78363,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78368,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78369,48479,Webb County,29700,"Laredo, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78370,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78371,48479,Webb County,29700,"Laredo, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78372,48249,Jim Wells County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78373,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78374,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78375,48249,Jim Wells County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78376,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78377,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78379,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78380,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78382,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78383,48297,Live Oak County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78384,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78385,48261,Kenedy County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78387,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78389,48025,Bee County,13300,"Beeville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78390,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78391,48025,Bee County,13300,"Beeville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78393,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78401,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78402,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78404,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78405,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78406,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78407,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78408,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78409,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78410,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78411,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78412,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78413,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78414,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78415,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78416,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78417,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78418,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78419,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78501,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78503,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78504,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78516,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78520,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78521,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78526,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78535,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78536,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78537,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78538,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78539,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78540,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78541,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78542,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78543,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78545,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78547,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78548,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78549,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78550,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78552,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78557,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78558,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78559,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78560,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78561,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78562,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78563,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78564,48505,Zapata County,49820,"Zapata, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78565,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78566,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78567,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78569,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78570,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78572,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78573,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78574,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78575,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78576,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78577,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78578,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78579,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78580,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78582,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78583,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78584,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78585,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78586,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78588,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78589,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78590,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78591,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78592,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78593,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78594,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78595,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78596,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78597,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78598,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78599,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78801,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78802,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78827,48127,Dimmit County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78828,48385,Real County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78829,48507,Zavala County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78830,48127,Dimmit County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78832,48271,Kinney County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78833,48385,Real County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78834,48127,Dimmit County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78836,48127,Dimmit County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78837,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78838,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78839,48507,Zavala County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78840,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78841,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78842,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78843,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78850,48325,Medina County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78851,48443,Terrell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78852,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78860,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78861,48325,Medina County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78870,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78871,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78872,48507,Zavala County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78873,48385,Real County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78877,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78879,48385,Real County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78880,48137,Edwards County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78881,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78883,48019,Bandera County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78884,48019,Bandera County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78885,48019,Bandera County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78886,48325,Medina County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78931,48015,Austin County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78932,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78933,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78934,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78935,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78938,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78940,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78941,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78942,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78943,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78944,48015,Austin County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78945,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78946,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78947,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78948,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78949,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78950,48015,Austin County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78951,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78953,48021,Bastrop County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78954,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78956,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78957,48021,Bastrop County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78959,48177,Gonzales County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78962,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78963,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79001,48359,Oldham County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79002,48179,Gray County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79003,48211,Hemphill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79005,48295,Lipscomb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79007,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79008,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79009,48369,Parmer County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79010,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79011,48483,Wheeler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79012,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79013,48341,Moore County,20300,"Dumas, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79014,48211,Hemphill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79015,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79016,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79018,48205,Hartley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79019,48011,Armstrong County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79021,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79022,48111,Dallam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79024,48295,Lipscomb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79025,48117,Deaf Smith County,25820,"Hereford, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79027,48069,Castro County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79029,48341,Moore County,20300,"Dumas, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79031,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79032,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79033,48357,Ochiltree County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79034,48295,Lipscomb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79035,48369,Parmer County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79036,48065,Carson County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79039,48065,Carson County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79040,48195,Hansford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79041,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79042,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79043,48069,Castro County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79044,48205,Hartley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79045,48117,Deaf Smith County,25820,"Hereford, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79046,48295,Lipscomb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79051,48111,Dallam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79052,48437,Swisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79053,48369,Parmer County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79054,48179,Gray County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79056,48295,Lipscomb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79057,48179,Gray County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79058,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79059,48393,Roberts County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79061,48483,Wheeler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79062,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79063,48069,Castro County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79064,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79065,48179,Gray County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79066,48179,Gray County,37420,"Pampa, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79068,48065,Carson County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79070,48357,Ochiltree County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79072,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79073,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79078,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79079,48483,Wheeler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79080,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79081,48195,Hansford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79082,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79083,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79084,48421,Sherman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79085,48069,Castro County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79086,48421,Sherman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79087,48111,Dallam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79088,48437,Swisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79091,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79092,48359,Oldham County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79093,48357,Ochiltree County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79094,48011,Armstrong County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79095,48087,Collingsworth County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79096,48483,Wheeler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79097,48065,Carson County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79098,48117,Deaf Smith County,25820,"Hereford, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79101,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79102,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79103,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79104,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79106,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79107,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79108,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79109,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79110,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79111,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79118,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79119,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79121,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79124,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79201,48075,Childress County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79220,48125,Dickens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79223,48101,Cottle County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79225,48197,Hardeman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79226,48129,Donley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79227,48155,Foard County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79229,48125,Dickens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79230,48075,Childress County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79231,48153,Floyd County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79233,48191,Hall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79234,48345,Motley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79235,48153,Floyd County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79236,48269,King County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79237,48129,Donley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79239,48191,Hall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79240,48129,Donley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79241,48153,Floyd County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79243,48125,Dickens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79244,48345,Motley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79245,48191,Hall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79247,48487,Wilbarger County,46900,"Vernon, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79248,48101,Cottle County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79250,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79251,48087,Collingsworth County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79252,48197,Hardeman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79255,48045,Briscoe County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79256,48345,Motley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79257,48045,Briscoe County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79258,48153,Floyd County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79259,48191,Hall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79261,48191,Hall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79311,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79312,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79313,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79314,48079,Cochran County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79316,48445,Terry County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79322,48107,Crosby County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79323,48165,Gaines County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79324,48017,Bailey County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79325,48369,Parmer County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79326,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79329,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79330,48169,Garza County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79331,48115,Dawson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79336,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79339,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79342,48165,Gaines County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79343,48107,Crosby County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79344,48017,Bailey County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79345,48445,Terry County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79346,48079,Cochran County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79347,48017,Bailey County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79350,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79351,48115,Dawson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79353,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79355,48501,Yoakum County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79356,48169,Garza County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79357,48107,Crosby County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79358,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79359,48165,Gaines County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79360,48165,Gaines County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79363,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79364,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79366,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79367,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79369,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79370,48125,Dickens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79371,48017,Bailey County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79372,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79373,48305,Lynn County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79376,48501,Yoakum County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79377,48115,Dawson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79378,48445,Terry County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79379,48079,Cochran County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79380,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79381,48305,Lynn County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79382,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79383,48305,Lynn County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79401,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79402,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79403,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79404,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79406,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79407,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79410,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79411,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79412,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79413,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79414,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79415,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79416,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79423,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79424,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79501,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79502,48433,Stonewall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79503,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79504,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79505,48275,Knox County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79506,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79508,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79510,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79511,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79512,48335,Mitchell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79517,48033,Borden County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79518,48263,Kent County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79519,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79520,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79521,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79525,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79526,48415,Scurry County,43660,"Snyder, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79527,48415,Scurry County,43660,"Snyder, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79528,48263,Kent County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79529,48275,Knox County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79530,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79532,48335,Mitchell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79533,48417,Shackelford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79534,48151,Fisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79535,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79536,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79537,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79538,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79539,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79540,48433,Stonewall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79541,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79543,48151,Fisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79544,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79545,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79546,48151,Fisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79547,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79548,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79549,48415,Scurry County,43660,"Snyder, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79553,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79556,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79560,48151,Fisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79561,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79562,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79563,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79565,48335,Mitchell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79566,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79567,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79601,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79602,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79603,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79605,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79606,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79607,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79699,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79701,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79703,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79705,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79706,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79707,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79713,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79714,48003,Andrews County,11380,"Andrews, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79718,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79719,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79720,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79721,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79730,48371,Pecos County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79731,48103,Crane County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79733,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79734,48243,Jeff Davis County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79735,48371,Pecos County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79738,48033,Borden County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79739,48173,Glasscock County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79741,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79742,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79743,48371,Pecos County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79744,48105,Crockett County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79745,48495,Winkler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79748,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79749,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79752,48461,Upton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79754,48301,Loving County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79755,48461,Upton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79756,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79758,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79759,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79761,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79762,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79763,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79764,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79765,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79766,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79769,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79770,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79772,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79776,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79777,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79778,48461,Upton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79780,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79781,48443,Terrell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79782,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79783,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79785,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79788,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79789,48495,Winkler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023

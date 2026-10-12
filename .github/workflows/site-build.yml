@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
       force_tx:
-        description: "Start this month's Texas city builds now (skip the 8th, DFW-first and insurer-bot waits)"
+        description: "Start this month's Texas city builds now (skip the 8th, DFW-first and insurer-bot waits). October 2026: builds the 18 metro-area pages + small towns"
         type: boolean
         default: false
       build:
@@ -29,7 +29,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 180   # publish month: map build + DFW deploy + every live city page
+    timeout-minutes: 360   # publish month: map build + DFW deploy + every live city page (23 Texas pages from Oct 12, 2026)
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
