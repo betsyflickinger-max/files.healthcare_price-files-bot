@@ -34,7 +34,10 @@ P = "bot/insurers/"
 SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "dfw": ("bot/insurers/", "data/2026-09-29/dfw_npis_all.parquet", "data/full/"),
     "tx": ("bot/insurers/tx/", "data/scope/tx_npis_all.parquet", "data/tx/"),
+    # first national batch: TN, CO, OK, AL, MS, MO, GA in one provider list ("Build provider list" with TN,CO,OK,AL,MS,MO,GA and s7)
+    "s7": ("bot/insurers/s7/", "data/scope/s7_npis_all.parquet", "data/s7/"),
 }
+NETWORKS = {"s7": "networks_s7.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
@@ -84,7 +87,7 @@ def peek(url):
 
 def load(s3, b, scope):
     man = {r["slot"]: r for r in store.read_csv(s3, b, P + "manifest.csv")}
-    for n in csv.DictReader(open(HERE / "networks.csv")):
+    for n in csv.DictReader(open(HERE / NETWORKS.get(scope, "networks.csv"))):
         if n["slot"] in man:
             pass
         elif scope == "dfw":  # first run: start from the tables already in R2
@@ -271,7 +274,7 @@ def main():
     ap.add_argument("--dry-run", action="store_true", help="check only; rent nothing, change nothing in R2")
     ap.add_argument("--only", default="", help="comma-separated slots")
     ap.add_argument("--fill", action="store_true", help="quick pass: collect results and fill free machines, no file check")
-    ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default) or tx (all of Texas)")
+    ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default), tx (all of Texas) or s7 (first national batch)")
     a = ap.parse_args()
     global P, SCOPE
     SCOPE, P = a.scope, SCOPES[a.scope][0]
@@ -287,6 +290,11 @@ def main():
         hold = s3.get_object(Bucket=b, Key=P + "hold.txt")["Body"].read().decode().strip()
     except Exception:
         pass
+    if not hold:  # a new area's machines would fail without its provider list
+        try:
+            s3.head_object(Bucket=b, Key=SCOPES[a.scope][1])
+        except Exception:
+            hold = "the provider list for this area isn't built yet (run 'Build provider list' first)"
     if hold:  # e.g. while a site build is reading data/full/rates; delete bot/insurers/hold.txt to resume
         print(f"ON HOLD (bot/insurers/hold.txt): {hold[:200]} -- checking only, no machines rented")
         launched = []

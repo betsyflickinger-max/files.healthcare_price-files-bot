@@ -5,6 +5,9 @@ Same columns as data/2026-09-29/dfw_npis_all.parquet, so 06f reads it the same w
 Keeps every NPI whose practice location is in the state. Streams the ~1 GB zip without unpacking it.
 
   python insurers/build_scope.py TX            -> R2 data/scope/tx_npis_all.parquet
+  python insurers/build_scope.py TN,CO,OK,AL,MS,MO,GA s7   -> R2 data/scope/s7_npis_all.parquet
+A list of states builds one combined list (one download of the registry file); the extra "state"
+column says which state each provider practices in. 06f only reads the npi column.
 """
 import csv
 import io
@@ -33,7 +36,9 @@ COLS = dict(npi="NPI", entity_type="Entity Type Code", org="Provider Organizatio
 
 
 def main():
-    st = sys.argv[1].upper()
+    states = {x.strip().upper() for x in sys.argv[1].split(",") if x.strip()}
+    label = sys.argv[2].lower() if len(sys.argv) > 2 and sys.argv[2].strip() else "_".join(sorted(states)).lower()
+    st = ",".join(sorted(states))
     page = requests.get(INDEX, timeout=60).text
     name = re.findall(r"NPPES_Data_Dissemination_[A-Za-z]+_\d{4}_V2\.zip", page)[0]
     url = f"https://download.cms.gov/nppes/{name}"
@@ -46,7 +51,7 @@ def main():
                 f.write(ch)
     z = zipfile.ZipFile(zp)
     main_csv = next(n for n in z.namelist() if re.match(r"npidata_pfile_\d+-\d+\.csv$", n))
-    rows = {k: [] for k in ("npi", "entity_type", "name", "credential", "taxonomy_1", "address", "city", "zip5", "phone", "deactivated")}
+    rows = {k: [] for k in ("npi", "entity_type", "name", "credential", "taxonomy_1", "address", "city", "zip5", "phone", "deactivated", "state")}
     seen = kept = 0
     with z.open(main_csv) as fb:
         rd = csv.reader(io.TextIOWrapper(fb, encoding="utf-8", errors="replace", newline=""))
@@ -54,7 +59,8 @@ def main():
         ix = {k: hdr.index(v) for k, v in COLS.items()}
         for row in rd:
             seen += 1
-            if row[ix["state"]].strip().upper() != st:
+            pst = row[ix["state"]].strip().upper()
+            if pst not in states:
                 continue
             kept += 1
             org = row[ix["org"]].strip()
@@ -68,9 +74,10 @@ def main():
             rows["zip5"].append(row[ix["zip"]][:5])
             rows["phone"].append(row[ix["phone"]] or None)
             rows["deactivated"].append(row[ix["deactivated"]] or None)
+            rows["state"].append(pst)
             if seen % 1_000_000 == 0:
                 print(f"  {seen:,} read, {kept:,} in {st}", flush=True)
-    out = Path(f"{st.lower()}_npis_all.parquet")
+    out = Path(f"{label}_npis_all.parquet")
     pq.write_table(pa.table({k: pa.array(v, pa.string()) for k, v in rows.items()}), out, compression="zstd")
     s3, b = store.r2()
     key = f"data/scope/{out.name}"

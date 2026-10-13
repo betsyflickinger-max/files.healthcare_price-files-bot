@@ -11,7 +11,7 @@ on:
         type: boolean
         default: true
       scope:
-        description: "Area: dfw (the live DFW tables) or tx (all of Texas, written to data/tx/)"
+        description: "Area: dfw (the live DFW tables), tx (all of Texas, data/tx/) or s7 (first national batch: TN, CO, OK, AL, MS, MO, GA, data/s7/)"
         default: "dfw"
       fill:
         description: "Quick fill only (collect results, start waiting files on free machines; used by finished machines)"
@@ -70,7 +70,7 @@ jobs:
             ARGS="--dry-run"
           fi
           python insurers/bot.py $ARGS
-      - name: All of Texas (scheduled runs only; manual runs use the inputs above)
+      - name: All of Texas and the first national batch (scheduled runs only; manual runs use the inputs above)
         if: github.event_name == 'schedule' || inputs.fill
         run: |
           cp out/insurer_summary.md out/insurer_summary_dfw.md
@@ -78,6 +78,11 @@ jobs:
           FILL=""; [ "${{ github.event.schedule }}" = "*/10 * * * *" ] && FILL="--fill"
           [ "${{ inputs.fill }}" = "true" ] && FILL="--fill"
           python insurers/bot.py --scope tx $FILL
+          cp out/insurer_summary.md out/insurer_summary_tx.md
+          [ -f out/insurer_alerts.md ] && mv out/insurer_alerts.md out/insurer_alerts_tx.md
+          python insurers/bot.py --scope s7 $FILL || echo "::warning::first national batch (s7) pass failed"
+          [ -f out/insurer_alerts_tx.md ] && cat out/insurer_alerts_tx.md >> out/insurer_alerts.md || true
+          cat out/insurer_summary_tx.md >> "$GITHUB_STEP_SUMMARY"
           cat out/insurer_summary_dfw.md >> "$GITHUB_STEP_SUMMARY"
           [ -f out/insurer_alerts_dfw.md ] && cat out/insurer_alerts_dfw.md >> out/insurer_alerts.md || true
       - run: cat out/insurer_summary.md >> "$GITHUB_STEP_SUMMARY"
