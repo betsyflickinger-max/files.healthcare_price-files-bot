@@ -18,7 +18,8 @@ import check  # noqa: E402  (same header check as the hospital bot: HEAD, then a
 
 
 def fill(template, d):
-    return template.replace("{date}", d.isoformat()).replace("{dc}", d.strftime("%Y%m%d")).replace("{ym}", d.strftime("%Y-%m"))
+    return (template.replace("{date}", d.isoformat()).replace("{dc}", d.strftime("%Y%m%d"))
+            .replace("{ymc}", d.strftime("%Y%m")).replace("{ym}", d.strftime("%Y-%m")))
 
 
 def candidate_dates(since, today):
@@ -90,6 +91,45 @@ def azure_list(arg):
                 http="200", error="", found=True)
 
 
+_TOC = {}
+
+
+def _toc_url(loc, today):
+    """A table of contents link: fixed, or a dated template ({date}/{ym}/{ymc}) tried newest first over 60 days.
+    A directory file that lists TOC_Files (BCBS Tennessee) is followed to its first table of contents."""
+    import json
+    if loc not in _TOC:
+        url = loc
+        if "{" in loc:
+            url = next((fill(loc, today - timedelta(days=i)) for i in range(60)
+                        if check.headers(fill(loc, today - timedelta(days=i)))["ok"]), "")
+            if not url:
+                raise ValueError("no table of contents in the last 60 days")
+        head = _get(url)[:3000]
+        if '"TOC_Files"' in head:
+            url = json.loads(_get(url))["TOC_Files"][0]
+        _TOC[loc] = url
+    return _TOC[loc]
+
+
+def toc_match(arg, today):
+    """Insurers whose file names change in ways a template can't follow (two different dates in one link, signed
+    links, multi-part files): read the insurer's table of contents and take the newest file whose link (without
+    the ?signature) matches a pattern. arg = '<table of contents link or template>|<regex>'."""
+    loc, pat = arg.split("|", 1)
+    toc = _toc_url(loc, today)
+    hits = {}
+    for u in re.findall(r'"location"\s*:\s*"([^"]+)"', _get(toc)):
+        u = u.replace("\\u0026", "&").replace("\\/", "/")
+        if re.search(pat, u.split("?")[0]):
+            hits[u.split("?")[0]] = u
+    if not hits:
+        return dict(url="", how="not in the insurer's table of contents", http="", error="no match", found=False)
+    key = sorted(hits)[-1]
+    return dict(url=hits[key], how=f"from the insurer's table of contents ({toc.rsplit('/', 1)[-1][:60]})",
+                http="200", error="", found=True)
+
+
 def find(row, today, since):
     """Returns dict(url, how, http, error). since = date of the file we already have."""
     finder = row.get("finder", "")
@@ -98,6 +138,8 @@ def find(row, today, since):
             return cigna_toc(row["finder_arg"])
         if finder == "azure_list":
             return azure_list(row["finder_arg"])
+        if finder == "toc_match":
+            return toc_match(row["finder_arg"], today)
     except Exception as e:
         return dict(url=row["current_url"], how=f"could not read the file list: {_why(e)}", http="",
                     error=str(e)[:200], found=False)
