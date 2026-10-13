@@ -39,7 +39,9 @@ REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
           "run_id", "droplet_id", "launched_at", "fails", "problem", "next_url"]
-SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
+SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
+# Oct 12, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and sfo3, so the
+# last Texas Cigna file (Pathwell OAP) could not start; s-8vcpu-32gb-amd was renting fine in nyc3 (and Cigna ran out of memory before).
 PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 1, "cigna": 1, "small": 12}  # files per machine
 RESERVE = 0  # slots to leave free for other jobs; 0 = use every free machine
 SCOPE = "dfw"  # biggest files; anything else: 4 vCPU / 8 GB
