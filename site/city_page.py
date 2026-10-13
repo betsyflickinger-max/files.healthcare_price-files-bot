@@ -118,7 +118,7 @@ def pfs_for(rvu_zip, loc, codes):
     return out
 
 
-def build(slug, template, embed, rvu, med_all, t5, out):
+def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None):
     name, where, loc, locname = CITIES[slug]
     adj, place = AREA.get(slug, (f'{name}-area', f'the {name} area'))
     os.makedirs(out, exist_ok=True)
@@ -131,10 +131,16 @@ def build(slug, template, embed, rvu, med_all, t5, out):
 
     # 1. price data: the city's insurer build in place of DFW's (merge_page.py, as in the monthly refresh); no DFW hospital
     #    price files and no DFW posted cash prices (empty, same shape, so the page shows "none")
+    #    (Oct 13, 2026: with hosp_index, the area's own hospital price files from hosp_area.py take DFW's place)
     T['hosp'] = {k: ([] if isinstance(v, list) else {} if isinstance(v, dict) else v) for k, v in T['hosp'].items()}
     T['cash'] = []
     page, hosp = f'{out}/page.html', f'{out}/hosp_empty.json'
     open(page, 'w', encoding='utf-8').write(join(pre, T, post)); json.dump(T['hosp'], open(hosp, 'w'))
+    if hosp_index:
+        H = json.load(open(hosp_index))
+        if set(H) != set(T['hosp']): sys.exit(f'STOP: hospital index keys {sorted(H)} differ from the page\'s {sorted(T["hosp"])}')
+        hosp, nh = hosp_index, len(H['src'])
+        print(f'{name}: {nh} hospital price files')
     py = sys.executable
     subprocess.run([py, f'{HERE}/merge_page.py', page, embed, hosp], check=True)
     names = f'{out}/plain_names_all.tsv'; rows = {}
@@ -189,12 +195,14 @@ def build(slug, template, embed, rvu, med_all, t5, out):
           f'<p><b>Sources.</b> Insurer Transparency in Coverage files dated {dates[0]} to {dates[-1]}: {", ".join(ins)}. Each file was read '
           f'for every Texas provider, then narrowed to providers whose practice address in the federal NPI Registry is '
           f'{where}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
-          f'insurer\'s own page. Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>', regex=True)
+          f'insurer\'s own page. ' + (f'Hospital price files: {nh} files from hospitals {where}, each line linked to its file. Providers\' posted cash '
+          f'prices are not on the {name} page yet.</p>' if hosp_index else f'Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>'), regex=True)
     # hospital files, cash prices and quality ratings aren't on city pages yet: say so instead of "none found"
     notyet = lambda what: f'{what} are not on the {name} page yet.'
-    w.sub('No hospital price file lists a rate from this insurer for this code.', notyet('Hospital price files'))
-    w.sub('No hospital price file lists this code for this insurer.', notyet('Hospital price files'))
-    w.sub("None of the hospitals' price files lists a cash price for this code.", notyet('Hospital price files'))
+    if not hosp_index:
+        w.sub('No hospital price file lists a rate from this insurer for this code.', notyet('Hospital price files'))
+        w.sub('No hospital price file lists this code for this insurer.', notyet('Hospital price files'))
+        w.sub("None of the hospitals' price files lists a cash price for this code.", notyet('Hospital price files'))
     w.sub('No provider on our list posts a cash price for this code yet.', notyet("Providers' posted cash prices"))
     w.sub(r'<p><b>Quality ratings\.</b>.*?</p>', f'<p><b>Quality ratings.</b> {notyet("Public quality ratings")}</p>', regex=True)
     w.sub(r'<p><b>Map\.</b>.*?</p>', '', regex=True)
@@ -287,7 +295,12 @@ def main():
     for k, key in [('template', 'site/deploy/price-finder.html'), ('embed', prefix + 'embed.json'), ('rvu', 'reference/2026-09-29/cms/rvu26d-updated-08-26-2026.zip'),
                    ('med', 'reference/site/med_all.json'), ('t5', 'reference/site/msdrg_table5.txt')]:
         s3.download_file(B, key, f[k])
-    page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out)
+    hidx, hpre = None, None
+    for _, d_ in reversed(done):   # the area's hospital price files (site/hosp_area.py): newest insurer build that has them
+        if written(d_ + 'hosp/hosp_index.json'):
+            hpre = d_ + 'hosp/'; hidx = f'{A.out}/hosp_index.json'; s3.download_file(B, hpre + 'hosp_index.json', hidx); break
+    if hidx: print('hospital files from', hpre)
+    page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx)
     # map: provider locations (cached per build) and the background (cached per city). If either fails, the page goes
     # out without its Map button, exactly as before maps existed for cities.
     gkey, bkey, maps = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', None
@@ -333,6 +346,11 @@ def main():
     live_list(d, A.city, name)
     fn = f'{d}/functions/{A.city}/price-finder/pf/t'; os.makedirs(fn, exist_ok=True)
     open(f'{fn}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(prefix)))
+    fh = f'{d}/functions/{A.city}/price-finder/pf/h'
+    if hidx:   # per-code hospital lines, same function pointed at the area's hosp/h/ folder
+        os.makedirs(fh, exist_ok=True)
+        open(f'{fh}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(hpre + 'h/')).replace("PREFIX + 't/' + code", "PREFIX + code"))
+    else: shutil.rmtree(fh, ignore_errors=True)
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
