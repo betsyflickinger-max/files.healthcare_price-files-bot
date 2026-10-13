@@ -19,7 +19,7 @@ E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_AC
 B = E["R2_BUCKET"] or "upfrontdfwdata"
 MONTH = sys.argv[1] if len(sys.argv) > 1 else date.today().strftime("%Y-%m")
 OUT = Path(__file__).resolve().parent.parent / "reports" / "census"
-FIELDS = ["description", "additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
+FIELDS = ["additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
           "service_code", "expiration_date", "setting", "billing_code_type_version"]
 
 

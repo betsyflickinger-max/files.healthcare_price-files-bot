@@ -75,7 +75,7 @@ def one(job):
         src, extra = unpack_7z(url), ["--source-url", url.split("?")[0]]
     new = stem(Path(src.split("?")[0]).name)
     res = dict(slot=job["slot"], url=url, table=new, prev_table=job.get("prev_table", ""), ok=False)
-    for sub in ("rates", "membership"):
+    for sub in ("rates", "membership", "codes"):
         (DATA / sub / f"{new}.parquet").unlink(missing_ok=True)
     p = subprocess.run([sys.executable, str(PIPE / "06f_full_extract.py"), src, "--network", label,
                         "--scope", str(DATA / "scope.parquet")] + extra, cwd=PIPE, capture_output=True, text=True)
@@ -100,6 +100,10 @@ def one(job):
     s3.upload_file(str(rates), B, f"{OUT}rates/{new}.parquet")
     s3.upload_file(str(memb), B, f"{OUT}membership/{new}.parquet")
     rates.unlink(); memb.unlink()
+    codes = DATA / "codes" / f"{new}.parquet"   # code descriptions, once per code
+    if codes.exists():
+        s3.upload_file(str(codes), B, f"{OUT}codes/{new}.parquet")
+        codes.unlink()
     cen = DATA / "census" / f"{new}.json"   # "what's in the file" inventory; kept per month so history builds up
     if cen.exists():
         try:
@@ -110,7 +114,7 @@ def one(job):
     old = job.get("prev_table", "")
     if old and old != new:
         month = date.today().strftime("%Y-%m")
-        for sub in ("rates", "membership"):
+        for sub in ("rates", "membership", "codes"):
             k = f"{OUT}{sub}/{old}.parquet"
             if exists(k):
                 move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")

@@ -8,6 +8,7 @@ Same idea as step 6, sized for the whole market:
   - Pass 2 (Go, pipeline/mrfrows) streams the prices once and writes one row per provider x price.
   - Output is one Parquet file per source file, so a re-run replaces just that file:
       data/rates/<source>.parquet        billing code, provider, TIN, rate, type, class, setting, ...
+      data/codes/<source>.parquet        each billing code's description, once per code (Oct 13, 2026)
       data/membership/<source>.parquet   every in-scope NPI+TIN on the roster, its network name(s),
                                          and how many priced rows point at it (0 = listed, no prices)
     Both carry reporting entity, file date, source file, source URL and checked_on.
@@ -38,7 +39,7 @@ spec = importlib.util.spec_from_file_location("s6", HERE / "06_filter_payer_file
 s6 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s6)
 BIN = HERE / "mrfrows" / "mrfrows"
-RATES, MEMB = DATA / "rates", DATA / "membership"
+RATES, MEMB, CODES = DATA / "rates", DATA / "membership", DATA / "codes"
 
 
 def duck():
@@ -89,6 +90,7 @@ def stream_to_parquet(cmd, dest, consts):
     tmpdest = Path(str(dest) + ".part")
     # Parquet compression runs on its own thread so it overlaps with CSV parsing (pyarrow releases the GIL).
     q, err, state = queue.Queue(maxsize=4), [], {"writer": None}
+    descs = {}  # (billing_code_type, billing_code) -> description
 
     def write_loop():
         try:
@@ -115,6 +117,11 @@ def stream_to_parquet(cmd, dest, consts):
                 tbl = tbl.add_column(i, k, const(k, n))
             for k in ("source_file", "source_url", "checked_on"):
                 tbl = tbl.append_column(k, const(k, n))
+            if "description" in tbl.column_names:  # one row per code in data/codes/, not repeated on every price row (+18% size)
+                for r in tbl.select(["billing_code_type", "billing_code", "description"]).group_by(
+                        ["billing_code_type", "billing_code", "description"]).aggregate([]).to_pylist():
+                    descs.setdefault((r["billing_code_type"], r["billing_code"]), r["description"])
+                tbl = tbl.drop_columns(["description"])
             q.put(tbl)
     finally:
         q.put(None)
@@ -127,6 +134,11 @@ def stream_to_parquet(cmd, dest, consts):
     if state["writer"]:
         state["writer"].close()
         tmpdest.replace(dest)
+    codes = CODES / Path(dest).name
+    codes.parent.mkdir(parents=True, exist_ok=True)
+    pq.write_table(pa.table({"billing_code_type": [k[0] for k in descs], "billing_code": [k[1] for k in descs],
+                             "description": list(descs.values()), "source_file": [str(consts["source_file"] or "")] * len(descs),
+                             "checked_on": [str(consts["checked_on"])] * len(descs)}), codes, compression="zstd")
 
 
 def stem(name):
@@ -212,7 +224,7 @@ def extract(path, ctx):
 CENSUS = DATA / "census"
 GROUPED = ["billing_code_type", "billing_code_type_version", "negotiation_arrangement", "negotiated_type", "billing_class",
            "setting", "expiration_date", "additional_information"]
-FILLED = ["description", "additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
+FILLED = ["additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
           "service_code", "expiration_date", "setting", "billing_code_type_version"]
 
 
