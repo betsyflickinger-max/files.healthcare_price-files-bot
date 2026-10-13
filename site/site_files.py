@@ -43,7 +43,7 @@ def push(d):
     if r.returncode != 0:
         sys.exit("deploy failed; the preview site is unchanged")
     with tarfile.open(f"{d}/site.tgz", "w:gz") as t:
-        for name in ("site", "functions"):
+        for name in [n for n in os.listdir(d) if n not in ("site.tgz", ".etag")]:  # site, functions, README.txt
             t.add(f"{d}/{name}", arcname=f"./{name}")
     s3.upload_file(f"{d}/site.tgz", B, KEY)
     open(f"{d}/.etag", "w").write(s3.head_object(Bucket=B, Key=KEY)["ETag"])
