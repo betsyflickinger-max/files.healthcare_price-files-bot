@@ -40,6 +40,10 @@ DFW3 = [('750', '753'), ('760', '762')]
 AREAS = [m for m in CITIES if m not in ZIP3]   # the rest of Texas: 18 metro areas + small-towns, by reference/geo/tx_zip_metro.csv
 AREA_W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')   # as the October rest-of-Texas build
 GB_PER_MACHINE, AREA_MAX = 20, 3              # metro-area machines: one per 20 GB of its split tables, 1 to 3
+# Oct 12, 2026 (Betsy): small towns was the last page left, alone on one machine for hours. Put up to 15 machines on it so
+# the build ends and the waiting Cigna file can start. Extra machines claim unread tables in stage A and skip finished
+# buckets in stage B; any that don't fit the account's machine limit are simply not started.
+BOOST = {'small-towns': 15}
 GEO = os.path.join(O.HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv')
 CITY_PAGES = ['el-paso', 'austin', 'san-antonio', 'houston']
 RUN_SPLIT = "for t in 1 2 3; do /root/v/bin/python /root/h/tx_split.py >> /root/run.log 2>&1 && break; sleep 5; done"
@@ -156,7 +160,7 @@ def main():
         left = []
         for m, n, w in metros():
             if exists(tout(m) + 'embed.json'): continue
-            left.append(m); n = n or st['machines'][m]
+            left.append(m); n = max(n or st['machines'][m], BOOST.get(m, 0))
             for i in range(n):
                 env = dict(RATES=f'data/tx/metro/{m}/rates/', NPIS=f'data/tx/metro/{m}/npis.parquet', TOUT=tout(m), OUTP=f'{SP}{m}-c{i + 1}/',
                            WK=f"work/every-tx/{m}/v{MONTH.replace('-', '')}/", ACACHE=f'work/every-tx/{m}/Acache/', NOXPART='1', ACLAIM='1',
