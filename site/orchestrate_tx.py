@@ -25,7 +25,7 @@ os.environ['BUILD'] = 'tx-' + MONTH + ('-metros' if EARLY else '')   # orchestra
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import orchestrate as O
 from orchestrate import B, s3, log, exists, getj, putj, ls, ensure, free_slots, issue
-from city_page import CITIES
+from city_page import CITIES, STATE_OF
 
 E = os.environ
 SP = O.SP                                     # site/builds/tx-YYYY-MM/
@@ -37,7 +37,7 @@ BIG = [('houston', 5, dict(WORKERS='2', WMEM='13GB', WTHREADS='4')),   # Oct 12 
        ('el-paso', 1, dict(WORKERS='5', WMEM='5GB', WTHREADS='2'))]
 ZIP3 = {'houston': ('770', '775'), 'san-antonio': ('780', '782'), 'austin': ('786', '787'), 'el-paso': ('798', '799')}  # as tx_split.py
 DFW3 = [('750', '753'), ('760', '762')]
-AREAS = [m for m in CITIES if m not in ZIP3]   # the rest of Texas: 18 metro areas + small-towns, by reference/geo/tx_zip_metro.csv
+AREAS = [m for m in CITIES if m not in ZIP3 and m not in STATE_OF]   # state pages: orchestrate_states.py   # the rest of Texas: 18 metro areas + small-towns, by reference/geo/tx_zip_metro.csv
 AREA_W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')   # as the October rest-of-Texas build
 GB_PER_MACHINE, AREA_MAX = 20, 3              # metro-area machines: one per 20 GB of its split tables, 1 to 3
 # Oct 12, 2026 (Betsy): small towns was the last page left, alone on one machine for hours. Put up to 15 machines on it so

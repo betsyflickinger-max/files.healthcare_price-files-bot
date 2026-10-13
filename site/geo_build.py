@@ -53,11 +53,12 @@ cache = {}
 raw = get('reference/geo/cache.csv')
 if raw:
     for r in csv.DictReader(io.StringIO(raw.decode())): cache[(r['address'], r['city'], r['zip'])] = r
+GST, GSTN = os.environ.get('GEO_STATE', 'TX'), os.environ.get('GEO_STATE_NAME', 'Texas')   # state pages (Oct 13, 2026)
 todo = sorted({k for k in key.values() if k not in cache})
 log('providers', len(npis), 'with address', len(key), 'cached addresses', len(cache), 'new', len(todo))
 for i in range(0, len(todo), 2000):
     chunk = todo[i:i + 2000]; body = io.StringIO(); w = csv.writer(body)
-    for j, (a, c, z) in enumerate(chunk): w.writerow([j, a, c, 'TX', z])
+    for j, (a, c, z) in enumerate(chunk): w.writerow([j, a, c, GST, z])
     text = None
     for attempt in range(4):
         try:
@@ -90,7 +91,7 @@ miss = [i for i, k in key.items() if D['fac'][i][2] in 'HA' and not cache[k]['la
 for i in miss[:120]:
     k = key[i]; hit = None
     for s in (street(k[0]), k[0].title()):
-        hit = nomi(dict(street=s, city=k[1].title(), state='TX', postalcode=k[2])) or nomi(dict(street=s, city=k[1].title(), state='TX'))
+        hit = nomi(dict(street=s, city=k[1].title(), state=GST, postalcode=k[2])) or nomi(dict(street=s, city=k[1].title(), state=GST))
         if hit: break
     cache[k] = dict(cache[k], match='OSM' if hit else 'OSM_none', lat=hit[0] if hit else '', lon=hit[1] if hit else '')
 log('OpenStreetMap tried', min(len(miss), 120), 'facilities')
@@ -132,7 +133,7 @@ def place(name, city, also=''):
             if sc > best: best, bl = sc, locs[li]
     hit = bl if best >= 0.8 else None
     if not hit and city and 'multiple' not in city.lower():
-        hit = nomi(dict(q=f'{also or name}, {city}, Texas')) or (nomi(dict(q=f'{name}, {city}, Texas')) if also else None)
+        hit = nomi(dict(q=f'{also or name}, {city}, {GSTN}')) or (nomi(dict(q=f'{name}, {city}, {GSTN}')) if also else None)
     names[k] = list(hit) if hit else None
     if len(names) % 10 == 0: s3.put_object(Bucket=B, Key='reference/geo/names.json', Body=json.dumps(names, indent=0).encode())   # survive a timeout
     return names[k]
@@ -146,7 +147,7 @@ for c in {(c['name'], c['city']) for c in D['cash']}:
     if g: cash[f'{c[0]}|{c[1]}'.lower()] = loc(*g); nc += 1
 s3.put_object(Bucket=B, Key='reference/geo/names.json', Body=json.dumps(names, indent=0).encode())
 
-zips = json.loads(get('reference/geo/zcta_tx.json') or b'{}')   # every Texas ZIP (Census 2024 Gazetteer), kept to this map's area
+zips = json.loads(get(f'reference/geo/zcta_{GST.lower()}.json') or b'{}')   # every Texas ZIP (Census 2024 Gazetteer), kept to this map's area
 zips = {z: v for z, v in zips.items() if BBOX[1] - .3 <= v[0] <= BBOX[3] + .3 and BBOX[0] - .3 <= v[1] <= BBOX[2] + .3}
 geo = dict(build=BID, made=time.strftime('%Y-%m-%d'), locs=locs, p=p, hn=hn, cash=cash, zips=zips,
            stats=dict(providers=len(npis), placed=placed, hospital_files=len(D['hosp']['src']), hospital_files_placed=nh,

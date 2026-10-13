@@ -13,6 +13,8 @@ Build id hosp-tx-YYYY-MM; state in R2 site/builds/<id>/state.json. Stages:
            that build: site/every-tx/<area>/<build>/hosp/h/<code>.txt and hosp/hosp_index.json.
   publish  city_page.py <area> --deploy, which now picks up hosp/hosp_index.json and serves hosp/h/ (one area per call).
 Nothing is averaged; every hospital line keeps its file and line number (h2_build.py rules).
+HOSP_SCOPE=s7 (state pages, Oct 13, 2026): build id hosp-st-YYYY-MM, one area per state of the first national batch (by the
+hospital's state in data/hospitals.csv), next to each state's insurer build under site/every-st/<state>/.
 """
 import csv, io, json, os, subprocess, sys, time
 
@@ -21,7 +23,9 @@ HGI = ('https://data.cms.gov/provider-data/sites/default/files/resources/893c372
        'Hospital_General_Information.csv')   # Medicare Hospital General Information, July 22, 2026 (Facility ID, ZIP Code)
 BIG = [('750', '753', 'dfw'), ('760', '762', 'dfw'), ('770', '775', 'houston'), ('780', '782', 'san-antonio'),
        ('786', '787', 'austin'), ('798', '799', 'el-paso')]
-SOLO = {'houston', 'san-antonio', 'austin'}   # big areas get a machine each; the rest share
+SOLO = {'houston', 'san-antonio', 'austin', 'georgia', 'missouri', 'tennessee'}   # big areas get a machine each; the rest share
+STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
+S7 = os.environ.get('HOSP_SCOPE') == 's7'
 
 
 def s3c():
@@ -34,7 +38,8 @@ def s3c():
 
 def newest_build(s3, B, area):
     """same rule as city_page.py: the newest site/every-tx/<area>/<build>/ whose embed.json exists"""
-    dirs = [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'site/every-tx/{area}/', Delimiter='/')
+    root = 'site/every-st/' if area in STATES.values() else 'site/every-tx/'
+    dirs = [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'{root}{area}/', Delimiter='/')
             for c in pg.get('CommonPrefixes', [])]
     best = None
     for d in dirs:
@@ -87,10 +92,11 @@ def plan_areas(O):
         return metro.get(z, 'small-towns')
     areas, nozip = {}, 0
     for r in csv.DictReader(open(f'{HERE}/../data/hospitals.csv')):
-        if r['state'] != 'TX' or not r['last_key'] or not r['last_sha256']: continue
-        z = zips.get(r['ccn'])
-        if not z: nozip += 1; continue
-        a = area(z)
+        if r['state'] != 'TX' and not (S7 and r['state'] in STATES) or not r['last_key'] or not r['last_sha256']: continue
+        if (r['state'] == 'TX') == S7: continue
+        z = zips.get(r['ccn'], '')
+        if not z and not S7: nozip += 1; continue
+        a = STATES[r['state']] if S7 else area(z)
         if a == 'dfw': continue
         j = dict(id=r['last_sha256'][:16], key=r['last_key'], url=r['mrf_url'], name=r['name'].title(), ccn=r['ccn'], zip=z)
         if all(x['id'] != j['id'] for x in areas.setdefault(a, [])): areas[a].append(j)
@@ -104,10 +110,12 @@ def plan_areas(O):
 
 
 def run():
-    os.environ.setdefault('BUILD', 'hosp-tx-' + time.strftime('%Y-%m'))
+    os.environ.setdefault('BUILD', ('hosp-st-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
     sys.path.insert(0, HERE)
     import orchestrate as O
     SP = O.SP
+    if S7 and O.getj(f"site/builds/st-{O.BID.split('-', 2)[2]}/state.json", {}).get('stage') != 'hosp':
+        O.log('state pages: insurer builds not finished yet (orchestrate_states.py); nothing to do'); return
     st = O.getj(SP + 'state.json', {'stage': 'plan', 'launches': {}, 'problems': [], 'published': {}})
     O.log('hospital build', O.BID, 'stage', st['stage'])
     if st['stage'] == 'plan':

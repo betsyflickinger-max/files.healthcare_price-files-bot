@@ -49,8 +49,19 @@ CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest
           'san-angelo': ('San Angelo', _in('Irion', 'Tom Green'), '99', 'Rest of Texas'),
           'victoria': ('Victoria', _in('Goliad', 'Victoria'), '99', 'Rest of Texas'),
           'small-towns': ('Small towns of Texas', 'in a Texas ZIP code not covered by another Texas Price Finder page', '99', 'Rest of Texas')}
+# First national batch (Oct 13, 2026): one page per state, built from data/s7/ split by the provider's practice state.
+# Localities from CMS 2026 GPCI2026.csv (checked at build time: the build stops if a state/locality pair is missing).
+# GA and MO have more than one doctor-fee locality; the page uses the one with the most providers (Atlanta, St. Louis) and says so.
+STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA'}
+STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colorado', '01', 'Colorado'),
+               'oklahoma': ('Oklahoma', '00', 'Oklahoma'), 'alabama': ('Alabama', '00', 'Alabama'),
+               'mississippi': ('Mississippi', '00', 'Mississippi'), 'missouri': ('Missouri', '01', 'Metropolitan St. Louis'),
+               'georgia': ('Georgia', '01', 'Atlanta')}
+for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
+def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
+def npis_key(slug): return f'data/s7/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
 # how a sentence names the area ("every El Paso-area hospital", "no rate ... in the El Paso area"), when the name doesn't fit
-AREA = {'small-towns': ('small-town Texas', 'small-town Texas')}
+AREA = {'small-towns': ('small-town Texas', 'small-town Texas'), **{k: (v[0], v[0]) for k, v in STATE_PAGES.items()}}
 # map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX).
 # Metro areas: their counties' extent (Census TIGERweb) plus 0.3 degrees; small towns: all of Texas.
 GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31.3',
@@ -61,7 +72,10 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'amarillo': '-103.4,34.4,-100.7,36.0', 'tyler': '-95.9,31.8,-94.6,33.0', 'abilene': '-100.5,31.7,-98.8,33.3',
             'midland': '-102.6,31.3,-101.3,32.9', 'odessa': '-103.1,31.3,-101.9,32.4', 'wichita-falls': '-99.3,33.0,-97.6,34.6',
             'texarkana': '-95.1,32.9,-93.7,34.1', 'san-angelo': '-101.6,30.7,-99.8,32.1', 'victoria': '-98.1,28.0,-96.3,29.5',
-            'small-towns': '-106.8,25.7,-93.4,36.7'}
+            'small-towns': '-106.8,25.7,-93.4,36.7',
+            'tennessee': '-90.6,34.7,-81.4,36.9', 'colorado': '-109.3,36.7,-101.8,41.3', 'oklahoma': '-103.3,33.4,-94.2,37.3',
+            'alabama': '-88.7,29.9,-84.7,35.3', 'mississippi': '-91.9,29.9,-87.9,35.3', 'missouri': '-96.0,35.7,-88.9,40.9',
+            'georgia': '-85.9,30.1,-80.6,35.3'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
@@ -94,11 +108,12 @@ class Words:
         self.s = re.sub(old, new.replace('\\', '\\\\'), self.s, flags=re.S) if regex else self.s.replace(old, new)
 
 
-def pfs_for(rvu_zip, loc, codes):
+def pfs_for(rvu_zip, loc, codes, st='TX'):
     """Medicare doctor fees for one locality: same formula and filters as build_med_all.py. code -> {'pfs'|'pfs26': [office, facility]}"""
     Z = zipfile.ZipFile(rvu_zip)
-    G = {r[2]: [float(r[4]), float(r[5]), float(r[6])] for r in csv.reader(io.TextIOWrapper(Z.open('GPCI2026.csv'), encoding='latin-1'))
-         if len(r) > 6 and r[1] == 'TX'}
+    G = {(r[1], r[2]): [float(r[4]), float(r[5]), float(r[6])] for r in csv.reader(io.TextIOWrapper(Z.open('GPCI2026.csv'), encoding='latin-1'))
+         if len(r) > 6 and r[1] in ('TX', st)}
+    if (st, loc) not in G: sys.exit(f'STOP: Medicare locality {st} {loc} is not in GPCI2026.csv; fix STATE_PAGES in city_page.py')
     def num(x):
         try: return float(str(x).replace('$', '').replace(',', '').strip())
         except ValueError: return None
@@ -108,13 +123,13 @@ def pfs_for(rvu_zip, loc, codes):
     for r in L[k + 1:]:
         if len(r) < 26 or r[0] not in codes or r[1] not in ('', '26') or r[3] not in ('A', 'R', 'T'): continue
         w, pen, nfna, pef, fna, mp, cf = num(r[5]), num(r[6]), r[7].strip(), num(r[8]), r[9].strip(), num(r[10]), num(r[25])
-        def at(l):
-            gw, gp, gm = G[l]
+        def at(l, s_=st):
+            gw, gp, gm = G[(s_, l)]
             nf = None if nfna == 'NA' else round((w * gw + pen * gp + mp * gm) * cf, 2)
             fa = None if fna == 'NA' else round((w * gw + pef * gp + mp * gm) * cf, 2)
             return [nf, fa if fa is not None else nf]
-        if all(x is None or x == 0 for x in at('11')): continue   # build_med_all.py skips these on the Dallas figures
-        out.setdefault(r[0], {})['pfs26' if r[1] == '26' else 'pfs'] = {'11': at('11'), loc: at(loc)}
+        if all(x is None or x == 0 for x in at('11', 'TX')): continue   # build_med_all.py skips these on the Dallas figures
+        out.setdefault(r[0], {})['pfs26' if r[1] == '26' else 'pfs'] = {'11': at('11', 'TX'), loc: at(loc)}
     return out
 
 
@@ -154,7 +169,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None):
 
     # 2. Medicare doctor fees for the city's locality. Check first: the same formula must give the page's own Dallas figures.
     M = D['med']['codes']
-    P = pfs_for(rvu, loc, set(M))
+    P = pfs_for(rvu, loc, set(M), STATE_OF.get(slug, 'TX'))
     checked = bad = 0
     for c, m in M.items():
         for k in ('pfs', 'pfs26'):
@@ -193,7 +208,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None):
     ins = sorted({n.split('|', 1)[0] for n in D['nets'] if D.get('scope', {}).get(n)}) or sorted({n.split('|', 1)[0] for n in D['nets']})
     w.sub(r'<p><b>Sources\.</b>.*?</p>',
           f'<p><b>Sources.</b> Insurer Transparency in Coverage files dated {dates[0]} to {dates[-1]}: {", ".join(ins)}. Each file was read '
-          f'for every Texas provider, then narrowed to providers whose practice address in the federal NPI Registry is '
+          f'for every {"provider in Tennessee, Colorado, Oklahoma, Alabama, Mississippi, Missouri and Georgia" if slug in STATE_OF else "Texas provider"}, then narrowed to providers whose practice address in the federal NPI Registry is '
           f'{where}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
           f'insurer\'s own page. ' + (f'Hospital price files: {nh} files from hospitals {where}, each line linked to its file. Providers\' posted cash '
           f'prices are not on the {name} page yet.</p>' if hosp_index else f'Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>'), regex=True)
@@ -285,10 +300,10 @@ def main():
     def written(k):
         try: return s3.head_object(Bucket=B, Key=k)['LastModified']
         except Exception: return None
-    dirs = [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'site/every-tx/{A.city}/', Delimiter='/')
+    dirs = [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'{root(A.city)}{A.city}/', Delimiter='/')
             for c in pg.get('CommonPrefixes', [])]
     done = sorted((t, d) for d in dirs if (t := written(d + 'embed.json')))   # newest finished build by when its embed.json was written
-    if not done: sys.exit(f'{name}: no finished build yet (no embed.json under site/every-tx/{A.city}/); nothing to do')
+    if not done: sys.exit(f'{name}: no finished build yet (no embed.json under {root(A.city)}{A.city}/); nothing to do')
     prefix = done[-1][1]
     print('using', prefix)
     f = {k: f'{A.out}/{n}' for k, n in [('template', 'dfw.html'), ('embed', 'embed.json'), ('rvu', 'rvu.zip'), ('med', 'med.json'), ('t5', 't5.txt')]}
@@ -306,7 +321,8 @@ def main():
     gkey, bkey, maps = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', None
     try:
         if not written(gkey):
-            env = dict(E, NPIS=f'data/tx/metro/{A.city}/npis.parquet', GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city])
+            env = dict(E, NPIS=npis_key(A.city), GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city],
+                       GEO_STATE=STATE_OF.get(A.city, 'TX'), GEO_STATE_NAME=CITIES[A.city][0] if A.city in STATE_OF else 'Texas')
             r = subprocess.run([sys.executable, f'{HERE}/geo_build.py', page, prefix], env=env, capture_output=True, text=True, timeout=5400)
             print(r.stdout[-2000:], r.stderr[-2000:])
             if r.returncode: raise RuntimeError('geo_build.py failed')

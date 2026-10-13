@@ -9,7 +9,9 @@ Rows are copied unchanged (no averaging, nothing dropped inside a metro); same c
 Output R2 data/tx/metro/<metro>/rates/<table>.parquet (+ membership/), and data/tx/metro/_done/<table>.json.
 SRC=rest: re-split the tables already split into the old "rest" metro (data/tx/metro/rest/, October 2026) into the metro-area
 pages the same way; done markers data/tx/metro/_done_rest/<table>.json. The rest/ copies are left in place.
-Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=rest]; MEM; THREADS; WORK."""
+SCOPE=s7 (Oct 13, 2026): split the first national batch (data/s7/) by the provider's practice state instead, into
+data/s7/state/<state slug>/rates|membership/<table>.parquet, done markers data/s7/state/_done/<table>.json. Same filters.
+Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=rest]; [SCOPE=s7]; MEM; THREADS; WORK."""
 import json, os, time, glob, shutil, duckdb, boto3
 E = os.environ
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
@@ -21,15 +23,20 @@ GEO = next((p for p in (f'{HERE}/tx_zip_metro.csv', f'{HERE}/../reference/geo/tx
 if not GEO: raise SystemExit('STOP: tx_zip_metro.csv not found')
 def ls(p): return [(o['Key'], o['Size']) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p) for o in pg.get('Contents', [])]
 REST = E.get('SRC') == 'rest'
+ST = E.get('SCOPE') == 's7'
+STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
 RIN, MIN, DONE = (('data/tx/metro/rest/rates/', 'data/tx/metro/rest/membership/', 'data/tx/metro/_done_rest/') if REST else
+                  ('data/s7/rates/', 'data/s7/membership/', 'data/s7/state/_done/') if ST else
                   ('data/tx/rates/', 'data/tx/membership/', 'data/tx/metro/_done/'))
+OUTD = 'data/s7/state/' if ST else 'data/tx/metro/'
 # z = 3-digit ZIP area, g.slug = metro area page of the 5-digit ZIP. A rest/ table holds only rest-of-Texas providers, so SRC=rest
 # uses the metro-area table alone (a provider can't land in a city folder and overwrite that city's split of the same table).
 AREA = "coalesce(g.slug, 'small-towns')"
 METRO = AREA if REST else f"""case when z between '770' and '775' then 'houston' when z between '780' and '782' then 'san-antonio'
   when z between '786' and '787' then 'austin' when z between '798' and '799' then 'el-paso'
   when (z between '750' and '753') or (z between '760' and '762') then 'dfw' else {AREA} end"""
-s3.download_file(B, 'data/scope/tx_npis_all.parquet', f'{W}/npis.parquet')
+if ST: METRO = 'case st ' + ' '.join(f"when '{k}' then '{v}'" for k, v in STATES.items()) + " else 'dfw' end"   # 'dfw' = dropped
+s3.download_file(B, 'data/scope/s7_npis_all.parquet' if ST else 'data/scope/tx_npis_all.parquet', f'{W}/npis.parquet')
 allt = [k.rsplit('/', 1)[1][:-8] for k, _ in sorted(ls(RIN), key=lambda x: -x[1]) if k.endswith('.parquet')]
 tables = allt if E.get('ALL') else [t for t in E['TABLES'].split(',') if t]
 for t in tables:
@@ -42,7 +49,7 @@ for t in tables:
     c.execute(f"create table g as select zip5, slug from read_csv('{GEO}', all_varchar=true)")
     if c.execute("select count(*) - count(distinct zip5) from g").fetchone()[0]: raise SystemExit('STOP: a ZIP is listed twice in tx_zip_metro.csv')
     c.execute(f"""create table m as select distinct n.npi, {METRO} metro
-      from (select npi, left(zip5, 3) z, left(zip5, 5) z5 from read_parquet('{W}/npis.parquet')) n left join g on g.zip5 = n.z5""")
+      from (select npi, left(zip5, 3) z, left(zip5, 5) z5{', upper(state) st' if ST else ''} from read_parquet('{W}/npis.parquet')) n left join g on g.zip5 = n.z5""")
     out = f'{W}/out'; shutil.rmtree(out, ignore_errors=True)
     c.execute(f"""copy (select r.*, m.metro from read_parquet('{src}') r join m using (npi)
       where m.metro <> 'dfw'
@@ -59,10 +66,10 @@ for t in tables:
         mt = d.rsplit('=', 1)[1]
         c.execute(f"copy (select * exclude (metro) from read_parquet('{d}/*.parquet')) to '{W}/one.parquet' (format parquet, compression zstd)")
         n = c.execute(f"select count(*) from read_parquet('{W}/one.parquet')").fetchone()[0]
-        s3.upload_file(f'{W}/one.parquet', B, f'data/tx/metro/{mt}/rates/{t}.parquet')
+        s3.upload_file(f'{W}/one.parquet', B, f'{OUTD}{mt}/rates/{t}.parquet')
         if have_m:
             c.execute(f"copy (select x.* from read_parquet('{W}/mem.parquet') x join m using (npi) where m.metro = '{mt}') to '{W}/onem.parquet' (format parquet, compression zstd)")
-            s3.upload_file(f'{W}/onem.parquet', B, f'data/tx/metro/{mt}/membership/{t}.parquet')
+            s3.upload_file(f'{W}/onem.parquet', B, f'{OUTD}{mt}/membership/{t}.parquet')
         stats['metros'][mt] = n
     c.close(); shutil.rmtree(out, ignore_errors=True)
     for f in ('one', 'onem', 'mem'):
