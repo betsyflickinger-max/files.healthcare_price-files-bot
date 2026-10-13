@@ -10,7 +10,7 @@ on:
 
 concurrency:
   group: board-status
-  cancel-in-progress: true
+  cancel-in-progress: false   # Oct 13: runs take >10 min now; cancelling meant no run ever finished
 
 permissions:
   contents: write
@@ -19,7 +19,7 @@ permissions:
 jobs:
   status:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 25
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
