@@ -336,6 +336,9 @@ def main():
         al += [f"| {k} | {m['insurer']} | {m['network_label']} | {(m.get('detail') or '').replace('|', '/')[:150]} |" for k, m in bad]
         (out / "insurer_alerts.md").write_text("\n".join(al) + "\n")
     print("\n".join(lines if a.dry_run else lines[:4]))
+    why = Counter((m.get("detail") or "no detail")[:160] for m in rows if m.get("status") == "queued")
+    for d, n in why.most_common(5):  # why queued files didn't start (machine limit, rent error, site build...)
+        print(f"  {n} queued: {d}")
     for k, m in bad:
         print(f"NEW PROBLEM: {k}: {m['insurer']} {m['network_label']}")
 
