@@ -58,7 +58,7 @@ PLACES = {"H": "Hospital", "A": "Surgery center", "G": "Office or clinic", "P": 
 
 # market keys: the first four cities keep their old short keys (rate-change history is saved under them); others use the page's slug
 OLDKEY = {"austin": "AUS", "san-antonio": "SAT", "houston": "HOU", "el-paso": "ELP"}
-RATE_FILES, RATE_MAX = 10, 7_000_000
+RATE_FILES, RATE_MAX = 16, 7_000_000   # 24 Texas areas used about 42 MB (Oct 13); the seven states add more
 
 # ---------- DFW page (also the source of national Medicare rates and the shoppable list) ----------
 DFW = page_data(open(ARGS.dfw_page, encoding="utf-8").read() if ARGS.dfw_page else get_bytes("site/deploy/price-finder.html").decode("utf-8"))
