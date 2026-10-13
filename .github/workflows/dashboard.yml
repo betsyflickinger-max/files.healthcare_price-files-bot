@@ -1,6 +1,7 @@
-name: Dashboard data (hospital side)
+name: Dashboard data (hospital and price sides)
 
-# Builds the hospital-side files for Betsy's "Price Transparency Metrics" dashboard from the bot's
+# Builds the hospital-side files (dashboard/build.py) and, since Oct 13, 2026, the price-side files for every live Price Finder
+# area (dashboard/build_prices.py; it used to run on Betsy's Mac). Builds the hospital-side files for Betsy's "Price Transparency Metrics" dashboard from the bot's
 # latest checks, then force-pushes them (one commit, no history) to the private repo
 # betsyflickinger-max/price-dashboard-data when the DASHBOARD_DATA_TOKEN secret is set, else to this repo's
 # public dashboard-data branch.
@@ -23,7 +24,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 60
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -46,6 +47,18 @@ jobs:
           assert len(h) > 4000, len(h)
           assert sum(x["have"] for x in s) > 0
           print("ok", len(h), "hospitals")
+          PY
+      - name: Price side (every live Price Finder area)
+        # a failure here leaves the hospital side to publish as before; the price files are then simply missing for the day
+        continue-on-error: true
+        run: |
+          set -o pipefail
+          python dashboard/build_prices.py | tail -60 | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import json, glob, os
+          m = json.load(open("out/dashboard/markets.json")); assert any(x["market"] == "DFW" for x in m), "no DFW"
+          for f in sorted(glob.glob("out/dashboard/*.json")): assert os.path.getsize(f) < 8_000_000, f"{f} is over 8 MB"
+          print("price side ok:", len(m), "areas")
           PY
       - name: Publish (private repo when its token is set, else the public dashboard-data branch)
         env:
