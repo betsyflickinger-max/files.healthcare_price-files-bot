@@ -41,7 +41,11 @@ NETWORKS = {"s7": "networks_s7.csv"}  # an area's own network list; dfw and tx u
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
-          "run_id", "droplet_id", "launched_at", "fails", "problem", "next_url"]
+          "run_id", "droplet_id", "launched_at", "fails", "problem", "next_url", "reader", "backfill"]
+# Reader version (Oct 13, 2026): tables read by an older reader lack the newly kept fields (insurer notes, bundled codes,
+# covered services, code version). When a machine slot is free, the bot re-reads those files, new files always first.
+READER = "2"
+REREAD_OLD_TABLES = True
 SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
 # Oct 12, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and sfo3, so the
 # last Texas Cigna file (Pathwell OAP) could not start; s-8vcpu-32gb-amd was renting fine in nyc3 (and Cigna ran out of memory before).
@@ -122,9 +126,11 @@ def collect(s3, b, man, now, dry):
             continue
         if res.get("ok"):
             old_rows = m.get("rows", "")
-            m.update(status="processed", table=res["table"], rows=str(res.get("rows", "")),
+            reread = m.get("backfill") == "1"   # an unchanged file re-read for the new fields: its prices didn't change
+            m.update(status="processed", table=res["table"], rows=str(res.get("rows", "")), reader=READER, backfill="",
                      file_last_updated_on=res.get("file_last_updated_on", m.get("file_last_updated_on", "")),
-                     processed_on=res.get("finished_at", "")[:10], last_changed=res.get("finished_at", "")[:10],
+                     processed_on=res.get("finished_at", "")[:10],
+                     last_changed=m.get("last_changed", "") if reread else res.get("finished_at", "")[:10],
                      fails="0", detail=f"read in {res.get('secs', '?')}s" + (f"; retired {res['retired']}" if res.get("retired") else ""))
             if old_rows.isdigit() and int(old_rows) > 0 and int(m["rows"] or 0) < int(old_rows) / 2:
                 m["detail"] += f"; rows fell from {int(old_rows):,} to {int(m['rows']):,}"
@@ -176,6 +182,10 @@ def check_all(man, today, only, force=False):
         m["last_checked"] = today.isoformat()
         if same and force and only:  # --force with --only: re-read it anyway (e.g. to fill in newly kept fields)
             same = False
+        if same and REREAD_OLD_TABLES and m.get("reader") != READER and m.get("table"):
+            m.update(status="queued", next_url=url, backfill="1", etag=info["etag"] or m.get("etag", ""), size=info["size"] or m.get("size", ""),
+                     detail=f"unchanged ({why}); re-reading when a machine is free to collect the newly kept fields")
+            continue
         if same:
             m.update(etag=info["etag"] or m.get("etag", ""), size=info["size"] or m.get("size", ""),
                      url=url, url_date=url_date(url) or m.get("url_date", ""), detail=f"unchanged ({why})")
@@ -220,13 +230,14 @@ def launch(s3, b, man, now, dry):
     # a queued file needs its new link; older manifests lost it, so those wait for the next full check
     queued = [m for m in man.values() if m.get("status") == "queued" and m.get("next_url")]
     groups = {}
-    for m in queued:
-        groups.setdefault(m["machine_group"], []).append(m)
+    for m in queued:  # re-reads of unchanged files (backfill) never share a machine with new files
+        groups.setdefault((m["machine_group"], m.get("backfill") == "1"), []).append(m)
     loads = []
-    for g, ms in groups.items():
-        n = PER_MACHINE.get(g, 2)
-        loads += [(f"{g}{i // n + 1}" if len(ms) > n else g, g, ms[i:i + n]) for i in range(0, len(ms), n)]
-    loads.sort(key=lambda x: (x[1] not in ("uhc", "aetna"), x[0]))  # biggest first: they take longest
+    for (g, rr), ms in groups.items():
+        n, tag = PER_MACHINE.get(g, 2), g + ("r" if rr else "")
+        loads += [(f"{tag}{i // n + 1}" if len(ms) > n else tag, g, ms[i:i + n]) for i in range(0, len(ms), n)]
+    # new files first, then re-reads; within each, biggest first: they take longest
+    loads.sort(key=lambda x: (x[2][0].get("backfill") == "1", x[1] not in ("uhc", "aetna"), x[0]))
     try:  # a website build reads these tables; new ones landing mid-build would make it stop and start over
         building = [n for n in droplets.names() if n.startswith("upfront-site-")]
     except Exception:
