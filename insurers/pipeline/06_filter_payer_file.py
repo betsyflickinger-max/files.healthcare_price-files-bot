@@ -122,8 +122,8 @@ def in_scope(npi, npis):
 
 def header(path):
     """Top-of-file fields. Single-plan files also carry plan_name / plan_id here."""
-    keys = ("reporting_entity_name", "reporting_entity_type", "plan_name", "plan_id", "plan_market_type",
-            "last_updated_on")
+    keys = ("reporting_entity_name", "reporting_entity_type", "plan_name", "plan_id", "plan_id_type", "plan_market_type",
+            "plan_sponsor_name", "issuer_name", "last_updated_on", "version")  # version etc. kept since Oct 13, 2026
     meta = {}
     with open_binary(path) as fb:
         for prefix, event, value in ijson.parse(fb):
