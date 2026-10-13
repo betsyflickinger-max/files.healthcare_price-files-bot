@@ -76,6 +76,14 @@ def main():
             finished = not left or (st['launches'].get(role, 0) >= 3 and not O.alive(role))
             ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE='s7', TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
             busy += not finished
+        if 'back_jobs' not in st:   # Oct 13: 530 GB on 4 machines is slow; a second machine per list works from the small end
+            st['back_jobs'] = [list(reversed(j[1:])) for j in st['split_jobs'] if len(j) > 2]
+        for i, job in enumerate(st['back_jobs']):
+            role = f'split-{i + 1}b'
+            left = [t for t in job if t not in done]
+            finished = not left or (st['launches'].get(role, 0) >= 3 and not O.alive(role))
+            ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE='s7', TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
+            busy += not finished
         log(len(todo), 'of', len(sz), 'seven-state tables left to split')
         if not busy:
             st['split_failed'] = todo
