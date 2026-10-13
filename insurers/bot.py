@@ -144,7 +144,7 @@ def collect(s3, b, man, now, dry):
     return notes
 
 
-def check_all(man, today, only):
+def check_all(man, today, only, force=False):
     notes = []
     for m in man.values():
         n = m["_net"]
@@ -174,6 +174,8 @@ def check_all(man, today, only):
                     and (not m.get("size") or info["size"] == m.get("size")):
                 same, why = True, "same internal date" + (" and size" if m.get("size") else "")
         m["last_checked"] = today.isoformat()
+        if same and force and only:  # --force with --only: re-read it anyway (e.g. to fill in newly kept fields)
+            same = False
         if same:
             m.update(etag=info["etag"] or m.get("etag", ""), size=info["size"] or m.get("size", ""),
                      url=url, url_date=url_date(url) or m.get("url_date", ""), detail=f"unchanged ({why})")
@@ -238,6 +240,15 @@ def launch(s3, b, man, now, dry):
         free = min(MAX_MACHINES - len(droplets.mine()), droplets.room() - RESERVE) if not dry else MAX_MACHINES
     except Exception:
         free = 1
+    # Use every free slot (Oct 13): split the biggest multi-file loads until there is one load per free machine.
+    while len(loads) < free:
+        big = max((l for l in loads if len(l[2]) > 1), key=lambda l: len(l[2]), default=None)
+        if big is None:
+            break
+        i = loads.index(big)
+        name, g, ms = big
+        h = len(ms) // 2
+        loads[i:i + 1] = [(f"{name}a", g, ms[:h]), (f"{name}b", g, ms[h:])]
     run_id = now.strftime("%Y%m%d-%H%M")
     env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "DIGITALOCEAN_TOKEN",
                                      "BOT_GITHUB_TOKEN")}
@@ -274,6 +285,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true", help="check only; rent nothing, change nothing in R2")
     ap.add_argument("--only", default="", help="comma-separated slots")
+    ap.add_argument("--force", action="store_true", help="with --only: re-read those files even if unchanged")
     ap.add_argument("--fill", action="store_true", help="quick pass: collect results and fill free machines, no file check")
     ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default), tx (all of Texas) or s7 (first national batch)")
     a = ap.parse_args()
@@ -285,7 +297,7 @@ def main():
     man = load(s3, b, a.scope)
     notes = collect(s3, b, man, now, a.dry_run)
     if not a.fill:
-        notes += check_all(man, today, {s.strip() for s in a.only.split(",") if s.strip()})
+        notes += check_all(man, today, {s.strip() for s in a.only.split(",") if s.strip()}, a.force)
     hold = ""
     try:
         hold = s3.get_object(Bucket=b, Key=P + "hold.txt")["Body"].read().decode().strip()

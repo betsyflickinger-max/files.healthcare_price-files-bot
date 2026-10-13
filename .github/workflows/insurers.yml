@@ -17,6 +17,10 @@ on:
         description: "Quick fill only (collect results, start waiting files on free machines; used by finished machines)"
         type: boolean
         default: false
+      force:
+        description: "Re-read the 'only' networks even if their files haven't changed"
+        type: boolean
+        default: false
       only:
         description: "Only these networks (slot names from insurers/networks.csv, comma-separated; blank = all)"
         required: false
@@ -62,6 +66,7 @@ jobs:
           ARGS=""
           [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ] && ARGS="--dry-run"
           [ -n "${{ inputs.only }}" ] && ARGS="$ARGS --only ${{ inputs.only }}"
+          [ "${{ inputs.force }}" = "true" ] && ARGS="$ARGS --force"
           ARGS="$ARGS --scope ${{ inputs.scope || 'dfw' }}"
           [ "${{ github.event.schedule }}" = "*/10 * * * *" ] && ARGS="$ARGS --fill"
           [ "${{ inputs.fill }}" = "true" ] && ARGS="$ARGS --fill"
