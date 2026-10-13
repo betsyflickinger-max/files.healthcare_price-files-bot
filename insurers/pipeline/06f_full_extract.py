@@ -21,6 +21,7 @@ Query later with DuckDB:  select * from 'data/rates/*.parquet' where billing_cod
 import argparse
 import csv
 import importlib.util
+import json
 import os
 import subprocess
 import sys
@@ -67,7 +68,9 @@ def load_scope(scope):
 
 COLS = ["billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
         "negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier",
-        "expiration_date"]
+        "expiration_date",
+        # kept since Oct 13, 2026 (appended; the site build doesn't use them yet)
+        "billing_code_type_version", "description", "additional_information", "bundled_codes", "covered_services"]
 
 
 def stream_to_parquet(cmd, dest, consts):
@@ -199,6 +202,48 @@ def extract(path, ctx):
         p.unlink()
     tmp.rmdir()
     print(f"  wrote {n_rows:,} price rows and {len(members):,} roster rows -> {st}.parquet", flush=True)
+    try:  # an inventory problem must never cost us the tables
+        census(con, RATES / (st + ".parquet"), CENSUS / (st + ".json"), meta, label, source_file, ctx.get("source_url", ""),
+               n_rows, n_refs, len({k[0] for k in members}))
+    except Exception as e:
+        print(f"  ! census skipped: {e}", flush=True)
+
+
+CENSUS = DATA / "census"
+GROUPED = ["billing_code_type", "billing_code_type_version", "negotiation_arrangement", "negotiated_type", "billing_class",
+           "setting", "expiration_date", "additional_information"]
+FILLED = ["description", "additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
+          "service_code", "expiration_date", "setting", "billing_code_type_version"]
+
+
+def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_groups, n_npis):
+    """'What's in the file': an inventory of the in-scope rows, so we can spot useful details before deciding
+    what to do with them. Real counts, no sampling. One JSON per file; research only, never shown as a price."""
+    t = f"read_parquet('{rates}')"
+    out = {"source_file": source_file, "source_url": source_url, "network": label, "checked_on": date.today().isoformat(),
+           "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
+           "rows": n_rows, "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
+    if n_rows:
+        d = con.execute(f"select approx_count_distinct(billing_code), approx_count_distinct(npi), approx_count_distinct(tin), "
+                        + ", ".join(f"count_if({c} <> '')" for c in FILLED)
+                        + f", count_if(negotiated_type ilike 'percent%') from {t}").fetchone()
+        out["distinct_approx"] = dict(zip(["billing_codes", "npis", "tins"], d[:3]))
+        out["rows_with_value"] = dict(zip(FILLED, d[3:-1]))
+        out["percent_of_charges_rows"] = d[-1]
+        # one scan for every breakdown; GROUPING() says which column each result row belongs to
+        sets = ", ".join(f"({c})" for c in GROUPED)
+        rows = con.execute(f"select {', '.join(GROUPED)}, " + ", ".join(f"grouping({c})" for c in GROUPED)
+                           + f", count(*) from {t} group by grouping sets ({sets})").fetchall()
+        k = len(GROUPED)
+        tops = {c: [] for c in GROUPED}
+        for r in rows:
+            i = r[k:2 * k].index(0)
+            tops[GROUPED[i]].append((r[i], r[-1]))
+        out["values"] = {c: {"distinct": len(v), "top": [{"value": x, "rows": n} for x, n in sorted(v, key=lambda z: -z[1])[:25]]}
+                         for c, v in tops.items()}
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_text(json.dumps(out, indent=1, default=str))
+    print(f"  census -> {dest.name}", flush=True)
 
 
 def membership_only(path, ctx):

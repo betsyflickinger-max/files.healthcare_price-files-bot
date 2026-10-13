@@ -8,7 +8,8 @@ For each file:
   3. Double-count fix: if this network's previous table had a different name (insurers date their file
      names), move the old tables to work/retired/<yyyy-mm>/ so a build over data/full/rates/*.parquet
      counts each network once. The old table is only moved after the new one is safely uploaded.
-  4. Write a result marker: bot/insurers/runs/<RUN_ID>/done/<slot>.json
+  4. Upload the file's inventory (06f census) to bot/insurers/census/<yyyy-mm>/<scope>/<table>.json.
+  5. Write a result marker: bot/insurers/runs/<RUN_ID>/done/<slot>.json
 """
 import csv
 import io
@@ -99,6 +100,13 @@ def one(job):
     s3.upload_file(str(rates), B, f"{OUT}rates/{new}.parquet")
     s3.upload_file(str(memb), B, f"{OUT}membership/{new}.parquet")
     rates.unlink(); memb.unlink()
+    cen = DATA / "census" / f"{new}.json"   # "what's in the file" inventory; kept per month so history builds up
+    if cen.exists():
+        try:
+            s3.upload_file(str(cen), B, f"bot/insurers/census/{date.today().strftime('%Y-%m')}/{OUT.strip('/').replace('/', '_')}/{new}.json")
+        except Exception as e:
+            log(f"[{job['slot']}] census upload failed: {e}")
+        cen.unlink()
     old = job.get("prev_table", "")
     if old and old != new:
         month = date.today().strftime("%Y-%m")

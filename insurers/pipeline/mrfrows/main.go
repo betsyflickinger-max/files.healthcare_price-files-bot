@@ -47,6 +47,7 @@ type price struct {
 	Class       string    `json:"billing_class"`
 	Setting     string    `json:"setting"`
 	Modifier    []flexStr `json:"billing_code_modifier"`
+	Additional  string    `json:"additional_information"`
 }
 type rate struct {
 	Refs   []flexStr `json:"provider_references"`
@@ -59,7 +60,26 @@ type item struct {
 	CodeType    string  `json:"billing_code_type"`
 	Code        flexStr `json:"billing_code"`
 	Rates       []rate  `json:"negotiated_rates"`
+	// Kept since Oct 13, 2026 (appended columns; nothing downstream depends on them yet)
+	Version     string          `json:"billing_code_type_version"`
+	Description string          `json:"description"`
+	Bundled     json.RawMessage `json:"bundled_codes"`
+	Covered     json.RawMessage `json:"covered_services"`
 }
+
+// compactJSON turns a raw JSON value (array/object) into one short line; null or missing -> "".
+func compactJSON(r json.RawMessage) string {
+	t := bytes.TrimSpace(r)
+	if len(t) == 0 || string(t) == "null" || string(t) == "[]" {
+		return ""
+	}
+	var b bytes.Buffer
+	if err := json.Compact(&b, t); err != nil {
+		return string(t)
+	}
+	return b.String()
+}
+
 type who struct{ npi, tin, ttype string }
 
 var codeRe = regexp.MustCompile(`"billing_code"\s*:\s*"?([^",}\s]+)`)
@@ -163,7 +183,8 @@ func main() {
 	bw := bufio.NewWriterSize(w, 8<<20)
 	cw := csv.NewWriter(bw)
 	cw.Write([]string{"billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
-		"negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier", "expiration_date"})
+		"negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier", "expiration_date",
+		"billing_code_type_version", "description", "additional_information", "bundled_codes", "covered_services"})
 
 	work := make(chan []byte, 4)
 	rowsCh := make(chan [][]string, 4)
@@ -298,6 +319,7 @@ func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]boo
 		return
 	}
 	var out [][]string
+	bundled, covered := compactJSON(it.Bundled), compactJSON(it.Covered)
 	for _, nr := range it.Rates {
 		seen := map[who]bool{}
 		var ws []who
@@ -335,7 +357,8 @@ func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]boo
 			}
 			for _, w := range ws {
 				out = append(out, []string{it.CodeType, string(it.Code), it.Name, it.Arrangement, w.npi, w.tin, w.ttype,
-					p.Type, rate, p.Class, p.Setting, strings.Join(p.ServiceCode, ","), strings.Join(mods, ","), p.Expiration})
+					p.Type, rate, p.Class, p.Setting, strings.Join(p.ServiceCode, ","), strings.Join(mods, ","), p.Expiration,
+					it.Version, it.Description, p.Additional, bundled, covered})
 				if len(out) >= 50000 {
 					emit(out)
 					out = nil
