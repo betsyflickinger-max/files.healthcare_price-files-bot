@@ -25,6 +25,10 @@ on:
         description: "Only these networks (slot names from insurers/networks.csv, comma-separated; blank = all)"
         required: false
         default: ""
+      scheduled:
+        description: "Act as the 6-hourly scheduled check (also checks Texas and the national batch); used by the Cloudflare timer"
+        type: boolean
+        default: false
 
 concurrency:
   group: insurer-price-files
@@ -76,7 +80,7 @@ jobs:
           fi
           python insurers/bot.py $ARGS
       - name: All of Texas and the first national batch (scheduled runs only; manual runs use the inputs above)
-        if: github.event_name == 'schedule' || inputs.fill
+        if: github.event_name == 'schedule' || inputs.fill || inputs.scheduled
         run: |
           cp out/insurer_summary.md out/insurer_summary_dfw.md
           [ -f out/insurer_alerts.md ] && mv out/insurer_alerts.md out/insurer_alerts_dfw.md
