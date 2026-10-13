@@ -21,16 +21,23 @@ def _h():
 FALLBACK_REGIONS = ["nyc1", "sfo3"]  # same list the website build uses when nyc3 has no room
 
 
+# Oct 12-13, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and
+# sfo3, which left 151 queued files waiting. When a size has no room anywhere, try these similar sizes in turn.
+SIMILAR = {"s-4vcpu-8gb": ["s-4vcpu-8gb-amd", "s-4vcpu-8gb-intel", "s-8vcpu-16gb-amd"]}
+
+
 def create(name, user_data, size=DEFAULT_SIZE):
-    """Rent a machine in nyc3; if DigitalOcean has no room for that size there (422), try nyc1, then sfo3."""
+    """Rent a machine in nyc3; if DigitalOcean has no room for that size there (422), try nyc1, then sfo3, then
+    the same regions with a similar size (and finally the default size)."""
     r = None
-    for region in [REGION] + FALLBACK_REGIONS:
-        body = dict(name=name, region=region, size=size, image=IMAGE, tags=["upfront", TAG], user_data=user_data,
-                    monitoring=False, ipv6=False)
-        r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
-        if r.status_code == 422 and size != DEFAULT_SIZE:  # size not available to this account: use the default
-            body["size"] = DEFAULT_SIZE
+    sizes = [size] + SIMILAR.get(size, []) + ([DEFAULT_SIZE] + SIMILAR[DEFAULT_SIZE] if size != DEFAULT_SIZE else [])
+    for s in dict.fromkeys(sizes):
+        for region in [REGION] + FALLBACK_REGIONS:
+            body = dict(name=name, region=region, size=s, image=IMAGE, tags=["upfront", TAG], user_data=user_data,
+                        monitoring=False, ipv6=False)
             r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
+            if r.status_code != 422:
+                break
         if r.status_code != 422:
             break
     if r.status_code >= 300:
