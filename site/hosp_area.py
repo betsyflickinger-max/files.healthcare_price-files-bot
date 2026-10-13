@@ -109,6 +109,29 @@ def plan_areas(O):
     return out
 
 
+def fix_names(O, prefix):
+    """Hospital names as the page shows them. Some systems put only the system name in every file (six Austin files said just
+    "Ascension Seton", no city). When a file's name is shared by another file in the area, or it has no city, use Medicare's
+    name and city for that hospital (data/hospitals.csv, matched by the file's fingerprint). Safe to run again."""
+    key = prefix + 'hosp/hosp_index.json'
+    try: H = json.loads(O.s3.get_object(Bucket=O.B, Key=key)['Body'].read())
+    except Exception: return
+    cms = {r['last_sha256'][:16]: (r['name'], r['city']) for r in csv.DictReader(open(f'{HERE}/../data/hospitals.csv')) if r['last_sha256']}
+    from collections import Counter
+    n = Counter((x[0] or '').strip().lower() for x in H['src'])
+    fixed = 0
+    for x in H['src']:
+        if x[5] in cms and (not x[1] or n[(x[0] or '').strip().lower()] > 1):
+            nm, ct = cms[x[5]]
+            if nm:
+                t = ' '.join(nm.split()).title().replace("'S ", "'s ")
+                for w in (' Of ', ' At ', ' The ', ' And ', ' For '): t = t.replace(w, w.lower())
+                x[0], x[1] = t.replace(' Tx', ' TX').replace('Llc', 'LLC'), ' '.join((ct or '').split()).title(); fixed += 1
+    if fixed:
+        O.s3.put_object(Bucket=O.B, Key=key, Body=json.dumps(H, separators=(',', ':')).encode())
+        O.log('hospital names:', fixed, 'of', len(H['src']), 'files named from Medicare\'s list in', prefix)
+
+
 def run():
     os.environ.setdefault('BUILD', ('hosp-st-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
     sys.path.insert(0, HERE)
@@ -160,12 +183,16 @@ def run():
             busy += not finished
         O.log('h2:', len([a for a in areas if a in done]), 'of', len(areas), 'areas built;', busy, 'machines working')
         if not busy: st['stage'] = 'publish'
+    if st['stage'] == 'done' and not st.get('names_fixed'): st['stage'] = 'publish'
     if st['stage'] == 'publish':
+        if not st.get('names_fixed'):   # Oct 13: pages published before the name fix go out again
+            st['published'], st['names_fixed'] = {}, True
         done = {k.rsplit('/', 1)[1][:-5]: k for k in O.ls(SP + 'h2/')}
         t0 = time.time()
         for a in st['areas']:
             if a in st['published'] or a not in done: continue
             if time.time() - t0 > 3 * 3600: break   # the rest go on the next run
+            fix_names(O, st['plan_prefix'][a] if 'plan_prefix' in st else O.getj(SP + 'areas.json', {})[a]['prefix'])
             r = subprocess.run([sys.executable, f'{HERE}/city_page.py', a, '--deploy', '--out', f'/tmp/city-{a}'],
                                capture_output=True, text=True, timeout=3600)
             print(r.stdout[-1200:], r.stderr[-1200:], flush=True)
