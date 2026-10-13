@@ -48,10 +48,10 @@ def main():
     done_c = {k.rsplit("/", 1)[1][:-5] for k in keys(f"bot/insurers/census/{MONTH}/{out.strip('/').replace('/', '_')}/")}
     done_e = {k.rsplit("/", 1)[1][:-8] for k in keys(f"{out}ends/")}
     todo = sorted((n, t) for t, n in tables.items() if not (t in done_c and t in done_e))
-    if a.limit:
-        todo = todo[:a.limit]
     print(f"{a.scope}: {len(tables)} tables, {len(tables) - len(todo)} already done, {len(todo)} to do "
           f"({sum(n for n, _ in todo) / 1e9:.1f} GB, smallest first)", flush=True)
+    if a.limit:
+        todo = todo[:a.limit]
 
     con = duckdb.connect()
     tmp = Path("/tmp/duck"); tmp.mkdir(exist_ok=True)
