@@ -60,7 +60,8 @@ Every day at 5:47am Central (`insurers/bot.py`, workflow "Insurer price files"):
 2. **Find this month's file** for each of the 76 DFW networks in `insurers/networks.csv`. Insurers date their file names, so the bot tries each date from today back to the file it already has. Files with a fixed link (Wellpoint) are checked in place.
 3. **Check without downloading:** same ETag, or the same `last_updated_on` inside the file plus the same size, means unchanged. That network gets `last_checked` = today.
 4. **Rent one DigitalOcean machine per insurer group** with changed files (UnitedHealthcare, Aetna, BCBSTX, Cigna, everyone else). Each machine runs the unchanged 06f pipeline, replaces that network's tables in R2 `data/full/rates/` and `data/full/membership/`, then deletes itself.
-5. **Double-count fix:** when the new file has a new name, the old month's tables move to `work/retired/<yyyy-mm>/` after the new ones are safely uploaded, so each network is counted once.
+5. **Keep every field and take an inventory (Oct 13):** tables also keep each code's description and version, the insurer's "additional information" notes, bundled codes and covered services. After each file, 06f writes a "what's in the file" inventory (real counts: how often each field is filled, top values for arrangement, rate type, class, setting, expiration, notes) to `bot/insurers/census/<yyyy-mm>/<scope>/<table>.json`. Research only, never shown as a price; a census error never fails the read.
+6. **Double-count fix:** when the new file has a new name, the old month's tables move to `work/retired/<yyyy-mm>/` after the new ones are safely uploaded, so each network is counted once.
 
 Problems (failed reads, rows down by more than half, dead links) open a GitHub issue labeled `insurer-file-alert`, once per problem. State: R2 `bot/insurers/manifest.csv`; machine logs and results: `bot/insurers/runs/<run>/`.
 
