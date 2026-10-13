@@ -90,6 +90,29 @@ def main():
     L += ["", f"Percent-of-charges rates: {pc:,} rows ({pct(pc, total)}).", "",
           "## Most common insurer notes (\"additional information\")", ""]
     L += [f"- {k} ({v:,} rows)" for k, v in notes.most_common(15)] or ["- none yet"]
+    # Contract end dates, as written in the files (insurers use 9999-12-31 / 2999-12-31 for "no set end")
+    ends, per_ins = Counter(), defaultdict(Counter)
+    for f in files:
+        ins = f.get("header", {}).get("reporting_entity_name", "") or f.get("network", "")
+        for e in f.get("contract_ends_by_month", []):
+            ends[e["month"]] += e["prices"]
+            per_ins[ins]["dated" if e["month"] not in ("blank", "no set end") else e["month"]] += e["prices"]
+            if e["month"] not in ("blank", "no set end") and e["month"] <= f"{int(MONTH[:4]) + 1}{MONTH[4:]}":
+                per_ins[ins]["within a year"] += e["prices"]
+    if ends:
+        L += ["", "## Contract end dates (as written in the files)", "",
+              "Prices whose contract ends in each of the next 12 months, summed across files. 'No set end' = the insurer wrote "
+              "9999-12-31 or 2999-12-31. Per-provider dates: `<scope>/ends/<table>.parquet` in R2.", "",
+              "| Month | Prices ending |", "|---|---|"]
+        nxt = sorted(m for m in ends if m not in ("blank", "no set end") and m >= MONTH)[:12]
+        L += [f"| {m} | {ends[m]:,} |" for m in nxt]
+        tot = sum(ends.values())
+        L += ["", f"No set end: {pct(ends['no set end'], tot)} of prices. Blank: {pct(ends['blank'], tot)}. "
+              f"Already past their end date: {pct(sum(v for m, v in ends.items() if m not in ('blank', 'no set end') and m < MONTH), tot)}.",
+              "", "| Insurer | Prices with a real end date | Ending within a year | No set end |", "|---|---|---|---|"]
+        for ins, c in sorted(per_ins.items()):
+            t = sum(v for k, v in c.items() if k != "within a year")
+            L.append(f"| {ins} | {pct(c['dated'], t)} | {pct(c['within a year'], t)} | {pct(c['no set end'], t)} |")
     L += ["", f"Per-file detail: `reports/census/{MONTH}.csv`."]
     (OUT / f"{MONTH}.md").write_text("\n".join(L) + "\n")
     print(f"{len(files)} inventories -> reports/census/{MONTH}.md and .csv")

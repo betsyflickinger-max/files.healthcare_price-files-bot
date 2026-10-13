@@ -221,41 +221,23 @@ def extract(path, ctx):
         print(f"  ! census skipped: {e}", flush=True)
 
 
-CENSUS = DATA / "census"
-GROUPED = ["billing_code_type", "billing_code_type_version", "negotiation_arrangement", "negotiated_type", "billing_class",
-           "setting", "expiration_date", "additional_information"]
-FILLED = ["additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
-          "service_code", "expiration_date", "setting", "billing_code_type_version"]
+CENSUS, ENDS = DATA / "census", DATA / "ends"
 
 
 def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_groups, n_npis):
-    """'What's in the file': an inventory of the in-scope rows, so we can spot useful details before deciding
-    what to do with them. Real counts, no sampling. One JSON per file; research only, never shown as a price."""
+    """'What's in the file' inventory + per-provider contract end dates (pipeline/inventory.py).
+    Real counts, no sampling; research only, never shown as a price."""
+    import inventory
     t = f"read_parquet('{rates}')"
-    out = {"source_file": source_file, "source_url": source_url, "network": label, "checked_on": date.today().isoformat(),
-           "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
-           "rows": n_rows, "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
-    if n_rows:
-        d = con.execute(f"select approx_count_distinct(billing_code), approx_count_distinct(npi), approx_count_distinct(tin), "
-                        + ", ".join(f"count_if({c} <> '')" for c in FILLED)
-                        + f", count_if(negotiated_type ilike 'percent%') from {t}").fetchone()
-        out["distinct_approx"] = dict(zip(["billing_codes", "npis", "tins"], d[:3]))
-        out["rows_with_value"] = dict(zip(FILLED, d[3:-1]))
-        out["percent_of_charges_rows"] = d[-1]
-        # one scan for every breakdown; GROUPING() says which column each result row belongs to
-        sets = ", ".join(f"({c})" for c in GROUPED)
-        rows = con.execute(f"select {', '.join(GROUPED)}, " + ", ".join(f"grouping({c})" for c in GROUPED)
-                           + f", count(*) from {t} group by grouping sets ({sets})").fetchall()
-        k = len(GROUPED)
-        tops = {c: [] for c in GROUPED}
-        for r in rows:
-            i = r[k:2 * k].index(0)
-            tops[GROUPED[i]].append((r[i], r[-1]))
-        out["values"] = {c: {"distinct": len(v), "top": [{"value": x, "rows": n} for x, n in sorted(v, key=lambda z: -z[1])[:25]]}
-                         for c, v in tops.items()}
+    base = {"source_file": source_file, "source_url": source_url, "network": label, "checked_on": date.today().isoformat(),
+            "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
+            "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
+    out = inventory.census(con, t, base)
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=1, default=str))
-    print(f"  census -> {dest.name}", flush=True)
+    ENDS.mkdir(parents=True, exist_ok=True)
+    inventory.contract_ends(con, t, ENDS / Path(rates).name)
+    print(f"  census + contract end dates -> {dest.stem}", flush=True)
 
 
 def membership_only(path, ctx):
