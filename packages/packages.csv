@@ -1,17 +1,17 @@
-package,name,role,codes,billing_class,in_total,note,taxonomy
-colonoscopy,Colonoscopy (diagnostic),facility,45378,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X
-colonoscopy,Colonoscopy (diagnostic),doctor,45378,professional,yes,the gastroenterologist's fee,207RG0100X|208600000X|208C00000X
-colonoscopy,Colonoscopy (diagnostic),anesthesia,00811|00812,professional,no,billed by time; shown separately,207L|367500000X
-colonoscopy,Colonoscopy (diagnostic),pathology,88305,professional,no,only if a biopsy or polyp is removed,207ZP
-knee-scope,Knee arthroscopy (meniscus repair or trim),facility,29881,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X
-knee-scope,Knee arthroscopy (meniscus repair or trim),doctor,29881,professional,yes,the orthopedic surgeon's fee,207X
-knee-scope,Knee arthroscopy (meniscus repair or trim),anesthesia,01400,professional,no,billed by time; shown separately,207L|367500000X
-cataract,Cataract surgery,facility,66984,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X
-cataract,Cataract surgery,doctor,66984,professional,yes,the eye surgeon's fee,207W
-cataract,Cataract surgery,anesthesia,00142,professional,no,billed by time; shown separately,207L|367500000X
-carpal-tunnel,Carpal tunnel release,facility,64721,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X
-carpal-tunnel,Carpal tunnel release,doctor,64721,professional,yes,the hand surgeon's fee,207X|2082S0099X|208200000X
-carpal-tunnel,Carpal tunnel release,anesthesia,01810,professional,no,billed by time; shown separately,207L|367500000X
-gallbladder,Gallbladder removal (laparoscopic),facility,47562,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X
-gallbladder,Gallbladder removal (laparoscopic),doctor,47562,professional,yes,the general surgeon's fee,208600000X|208C00000X
-gallbladder,Gallbladder removal (laparoscopic),anesthesia,00790,professional,no,billed by time; shown separately,207L|367500000X
+package,name,role,codes,billing_class,in_total,note,taxonomy,family
+colonoscopy,Colonoscopy (diagnostic),facility,45378,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X,45378|45380|45384|45385
+colonoscopy,Colonoscopy (diagnostic),doctor,45378,professional,yes,the gastroenterologist's fee,207RG0100X|208600000X|208C00000X,45378|45380|45384|45385
+colonoscopy,Colonoscopy (diagnostic),anesthesia,00811|00812,professional,no,billed by time; shown separately,207L|367500000X,00811|00812|00813
+colonoscopy,Colonoscopy (diagnostic),pathology,88305,professional,no,only if a biopsy or polyp is removed,207ZP,88305
+knee-scope,Knee arthroscopy (meniscus repair or trim),facility,29881,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X,29881|29880|29877
+knee-scope,Knee arthroscopy (meniscus repair or trim),doctor,29881,professional,yes,the orthopedic surgeon's fee,207X,29881|29880|29877
+knee-scope,Knee arthroscopy (meniscus repair or trim),anesthesia,01400,professional,no,billed by time; shown separately,207L|367500000X,01400|01382
+cataract,Cataract surgery,facility,66984,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X,66984|66982
+cataract,Cataract surgery,doctor,66984,professional,yes,the eye surgeon's fee,207W,66984|66982
+cataract,Cataract surgery,anesthesia,00142,professional,no,billed by time; shown separately,207L|367500000X,00142
+carpal-tunnel,Carpal tunnel release,facility,64721,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X,64721|26055|25000
+carpal-tunnel,Carpal tunnel release,doctor,64721,professional,yes,the hand surgeon's fee,207X|2082S0099X|208200000X,64721|26055|25000
+carpal-tunnel,Carpal tunnel release,anesthesia,01810,professional,no,billed by time; shown separately,207L|367500000X,01810|01820
+gallbladder,Gallbladder removal (laparoscopic),facility,47562,institutional,yes,the hospital or surgery center's fee,282N|261QA1903X,47562|47563
+gallbladder,Gallbladder removal (laparoscopic),doctor,47562,professional,yes,the general surgeon's fee,208600000X|208C00000X,47562|47563
+gallbladder,Gallbladder removal (laparoscopic),anesthesia,00790,professional,no,billed by time; shown separately,207L|367500000X,00790
