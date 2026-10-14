@@ -52,6 +52,17 @@ def state_npis():
 def tout(slug): return f'site/every-st/{slug}/{MONTH}/'
 
 
+# Oct 14: while the state builds ran, the insurer queue was paused (hold.txt starting 'state-pages pause') so its machine
+# slots went to the builds; files already being read finished. Lifted here as soon as every state is built.
+PAUSE_KEYS = ['bot/insurers/tx/hold.txt', 'bot/insurers/hold.txt', 'bot/fleet/hold_hospitals.txt']
+def lift_pause():
+    for k in PAUSE_KEYS:
+        try:
+            if s3.get_object(Bucket=B, Key=k)['Body'].read().decode().startswith('state-pages pause'):
+                s3.delete_object(Bucket=B, Key=k); log('insurer queue pause lifted:', k)
+        except Exception: pass
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -104,8 +115,9 @@ def main():
                            MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * 256 // n), **W)
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         log('states still building:', ', '.join(left) or 'none')
-        if not left: st['stage'] = 'hosp'
+        if not left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
+        lift_pause()
         log('insurer builds done; the hospital step (hosp_area.py, HOSP_SCOPE=s7) builds hospitals and publishes the pages')
     putj(SP + 'state.json', st)
 
