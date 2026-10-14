@@ -1,0 +1,53 @@
+name: Find insurers' price files (every state)
+
+# insurers/find_insurers.py (Oct 14, 2026): every marketplace insurer in every state (CMS file + state-run
+# marketplaces), searched for its Transparency in Coverage files; the bot opens every find itself. Results in
+# data/insurer_sources.csv. Finding a file doesn't read it: adding insurers to the reading list stays a separate step.
+on:
+  schedule:
+    - cron: "23 9 7 * *"   # 7th of each month, 4:23am Central
+  workflow_dispatch:
+    inputs:
+      states:
+        description: "Only these states, comma-separated (blank = all)"
+        default: ""
+      limit:
+        description: "Max insurer-state pairs to search (0 = all)"
+        default: "0"
+      model:
+        description: "Claude model"
+        default: "claude-haiku-5-5"
+
+concurrency:
+  group: insurer-search
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MODEL: ${{ inputs.model || 'claude-haiku-5-5' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Search
+        run: |
+          python insurers/find_insurers.py --states "${{ inputs.states }}" --limit "${{ inputs.limit || '0' }}" | tee out.txt
+          grep "^done" out.txt >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Save to main
+        if: always()
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "price-files-bot@users.noreply.github.com"
+          git add data/insurer_sources.csv
+          git commit -m "Insurer file search $(date -u +%F): $(grep '^done' out.txt | cut -c1-200)" || exit 0
+          git pull --rebase -q origin main && git push origin HEAD:main
