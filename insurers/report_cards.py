@@ -93,7 +93,7 @@ def main():
             c["zero"] += j.get("zero_dollar_rows", 0)
             c["roster"] += j.get("roster_rows", 0) or 0
             c["no_price"] += j.get("roster_listed_no_prices", 0) or 0
-            c["ends"] += (j.get("rows_with_value") or {}).get("expiration_date", 0)
+            c["ends"] += sum(e["prices"] for e in j.get("contract_ends_by_month", []) if e["month"] not in ("blank", "no set end"))
             c["past"] += j.get("prices_already_past_end_date", 0)
 
     out = []
@@ -115,7 +115,7 @@ def main():
          f"- **Up to date:** the file's own 'last updated' date is within {UP_TO_DATE_DAYS} days (the rule requires monthly updates).",
          "- **$0.00 prices:** share of dollar-type prices listed as $0.00, which tells a patient nothing.",
          "- **Listed, no prices:** providers the insurer lists in-network in our area that have no price at all in the file.",
-         "- **End dates:** share of prices that carry a contract end date; and the share whose end date has already passed.", "",
+         "- **End dates:** share of prices with a real contract end date (placeholders like 9999-12-31 don't count); and the share whose end date has already passed.", "",
          "Counts cover the providers in each area only. '—' = not measured yet (inventory still being filled in).", ""]
     for scope in SCOPES:
         rows = [r for r in out if r["scope"] == scope]
