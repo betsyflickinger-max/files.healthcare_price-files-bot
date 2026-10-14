@@ -18,6 +18,10 @@ on:
         description: "Also search hospitals whose link is broken or isn't a price file"
         type: boolean
         default: false
+      all_outstanding:
+        description: "Every hospital without a working file, whatever the reason (the monthly run does this)"
+        type: boolean
+        default: true
       model:
         description: "Claude model"
         default: "claude-haiku-5-5"
@@ -56,7 +60,8 @@ jobs:
       - name: Search
         run: |
           python bot/search_files.py --limit "${{ inputs.limit || '0' }}" --states "${{ inputs.states }}" \
-            ${{ inputs.also_broken && '--also-broken' || '' }} | tee out.txt
+            ${{ inputs.also_broken && '--also-broken' || '' }} \
+            ${{ (github.event_name == 'schedule' || inputs.all_outstanding) && '--all-outstanding' || '' }} | tee out.txt
           grep "^done" out.txt >> "$GITHUB_STEP_SUMMARY" || true
       - name: Save to main
         if: always()
@@ -72,7 +77,7 @@ jobs:
         run: |
           if grep -qE "left [1-9]" out.txt; then
             gh workflow run web-search.yml --ref main -f states="${{ inputs.states }}" -f model="${{ inputs.model || 'claude-haiku-5-5' }}" \
-              -f research_days="${{ inputs.research_days || '30' }}" -f also_broken="${{ inputs.also_broken || false }}"
+              -f research_days="${{ inputs.research_days || '30' }}" -f also_broken="${{ inputs.also_broken || false }}" -f all_outstanding="${{ github.event_name == 'schedule' || inputs.all_outstanding }}"
           fi
       - name: Open an issue for finds that need a hand check
         env:

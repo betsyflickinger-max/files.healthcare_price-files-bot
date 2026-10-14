@@ -4,3 +4,4 @@ ijson==3.3.0
 zstandard==0.23.0
 rapidfuzz==3.10.0
 internetarchive==5.0.0
+remotezip==0.12.6

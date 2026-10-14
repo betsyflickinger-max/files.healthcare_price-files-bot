@@ -143,10 +143,26 @@ def head_text(url, limit=1_000_000):
                 if len(buf) >= limit:
                     break
             if buf[:2] == b"PK" or "zip" in ct:
-                return "", "zip file"
+                return zip_head(url, limit)
             return buf.decode("utf-8", "replace"), ct
     except requests.RequestException as e:
         return "", type(e).__name__
+
+
+def zip_head(url, limit=1_000_000):
+    """Oct 14: read the start of the price file INSIDE a zip without downloading the whole zip (HTTP range requests
+    fetch the zip's table of contents and the first part of the file). ('', 'zip file') if the server won't allow it."""
+    try:
+        from remotezip import RemoteZip
+        with RemoteZip(url, headers={"User-Agent": discover.UA}, timeout=60, verify=False) as z:
+            members = [i for i in z.infolist() if re.search(r"\.(json|csv)$", i.filename, re.I)]
+            if not members:
+                return "", "zip file (no JSON or CSV inside)"
+            m = max(members, key=lambda i: i.file_size)
+            with z.open(m) as f:
+                return f.read(limit).decode("utf-8", "replace"), "zip:" + m.filename[-60:]
+    except Exception as e:
+        return "", f"zip file ({type(e).__name__})"
 
 
 def names_in_file(text):
@@ -182,8 +198,8 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
     A match on the LEGAL name only is weak (sister hospitals share one legal entity: every Baptist Health hospital in
     Montgomery is "Health Care Authority for Baptist Health"), so it needs the everyday name's words in the link too."""
     text, info = head_text(url)
-    if info == "zip file":
-        return "held", "zipped file link (can't check the hospital name inside without downloading it)"
+    if info.startswith("zip file"):
+        return "held", "zipped file link; the server wouldn't let the bot peek inside without downloading it all"
     if not text:
         return None, f"file link {info}" if info else "file link unreadable"
     names, addr = names_in_file(text)
@@ -352,9 +368,17 @@ def logged_hosts(L):
     return [x for x in dict.fromkeys(hs) if x and not x.endswith(discover.SHARED_HOSTS)]
 
 
-def targets(rows, a):
+OK_STATUS = {"unchanged", "new - first version saved", "changed - new version saved", "too large for free runner"}
+
+
+def targets(rows, a, log=None):
+    """Hospitals to search. Default: "no price file found" (+ broken / not-a-price-file with --also-broken).
+    --all-outstanding: every hospital without a working file, whatever the reason (broken link, not a price file,
+    unreadable, never checked even with a website on record). A hospital we already found a link for is skipped
+    until the daily run has checked that link."""
     want = {s.strip().upper() for s in (a.states or "").split(",") if s.strip()}
     bad = {"no price file found"} | ({"link broken", "not a price file"} if a.also_broken else set())
+    log = log or {}
     s3, bucket = store.r2()
     status = {}
     for st in sorted({r["state"] for r in rows}):
@@ -363,15 +387,22 @@ def targets(rows, a):
         try:
             body = s3.get_object(Bucket=bucket, Key=f"{store.R2_PREFIX}manifest/hospitals/{st}.csv")["Body"].read().decode()
             for m in csv.DictReader(io.StringIO(body)):
-                status[m["ccn"]] = m.get("status", "")
+                status[m["ccn"]] = (m.get("status", ""), m.get("last_checked", "")[:10])
         except Exception:
             pass
     out = []
     for r in rows:
         if want and r["state"] not in want:
             continue
-        s = status.get(r["ccn"])
-        if s in bad or (s is None and not r.get("index_domain") and not r.get("mrf_url")):
+        s, checked = status.get(r["ccn"], (None, ""))
+        L = log.get(r["ccn"], {})
+        if L.get("result") == "found" and L.get("searched_at", "") >= checked:
+            continue   # found a link; the daily run hasn't checked it yet
+        if getattr(a, "all_outstanding", False):
+            hit = s not in OK_STATUS
+        else:
+            hit = s in bad or (s is None and not r.get("index_domain") and not r.get("mrf_url"))
+        if hit:
             r["_status"] = s or "never checked"
             out.append(r)
     return out
@@ -382,6 +413,8 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--states", default="")
     ap.add_argument("--also-broken", action="store_true")
+    ap.add_argument("--all-outstanding", action="store_true",
+                    help="every hospital without a working file (see targets())")
     ap.add_argument("--workers", type=int, default=12)
     ap.add_argument("--no-deep-again", action="store_true",
                     help="don't run the free layers again on hospitals searched recently and not found")
@@ -398,7 +431,7 @@ def main():
     log = {r["ccn"]: r for r in csv.DictReader(open(LOG, encoding="utf-8"))} if LOG.exists() else {}
     cut = (date.today() - timedelta(days=int(E.get("RESEARCH_DAYS") or 30))).isoformat()
     todo = []
-    for r in targets(rows, a):
+    for r in targets(rows, a, log):
         L = log.get(r["ccn"], {})
         if L.get("searched_at", "") < cut:
             todo.append(r)
@@ -411,6 +444,28 @@ def main():
     NAMES = deep.enrollment_names()
     NAT = deep.National(rows)
     VENDORS = [] if E.get("NO_ARCHIVES") == "1" else deep.vendor_urls()
+    # free re-check of the hand-check list with today's checks (Oct 14: zipped files can now be read without a download)
+    byccn = {r["ccn"]: r for r in rows}
+    rech = {"found": 0, "dropped": 0}
+    def recheck(L):
+        h = byccn.get(L["ccn"])
+        if not h or not L.get("mrf_url"):
+            return L, None, ""
+        legal = NAMES.get(h["ccn"], {}).get("legal", "")
+        return L, *check_file(h, L["mrf_url"], h["_norm"] in fs.DUP, deep.all_names(h, NAMES), legal=legal)
+    held_now = [L for L in log.values() if L.get("result") == "held" and L.get("mrf_url")]
+    with ThreadPoolExecutor(a.workers) as ex:
+        for L, ok, msg in ex.map(recheck, held_now):
+            if ok == "yes":
+                h = byccn[L["ccn"]]
+                if not h.get("mrf_url"):
+                    h["mrf_url"], h["found_by"] = L["mrf_url"], f"web {date.today().isoformat()}"
+                L.update(result="found", how="re-check: " + msg); rech["found"] += 1
+            elif ok is None:
+                L.update(result="not found", why=("re-check: " + msg + "; " + L.get("why", ""))[:400], mrf_url=""); rech["dropped"] += 1
+            elif msg:
+                L["how"] = msg if "zip" in msg else L["how"]
+    print(f"  hand-check list re-checked: {len(held_now)}; now found {rech['found']}, not this hospital {rech['dropped']}", flush=True)
     print(f"{len(todo):,} hospitals to search (model {MODEL}, up to {MAX_SEARCHES} searches each)", flush=True)
     t0, stop = time.time(), float(E.get("STOP_AFTER_MIN") or 320) * 60
     today = date.today().isoformat()
