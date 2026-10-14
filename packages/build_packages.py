@@ -111,6 +111,11 @@ def main():
         left join doc pa on pa.package = f.package and pa.network = f.network and pa.role = 'pathology'
         left join nt n on n.npi = f.npi
         where f.role = 'facility'""")  # a facility fee belongs to an organization, not one doctor
+    # Flat-price networks: one facility fee for every facility in the network (e.g. a default rate). Kept and labeled,
+    # but left out of lowest/highest rankings (Betsy, Oct 14, 2026).
+    con.execute("""alter table pk add column same_price_everywhere boolean""")
+    con.execute("""update pk set same_price_everywhere = (select count(distinct facility_fee) = 1 and count(*) >= 10 from pk p2
+                   where p2.package = pk.package and p2.network = pk.network)""")
     con.execute("copy pk to '/tmp/pk.parquet' (format parquet, compression zstd)")
     s3.upload_file("/tmp/pk.parquet", B, f"data/packages/{MONTH}/{a.area}.parquet")
 
@@ -121,20 +126,25 @@ def main():
          "Anesthesia (billed by time) and pathology are shown separately, never added. For review; not on the site yet.", ""]
     for pkg, name in con.execute('select distinct package, "name" from pk order by 1').fetchall():
         s = con.execute(f"""select count(*), count(distinct facility_npi), count(distinct network), min(total_low), max(total_high),
-                                   quantile_disc(total_middle, 0.5) from pk where package = '{pkg}'""").fetchone()
+                                   quantile_disc(total_middle, 0.5) from pk where package = '{pkg}' and not same_price_everywhere""").fetchone()
         L += [f"## {name}", "", f"{s[0]:,} facility-and-network prices: {s[1]:,} facilities in {s[2]} networks. "
               f"Totals run from {money(s[3])} to {money(s[4])}.", "",
               "Lowest five, using each network's middle doctor's fee:", "",
               "| Facility | City | Network | Facility fee | Doctor (low / middle / high) | Total with middle doctor | Anesthesia (separate) |",
               "|---|---|---|---|---|---|---|"]
         for r in con.execute(f"""select facility, city, network, facility_fee, doctor_low, doctor_middle, doctor_high, total_middle,
-                                        anesthesia_low, anesthesia_high from pk where package = '{pkg}' order by total_middle limit 5""").fetchall():
+                                        anesthesia_low, anesthesia_high from pk where package = '{pkg}' and not same_price_everywhere order by total_middle limit 5""").fetchall():
             L.append(f"| {r[0]} | {(r[1] or '').title()} | {r[2]} | {money(r[3])} | {money(r[4])} / {money(r[5])} / {money(r[6])} | "
                      f"{money(r[7])} | {money(r[8])}–{money(r[9])} |")
         L += ["", "Highest five:", "", "| Facility | City | Network | Facility fee | Total with middle doctor |", "|---|---|---|---|---|"]
-        for r in con.execute(f"""select facility, city, network, facility_fee, total_middle from pk where package = '{pkg}'
+        for r in con.execute(f"""select facility, city, network, facility_fee, total_middle from pk where package = '{pkg}' and not same_price_everywhere
                                  order by total_middle desc limit 5""").fetchall():
             L.append(f"| {r[0]} | {(r[1] or '').title()} | {r[2]} | {money(r[3])} | {money(r[4])} |")
+        flat = con.execute(f"""select network, any_value(facility_fee), count(*) from pk where package = '{pkg}' and same_price_everywhere
+                               group by network order by 1""").fetchall()
+        if flat:
+            L += ["", "Same facility price at every facility in the network (labeled on the site, left out of rankings):", ""]
+            L += [f"- {n}: {money(v)} at {c:,} facilities" for n, v, c in flat]
         L.append("")
     out = HERE.parent / "reports" / "packages" / f"{MONTH}.md"
     out.parent.mkdir(parents=True, exist_ok=True)

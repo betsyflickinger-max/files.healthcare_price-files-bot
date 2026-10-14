@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: "33 14 12 * *"   # monthly on the 12th, 9:33am Central (after the month's insurer tables are read)
   workflow_dispatch:
+    inputs:
+      reuse:
+        description: "Rebuild from this month's saved price rows (minutes, not hours)"
+        type: boolean
+        default: false
 
 concurrency:
   group: packages
@@ -27,7 +32,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 duckdb==1.5.6
-      - run: python packages/build_packages.py
+      - run: python packages/build_packages.py ${{ inputs.reuse && '--reuse' || '' }}
       - name: Save the summary
         run: |
           git config user.name "price-files-bot"
