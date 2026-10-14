@@ -1,0 +1,76 @@
+name: Search the web for missing hospital price files
+
+# bot/search_files.py (Oct 14, 2026): for each hospital the daily run marks "no price file found", Claude searches the
+# web for its website, cms-hpt.txt and file links; the bot checks every find itself before adding it to
+# data/hospitals.csv. Monthly re-search of anything still missing (RESEARCH_DAYS), and by hand.
+on:
+  schedule:
+    - cron: "13 8 6 * *"   # 6th of each month, 3:13am Central
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "Max hospitals to search (0 = all; 40 for a test)"
+        default: "0"
+      states:
+        description: "Only these states, comma-separated (blank = all)"
+        default: ""
+      also_broken:
+        description: "Also search hospitals whose link is broken or isn't a price file"
+        type: boolean
+        default: false
+      model:
+        description: "Claude model"
+        default: "claude-haiku-5-5"
+      research_days:
+        description: "Skip hospitals this bot searched in the last N days"
+        default: "30"
+
+concurrency:
+  group: web-search
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 345
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MODEL: ${{ inputs.model || 'claude-haiku-5-5' }}
+      RESEARCH_DAYS: ${{ inputs.research_days || '30' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Search
+        run: |
+          python bot/search_files.py --limit "${{ inputs.limit || '0' }}" --states "${{ inputs.states }}" \
+            ${{ inputs.also_broken && '--also-broken' || '' }} | tee out.txt
+          grep "^done" out.txt >> "$GITHUB_STEP_SUMMARY" || true
+      - name: Save to main
+        if: always()
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "price-files-bot@users.noreply.github.com"
+          git add data/hospitals.csv data/web_search_log.csv
+          git commit -m "Web search for missing price files $(date -u +%F): $(grep '^done' out.txt | cut -c1-200)" || exit 0
+          git pull --rebase -q origin main && git push origin HEAD:main
+      - name: Open an issue for finds that need a hand check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -s held_web.md ]; then
+            gh label create hospital-web-check --color 5319E7 --description "Web-search find needs a person to confirm" 2>/dev/null || true
+            gh issue list --label hospital-web-check --state open --json number --jq '.[].number' | xargs -r -I{} gh issue close {} -c "Replaced by the latest list."
+            gh issue create --title "Price files found by web search, to check by hand $(date -u +%F)" --body-file held_web.md --label hospital-web-check
+          fi
