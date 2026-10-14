@@ -82,3 +82,11 @@ def room():
     r = requests.get(f"{API}/droplets", params={"per_page": 200}, headers=_h(), timeout=60)
     r.raise_for_status()
     return lim - len(r.json()["droplets"])
+
+
+def fleet():
+    """The shared-queue machines that exist now: list of (id, name, created_at, size)."""
+    r = requests.get(f"{API}/droplets", params={"tag_name": TAG, "per_page": 200}, headers=_h(), timeout=60)
+    r.raise_for_status()
+    return [(d["id"], d["name"], d["created_at"], d["size_slug"]) for d in r.json()["droplets"]
+            if d["name"].startswith("upfront-fleet-")]

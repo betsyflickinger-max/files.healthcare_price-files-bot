@@ -28,6 +28,7 @@ sys.path[:0] = [str(HERE), str(HERE.parent / "bot")]
 import check  # noqa: E402
 import droplets  # noqa: E402
 import find_links  # noqa: E402
+import fleet  # noqa: E402
 import store  # noqa: E402
 
 P = "bot/insurers/"
@@ -49,10 +50,10 @@ REREAD_OLD_TABLES = True
 SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
 # Oct 12, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and sfo3, so the
 # last Texas Cigna file (Pathwell OAP) could not start; s-8vcpu-32gb-amd was renting fine in nyc3 (and Cigna ran out of memory before).
-PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 1, "cigna": 1, "small": 12, "bcbs": 4, "parts": 30}  # files per machine
-# bcbs = Blue plans' ~0.1-1.4 GB files; parts = multi-part networks whose parts are all under 50 MB (BCBS Tennessee)
+# Oct 14, 2026: no more fixed files-per-machine batches. Every waiting file is one job in the shared queue
+# (insurers/fleet.py); each machine keeps taking the next job it is big enough for until none are left.
 RESERVE = 0  # slots to leave free for other jobs; 0 = use every free machine
-ST_ROOM = 4  # while the seven-state website build runs, Texas/DFW files leave this many machines free for it
+ST_ROOM = fleet.ST_ROOM  # while the seven-state website build runs, leave this many machines free for it
 SCOPE = "dfw"  # biggest files; anything else: 4 vCPU / 8 GB
 # Machine cap (Oct 14, 2026): no fixed number. droplets.room() reads the account's live limit from DigitalOcean on
 # every pass, so a raised limit is used on the very next 10-minute pass (was a hard-coded 14, then 9 before Oct 13).
@@ -114,6 +115,17 @@ def load(s3, b, scope):
 
 def collect(s3, b, man, now, dry):
     notes = []
+    try:  # the shared machine queue: clear claims of machines that are gone, so their files go back in line
+        alive = {str(d[0]) for d in droplets.mine()}
+    except Exception as e:
+        alive = None
+        print("could not list machines:", e)
+    qjobs, qclaims = fleet.jobs(s3, b), fleet.claims(s3, b)
+    if alive is not None and not dry:
+        def save(j, res):
+            s3.put_object(Bucket=b, Key=j["done_key"], Body=json.dumps(res).encode())
+        for n in fleet.reap(s3, b, qjobs, qclaims, alive, save):
+            print("queue:", n)
     for m in man.values():
         if m.get("status") != "running":
             continue
@@ -121,6 +133,21 @@ def collect(s3, b, man, now, dry):
         try:
             res = json.loads(s3.get_object(Bucket=b, Key=key)["Body"].read())
         except Exception:
+            jid = fleet.job_id(SCOPE, m["slot"])
+            if jid in qjobs:  # in the shared queue: only the time on a machine counts toward "stuck"
+                c = qclaims.get(jid)
+                if not c:
+                    m["detail"] = "in the machine queue, waiting for a free machine"
+                    continue
+                if fleet.age_mins(c.get("claimed_at", "")) / 60 <= STUCK_HOURS:
+                    m["detail"] = f"being read on {c.get('name')} since {c.get('claimed_at', '')[:16].replace('T', ' ')} UTC"
+                    continue
+                if not dry:  # a machine stuck on one file: return it and take the file out of line
+                    droplets.delete(c.get("droplet_id"))
+                    fleet.finish(s3, b, jid)
+                m.update(status="failed", detail=f"machine gave no result in {STUCK_HOURS} hours", fails=str(int(m.get("fails") or 0) + 1))
+                notes.append(("failed", m))
+                continue
             age = (now - datetime.fromisoformat(m["launched_at"].replace("Z", "+00:00"))).total_seconds() / 3600
             if age > STUCK_HOURS:
                 m.update(status="failed", detail=f"machine gave no result in {STUCK_HOURS} hours", fails=str(int(m.get("fails") or 0) + 1))
@@ -140,11 +167,17 @@ def collect(s3, b, man, now, dry):
         else:
             m.update(status="failed", detail=res.get("error", "unknown error")[:300], fails=str(int(m.get("fails") or 0) + 1))
             notes.append(("failed", m))
-    # cost safety net: any bot machine older than STUCK_HOURS is deleted
+    # cost safety net. Old fixed-list machines: any older than STUCK_HOURS is deleted. Queue machines may run as long
+    # as there is work, so one is deleted only if it has held no job for an hour (stuck starting up or failed to exit).
     try:
+        busy = {str(c.get("droplet_id")) for c in qclaims.values()}
         for did, name, created in droplets.mine():
             age = (now - datetime.fromisoformat(created.replace("Z", "+00:00"))).total_seconds() / 3600
-            if age > STUCK_HOURS and not dry:
+            if name.startswith(fleet.NAME):
+                if str(did) not in busy and age > 1 and not dry:
+                    droplets.delete(did)
+                    print(f"deleted idle queue machine {name} ({age:.1f} h old, holding no job)")
+            elif age > STUCK_HOURS and not dry:
                 droplets.delete(did)
                 print(f"deleted leftover machine {name} ({age:.0f} h old)")
     except Exception as e:
@@ -204,15 +237,14 @@ def check_all(man, today, only, force=False):
     return notes
 
 
-def user_data(run_id, group, env):
-    env = dict(env, SCOPE_KEY=SCOPES[SCOPE][1], OUT_PREFIX=SCOPES[SCOPE][2], RUN_PREFIX=P)
+def user_data(env):
+    """Start-up script for a queue machine: install, then take jobs from the shared queue until none are left."""
     exports = "\n".join(f"export {k}='{v}'" for k, v in env.items())
     return f"""#!/bin/bash
 exec > /var/log/job.log 2>&1
 set -x
 export DEBIAN_FRONTEND=noninteractive HOME=/root
 {exports}
-export RUN_ID='{run_id}' GROUP='{group}'
 apt-get update -y && apt-get install -y python3-venv git curl
 curl -sL https://go.dev/dl/go1.26.9.linux-amd64.tar.gz | tar -C /usr/local -xz
 export PATH=$PATH:/usr/local/go/bin
@@ -227,75 +259,61 @@ curl -s -X DELETE -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" https://api.dig
 
 
 def launch(s3, b, man, now, dry):
-    """Split queued files into machine loads (big files alone, small ones together) and rent as many
-    machines as the account allows. Anything that doesn't fit waits for the next daily run."""
-    # a queued file needs its new link; older manifests lost it, so those wait for the next full check
+    """Put this area's waiting files in the shared queue, then rent one machine per unclaimed job (biggest first)
+    until the account's live machine limit is reached. Machines keep taking jobs until none are left, so files that
+    don't get a machine now are picked up by the first machine that frees up."""
     queued = [m for m in man.values() if m.get("status") == "queued" and m.get("next_url")]
-    groups = {}
-    for m in queued:  # re-reads of unchanged files (backfill) never share a machine with new files
-        groups.setdefault((m["machine_group"], m.get("backfill") == "1"), []).append(m)
-    loads = []
-    for (g, rr), ms in groups.items():
-        n, tag = PER_MACHINE.get(g, 2), g + ("r" if rr else "")
-        loads += [(f"{tag}{i // n + 1}" if len(ms) > n else tag, g, ms[i:i + n]) for i in range(0, len(ms), n)]
-    # new files first, then re-reads; within each, biggest first: they take longest
-    loads.sort(key=lambda x: (x[2][0].get("backfill") == "1", x[1] not in ("uhc", "aetna"), x[0]))
-    try:  # a website build reads these tables; new ones landing mid-build would make it stop and start over
-        names = droplets.names()
-    except Exception:
-        names = []
-    # Oct 14: the seven-state build (upfront-site-st-*) reads only data/s7, so it holds back only the s7 files;
-    # Texas and DFW files go ahead but leave ST_ROOM machines free so that build keeps moving.
-    st_build = any(n.startswith("upfront-site-st-") for n in names)
-    building = [n for n in names if n.startswith("upfront-site-") and (SCOPE == "s7" or not n.startswith("upfront-site-st-"))]
-    keep_free = ST_ROOM if st_build and SCOPE != "s7" else 0
-    if building and queued and not dry:
-        for m in queued:
-            m["detail"] = f"waiting: a website build is running ({len(building)} machines); starts when it finishes"
-        print(f"Website build running ({len(building)} machines): {len(queued)} queued files wait")
-        return []
-    try:  # stay inside both our own cap and the account's limit (other jobs may be using machines)
-        free = droplets.room() - RESERVE - keep_free if not dry else 15
-    except Exception:
-        free = 1
-    # Use every free slot (Oct 13): split the biggest multi-file loads until there is one load per free machine.
-    while len(loads) < free:
-        big = max((l for l in loads if len(l[2]) > 1), key=lambda l: len(l[2]), default=None)
-        if big is None:
-            break
-        i = loads.index(big)
-        name, g, ms = big
-        h = len(ms) // 2
-        loads[i:i + 1] = [(f"{name}a", g, ms[:h]), (f"{name}b", g, ms[h:])]
     run_id = now.strftime("%Y%m%d-%H%M")
-    env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "DIGITALOCEAN_TOKEN",
-                                     "BOT_GITHUB_TOKEN")}
-    launched = []
-    for name, g, ms in loads:
-        size = SIZES.get(g, droplets.DEFAULT_SIZE)
-        if free <= 0:
-            for m in ms:
-                m["detail"] = "waiting for a free machine slot (account limit); starts on a later run"
-            continue
-        jobs = [dict(slot=m["slot"], url=m["next_url"], network_label=m["network_label"], prev_table=m.get("table", "")) for m in ms]
-        buf = io.StringIO()
-        w = csv.DictWriter(buf, ["slot", "url", "network_label", "prev_table"])
-        w.writeheader(); w.writerows(jobs)
+    for m in queued:
+        size = SIZES.get(m["machine_group"], droplets.DEFAULT_SIZE)
+        job = dict(id=fleet.job_id(SCOPE, m["slot"]), kind="insurer", scope=SCOPE, slot=m["slot"], url=m["next_url"],
+                   network_label=m["network_label"], prev_table=m.get("table", ""), group=m["machine_group"],
+                   size=size, mem=fleet.mem_gb(size), backfill="1" if m.get("backfill") == "1" else "",
+                   run_id=run_id, done_key=f"{P}runs/{run_id}/done/{m['slot']}.json", out_prefix=SCOPES[SCOPE][2],
+                   scope_key=SCOPES[SCOPE][1], hold_key=P + "hold.txt")
         if dry:
-            print(f"[dry run] would rent a {size} machine for {name}: {len(jobs)} files")
+            print(f"[dry run] would queue {job['id']} ({size})")
             continue
-        s3.put_object(Bucket=b, Key=f"{P}runs/{run_id}/{name}.csv", Body=buf.getvalue().encode())
+        fleet.put_job(s3, b, job)
+        u = m.pop("next_url")
+        m.update(status="running", run_id=run_id, launched_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"), droplet_id="",
+                 url=u, url_date=url_date(u) or m.get("url_date", ""),
+                 detail="in the machine queue, waiting for a free machine")
+    if dry:
+        return []
+    return fill(s3, b, now)
+
+
+def fill(s3, b, now):
+    """Rent machines for unclaimed queue jobs, up to the account's live limit. Returns [(machine name, job id)]."""
+    try:
+        everyone = droplets.names()
+        ours = droplets.fleet()
+        free = droplets.room() - RESERVE
+    except Exception as e:
+        print("could not read machines or the account limit:", e)
+        return []
+    if any(n.startswith("upfront-site-st-") for n in everyone):
+        free -= ST_ROOM
+    qjobs, qclaims = fleet.jobs(s3, b), fleet.claims(s3, b)
+    held = fleet.held_scopes(s3, b, qjobs, everyone)
+    for sc, why in held.items():
+        print(f"queue: {sc} files not started: {why}")
+    want = fleet.plan(qjobs, qclaims, held, ours, free)
+    env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET",
+                                     "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN")}
+    launched, stamp = [], now.strftime("%Y%m%d-%H%M")
+    for i, (size, job) in enumerate(want, 1):
+        name = f"{fleet.NAME}{fleet.mem_gb(size)}g-{stamp}-{i:02d}"
         try:
-            d = droplets.create(f"upfront-bot-{SCOPE}-{name}-{run_id}", user_data(run_id, name, env), size)
+            droplets.create(name, user_data(env), size)
         except Exception as e:
-            for m in ms:
-                m["detail"] = f"could not rent a machine: {str(e)[:200]}"
-            continue
-        free -= 1
-        for m in ms:
-            m.update(status="running", run_id=run_id, droplet_id=str(d["id"]), launched_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                     url=m.pop("next_url"), url_date=url_date(m["url"]) or m.get("url_date", ""))
-        launched.append((name, len(ms)))
+            print(f"could not rent a machine for {job['id']}: {str(e)[:200]}")
+            break  # the account or region is full; the next pass tries again
+        launched.append((name, job["id"]))
+    waiting = len([j for jid, j in qjobs.items() if jid not in qclaims])
+    print(f"queue: {len(qjobs)} jobs, {len(qclaims)} being read, {waiting} waiting; "
+          f"{len(ours)} queue machines running, {max(free, 0)} free slots, rented {len(launched)}")
     return launched
 
 
@@ -356,7 +374,7 @@ def main():
     if hold:
         lines.append(f"On hold, no machines rented: {hold[:200]}")
     if launched:
-        lines.append("Rented machines: " + ", ".join(f"{g} ({n} files)" for g, n in launched))
+        lines.append(f"Rented {len(launched)} queue machines (each keeps taking files until none are left)")
     lines += ["", "| Insurer | Network | Status | Detail |", "|---|---|---|---|"]
     lines += [f"| {m['insurer']} | {m['network_label']} | {m.get('status', '')} | {(m.get('detail') or '').replace('|', '/')[:120]} |" for m in rows]
     (out / "insurer_summary.md").write_text("\n".join(lines) + "\n")

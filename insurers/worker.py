@@ -1,6 +1,8 @@
-"""Runs on a rented machine: read each assigned insurer file and replace its tables in R2, then delete itself.
+"""Runs on a rented machine: read insurer files and replace their tables in R2, then delete itself.
 
-Job list: R2 bot/insurers/runs/<RUN_ID>/<GROUP>.csv  (slot, url, network_label, prev_table)
+Queue mode (Oct 14, 2026; the default): claim the next job from the shared queue (insurers/fleet.py) that this
+machine is big enough for, read it, save its result, and claim another, until nothing is left that it can take.
+Old mode (a fixed list, RUN_ID + GROUP set): R2 bot/insurers/runs/<RUN_ID>/<GROUP>.csv (slot, url, network_label, prev_table).
 For each file:
   1. 06f_full_extract.py (unchanged pipeline code): download, read the roster, stream every price for
      every in-scope provider into data/rates/<name>.parquet and data/membership/<name>.parquet.
@@ -17,6 +19,7 @@ import json
 import os
 import subprocess
 import sys
+import threading
 import time
 from datetime import date
 from pathlib import Path
@@ -35,16 +38,21 @@ s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflar
                   region_name="auto")
 B = E["R2_BUCKET"]
 RUN = os.environ.get("RUN_PREFIX", "bot/insurers/") + f"runs/{E['RUN_ID']}/"
-OUT = os.environ.get("OUT_PREFIX", "data/full/")  # data/full/ = DFW tables, data/tx/ = all of Texas
+OUT = os.environ.get("OUT_PREFIX", "data/full/")  # data/full/ = DFW tables, data/tx/ = all of Texas (set per job in queue mode)
 SCOPE_KEY = os.environ.get("SCOPE_KEY", "data/2026-09-29/dfw_npis_all.parquet")
+SCOPE_FILE = DATA / "scope.parquet"
 LOG = []
+LOG_KEY = RUN + f"log_{E['GROUP']}.txt"
 
 
 def log(*a):
     m = time.strftime("%H:%M:%S ") + " ".join(str(x) for x in a)
     print(m, flush=True)
     LOG.append(m)
-    s3.put_object(Bucket=B, Key=RUN + f"log_{E['GROUP']}.txt", Body="\n".join(LOG).encode())
+    try:
+        s3.put_object(Bucket=B, Key=LOG_KEY, Body="\n".join(LOG[-3000:]).encode())
+    except Exception:
+        pass
 
 
 def stem(name):  # same naming as 06f
@@ -78,7 +86,7 @@ def one(job):
     for sub in ("rates", "membership", "codes", "ends"):
         (DATA / sub / f"{new}.parquet").unlink(missing_ok=True)
     p = subprocess.run([sys.executable, str(PIPE / "06f_full_extract.py"), src, "--network", label,
-                        "--scope", str(DATA / "scope.parquet")] + extra, cwd=PIPE, capture_output=True, text=True)
+                        "--scope", str(SCOPE_FILE)] + extra, cwd=PIPE, capture_output=True, text=True)
     if src != url:
         Path(src).unlink(missing_ok=True)
     tail = (p.stdout + p.stderr).strip().splitlines()[-6:]
@@ -164,12 +172,93 @@ def self_delete():
         log("self-delete failed (the GitHub side deletes leftover machines after 2 days):", e)
 
 
+def me():
+    """This machine: its DigitalOcean id, name and memory (read from DigitalOcean, since the launcher may have had to
+    take a different size than it asked for)."""
+    meta = "http://169.254.169.254/metadata/v1/"
+    did = requests.get(meta + "id", timeout=5).text.strip()
+    name = requests.get(meta + "hostname", timeout=5).text.strip()
+    mem = 0
+    try:
+        d = requests.get(f"https://api.digitalocean.com/v2/droplets/{did}", timeout=30,
+                         headers={"Authorization": f"Bearer {E['DIGITALOCEAN_TOKEN']}"}).json()["droplet"]
+        mem = int(d["memory"]) // 1024
+    except Exception:
+        kb = int(open("/proc/meminfo").read().split()[1])
+        mem = round(kb / 1024 / 1024 * 1.05)
+    return dict(droplet_id=did, name=name, mem=mem)
+
+
+def machine_names():
+    try:
+        r = requests.get("https://api.digitalocean.com/v2/droplets", params={"per_page": 200}, timeout=60,
+                         headers={"Authorization": f"Bearer {E['DIGITALOCEAN_TOKEN']}"})
+        return [d["name"] for d in r.json()["droplets"]]
+    except Exception:
+        return []
+
+
+def queue_main():
+    """Keep claiming the next job this machine can take until none are left."""
+    global OUT, SCOPE_FILE, LOG_KEY
+    sys.path.insert(0, str(HERE))
+    import fleet
+    who = me()
+    LOG_KEY = fleet.L + f"{who['name']}.txt"
+    log(f"machine {who['name']} ({who['mem']} GB) taking jobs from the queue")
+    (DATA / "rates").mkdir(parents=True, exist_ok=True)
+    (DATA / "membership").mkdir(parents=True, exist_ok=True)
+    have_scope, done_n = {}, 0
+    while True:
+        js = fleet.jobs(s3, B)
+        cl = fleet.claims(s3, B)
+        held = fleet.held_scopes(s3, B, js, machine_names())
+        cand = fleet.order([j for jid, j in js.items()
+                            if jid not in cl and j["scope"] not in held and j.get("mem", 8) <= who["mem"]])
+        job = next((j for j in cand if fleet.claim(s3, B, j["id"], who)), None)
+        if job is None:
+            left = len([j for jid, j in js.items() if jid not in cl])
+            log(f"nothing left this machine can take ({done_n} files read; {left} unclaimed need a bigger machine "
+                f"or are held: {held or 'none held'})")
+            return
+        claimed_at = fleet.iso()
+        stop = threading.Event()
+
+        def beat(jid=job["id"], st=stop, at=claimed_at):
+            while not st.wait(fleet.HEARTBEAT_SECS):
+                try:
+                    fleet.heartbeat(s3, B, jid, who, at)
+                except Exception as e:
+                    print("heartbeat failed:", e, flush=True)
+        threading.Thread(target=beat, daemon=True).start()
+        OUT = job["out_prefix"]
+        SCOPE_FILE = DATA / f"scope_{job['scope']}.parquet"
+        if job["scope"] not in have_scope:
+            s3.download_file(B, job["scope_key"], str(SCOPE_FILE))
+            have_scope[job["scope"]] = True
+        log(f"[{job['id']}] claimed ({job['size']} job, attempt {int(job.get('attempts', 0)) + 1})")
+        try:
+            res = one(job)
+        except Exception as e:
+            res = dict(slot=job["slot"], url=job["url"], ok=False, error=f"{type(e).__name__}: {str(e)[:400]}")
+        stop.set()
+        res.update(finished_at=fleet.iso(), machine=who["name"])
+        s3.put_object(Bucket=B, Key=job["done_key"], Body=json.dumps(res).encode())
+        fleet.finish(s3, B, job["id"])
+        done_n += 1
+        log(f"[{job['id']}] {'ok' if res['ok'] else 'FAILED'} {res.get('rows', '')} rows {res.get('error', '')[:200]}")
+
+
 def main():
+    if not (E["RUN_ID"] and E["GROUP"]):
+        queue_main()
+        log("ALL DONE")
+        return
     body = s3.get_object(Bucket=B, Key=RUN + f"{E['GROUP']}.csv")["Body"].read().decode()
     jobs = list(csv.DictReader(io.StringIO(body)))
     (DATA / "rates").mkdir(parents=True, exist_ok=True)
     (DATA / "membership").mkdir(parents=True, exist_ok=True)
-    s3.download_file(B, SCOPE_KEY, str(DATA / "scope.parquet"))
+    s3.download_file(B, SCOPE_KEY, str(SCOPE_FILE))
     log(f"group {E['GROUP']}: {len(jobs)} files")
     for job in jobs:
         key = RUN + f"done/{job['slot']}.json"
