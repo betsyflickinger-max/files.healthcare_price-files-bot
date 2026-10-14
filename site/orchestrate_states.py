@@ -63,6 +63,26 @@ def lift_pause():
         except Exception: pass
 
 
+# Oct 14: when a state finishes, its machines delete themselves and the free slots go to the states still building, so no
+# slot sits empty (this was done by hand before). Each free slot goes to the state with the most stage-B buckets left per
+# machine; a new machine spends ~30 min getting ready, so only where at least MIN_LEFT buckets per machine remain.
+NB, MIN_LEFT, MAX_MACHINES = 256, 10, 12
+def wk(slug): return f"work/every-st/{slug}/v{MONTH.replace('-', '')}/"
+def rebalance(st, left, run):
+    free = free_slots()
+    if free < 1 or not left: return
+    todo = {s: NB - sum(1 for k in ls(wk(s) + 'B/') if k.endswith('.json')) for s in left}
+    while free > 0:
+        room = [x for x in left if st['machines'][x] < MAX_MACHINES]
+        if not room: break
+        s = max(room, key=lambda x: todo[x] / (st['machines'][x] + 1))
+        if todo[s] / (st['machines'][s] + 1) < MIN_LEFT: break
+        st['machines'][s] += 1; free -= 1
+        msg = f"{time.strftime('%b %d %H:%M')} UTC: free slot -> {s} ({st['machines'][s]} machines, {todo[s]} of {NB} buckets left)"
+        log(msg); st.setdefault('log', []).append(msg)
+        run(s, st['machines'][s] - 1)
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -104,16 +124,17 @@ def main():
             st['stage'] = 'build'
             log('providers per state', st['providers'], 'machines', st['machines'])
     if st['stage'] == 'build':
-        left = []
-        for slug in STATES.values():
-            if exists(tout(slug) + 'embed.json'): continue
-            left.append(slug); n = st['machines'][slug]
-            for i in range(n):
+        left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
+        def run(slug, i):
+                n = st['machines'][slug]
                 env = dict(RATES=f'data/s7/state/{slug}/rates/', NPIS=f'data/s7/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
-                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * 256 // n), **W)
+                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), **W)
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
+        for slug in left:
+            for i in range(st['machines'][slug]): run(slug, i)
+        rebalance(st, left, run)
         log('states still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
