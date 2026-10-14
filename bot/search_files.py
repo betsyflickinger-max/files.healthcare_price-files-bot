@@ -49,6 +49,7 @@ import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import deep_find as deep  # noqa: E402
+import fetch_plus  # noqa: E402
 import discover  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
@@ -87,7 +88,10 @@ TOOLS_FULL = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 
 STATE = {"tools": TOOLS_FULL, "beta": "web-fetch-2025-09-10"}
 
 
-def ask(h, extra):
+ESCALATE = E.get("ESCALATE_MODEL") or "claude-sonnet-5-5"
+
+
+def ask(h, extra, model=None):
     n = NAMES.get(h["ccn"], {})
     more = "".join(f"{k}: {v}\n" for k, v in (("Legal name", n.get("legal")), ("Doing business as", n.get("dba")),
                                                ("Address", n.get("address")), ("NPI", n.get("npi"))) if v)
@@ -99,7 +103,7 @@ def ask(h, extra):
         headers = {"x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"}
         if STATE["beta"]:
             headers["anthropic-beta"] = STATE["beta"]
-        body = {"model": MODEL, "max_tokens": 2500, "system": PROMPT, "tools": STATE["tools"],
+        body = {"model": model or MODEL, "max_tokens": 2500, "system": PROMPT, "tools": STATE["tools"],
                 "messages": [{"role": "user", "content": user}]}
         try:
             r = requests.post("https://api.anthropic.com/v1/messages", headers=headers, json=body, timeout=300)
@@ -130,23 +134,32 @@ def ask(h, extra):
 
 
 def head_text(url, limit=1_000_000):
-    """First ~1 MB of a link as text (requests un-gzips transfer encoding). '' if unreachable or binary."""
+    """First ~1 MB of a link as text (requests un-gzips transfer encoding). '' if unreachable or binary.
+    Oct 14: a bot wall (403, "Just a moment...") gets a Chrome-like request, then a real browser (bot/fetch_plus.py)."""
+    st, ct, buf = None, "", b""
     try:
         with requests.get(url, headers={"User-Agent": discover.UA}, timeout=40, stream=True, verify=False,
                           allow_redirects=True) as r:
-            if r.status_code != 200:
-                return "", f"HTTP {r.status_code}"
-            ct = r.headers.get("content-type", "").lower()
-            buf = b""
-            for chunk in r.iter_content(65536):
-                buf += chunk
-                if len(buf) >= limit:
-                    break
-            if buf[:2] == b"PK" or "zip" in ct:
-                return zip_head(url, limit)
-            return buf.decode("utf-8", "replace"), ct
+            st, ct = r.status_code, r.headers.get("content-type", "").lower()
+            if st == 200:
+                for chunk in r.iter_content(65536):
+                    buf += chunk
+                    if len(buf) >= limit:
+                        break
     except requests.RequestException as e:
-        return "", type(e).__name__
+        st, ct = None, type(e).__name__
+    if st is None or fetch_plus.challenged(st, buf):
+        st2, ct2, buf2, _ = fetch_plus.cffi_head(url, limit)
+        if st2 == 200 and not fetch_plus.challenged(st2, buf2):
+            st, ct, buf = 200, ct2.lower() + " (chrome-like)", buf2
+        elif E.get("FETCH_BROWSER") != "0" and (st in fetch_plus.BLOCKED or fetch_plus.challenged(st2 or 0, buf2)):
+            text, info = fetch_plus.browser_head(url, limit)
+            return (text, info) if text else ("", f"HTTP {st} (blocked; {info})")
+    if st != 200:
+        return "", f"HTTP {st}" if st else (ct or "unreachable")
+    if buf[:2] == b"PK" or "zip" in ct:
+        return zip_head(url, limit)
+    return buf.decode("utf-8", "replace"), ct
 
 
 def zip_head(url, limit=1_000_000):
@@ -346,6 +359,22 @@ def deep_layer(h, hosts, pages, names_, dup, done_hosts):
                 return "found", f"crawl ({n} pages on {d}): " + msg, "", discover.clean(u), ""
             if ok == "held":
                 held = held or ("held", "crawl: " + msg, "", discover.clean(u), "")
+        if not files and not idx and E.get("FETCH_BROWSER") != "0":
+            # Oct 14: price pages built with JavaScript look empty to a plain fetch: open them in a real browser
+            bl = fetch_plus.browser_links([p for p in pages if discover.host(p) == d] + [f"https://{d}/"])
+            for u in bl[:12]:
+                if "cms-hpt" in u.lower():
+                    r = check_index_url(h, discover.clean(u), dup, names_)
+                    if r and r["accepted"] == "yes":
+                        return "found", f"browser: index {u[:100]} lists '{r['loc'][:60]}' ({r['score']})", "", r["mrf"], ""
+                    continue
+                ok, msg = check_file(h, discover.clean(u), dup, names_, strict=discover.host(u) != d,
+                                     legal=NAMES.get(h["ccn"], {}).get("legal", ""))
+                if ok == "yes":
+                    return "found", f"browser ({d}): " + msg, "", discover.clean(u), ""
+                if ok == "held":
+                    held = held or ("held", "browser: " + msg, "", discover.clean(u), "")
+            files = files or bl
         why.append(f"{d}: crawled {n} pages, {len(files)} file-like links")
         if E.get("NO_ARCHIVES") == "1":
             continue
@@ -378,6 +407,39 @@ def national_layer(h, names_, dup):
         if ok == "yes":
             return "found", f"national: {idx[:80]} lists '{loc[:50]}'; " + msg, "", mrf, ""
     return held   # national near-misses are other hospitals with similar names: never held for a hand check
+
+
+DOLT = {}    # ccn -> [homepage, price page] from DoltHub's crowd-sourced hospital list (2021-23; CCN-keyed, so no name mix-ups)
+OWNER = {}   # ccn -> CMS "Hospital Ownership"
+
+
+def load_dolthub():
+    base = "https://www.dolthub.com/api/v1alpha1/dolthub/hospital-price-transparency-v3/main"
+    for off in range(0, 12000, 1000):
+        try:
+            q = f"SELECT cms_certification_num, homepage_url, chargemaster_url FROM hospitals LIMIT 1000 OFFSET {off}"
+            rows = requests.get(base, params={"q": q}, timeout=120).json().get("rows", [])
+        except Exception as e:  # noqa: BLE001
+            print("  ! DoltHub:", str(e)[:120], flush=True); break
+        for r in rows:
+            DOLT[(r.get("cms_certification_num") or "").zfill(6)] = [r.get("homepage_url") or "", r.get("chargemaster_url") or ""]
+        if len(rows) < 1000:
+            break
+    print(f"  DoltHub hospital list: pages for {len(DOLT):,} hospitals", flush=True)
+
+
+def load_ownership():
+    try:
+        r = requests.get("https://data.cms.gov/provider-data/api/1/datastore/query/xubh-q36u/0/download?format=csv", timeout=300)
+        for row in csv.DictReader(io.StringIO(r.content.decode("utf-8-sig"))):
+            OWNER[row.get("Facility ID", "")] = row.get("Hospital Ownership", "")
+        print(f"  CMS ownership for {len(OWNER):,} hospitals", flush=True)
+    except Exception as e:  # noqa: BLE001
+        print("  ! CMS ownership:", str(e)[:120], flush=True)
+
+
+CLOSED_RX = re.compile(r"\b(closed|closure|ceased operations|no longer operat|shut down|merged into|now part of|"
+                       r"converted to|demolish)", re.I)
 
 
 def logged_hosts(L):
@@ -437,6 +499,10 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--states", default="")
     ap.add_argument("--also-broken", action="store_true")
+    ap.add_argument("--retry-not-found", action="store_true",
+                    help="run the free layers again on every hospital still not found, even if searched recently")
+    ap.add_argument("--escalate", action="store_true",
+                    help="one more Claude search with a stronger model (ESCALATE_MODEL) for hospitals still not found")
     ap.add_argument("--all-outstanding", action="store_true",
                     help="every hospital without a working file (see targets())")
     ap.add_argument("--workers", type=int, default=12)
@@ -459,8 +525,10 @@ def main():
         L = log.get(r["ccn"], {})
         if L.get("searched_at", "") < cut:
             todo.append(r)
-        elif not a.no_deep_again and L.get("result") in ("not found", "error") and "deep" not in L.get("model", ""):
-            r["_deep_only"] = True   # searched recently: free layers only, no new Claude search
+        elif not a.no_deep_again and L.get("result") in ("not found", "error", "reported closed") and (
+                a.retry_not_found or a.escalate or "deep" not in L.get("model", "")):
+            r["_deep_only"] = True   # searched recently: free layers only, no new Claude search (unless --escalate)
+            r["_escalate"] = a.escalate and L.get("result") != "reported closed"
             todo.append(r)
     if a.limit:
         todo = todo[:a.limit]
@@ -469,6 +537,18 @@ def main():
     if rj.exists():
         REJECT.update({(r["ccn"], r["mrf_url"]): r["reason"] for r in csv.DictReader(open(rj, encoding="utf-8"))})
     NAMES = deep.enrollment_names()
+    load_dolthub()
+    load_ownership()
+    # federally owned hospitals (VA, Indian Health Service, military) are exempt from the price-file rule (45 CFR 180.30)
+    exempt = [r for r in todo if OWNER.get(r["ccn"], "").startswith("Government - Federal")
+              or OWNER.get(r["ccn"], "") == "Veterans Health Administration"]
+    for r in exempt:
+        L = log.get(r["ccn"], {})
+        log[r["ccn"]] = dict(L, ccn=r["ccn"], name=r["name"], city=r["city"], state=r["state"], type=r["type"],
+                             result="exempt (federal)", how="CMS lists it as Government - Federal; the rule exempts federal hospitals",
+                             searched_at=L.get("searched_at") or date.today().isoformat())
+    todo = [r for r in todo if r not in exempt]
+    print(f"  exempt (federally owned): {len(exempt)}", flush=True)
     NAT = deep.National(rows)
     VENDORS = [] if E.get("NO_ARCHIVES") == "1" else deep.vendor_urls()
     # free re-check of the hand-check list with today's checks (Oct 14: zipped files can now be read without a download)
@@ -496,7 +576,7 @@ def main():
     print(f"{len(todo):,} hospitals to search (model {MODEL}, up to {MAX_SEARCHES} searches each)", flush=True)
     t0, stop = time.time(), float(E.get("STOP_AFTER_MIN") or 320) * 60
     today = date.today().isoformat()
-    counts = {"found": 0, "held": 0, "not found": 0, "error": 0}
+    counts = {"found": 0, "held": 0, "not found": 0, "error": 0, "reported closed": 0}
     held_rows = []
 
     def one(h):
@@ -518,20 +598,26 @@ def main():
         held = held or res
         # layer 2b: crawl + archives on the sites we already know
         done_hosts = set()
-        known = [h.get("index_domain", "")] + logged_hosts(L)
-        res = deep_layer(h, known, [prev.get("price_page", "")], names_, dup, done_hosts)
+        dolt = DOLT.get(h["ccn"], [])
+        known = [h.get("index_domain", "")] + logged_hosts(L) + [discover.host(u) for u in dolt if u]
+        known = [x for x in dict.fromkeys(known) if x and not x.endswith(discover.SHARED_HOSTS)]
+        res = deep_layer(h, known, [prev.get("price_page", "")] + dolt, names_, dup, done_hosts)
         if res and res[0] == "found":
             return h, res + (prev, 0)
         if res and res[0] == "held":
             held = held or res
         why0 = res[4] if res else ""
-        if h.get("_deep_only"):
-            return h, (held or ("not found", "", "", "", why0 or "free layers found nothing")) + (prev, 0)
+        if h.get("_deep_only") and not h.get("_escalate"):
+            return h, finish(held, why0 or "free layers found nothing", prev) + (prev, 0)
         # layer 1: Claude searches the web
         extra = ""
         if h.get("index_domain"):
             extra = f"Note: {h['index_domain']}/cms-hpt.txt is missing or does not list this hospital.\n"
-        ans, ns = ask(h, extra)
+        if h.get("_escalate"):
+            extra += ("An earlier search found: " + "; ".join(x for x in (prev.get("website", ""), prev.get("price_page", ""),
+                      prev.get("notes", "")) if x)[:400] + "\nLook harder: the hospital's own site, its health system's "
+                      "site, its billing/price-estimate vendor, and the cms-hpt.txt of every related domain.\n")
+        ans, ns = ask(h, extra, model=ESCALATE if h.get("_escalate") else None)
         if ans is None:
             return h, (held or ("error", "", "", "", "API error")) + (prev, 0)
         if not isinstance(ans, dict):
@@ -550,7 +636,14 @@ def main():
         if res2 and res2[0] == "held":
             held = held or res2
         why = "; ".join(x for x in (res[4], res2[4] if res2 else "", why0) if x)[:400]
-        return h, (held or ("not found", "", "", "", why)) + (ans, ns)
+        return h, finish(held, why, ans) + (ans, ns)
+
+    def finish(held, why, ans):
+        if held:
+            return held
+        if CLOSED_RX.search((ans.get("status_note") or "") + " " + (ans.get("notes") or "")):
+            return ("reported closed", "", "", "", ("the search reports it closed, merged or converted; " + why)[:400])
+        return ("not found", "", "", "", why)
 
     left = 0
     with ThreadPoolExecutor(a.workers) as ex:
@@ -562,9 +655,10 @@ def main():
             counts[result] = counts.get(result, 0) + 1
             L = log.get(h["ccn"], {})
             log[h["ccn"]] = dict(ccn=h["ccn"], name=h["name"], city=h["city"], state=h["state"], type=h["type"],
-                                 searched_at=today if not h.get("_deep_only") else L.get("searched_at", today),
+                                 searched_at=today if (not h.get("_deep_only") or h.get("_escalate")) else L.get("searched_at", today),
                                  times_searched=str(int(L.get("times_searched") or 0) + 1),
-                                 model=(MODEL if not h.get("_deep_only") else L.get("model", "")) + "+deep",
+                                 model=(ESCALATE if h.get("_escalate") else MODEL if not h.get("_deep_only")
+                                        else L.get("model", "")) + "+deep",
                                  result=result, how=how, domain=dom, mrf_url=mrf, price_page=(ans.get("price_page") or "")[:300],
                                  why=why, notes=" ".join(x for x in (ans.get("status_note") or "", ans.get("notes") or "") if x)[:300],
                                  searches=str(ns), answer=json.dumps(ans, ensure_ascii=False)[:1500])
@@ -579,7 +673,8 @@ def main():
             if i % 25 == 0:
                 print(f"  {i:,}/{len(todo):,}: {counts} · {USE['searches']} searches", flush=True)
     for r in rows:
-        r.pop("_norm", None); r.pop("_status", None); r.pop("_deep_only", None)
+        for k in ("_norm", "_status", "_deep_only", "_escalate"):
+            r.pop(k, None)
     with open(LIST, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fields); w.writeheader(); w.writerows(rows)
     with open(LOG, "w", newline="", encoding="utf-8") as f:

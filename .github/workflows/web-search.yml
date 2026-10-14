@@ -22,6 +22,14 @@ on:
         description: "Every hospital without a working file, whatever the reason (the monthly run does this)"
         type: boolean
         default: true
+      retry_not_found:
+        description: "Run the free layers (browser, archives, crawl...) again on every hospital still not found"
+        type: boolean
+        default: false
+      escalate:
+        description: "Also give each still-missing hospital one more Claude search with a stronger model (costs more)"
+        type: boolean
+        default: false
       model:
         description: "Claude model"
         default: "claude-haiku-5-5"
@@ -61,7 +69,9 @@ jobs:
         run: |
           python bot/search_files.py --limit "${{ inputs.limit || '0' }}" --states "${{ inputs.states }}" \
             ${{ inputs.also_broken && '--also-broken' || '' }} \
-            ${{ (github.event_name == 'schedule' || inputs.all_outstanding) && '--all-outstanding' || '' }} | tee out.txt
+            ${{ (github.event_name == 'schedule' || inputs.all_outstanding) && '--all-outstanding' || '' }} \
+            ${{ (github.event_name == 'schedule' || inputs.retry_not_found) && '--retry-not-found' || '' }} \
+            ${{ inputs.escalate && '--escalate' || '' }} | tee out.txt
           grep "^done" out.txt >> "$GITHUB_STEP_SUMMARY" || true
       - name: Save to main
         if: always()

@@ -24,6 +24,7 @@ import urllib.parse
 import requests
 
 import discover
+import fetch_plus
 
 UA = {"User-Agent": discover.UA}
 FILE_RX = re.compile(r"standard[-_ ]?charges?|machine[-_ ]?readable|cms-hpt|chargemaster|charge[-_ ]?master|"
@@ -45,9 +46,14 @@ DROP = {"llc", "inc", "the", "of", "and", "at", "a", "hospital", "hospitals", "m
 
 def get(url, timeout=25, stream=False):
     try:
-        return requests.get(url, headers=UA, timeout=(6, min(timeout, 12)), verify=False, allow_redirects=True, stream=stream)
+        r = requests.get(url, headers=UA, timeout=(6, min(timeout, 12)), verify=False, allow_redirects=True, stream=stream)
     except requests.RequestException:
-        return None
+        r = None
+    if r is None or r.status_code in fetch_plus.BLOCKED:   # Oct 14: bot wall? ask the way Chrome would
+        r2 = fetch_plus.cffi_get(url, timeout=min(timeout, 20), stream=stream)
+        if r2 is not None and r2.status_code < 400:
+            return r2
+    return r
 
 
 # ---------- names: Medicare enrollment list (legal + DBA names, NPI, ZIP) ----------

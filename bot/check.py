@@ -15,6 +15,7 @@ import subprocess
 
 import requests
 
+import fetch_plus
 from discover import UA
 
 SAMPLE = 64 * 1024
@@ -43,6 +44,16 @@ def headers(url):
         return out
     out["http"] = str(r.status_code)
     out["final_url"] = r.url
+    if r.status_code in fetch_plus.BLOCKED:   # Oct 14: bot wall? ask again the way Chrome would
+        st, ct, body, fu = fetch_plus.cffi_head(url, limit=6000)
+        if st and st < 400 and not fetch_plus.challenged(st, body):
+            out.update(ok=True, http=str(st), final_url=fu, via="chrome-like request")
+            if "text/html" in ct.lower():
+                out["html"] = True
+            return out
+        # a JavaScript challenge: only a real browser gets the file, so let the download step try (no headers)
+        out.update(ok=True, http=str(r.status_code), needs_browser=True, via="browser")
+        return out
     if r.status_code >= 400:
         out["error"] = f"HTTP {r.status_code}"
         return out
@@ -105,14 +116,34 @@ def download(url, out, max_time=5400, insecure=False):
     if insecure:
         cmd.insert(1, "-k")
     r = subprocess.run(cmd, capture_output=True, text=True)
-    if r.returncode == 0:
+    if r.returncode == 0 and not looks_like_bot_wall(out):
         return True, "", insecure
+    walled = re.search(r"error: (401|403|406|409|429|503)\b", r.stderr) or "(56)" in r.stderr or "(35)" in r.stderr
+    if r.returncode == 0 or walled:
+        # Oct 14: HTTP error / reset / TLS refusal, or a bot-check page instead of the file: Chrome-like request,
+        # then a real browser
+        ok, e2 = fetch_plus.cffi_download(url, out, max_time)
+        if ok:
+            return True, "", insecure
+        ok, e3 = fetch_plus.browser_download(url, out)
+        if ok:
+            return True, "", insecure
+        if r.returncode == 0:
+            return False, f"bot-check page instead of the file ({e2}; {e3})"[:300], False
     err = r.stderr.strip().splitlines()[-1] if r.stderr.strip() else f"curl exit {r.returncode}"
     if "(60)" in r.stderr and not insecure:  # bad certificate on a public file: fetch anyway, flag it
         ok, e2, _ = download(url, out, max_time, insecure=True)
         if ok:
             return True, "", True
     return False, err[:300], False
+
+
+def looks_like_bot_wall(path):
+    try:
+        with open(path, "rb") as f:
+            return fetch_plus.challenged(200, f.read(6000))
+    except OSError:
+        return False
 
 
 def sha256_file(path):
