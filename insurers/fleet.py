@@ -161,6 +161,8 @@ def held_scopes(s3, b, all_jobs, names):
         if txt:
             held[sc] = f"on hold: {txt[:120]}"
             continue
+        if j.get("kind", "insurer") != "insurer":  # website builds read insurer tables only
+            continue
         builds = [n for n in names if n.startswith("upfront-site-") and (sc == "s7" or not n.startswith("upfront-site-st-"))]
         if builds:
             held[sc] = f"waiting: a website build is running ({len(builds)} machines)"

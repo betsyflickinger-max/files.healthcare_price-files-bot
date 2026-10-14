@@ -231,16 +231,22 @@ def queue_main():
                 except Exception as e:
                     print("heartbeat failed:", e, flush=True)
         threading.Thread(target=beat, daemon=True).start()
-        OUT = job["out_prefix"]
-        SCOPE_FILE = DATA / f"scope_{job['scope']}.parquet"
-        if job["scope"] not in have_scope:
-            s3.download_file(B, job["scope_key"], str(SCOPE_FILE))
-            have_scope[job["scope"]] = True
         log(f"[{job['id']}] claimed ({job['size']} job, attempt {int(job.get('attempts', 0)) + 1})")
         try:
-            res = one(job)
+            if job.get("kind") == "hospital":  # an oversized hospital file: the hospital bot's own steps (bot/run.py)
+                sys.path.insert(0, str(HERE.parent / "bot"))
+                import run as hospital_run
+                res = hospital_run.run_on_machine(job, s3, B, log)
+            else:
+                OUT = job["out_prefix"]
+                SCOPE_FILE = DATA / f"scope_{job['scope']}.parquet"
+                if job["scope"] not in have_scope:
+                    s3.download_file(B, job["scope_key"], str(SCOPE_FILE))
+                    have_scope[job["scope"]] = True
+                res = one(job)
         except Exception as e:
-            res = dict(slot=job["slot"], url=job["url"], ok=False, error=f"{type(e).__name__}: {str(e)[:400]}")
+            res = dict(slot=job["slot"], url=job["url"], ok=False, error=f"{type(e).__name__}: {str(e)[:400]}",
+                       kind=job.get("kind", "insurer"), state=job.get("state", ""), ccns=job.get("ccns", []))
         stop.set()
         res.update(finished_at=fleet.iso(), machine=who["name"])
         s3.put_object(Bucket=B, Key=job["done_key"], Body=json.dumps(res).encode())

@@ -14,7 +14,7 @@ For each hospital due that day the bot:
 4. **Reads it with the fixed reader** (`bot/reader.py`, from `pipeline/2026-10-09/08_extract_hospital_codes.py`): counts every row and pulls the site's 89 target codes to `bot/rows/<day>/<state>/<sha12>.csv.zst`. Each row keeps `raw_key`, `source_url`, `sha256` and `source_row`. The whole original is kept, so any other code can be extracted later.
 5. **Writes one status row per hospital** and flags problems: broken link, missing file, a web page instead of a file, an unreadable file, or rows down by more than half.
 
-Hospitals that share one system-wide file are checked once. Files over 6 GB are flagged for the rented machine (version 2), because the free runner has about 14 GB of disk.
+Hospitals that share one system-wide file are checked once. Files over 6 GB don't fit the free runner (about 14 GB of disk), so since Oct 14 they go into the shared machine queue (see version 2, step 4) as a hospital job, with status "queued for a rented machine". A machine with enough disk (8 GB machines up to 60 GB files, 16 GB machines up to 130 GB, 32 GB machines beyond) runs the same steps on it: save the original to R2 and archive.org, count rows, pull the target codes. Its result lands in `bot/fleet/results/hospital/<state>/`, and the state's next daily run folds it into the manifests and that day's status.
 
 ### Where results go (R2, under `bot/`)
 

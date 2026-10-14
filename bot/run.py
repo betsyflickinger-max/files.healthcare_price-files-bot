@@ -11,7 +11,10 @@ For each hospital due today:
      to archive.org, count its rows with the fixed reader, extract the site's target codes.
   4. Write one status row per hospital (for the coverage spreadsheet and the Price File Watch) and
      flag problems: broken/missing file, not a price file, unreadable, rows down by more than half.
-Hospitals sharing one system-wide file are checked once. Files over the size cap are flagged for v2.
+Hospitals sharing one system-wide file are checked once.
+Files over the size cap (Oct 14, 2026) go into the shared machine queue (insurers/fleet.py) as a "hospital" job. A rented
+machine with enough disk runs the same steps (process_file) on it and saves the result to R2
+bot/fleet/results/hospital/<state>/<id>.json; the state's next daily run folds that result into its manifests and status.
 """
 import argparse
 import csv
@@ -46,6 +49,9 @@ STATUS_FIELDS = ["checked_at", "state", "ccn", "hospital", "city", "type", "stat
                  "etag", "last_modified", "size", "sha256", "r2_key", "ia_item", "records", "prev_records",
                  "file_last_updated_on", "first_seen", "last_changed", "cert_unverified",
                  "file_version", "license_number", "license_state", "attested", "attester_name"]
+
+QUEUED = "queued for a rented machine"
+RESULTS = f"{store.R2_PREFIX}fleet/results/hospital/"
 
 PROBLEM = {"link broken", "not a price file", "unreadable file", "no price file found", "too large for free runner"}
 
@@ -157,7 +163,10 @@ def process_file(url, prev, ctx):
 
     if h["size"].isdigit() and int(h["size"]) > MAX_BYTES:
         e["size"] = h["size"]
-        return fail("too large for free runner", f"{int(h['size']) / 1024 ** 3:.1f} GB; needs the v2 rented machine")
+        if ctx.get("enqueue"):
+            res.update(status=QUEUED, detail=ctx["enqueue"](url, int(h["size"]), prev))
+            return prev, res
+        return fail("too large for free runner", f"{int(h['size']) / 1024 ** 3:.1f} GB; needs a rented machine")
     if time.time() > ctx["stop_downloads_at"]:
         res.update(status="skipped", detail="time limit reached; checked next run")
         return prev, res
@@ -172,6 +181,9 @@ def process_file(url, prev, ctx):
             return fail("link broken", err)
         res["cert_unverified"] = "yes" if insecure else ""
         if raw.stat().st_size > MAX_BYTES:
+            if ctx.get("enqueue"):
+                res.update(status=QUEUED, detail=ctx["enqueue"](url, raw.stat().st_size, prev))
+                return prev, res
             return fail("too large for free runner", f"{raw.stat().st_size / 1024 ** 3:.1f} GB")
         if check.looks_like_web_page(raw):
             return fail("not a price file", "link returns a web page, not a price file")
@@ -230,6 +242,92 @@ def process_file(url, prev, ctx):
             p.unlink(missing_ok=True)
 
 
+def machine_size(nbytes):
+    """A machine whose disk holds the original, its compressed copy and the extracted rows (about 2.3x the file):
+    8 GB machines have 160 GB of disk, 16 GB machines 320 GB, 32 GB machines 640 GB."""
+    gb = nbytes / 1024 ** 3
+    return "s-4vcpu-8gb" if gb <= 60 else "s-8vcpu-16gb-amd" if gb <= 130 else "s-8vcpu-32gb-amd"
+
+
+def file_id(state, url):
+    return f"{state}-{hashlib.sha1(url.encode()).hexdigest()[:12]}"
+
+
+def enqueuer(state, ccns_for, links_for, s3, bucket):
+    """Returns enqueue(url, nbytes, prev) for process_file: adds a hospital job to the shared machine queue once."""
+    sys.path.insert(0, str(ROOT / "insurers"))
+    import fleet
+
+    def enqueue(url, nbytes, prev):
+        fid = file_id(state, url)
+        jid = fleet.job_id("hospitals", fid)
+        size = machine_size(nbytes)
+        if store.exists(s3, bucket, fleet.Q + jid + ".json"):
+            return f"{nbytes / 1024 ** 3:.1f} GB; already in the machine queue"
+        L = links_for.get(url, {})
+        fleet.put_job(s3, bucket, dict(
+            id=jid, kind="hospital", scope="hospitals", slot=fid, url=url, state=state, ccns=ccns_for.get(url, []),
+            index_url=L.get("index_url", ""), index_found=bool(L.get("index_found")), link_source=L.get("how", ""),
+            prev=prev or {}, size=size, mem=fleet.mem_gb(size), bytes=nbytes,
+            done_key=f"{RESULTS}{state}/{fid}.json", hold_key=f"{store.R2_PREFIX}fleet/hold_hospitals.txt"))
+        return f"{nbytes / 1024 ** 3:.1f} GB; added to the machine queue ({size} machine)"
+    return enqueue
+
+
+def run_on_machine(job, s3, bucket, log=print):
+    """On a rented machine: the free runner's steps (process_file) for one oversized hospital file, with no size cap.
+    Returns the result saved to job['done_key']."""
+    global MAX_BYTES
+    MAX_BYTES = 10 ** 15
+    st, url = job["state"], job["url"]
+    now_dt = datetime.now(timezone.utc)
+    today = now_dt.date()
+    work = Path("/mnt/work" if Path("/mnt").is_dir() else ROOT / "work") / st
+    work.mkdir(parents=True, exist_ok=True)
+    reader.load_codes(ROOT / "reference" / "codes89.csv")
+    ctx = dict(now=now_dt.strftime("%Y-%m-%dT%H:%M:%SZ"), today=today, day=today.isoformat(), month=today.strftime("%Y-%m"),
+               state=st, saver=Saver(st, today.isoformat(), False), work=work, local=False, codes=True,
+               ccns_for={url: job.get("ccns") or []}, stop_downloads_at=time.time() + 10 ** 7)
+    t0 = time.time()
+    entry, res = process_file(url, job.get("prev") or None, ctx)
+    shutil.rmtree(work, ignore_errors=True)
+    log(f"[{job['id']}] {res['status']} in {round(time.time() - t0)}s {res.get('detail', '')[:200]}")
+    return dict(ok=res["status"] not in PROBLEM, kind="hospital", url=url, state=st, ccns=job.get("ccns") or [],
+                index_url=job.get("index_url", ""), index_found=job.get("index_found", False),
+                link_source=job.get("link_source", ""), entry=entry or {}, res=res, finished_at=ctx["now"],
+                secs=round(time.time() - t0))
+
+
+def status_row(h, L, res, f, now, st):
+    known = discover.clean(h["mrf_url"]) if h.get("mrf_url") else ""
+    u = L["mrf_url"]
+    return dict(checked_at=now, state=st, ccn=h["ccn"], hospital=h["name"], city=h["city"], type=h["type"],
+                status=res["status"], alert=res.get("alert", ""), detail=res.get("detail", ""), mrf_url=u,
+                index_url=L["index_url"], index_found="yes" if L["index_found"] else "no",
+                link_source=L["how"], link_changed="yes" if known and u and u != known else "",
+                check_method=res.get("check_method", ""), http=res.get("http", ""),
+                etag=f.get("etag", ""), last_modified=f.get("last_modified", ""), size=f.get("size", ""),
+                sha256=f.get("sha256", ""), r2_key=f.get("r2_key", ""), ia_item=res.get("ia_item", ""),
+                records=f.get("records", ""), prev_records=res.get("prev_records", ""),
+                file_last_updated_on=f.get("file_last_updated_on", ""), first_seen=f.get("first_seen", ""),
+                last_changed=f.get("last_changed", ""), cert_unverified=res.get("cert_unverified", ""),
+                **{k: f.get(k) or "" for k in ("file_version", "license_number", "license_state", "attested", "attester_name")})
+
+
+def machine_results(saver, st):
+    """Results rented machines saved for this state's oversized files: [(key, result)]."""
+    if saver.local:
+        return []
+    out = []
+    for page in saver.s3.get_paginator("list_objects_v2").paginate(Bucket=saver.bucket, Prefix=f"{RESULTS}{st}/"):
+        for o in page.get("Contents", []):
+            try:
+                out.append((o["Key"], json.loads(saver.s3.get_object(Bucket=saver.bucket, Key=o["Key"])["Body"].read())))
+            except Exception as ex:
+                print("could not read machine result", o["Key"], ex)
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--state", required=True)
@@ -259,7 +357,31 @@ def main():
             files[u] = dict(url=u, sha256=h["last_sha256"], r2_key=h["last_key"], bytes=h.get("last_bytes", ""),
                             first_seen=h.get("last_archived_run", ""))
 
-    todo = [h for h in hospitals if due(h, hosp_prev.get(h["ccn"]), today, a.all)]
+    # Results from rented machines (oversized files): fold them in before today's checks, so they count as done.
+    by_ccn = {h["ccn"]: h for h in hospitals}
+    merged_rows, merged_keys = [], []
+    for key, r in machine_results(saver, st):
+        res = r.get("res") or dict(status="too large for free runner", alert="yes",
+                                   detail=f"rented machine failed: {r.get('error', 'no result')}"[:300])
+        if r.get("entry"):
+            files[r["url"]] = r["entry"]
+        L = dict(mrf_url=r["url"], index_url=r.get("index_url", ""), index_found=r.get("index_found", False),
+                 how=(r.get("link_source") or "") + " (read on a rented machine)")
+        for ccn in r.get("ccns") or []:
+            h = by_ccn.get(ccn)
+            if not h:
+                continue
+            merged_rows.append(status_row(h, L, res, files.get(r["url"], {}), r.get("finished_at") or now, st))
+            prev = hosp_prev.get(ccn, {})
+            hosp_prev[ccn] = dict(ccn=ccn, mrf_url=r["url"], index_url=L["index_url"], status=res["status"],
+                                  alert=res.get("alert", ""), last_checked=r.get("finished_at") or now,
+                                  last_ok=(r.get("finished_at") or now) if res["status"] not in PROBLEM else prev.get("last_ok", ""))
+        merged_keys.append(key)
+    if merged_keys:
+        print(f"{st}: {len(merged_keys)} oversized file(s) read on rented machines folded in", flush=True)
+    merged_ccns = {row["ccn"] for row in merged_rows}
+
+    todo = [h for h in hospitals if h["ccn"] not in merged_ccns and due(h, hosp_prev.get(h["ccn"]), today, a.all)]
     print(f"{st}: {len(hospitals)} hospitals, {len(todo)} due today", flush=True)
 
     # 1. Current link for each hospital (from its own cms-hpt.txt)
@@ -277,6 +399,9 @@ def main():
     ctx = dict(now=now, today=today, day=day, month=today.strftime("%Y-%m"), state=st, saver=saver, work=work,
                local=a.local, codes=not a.no_codes, ccns_for=ccns_for,
                stop_downloads_at=t0 + a.minutes * 60)
+    if not a.local:  # oversized files go to the shared machine queue instead of being skipped
+        ctx["enqueue"] = enqueuer(st, ccns_for, {L["mrf_url"]: L for L in links.values() if L.get("mrf_url")},
+                                  saver.s3, saver.bucket)
 
     # 2. Check each distinct file once
     results = {}
@@ -307,27 +432,18 @@ def main():
                                      detail="no cms-hpt.txt entry or known link for this hospital")
         if res.get("status") == "skipped":
             continue
-        f = files.get(u, {})
-        known = discover.clean(h["mrf_url"]) if h.get("mrf_url") else ""
-        rows.append(dict(checked_at=now, state=st, ccn=h["ccn"], hospital=h["name"], city=h["city"], type=h["type"],
-                         status=res["status"], alert=res.get("alert", ""), detail=res.get("detail", ""), mrf_url=u,
-                         index_url=L["index_url"], index_found="yes" if L["index_found"] else "no",
-                         link_source=L["how"], link_changed="yes" if known and u and u != known else "",
-                         check_method=res.get("check_method", ""), http=res.get("http", ""),
-                         etag=f.get("etag", ""), last_modified=f.get("last_modified", ""), size=f.get("size", ""),
-                         sha256=f.get("sha256", ""), r2_key=f.get("r2_key", ""), ia_item=res.get("ia_item", ""),
-                         records=f.get("records", ""), prev_records=res.get("prev_records", ""),
-                         file_last_updated_on=f.get("file_last_updated_on", ""), first_seen=f.get("first_seen", ""),
-                         last_changed=f.get("last_changed", ""), cert_unverified=res.get("cert_unverified", ""),
-                         **{k: f.get(k) or "" for k in ("file_version", "license_number", "license_state", "attested", "attester_name")}))
+        rows.append(status_row(h, L, res, files.get(u, {}), now, st))
         prev = hosp_prev.get(h["ccn"], {})
         hosp_prev[h["ccn"]] = dict(ccn=h["ccn"], mrf_url=u, index_url=L["index_url"], status=res["status"],
                                    alert=res.get("alert", ""), last_checked=now,
-                                   last_ok=now if res["status"] not in PROBLEM else prev.get("last_ok", ""))
+                                   last_ok=now if res["status"] not in PROBLEM | {QUEUED} else prev.get("last_ok", ""))
 
     saver.write("files", list(files.values()), FILE_FIELDS)
     saver.write("hosp", list(hosp_prev.values()), HOSP_FIELDS)
+    rows = merged_rows + rows
     saver.write("status", rows, STATUS_FIELDS)
+    for key in merged_keys:  # folded in and saved: done with these results
+        saver.s3.delete_object(Bucket=saver.bucket, Key=key)
     Path(ROOT / "out").mkdir(exist_ok=True)
     with open(ROOT / "out" / f"status_{st}.csv", "w", newline="") as fo:
         w = csv.DictWriter(fo, STATUS_FIELDS); w.writeheader(); w.writerows(rows)

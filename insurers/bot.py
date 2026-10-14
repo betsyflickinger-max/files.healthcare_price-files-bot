@@ -123,6 +123,7 @@ def collect(s3, b, man, now, dry):
     qjobs, qclaims = fleet.jobs(s3, b), fleet.claims(s3, b)
     if alive is not None and not dry:
         def save(j, res):
+            res.update(kind=j.get("kind", "insurer"), state=j.get("state", ""), ccns=j.get("ccns", []))
             s3.put_object(Bucket=b, Key=j["done_key"], Body=json.dumps(res).encode())
         for n in fleet.reap(s3, b, qjobs, qclaims, alive, save):
             print("queue:", n)
@@ -250,7 +251,7 @@ curl -sL https://go.dev/dl/go1.26.9.linux-amd64.tar.gz | tar -C /usr/local -xz
 export PATH=$PATH:/usr/local/go/bin
 git clone --depth 1 {REPO} /opt/bot
 cd /opt/bot/insurers/pipeline/mrfrows && go build -o mrfrows . && cd /opt/bot
-python3 -m venv /opt/venv && /opt/venv/bin/pip install -q -r insurers/requirements-worker.txt
+python3 -m venv /opt/venv && /opt/venv/bin/pip install -q -r insurers/requirements-worker.txt -r requirements.txt
 /opt/venv/bin/python insurers/worker.py
 # if the worker died before deleting the machine, delete it now
 ID=$(curl -s http://169.254.169.254/metadata/v1/id)
@@ -301,7 +302,7 @@ def fill(s3, b, now):
         print(f"queue: {sc} files not started: {why}")
     want = fleet.plan(qjobs, qclaims, held, ours, free)
     env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET",
-                                     "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN")}
+                                     "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN", "IA_ACCESS_KEY", "IA_SECRET_KEY")}
     launched, stamp = [], now.strftime("%Y%m%d-%H%M")
     for i, (size, job) in enumerate(want, 1):
         name = f"{fleet.NAME}{fleet.mem_gb(size)}g-{stamp}-{i:02d}"

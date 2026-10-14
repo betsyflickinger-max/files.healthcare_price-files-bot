@@ -68,7 +68,7 @@ def main():
         c["checked"] += 1
         c["file saved" if r["status"] in GOOD else r["status"]] += 1
     cov_fields = ["state", "hospitals", "checked", "file saved", "coverage_pct", "link broken", "not a price file",
-                  "unreadable file", "no price file found", "too large for free runner", "not yet checked"]
+                  "unreadable file", "no price file found", "too large for free runner", "queued for a rented machine", "not yet checked"]
     cov = []
     for st in sorted(by_state):
         c = by_state[st]

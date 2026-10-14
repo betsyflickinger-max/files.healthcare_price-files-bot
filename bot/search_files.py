@@ -392,7 +392,7 @@ def logged_hosts(L):
     return [x for x in dict.fromkeys(hs) if x and not x.endswith(discover.SHARED_HOSTS)]
 
 
-OK_STATUS = {"unchanged", "new - first version saved", "changed - new version saved", "too large for free runner"}
+OK_STATUS = {"unchanged", "new - first version saved", "changed - new version saved", "too large for free runner", "queued for a rented machine"}
 
 
 def targets(rows, a, log=None):
