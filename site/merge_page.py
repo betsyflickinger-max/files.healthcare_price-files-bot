@@ -15,6 +15,12 @@ for c, o in old.items():
 for k in ('codes', 'fac', 'nets', 'dates', 'urls', 'labs', 'scope'): D[k] = new[k]
 for c in D['codes'].values(): c['f'] = None
 D['hosp'] = json.load(open(hosp))
+# No Surprises Act figures (nsa/arb_page.py): provider lines are keyed by position, so re-key them for the new provider
+# list (npis.json sits next to embed.json in every build); without it they are dropped rather than left misaligned
+if 'arb' in D:
+    import os; sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'nsa')); import arb_page
+    npp = os.path.join(os.path.dirname(os.path.abspath(embp)), 'npis.json')
+    arb_page.remap(D, json.load(open(npp)) if os.path.exists(npp) else None)
 print('codes', len(D['codes']), 'providers', len(D['fac']), 'networks', len(D['nets']), 'hospital files', len(D['hosp']['src']),
       'dropped codes', len([c for c in old if c not in D['codes']]))
 open(page, 'w').write(s[:a] + json.dumps(D, separators=(',', ':'), ensure_ascii=False).replace('</', '<\\/') + s[b:])

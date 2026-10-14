@@ -235,6 +235,8 @@ def publish(st):
     for k, f in [(SP + 'page_before.html', 'old.html'), (TOUT + 'embed.json', 'embed.json'), (SP + 'hosp_index.json', 'hosp.json'),
                  ('reference/site/med_all.json', 'med.json'), ('reference/site/msdrg_table5.txt', 't5.txt')]:
         s3.download_file(B, k, '/tmp/pub/' + f)
+    try: s3.download_file(B, TOUT + 'npis.json', '/tmp/pub/npis.json')   # merge_page.py re-keys the arbitration provider lines with it
+    except Exception as e: print('no npis.json for this build; arbitration provider lines dropped:', e)
     import shutil; shutil.copy('/tmp/pub/old.html', '/tmp/pub/new.html')
     py = sys.executable
     subprocess.run([py, f'{HERE}/merge_page.py', '/tmp/pub/new.html', '/tmp/pub/embed.json', '/tmp/pub/hosp.json'], check=True)

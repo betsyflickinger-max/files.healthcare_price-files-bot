@@ -133,7 +133,7 @@ def pfs_for(rvu_zip, loc, codes, st='TX'):
     return out
 
 
-def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None):
+def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_file=None):
     name, where, loc, locname = CITIES[slug]
     adj, place = AREA.get(slug, (f'{name}-area', f'the {name} area'))
     os.makedirs(out, exist_ok=True)
@@ -166,6 +166,16 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None):
     open(names, 'w').write(''.join(f'{c}\t{n}\n' for c, n in rows.items()))
     subprocess.run([py, f'{HERE}/apply_names_med.py', page, med_all, names, t5], check=True)
     pre, D, post = split(open(page, encoding='utf-8').read())
+
+    # 1b. No Surprises Act arbitration figures for this metro area (nsa/arb_page.py), never the DFW template's;
+    #     none when CMS reports no such area (small towns, other states)
+    D.pop('arb', None)
+    if arb_file and os.path.exists(arb_file):
+        sys.path.insert(0, os.path.join(HERE, '..', 'nsa')); import arb_page
+        npp = os.path.join(os.path.dirname(os.path.abspath(embed)), 'npis.json')
+        a = arb_page.page_arb(json.load(open(arb_file)), slug, json.load(open(npp)) if os.path.exists(npp) else None, set(D['codes']))
+        if a: D['arb'] = a
+        print(f"{name}: arbitration figures for {a['region']}: {len(a['c']):,} codes, {len(a['p']):,} providers" if a else f'{name}: no arbitration area')
 
     # 2. Medicare doctor fees for the city's locality. Check first: the same formula must give the page's own Dallas figures.
     M = D['med']['codes']
@@ -315,7 +325,10 @@ def main():
         if written(d_ + 'hosp/hosp_index.json'):
             hpre = d_ + 'hosp/'; hidx = f'{A.out}/hosp_index.json'; s3.download_file(B, hpre + 'hosp_index.json', hidx); break
     if hidx: print('hospital files from', hpre)
-    page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx)
+    for k, dst in [(prefix + 'npis.json', f'{A.out}/npis.json'), ('data/idr/site/arb_tx.json', f'{A.out}/arb_tx.json')]:
+        try: s3.download_file(B, k, dst)
+        except Exception as e: print('not found:', k, e)
+    page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json')
     # map: provider locations (cached per build) and the background (cached per city). If either fails, the page goes
     # out without its Map button, exactly as before maps existed for cities.
     gkey, bkey, maps = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', None
