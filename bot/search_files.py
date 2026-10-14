@@ -74,7 +74,7 @@ USE = {"in": 0, "out": 0, "searches": 0, "fetches": 0, "calls": 0}
 LOCK = threading.Lock()
 TOOLS_FULL = [{"type": "web_search_20250305", "name": "web_search", "max_uses": MAX_SEARCHES,
                "user_location": {"type": "approximate", "country": "US"}},
-              {"type": "web_fetch_20250910", "name": "web_fetch", "max_uses": 3, "max_content_tokens": 20000}]
+              {"type": "web_fetch_20250910", "name": "web_fetch", "max_uses": 3, "max_content_tokens": 10000}]
 STATE = {"tools": TOOLS_FULL, "beta": "web-fetch-2025-09-10"}
 
 
@@ -165,19 +165,22 @@ def names_in_file(text):
 
 def check_file(h, url, dup):
     text, info = head_text(url)
+    if info == "zip file":
+        return "held", "zipped file link (can't check the hospital name inside without downloading it)"
     if not text:
         return None, f"file link {info}" if info else "file link unreadable"
     names, addr = names_in_file(text)
     if names is None:
         return None, f"file link is not a CMS price file ({info[:40]})"
-    best = max([discover.score(h["name"], n) for n in names] + [0])
+    scored = sorted(((discover.score(h["name"], n), n) for n in names), reverse=True) or [(0, "?")]
+    best, bname = scored[0]
     words = any(fs.words_in(h["name"], n) for n in names)
     city_ok = h["city"].lower() in (addr or text[:5000]).lower()
     if (best >= 85 or words) and (city_ok or not dup):
-        return "yes", f"file names '{(names or [''])[0][:60]}' ({round(best)})"
+        return "yes", f"file names '{bname[:60]}' ({round(best)})"
     if best >= 70 or words:
-        return "held", f"file names '{(names or [''])[0][:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
-    return None, f"file is for '{(names or ['?'])[0][:60]}', not this hospital"
+        return "held", f"file names '{bname[:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
+    return None, f"file is for '{bname[:60]}', not this hospital"
 
 
 def check_index_url(h, url, dup):
@@ -188,8 +191,9 @@ def check_index_url(h, url, dup):
         return None
     sc, e = max(((discover.score(h["name"], x.get("location-name", "")), x) for x in ents), key=lambda t: t[0])
     if sc >= 85:
+        rough = not fs.words_in(h["name"], e.get("location-name", ""))
         return dict(domain=discover.host(url), mrf=e["mrf-url"], score=round(sc), loc=e.get("location-name", ""),
-                    accepted="held" if dup else "yes")
+                    accepted="held" if dup or rough else "yes")
     return None
 
 
@@ -211,10 +215,15 @@ def verify(h, ans, dup):
             res = fs.try_domain(h, d, "web", fs.DUP)
         except Exception:
             res = None
+        if res and res["accepted"] == "yes" and not fs.words_in(h["name"], res["location"]):
+            # a big system index ("CHI St. Vincent" for CHI St Vincent Infirmary) may list a sister hospital or the whole
+            # system: every distinctive word of the name must be in the listed location, else a person checks it
+            res = dict(res, accepted="no - rough match")
         if res and res["accepted"] == "yes":
             return "found", f"index {res['index_url']} lists '{res['location'][:60]}' ({res['score']})", d, "", ""
         if res:
-            held = held or ("held", f"index {res['index_url']} lists '{res['location'][:60]}'; same name in another state", d, "", "")
+            held = held or ("held", f"index {res['index_url']} lists '{res['location'][:60]}' ({res['score']}); "
+                            + ("rough match" if "rough" in res["accepted"] else "same name in another state"), d, "", "")
         why.append(f"{d}: no matching cms-hpt.txt")
     if ans.get("cms_hpt_txt", "").startswith("http"):
         r = check_index_url(h, discover.clean(ans["cms_hpt_txt"]), dup)

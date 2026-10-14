@@ -136,7 +136,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 040001,SILOAM SPRINGS REGIONAL HOSPITAL,SILOAM SPRINGS,AR,Acute Care Hospitals,,,,,,,
 040002,JOHNSON REGIONAL MEDICAL CENTER,CLARKSVILLE,AR,Acute Care Hospitals,,https://www.jrmc.com/wp-content/uploads/2025/12/710403278_johnson-regional-medical-center_standardcharges.csv,raw/hospitals/2026-10/AR/b912d2dbc82c_710403278_johnson-regional-medical-center_standardcharges.csv.zst,b912d2dbc82c80ed5f6c530bd233067d5d528a4698b297153882903f3ab9e027,2969033,2026-10-05/nat,
 040004,WASHINGTON REGIONAL MEDICAL CENTER,FAYETTEVILLE,AR,Acute Care Hospitals,wregional.com,,,,,,osm 2026-10-10
-040007,CHI-ST VINCENT INFIRMARY,LITTLE ROCK,AR,Acute Care Hospitals,commonspirit.org,,,,,,web 2026-10-14
+040007,CHI-ST VINCENT INFIRMARY,LITTLE ROCK,AR,Acute Care Hospitals,,,,,,,
 040010,MERCY HOSPITAL NORTHWEST ARKANSAS,ROGERS,AR,Acute Care Hospitals,mercy.net,https://www.mercy.net/content/dam/mercy/en/web-assets/charge-files/621684203_mercy-hospital-northwest-arkansas_standardcharges.zip,raw/hospitals/2026-10/AR/db5befde9b69_621684203_mercy-hospital-northwest-arkansas_standardcharges.zip.zst,db5befde9b69841630160a430de226ca54607c0736fdc45c7cf3c5953d4aa8a5,86318045,2026-10-05/nat,
 040011,CHAMBERS MEMORIAL HOSPITAL,DANVILLE,AR,Acute Care Hospitals,,,,,,,
 040014,WHITE COUNTY MEDICAL CENTER,SEARCY,AR,Acute Care Hospitals,unity-health.org,,,,,,osm 2026-10-10
