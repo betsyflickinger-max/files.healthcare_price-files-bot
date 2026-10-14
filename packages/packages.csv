@@ -1,0 +1,17 @@
+package,name,role,codes,billing_class,in_total,note
+colonoscopy,Colonoscopy (diagnostic),facility,45378,institutional,yes,the hospital or surgery center's fee
+colonoscopy,Colonoscopy (diagnostic),doctor,45378,professional,yes,the gastroenterologist's fee
+colonoscopy,Colonoscopy (diagnostic),anesthesia,00811|00812,professional,no,billed by time; shown separately
+colonoscopy,Colonoscopy (diagnostic),pathology,88305,professional,no,only if a biopsy or polyp is removed
+knee-scope,Knee arthroscopy (meniscus repair or trim),facility,29881,institutional,yes,the hospital or surgery center's fee
+knee-scope,Knee arthroscopy (meniscus repair or trim),doctor,29881,professional,yes,the orthopedic surgeon's fee
+knee-scope,Knee arthroscopy (meniscus repair or trim),anesthesia,01400,professional,no,billed by time; shown separately
+cataract,Cataract surgery,facility,66984,institutional,yes,the hospital or surgery center's fee
+cataract,Cataract surgery,doctor,66984,professional,yes,the eye surgeon's fee
+cataract,Cataract surgery,anesthesia,00142,professional,no,billed by time; shown separately
+carpal-tunnel,Carpal tunnel release,facility,64721,institutional,yes,the hospital or surgery center's fee
+carpal-tunnel,Carpal tunnel release,doctor,64721,professional,yes,the hand surgeon's fee
+carpal-tunnel,Carpal tunnel release,anesthesia,01810,professional,no,billed by time; shown separately
+gallbladder,Gallbladder removal (laparoscopic),facility,47562,institutional,yes,the hospital or surgery center's fee
+gallbladder,Gallbladder removal (laparoscopic),doctor,47562,professional,yes,the general surgeon's fee
+gallbladder,Gallbladder removal (laparoscopic),anesthesia,00790,professional,no,billed by time; shown separately

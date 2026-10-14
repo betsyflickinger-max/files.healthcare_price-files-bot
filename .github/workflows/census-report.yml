@@ -32,9 +32,10 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36
       - run: python insurers/census_report.py ${{ inputs.month }}
+      - run: python insurers/report_cards.py
       - name: Save the report
         run: |
           git config user.name "price-files-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/census 2>/dev/null || true
+          git add reports/census reports/insurer_report_cards 2>/dev/null || true
           git diff --cached --quiet || { git commit -qm "Insurer file inventory report $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }

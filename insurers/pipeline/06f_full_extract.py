@@ -233,6 +233,9 @@ def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_gro
             "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
             "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
     out = inventory.census(con, t, base)
+    memb = MEMB / Path(rates).name
+    if memb.exists():
+        out.update(inventory.roster(con, f"read_parquet('{memb}')"))
     dest.parent.mkdir(parents=True, exist_ok=True)
     dest.write_text(json.dumps(out, indent=1, default=str))
     ENDS.mkdir(parents=True, exist_ok=True)

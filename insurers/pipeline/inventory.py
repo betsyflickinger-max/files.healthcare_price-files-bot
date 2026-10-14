@@ -14,7 +14,8 @@ GROUPED = ["billing_code_type", "billing_code_type_version", "negotiation_arrang
            "setting", "expiration_date", "additional_information"]
 FILLED = ["additional_information", "bundled_codes", "covered_services", "billing_code_modifier",
           "service_code", "expiration_date", "setting", "billing_code_type_version"]
-NO_END = "left(expiration_date, 4) >= '2900'"  # 9999-12-31, 2999-12-31: the insurer's "no set end date"
+NO_END = "left(expiration_date, 4) >= '2900'"
+VERSION = 2  # 2 (Oct 13, 2026): adds zero_dollar_rows, dollar_rows and roster_listed_no_prices  # 9999-12-31, 2999-12-31: the insurer's "no set end date"
 
 
 def columns(con, t):
@@ -32,10 +33,13 @@ def census(con, t, base):
     filled = [c for c in FILLED if c in have]
     d = con.execute(f"select approx_count_distinct(billing_code), approx_count_distinct(npi), approx_count_distinct(tin), "
                     + "".join(f"count_if({c} <> ''), " for c in filled)
-                    + f"count_if(negotiated_type ilike 'percent%') from {t}").fetchone()
+                    + f"count_if(negotiated_type ilike 'percent%'), "
+                    + f"count_if(negotiated_type not ilike 'percent%' and try_cast(negotiated_rate as double) = 0), "
+                    + f"count_if(negotiated_type not ilike 'percent%' and try_cast(negotiated_rate as double) > 0) from {t}").fetchone()
+    out["census_version"] = VERSION
     out["distinct_approx"] = dict(zip(["billing_codes", "npis", "tins"], d[:3]))
-    out["rows_with_value"] = dict(zip(filled, d[3:-1]))
-    out["percent_of_charges_rows"] = d[-1]
+    out["rows_with_value"] = dict(zip(filled, d[3:-3]))
+    out["percent_of_charges_rows"], out["zero_dollar_rows"], out["dollar_rows"] = d[-3], d[-2], d[-1]
     out["fields_not_in_table"] = [c for c in FILLED if c not in have]  # tables read before Oct 13, 2026
     grouped = [c for c in GROUPED if c in have]
     rows = con.execute(f"select {', '.join(grouped)}, " + ", ".join(f"grouping({c})" for c in grouped)
@@ -56,6 +60,15 @@ def census(con, t, base):
         today = date.today().isoformat()
         out["prices_already_past_end_date"] = sum(p for m, p, _ in e if m not in ("blank", "no set end") and m < today[:7])
     return out
+
+
+def roster(con, m):
+    """m = DuckDB expression for the membership table: providers the insurer lists in-network vs. those with any price."""
+    try:
+        r = con.execute(f"select count(*), count_if(try_cast(priced_rows as bigint) = 0) from {m}").fetchone()
+        return {"roster_rows": r[0], "roster_listed_no_prices": r[1]}
+    except Exception:
+        return {}
 
 
 def contract_ends(con, t, dest):

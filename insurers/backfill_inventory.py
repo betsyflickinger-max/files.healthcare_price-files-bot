@@ -45,7 +45,12 @@ def main():
         return got
 
     tables = {k.rsplit("/", 1)[1][:-8]: n for k, n in keys(f"{out}rates/").items() if k.endswith(".parquet")}
-    done_c = {k.rsplit("/", 1)[1][:-5] for k in keys(f"bot/insurers/census/{MONTH}/{out.strip('/').replace('/', '_')}/")}
+    def current(k):  # an inventory from an older version of inventory.py is redone
+        try:
+            return json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read()).get("census_version", 1) >= inventory.VERSION
+        except Exception:
+            return False
+    done_c = {k.rsplit("/", 1)[1][:-5] for k in keys(f"bot/insurers/census/{MONTH}/{out.strip('/').replace('/', '_')}/") if current(k)}
     done_e = {k.rsplit("/", 1)[1][:-8] for k in keys(f"{out}ends/")}
     todo = sorted((n, t) for t, n in tables.items() if not (t in done_c and t in done_e))
     print(f"{a.scope}: {len(tables)} tables, {len(tables) - len(todo)} already done, {len(todo)} to do "
@@ -76,6 +81,7 @@ def main():
                     "header": {"reporting_entity_name": meta[0] or "", "last_updated_on": meta[1] or ""},
                     "roster_rows_in_scope": mem[0], "roster_npis_in_scope": mem[1], "inventory_from": "existing table (backfill)"}
             cen = inventory.census(con, t, base)
+            cen.update(inventory.roster(con, f"read_parquet('r2://{B}/{out}membership/{tab}.parquet')"))
             s3.put_object(Bucket=B, Key=f"bot/insurers/census/{MONTH}/{out.strip('/').replace('/', '_')}/{tab}.json",
                           Body=json.dumps(cen, indent=1, default=str).encode())
             local = tmp / f"{tab}.ends.parquet"
