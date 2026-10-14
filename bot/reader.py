@@ -253,3 +253,76 @@ def count_records(path):
     if is_json(path):
         return ("json",) + _json_records(path)
     return ("csv",) + _csv_records(path)
+
+
+ATTEST_FIELDS = ["file_version", "license_number", "license_state", "attested", "attester_name", "attestation_text"]
+
+
+def header_info(path):
+    """Read only the top of a hospital file and return what the hospital states about the file itself:
+    the CMS template version, its state license number and state, whether it signed the required
+    statement that the file is accurate and complete ("attestation"; "affirmation" in v2.0/2.1), and who signed.
+    Values are copied as written; blank when the file doesn't include them. Never raises."""
+    out = dict.fromkeys(ATTEST_FIELDS, "")
+    try:
+        if is_json(path):
+            _json_header(path, out)
+        else:
+            _csv_header(path, out)
+    except Exception:
+        pass
+    out["attestation_text"] = out["attestation_text"][:400]
+    return out
+
+
+def _yes(v):
+    s = str(v).strip().lower()
+    return "yes" if s in ("true", "yes", "y", "1") else ("no" if s in ("false", "no", "n", "0") else str(v).strip()[:40])
+
+
+def _csv_header(path, out):
+    f = io.TextIOWrapper(sniff_open(path), encoding="utf-8-sig", errors="replace", newline="")
+    recs, rec, q = [], [], 0
+    for line in f:
+        rec.append(line); q += line.count('"')
+        if q % 2:
+            continue
+        recs.append("".join(rec)); rec, q = [], 0
+        if len(recs) == 2:
+            break
+    f.close()
+    if len(recs) < 2:
+        return
+    keys, vals = next(csv.reader([recs[0]])), next(csv.reader([recs[1]]))
+    for k, v in zip(keys, vals):
+        p, v = norm(k), v.strip()
+        if p[0] == "version" and not out["file_version"]:
+            out["file_version"] = v
+        elif p[0] == "license_number" and not out["license_number"]:
+            out["license_number"] = v
+            out["license_state"] = (k.split("|")[1].strip() if len(p) > 1 else "")
+        elif p[0] == "attester_name":
+            out["attester_name"] = v
+        elif p[0].startswith("to the best of its knowledge"):  # the statement itself is the column name
+            out["attested"], out["attestation_text"] = _yes(v), k.strip()
+
+
+def _json_header(path, out):
+    with json_open(path) as fb:
+        for prefix, event, value in ijson.parse(fb):
+            if prefix == "standard_charge_information":
+                break
+            if event not in ("string", "number", "boolean"):
+                continue
+            if prefix == "version":
+                out["file_version"] = str(value)
+            elif prefix == "license_information.license_number":
+                out["license_number"] = str(value)
+            elif prefix == "license_information.state":
+                out["license_state"] = str(value)
+            elif prefix in ("attestation.confirm_attestation", "affirmation.confirm_affirmation"):
+                out["attested"] = _yes(value)
+            elif prefix in ("attestation.attestation", "affirmation.affirmation"):
+                out["attestation_text"] = str(value)
+            elif prefix == "attestation.attester_name":
+                out["attester_name"] = str(value)

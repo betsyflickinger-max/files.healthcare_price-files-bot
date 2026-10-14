@@ -8,6 +8,9 @@ on:
       insurers:
         description: "Insurers (comma-separated): cigna, uhc"
         default: "cigna,uhc"
+      only:
+        description: "Run only one part: plans, allowed (blank = both)"
+        default: ""
 
 concurrency:
   group: plans
@@ -18,6 +21,7 @@ permissions:
 
 jobs:
   plans:
+    if: ${{ inputs.only == '' || inputs.only == 'plans' || github.event_name == 'schedule' }}
     runs-on: ubuntu-latest
     timeout-minutes: 300
     env:
@@ -38,3 +42,28 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add reports/plans 2>/dev/null || true
           git diff --cached --quiet || { git commit -qm "Employer plan lists $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
+
+  # Out-of-network ("allowed amount") files: every file, saved untouched, plus counts. Separate job so a slow
+  # UHC listing can't push the plan lists past their time limit. ~80,000 tiny files, about 75 minutes.
+  allowed:
+    if: ${{ inputs.only == '' || inputs.only == 'allowed' || github.event_name == 'schedule' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 requests==2.32.3 pyarrow==26.0.0
+      - run: python plans/allowed_amounts.py --insurers "${{ inputs.insurers || 'cigna,uhc' }}"
+      - name: Save the summary
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/allowed 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Out-of-network files $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }

@@ -39,12 +39,13 @@ FIRST_WEEK_ENDS = date(2026, 10, 19)
 
 FILE_FIELDS = ["url", "etag", "last_modified", "size", "sample_fp", "sha256", "bytes", "r2_key", "format",
                "records", "file_last_updated_on", "first_seen", "last_checked", "last_changed",
-               "last_full_download", "fails", "last_error"]
+               "last_full_download", "fails", "last_error"] + reader.ATTEST_FIELDS
 HOSP_FIELDS = ["ccn", "mrf_url", "index_url", "status", "alert", "last_checked", "last_ok"]
 STATUS_FIELDS = ["checked_at", "state", "ccn", "hospital", "city", "type", "status", "alert", "detail",
                  "mrf_url", "index_url", "index_found", "link_source", "link_changed", "check_method", "http",
                  "etag", "last_modified", "size", "sha256", "r2_key", "ia_item", "records", "prev_records",
-                 "file_last_updated_on", "first_seen", "last_changed", "cert_unverified"]
+                 "file_last_updated_on", "first_seen", "last_changed", "cert_unverified",
+                 "file_version", "license_number", "license_state", "attested", "attester_name"]
 
 PROBLEM = {"link broken", "not a price file", "unreadable file", "no price file found", "too large for free runner"}
 
@@ -178,6 +179,8 @@ def process_file(url, prev, ctx):
             if not prev.get("records"):  # seeded from the October runs: count rows once
                 fmt, n, _, upd = reader.count_records(raw)
                 e.update(format=fmt, records=str(n), file_last_updated_on=upd)
+            if not e.get("file_version") and not e.get("attested"):  # older entries: read the header once
+                e.update(reader.header_info(raw))
             e.update(fails="0", last_error="")
             res.update(status="unchanged", check_method=method + ", same SHA-256", records=e.get("records", ""))
             return e, res
@@ -198,7 +201,8 @@ def process_file(url, prev, ctx):
                 res["detail"] = ia_err
         old_records = (prev or {}).get("records", "")
         e.update(sha256=sha, bytes=str(nbytes), r2_key=key, last_changed=now, format=fmt,
-                 records="" if n is None else str(n), file_last_updated_on=upd, fails="0", last_error="")
+                 records="" if n is None else str(n), file_last_updated_on=upd, fails="0", last_error="",
+                 **reader.header_info(raw))
         res.update(status="changed - new version saved" if prev and prev.get("sha256") else "new - first version saved",
                    check_method=method, records=e["records"])
         if n is None:
@@ -311,7 +315,8 @@ def main():
                          sha256=f.get("sha256", ""), r2_key=f.get("r2_key", ""), ia_item=res.get("ia_item", ""),
                          records=f.get("records", ""), prev_records=res.get("prev_records", ""),
                          file_last_updated_on=f.get("file_last_updated_on", ""), first_seen=f.get("first_seen", ""),
-                         last_changed=f.get("last_changed", ""), cert_unverified=res.get("cert_unverified", "")))
+                         last_changed=f.get("last_changed", ""), cert_unverified=res.get("cert_unverified", ""),
+                         **{k: f.get(k) or "" for k in ("file_version", "license_number", "license_state", "attested", "attester_name")}))
         prev = hosp_prev.get(h["ccn"], {})
         hosp_prev[h["ccn"]] = dict(ccn=h["ccn"], mrf_url=u, index_url=L["index_url"], status=res["status"],
                                    alert=res.get("alert", ""), last_checked=now,
