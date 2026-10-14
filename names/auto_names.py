@@ -4,7 +4,8 @@ Uses the Anthropic API (secret ANTHROPIC_API_KEY) with a small model. Reads the 
 picks unnamed CPT codes (most prices first), asks for names in batches, checks them, and appends to
 site/plain_names_auto.tsv. Hand-written names in site/plain_names_cpt.tsv always win.
 Then patches the live page (site/deploy/price-finder.html + current.tgz in R2) so the names show right away.
-env: MAX_CODES (default 20000), WORKERS (default 6), STOP_AFTER_MIN (default 300), BATCH (default 40), MODEL (default claude-haiku-5-5), APPLY (1 = patch live page)
+env: MAX_CODES (default 20000), WORKERS (default 6), STOP_AFTER_MIN (default 300), BATCH (default 40), MODEL (default claude-haiku-5-5),
+     FALLBACK_MODEL (default claude-sonnet-5-5; second try for codes MODEL declined; blank = off), APPLY (1 = patch live page)
 """
 import io, json, os, re, sys, tarfile, time, urllib.request
 import boto3
@@ -12,6 +13,7 @@ import boto3
 E = {k: v.strip() for k, v in os.environ.items()}
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 HAND, AUTO = f"{ROOT}/site/plain_names_cpt.tsv", f"{ROOT}/site/plain_names_auto.tsv"
+DECLINED = f"{ROOT}/site/plain_names_declined.tsv"   # code<TAB>date both models declined; retried after RETRY_DAYS
 MAX, BATCH, MODEL = int(E.get("MAX_CODES", "20000")), int(E.get("BATCH", "40")), E.get("MODEL", "claude-haiku-5-5")
 s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
@@ -64,13 +66,18 @@ def ok(code, name, insurer):
 s = s3.get_object(Bucket=B, Key="site/deploy/price-finder.html")["Body"].read().decode()
 a, b, D = page_data(s)
 hand, auto = load(HAND), load(AUTO)
+import datetime as _dt
+_cut = (_dt.date.today() - _dt.timedelta(days=int(E.get("RETRY_DAYS", "30")))).isoformat()
+declined = {c: d for c, d in load(DECLINED).items() if d >= _cut}   # declined recently: don't pay to ask again yet
 todo = sorted([(v.get("n") or 0, c, v["name"]) for c, v in D["codes"].items()
-               if "name as written" in v.get("cat", "") and v["type"] == "CPT" and c not in hand and c not in auto],
+               if "name as written" in v.get("cat", "") and v["type"] == "CPT" and c not in hand and c not in auto
+               and c not in declined],
               key=lambda x: -int(x[0] or 0))[:MAX]
 print(f"unnamed CPT codes to try: {len(todo)}", flush=True)
 new, skipped, tin, tout = {}, 0, 0, 0
 import threading, concurrent.futures as cf
 lock, t0 = threading.Lock(), time.time()
+asked = set()
 WORKERS, STOP = int(E.get("WORKERS", "6")), float(E.get("STOP_AFTER_MIN", "300")) * 60
 def work(k):
     global skipped, tin, tout
@@ -79,6 +86,7 @@ def work(k):
     res, use = ask([f"{c}\t{nm}" for _, c, nm in chunk])
     with lock:
         tin += use.get("input_tokens", 0); tout += use.get("output_tokens", 0)
+        if res: asked.update(c for _, c, _n in chunk)
         got = {}
         for _, c, nm in chunk:
             v = res.get(c)
@@ -90,7 +98,21 @@ def work(k):
         print(f"batch {k // BATCH + 1}: {len(new)} named so far, {skipped} left as is", flush=True)
 with cf.ThreadPoolExecutor(WORKERS) as ex:
     list(ex.map(work, range(0, len(todo), BATCH)))
+# Second pass (Oct 14): codes the small model wasn't sure about get one try with a stronger model (FALLBACK_MODEL,
+# blank = off). Same rules and checks; it still returns null when unsure, so those keep the insurer's wording.
+FALLBACK = E.get("FALLBACK_MODEL", "claude-sonnet-5-5")
+if FALLBACK and FALLBACK != MODEL and time.time() - t0 < STOP:
+    todo = [t for t in todo if t[1] not in new]
+    print(f"second pass with {FALLBACK}: {len(todo)} codes", flush=True)
+    MODEL, skipped, t0 = FALLBACK, 0, time.time()
+    with cf.ThreadPoolExecutor(WORKERS) as ex:
+        list(ex.map(work, range(0, len(todo), BATCH)))
 print(f"named {len(new)}, left {skipped} with the insurer's wording; tokens in {tin}, out {tout}")
+_today = _dt.date.today().isoformat()
+_keep = {c: d for c, d in load(DECLINED).items() if c not in new}
+_keep.update({c: _today for _, c, _n in todo if c in asked and c not in new})
+with open(DECLINED, "w") as f:
+    for c, d in sorted(_keep.items()): f.write(f"{c}\t{d}\n")
 summ = os.environ.get("GITHUB_STEP_SUMMARY")
 if summ:
     open(summ, "a").write(f"Named {len(new)} codes, {skipped} left with the insurer's wording. Tokens: {tin} in, {tout} out.\n")

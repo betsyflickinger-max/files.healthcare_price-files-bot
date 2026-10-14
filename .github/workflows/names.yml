@@ -8,6 +8,12 @@ on:
       max_codes:
         description: "How many unnamed codes to try this run"
         default: "1500"
+      fallback_model:
+        description: "Stronger model for codes the small model declines (blank = off)"
+        default: "claude-sonnet-5-5"
+      retry_days:
+        description: "Ask again about codes both models declined after this many days (0 = ask again now)"
+        default: "30"
 
 concurrency:
   group: names
@@ -28,6 +34,8 @@ jobs:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       MAX_CODES: ${{ inputs.max_codes || '20000' }}
       APPLY: "1"
+      FALLBACK_MODEL: ${{ github.event_name == 'workflow_dispatch' && inputs.fallback_model || 'claude-sonnet-5-5' }}
+      RETRY_DAYS: ${{ inputs.retry_days || '30' }}
     steps:
       - uses: actions/checkout@v4
       - name: Check the API key
@@ -47,7 +55,7 @@ jobs:
         run: |
           git config user.name "price-files-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add site/plain_names_auto.tsv 2>/dev/null || true
+          git add site/plain_names_auto.tsv site/plain_names_declined.tsv 2>/dev/null || true
           git diff --cached --quiet || { git commit -qm "Auto plain names $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
       - name: Publish the preview site
         if: env.SKIP != '1'
