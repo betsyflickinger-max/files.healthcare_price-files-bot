@@ -100,6 +100,8 @@ def ask(h, extra, model=None):
             "Price files are often named for the legal name, like <EIN>_<legal-name>_standardcharges.json, and are often "
             "hosted by a vendor (Panacea, Hospital Price Index, Craneware, Hyve, PARA...) rather than the hospital's site.")
     for attempt in range(6):
+        if STATE.get("no_credit"):
+            return None, 0
         headers = {"x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"}
         if STATE["beta"]:
             headers["anthropic-beta"] = STATE["beta"]
@@ -114,6 +116,11 @@ def ask(h, extra, model=None):
             STATE.update(tools=TOOLS_FULL[:1], beta=""); continue
         if r.status_code in (429, 529, 500, 502, 503):
             time.sleep(min(float(r.headers.get("retry-after") or 15 * (attempt + 1)), 120)); continue
+        if r.status_code == 400 and "credit balance" in r.text:
+            if not STATE.get("no_credit"):
+                print("::warning::Anthropic API credit ran out; no more Claude searches this run (free layers continue)", flush=True)
+            STATE["no_credit"] = True
+            return None, 0
         if r.status_code != 200:
             print("  API error", r.status_code, r.text[:300], flush=True)
             return None, 0
@@ -654,6 +661,8 @@ def main():
             result, how, dom, mrf, why, ans, ns = res
             counts[result] = counts.get(result, 0) + 1
             L = log.get(h["ccn"], {})
+            if result == "error" and L.get("result"):   # Oct 14: an API failure must never erase an earlier result
+                continue
             log[h["ccn"]] = dict(ccn=h["ccn"], name=h["name"], city=h["city"], state=h["state"], type=h["type"],
                                  searched_at=today if (not h.get("_deep_only") or h.get("_escalate")) else L.get("searched_at", today),
                                  times_searched=str(int(L.get("times_searched") or 0) + 1),

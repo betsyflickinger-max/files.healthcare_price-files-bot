@@ -87,6 +87,8 @@ def call_model(model, system, user):
 
 def call(system, user, tools=True, max_tokens=2500, model=None):
     for attempt in range(6):
+        if STATE.get("no_credit"):
+            return None, 0
         h = {"x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"}
         if STATE["beta"] and tools:
             h["anthropic-beta"] = STATE["beta"]
@@ -101,6 +103,11 @@ def call(system, user, tools=True, max_tokens=2500, model=None):
             STATE.update(tools=TOOLS[:1], beta=""); continue
         if r.status_code in (429, 500, 502, 503, 529):
             time.sleep(min(float(r.headers.get("retry-after") or 15 * (attempt + 1)), 120)); continue
+        if r.status_code == 400 and "credit balance" in r.text:
+            if not STATE.get("no_credit"):
+                print("::warning::Anthropic API credit ran out; no more Claude searches this run (free layers continue)", flush=True)
+            STATE["no_credit"] = True
+            return None, 0
         if r.status_code != 200:
             print("  API error", r.status_code, r.text[:200], flush=True)
             return None, 0
@@ -441,6 +448,8 @@ def main():
         for i, (t, (result, url, how, why, ans, ns)) in enumerate(ex.map(search_one, todo), 1):
             counts[result] = counts.get(result, 0) + 1
             k = (t["state"], t["issuer"].lower())
+            if result == "error" and k in prev:   # Oct 14: an API failure must never erase an earlier result
+                continue
             ent = re.search(r"for '([^']*)'", how)
             rows[k] = dict(t, result=result, url=url, reporting_entity=ent.group(1) if ent else "", how=how or why,
                            price_page=(ans.get("page") or "")[:300],
