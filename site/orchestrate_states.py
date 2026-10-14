@@ -88,10 +88,10 @@ def rebalance(st, left, run):
 # States finished before this was added were already reported by hand.
 ANNOUNCE_FROM = '2026-10-14 21:30'   # UTC
 NAMES = {v: v.title() for v in STATES.values()}
-def ct_now():
+def ct(t):   # a UTC datetime -> "Oct 14 5:03 PM CT"
     from zoneinfo import ZoneInfo
-    import datetime as dt
-    return dt.datetime.now(ZoneInfo('America/Chicago')).strftime('%b %d %-I:%M %p CT')
+    return t.astimezone(ZoneInfo('America/Chicago')).strftime('%b %d %-I:%M %p CT')
+def finished_at(x): return ct(s3.head_object(Bucket=B, Key=tout(x) + 'embed.json')['LastModified'])
 def announce(st, left):
     if 'announced' not in st:
         st['announced'] = [x for x in STATES.values() if x not in left and
@@ -106,7 +106,7 @@ def announce(st, left):
     still = [f"- {NAMES[x]}: {sum(1 for k in ls(wk(x) + 'B/') if k.endswith('.json'))} of {NB} batches done, {st['machines'][x]} machines"
              for x in left]
     title = ' + '.join(NAMES[x] for x in new) + (' done: all 7 states built' if not left else ' done; machines moved on')
-    body = '\n'.join([f"{', '.join(NAMES[x] for x in new)} finished its Price Finder data ({ct_now()}).", '',
+    body = '\n'.join([' '.join(f"{NAMES[x]} finished its Price Finder data at {finished_at(x)}." for x in new), '',
                       '**Where the free machines went**', *(['- ' + m for m in moves] or ['- none yet (slots go out on the next runs)']), '',
                       '**Still building**', *(still or ['- nothing: every state is built; the hospital + publish step starts now'])])
     O.issue(title, body)
