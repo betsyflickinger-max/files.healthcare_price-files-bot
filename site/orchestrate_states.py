@@ -22,6 +22,8 @@ SP = O.SP
 SIZE = 's-8vcpu-32gb-amd'
 STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
+# Oct 14: STALL_MIN 180 (default 60): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
+# new Georgia machine just before its first batch finished, over and over.
 GB_PER_MACHINE, MAX_PER_STATE = 20, 3
 RUN_SPLIT = "for t in 1 2 3; do /root/v/bin/python /root/h/tx_split.py >> /root/run.log 2>&1 && break; sleep 5; done"
 SPLIT_MACHINES = 4
@@ -171,7 +173,7 @@ def main():
                 env = dict(RATES=f'data/s7/state/{slug}/rates/', NPIS=f'data/s7/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
-                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), **W)
+                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='180', **W)
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
