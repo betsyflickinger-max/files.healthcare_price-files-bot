@@ -1,6 +1,0 @@
-hospital_name,last_updated_on,version,location_name,hospital_address,license_number|DE,"To the best of its knowledge and belief, the hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50"
-Test Hospital,2026-10-01,2.2.0,Test,1 Main St,123,true
-description,code|1,code|1|type,setting,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|methodology,standard_charge|min,standard_charge|max,additional_generic_notes
-MRI brain,70551,CPT,outpatient,3000,1500,Aetna,PPO,1200,fee schedule,900,1800,
-CBC,85025,CPT,outpatient,100,40,Cigna,OAP,30,fee schedule,20,60,
-Other,12345,CPT,outpatient,50,20,Cigna,OAP,10,fee schedule,5,15,
