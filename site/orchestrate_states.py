@@ -109,7 +109,7 @@ def announce(st, left):
     body = '\n'.join([f"{', '.join(NAMES[x] for x in new)} finished its Price Finder data ({ct_now()}).", '',
                       '**Where the free machines went**', *(['- ' + m for m in moves] or ['- none yet (slots go out on the next runs)']), '',
                       '**Still building**', *(still or ['- nothing: every state is built; the hospital + publish step starts now'])])
-    issue(title, body)
+    O.issue(title, body)
     st['announced'] += new; st['announce_log_i'] = len(st.get('log', []))
 
 
@@ -165,7 +165,8 @@ def main():
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
         rebalance(st, left, run)
-        announce(st, left)
+        try: announce(st, left)   # a failed notice must never stop the build from saving its state
+        except Exception as e: log('notice failed:', repr(e)[:200])
         log('states still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
