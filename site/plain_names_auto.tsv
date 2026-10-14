@@ -9999,3 +9999,128 @@ C9290	Bupivacaine liposome numbing injection, per 10 mg
 28531	Open surgery for foot sesamoid bone fracture
 67345	Botulinum injection into eye muscle
 77439	Ultrasound guidance for skin radiation therapy placement
+0083U	Lab test of how a patient's tumor cells respond to chemotherapy drugs
+0314T	Laparoscopic removal of a vagus nerve blocking stimulator and its leads
+0394T	Electronic radiation treatment applied to the skin, per session
+0442U	Fingerstick test telling viral from bacterial respiratory infection
+0526F	Quality reporting code: follow-up visit in an ongoing episode of care
+0534U	Prostate cancer side-effect risk test from a cheek swab (retired code)
+0634U	Breast cancer blood test for ESR1 gene changes
+0635U	Gene activity test from a skin swab for atopic dermatitis treatment choice
+0636U	Babesia (tick-borne infection) antibody blood test, IgG
+0637U	Babesia (tick-borne infection) antibody blood test, IgM
+0638U	Bartonella (cat-scratch bacteria) antibody blood test, IgG
+0639U	Bartonella (cat-scratch bacteria) antibody blood test, IgM
+0640U	Count of cancer cells in spinal fluid
+0641U	Cancer leftover-disease DNA test, first baseline test (retired code)
+0642U	Cancer leftover-disease DNA blood test, follow-up (retired code)
+0643U	Urine DNA test for genitourinary cancer gene changes (about 200 genes)
+0644U	Leukemia leftover-disease test, personalized baseline setup
+0645U	Leukemia leftover-disease monitoring test, blood or bone marrow
+0646U	Whole-genome cancer leftover-disease test, baseline (blood and tumor)
+0647U	Whole-genome cancer leftover-disease blood test, monitoring
+0648U	Solid tumor gene panel test (about 42 genes)
+0649U	Alzheimer's disease genetic blood test
+0650U	Gene test for heart, kidney and blood pressure drug reactions (9 genes)
+0651U	Inherited cancer risk gene panel (55 genes)
+0652U	Saliva gene test for kidney-related drug reactions (13 genes)
+0653U	Whole-exome gene test for inherited kidney disease
+0654U	Mitochondrial disease test: complex I assembly (child metabolic disorder)
+0655U	Mitochondrial disease test: complex V enzyme activity
+0656U	Mitochondrial disease test: pyruvate dehydrogenase enzyme activity
+0657U	Rapid genetic sequencing for a rare disease, family member comparison
+0658U	Rapid whole-genome sequencing for a rare disease, patient
+0659U	Ultra-rapid whole-genome sequencing for a rare disease, patient
+0660U	HPV types 18, 31, 33 and 35 DNA blood test
+0661U	HPV type 16 DNA blood test
+0662U	Kidney transplant rejection test from urine (12 genes)
+0663U	Prenatal blood test for baby's platelet type
+0664U	Kidney transplant injury test from blood (13 genes)
+0665U	Blood test for fatty liver disease with liver inflammation (MASH)
+0666U	Wound swab test for germs and antibiotic resistance genes
+0667U	Blood test for FGF21 (marker of mitochondrial disease)
+0668U	Pancreatic cancer screening blood test
+0669U	Blood test for Bartonella, Babesia and Borrelia (Lyme) germs
+0670U	Whole-genome rare disease test, patient plus one family member
+0671U	Whole-genome rare disease test, patient plus two family members
+0672U	Whole-exome rare disease test, patient plus one family member
+0673U	Whole-exome rare disease test, patient plus two family members
+0674U	Whole-genome rare disease analysis, patient plus one family member
+0675U	Whole-genome rare disease analysis, patient plus two family members
+0676U	Prenatal whole-genome test for a rare disease, with mother's sample
+0677U	Prenatal whole-genome test for a rare disease, with both parents
+0678U	Inherited cancer risk whole-genome test (117 genes)
+0679U	Inherited blood cancer risk whole-genome test (over 105 genes)
+0680U	Blood test showing tobacco use (DNA marker)
+0681U	Saliva test showing tobacco use (DNA markers)
+0682U	Lung cancer risk blood test from smoking-related DNA marker
+0683U	Lung cancer risk saliva test from smoking-related DNA markers
+0684U	Blood test for heavy alcohol use (DNA markers)
+0685U	Blood or saliva test for heavy alcohol use (DNA markers)
+0686U	Prostate cancer gene activity test on biopsy tissue (22 genes)
+0687U	DNA match test to confirm a biopsy sample is the patient's
+0688U	Colorectal cancer leftover-disease DNA test, baseline
+0689U	Colorectal cancer leftover-disease DNA blood test, monitoring
+0690U	Transplant rejection blood test (donor DNA level)
+0691U	Carrier screening gene panel for parents-to-be (6 genes)
+0692U	Blood protein test for blocked leg arteries (peripheral artery disease)
+0693U	Head and neck cancer DNA test, personalized
+0694U	Blood test identifying abnormal antibody proteins (myeloma screening)
+0695U	Spinal fluid DNA test for brain and spinal cord cancer
+0696U	Tumor tissue RNA test (350 or more genes)
+0697U	Gene test to guide weight-loss medicine choice, cheek swab or blood
+0698U	Blood test for brain injury after a head blow (concussion)
+0709T	Cancer immunotherapy injection into the skin, each additional injection
+0715T	Breaking up calcium in a heart artery with sound waves (lithotripsy)
+0817T	Implant or replace an ankle nerve stimulator for bladder control, deep
+0818T	Revise or remove an ankle nerve stimulator for bladder control, shallow
+0819T	Revise or remove an ankle nerve stimulator for bladder control, deep
+1451F	Quality reporting code: symptoms got clinically worse since last check
+20702	Placing a drug-releasing device inside a bone's marrow canal
+22226	Spine bone-cutting correction surgery, each extra vertebra
+25450	Surgery to stop the growth plate at the wrist (radius or ulna)
+25909	Repeat amputation of the forearm
+25929	Follow-up closure or scar repair after an amputation through the hand
+25931	Repeat amputation through the hand bones
+27105	Moving a back muscle to the hip to improve hip function
+27499	Thigh or knee pressure-relief surgery, several compartments, tissue removal
+3115F	Quality reporting code: measured activity level and heart failure symptoms
+3119F	Quality reporting code: activity level and symptoms not checked
+32036	Opening the chest wall to drain an infected fluid pocket (open flap)
+32940	Surgery to free a stuck lung from the chest wall
+34471	Removal of a blood clot from the subclavian vein through a neck incision
+35331	Surgery to clear a blocked abdominal aorta (endarterectomy)
+35631	Artery bypass with a man-made graft from the aorta to an abdominal artery
+37256	Iliac (pelvis) artery balloon angioplasty, complex blockage, first artery
+37260	Iliac (pelvis) artery stent, complex blockage, first artery
+37263	Thigh/knee artery balloon angioplasty, simple blockage, first artery
+37264	Thigh/knee artery balloon angioplasty, simple blockage, each extra artery
+37272	Thigh/knee artery plaque removal (atherectomy), simple, each extra artery
+37281	Lower-leg artery balloon angioplasty, simple blockage, each extra artery
+37289	Lower-leg artery plaque removal (atherectomy), simple, each extra artery
+37292	Lower-leg artery stent with plaque removal, simple blockage, first artery
+37294	Lower-leg artery stent with plaque removal, complex blockage, first artery
+37297	Below-ankle artery balloon angioplasty, simple blockage, each extra artery
+3750F	Quality reporting code: patient not on long-term high-dose steroids
+42699	Unlisted salivary gland or duct procedure
+48547	Surgery to bypass the duodenum after a pancreas injury
+54430	Penis shunt surgery to treat a prolonged erection (priapism)
+55559	Unlisted laparoscopic procedure on the spermatic cord
+6150F	Quality reporting code: patient not starting a first course of anti-TNF drug
+61596	Skull base surgery through the inner ear (transcochlear approach)
+61613	Skull base surgery to close a carotid artery aneurysm or malformation
+62120	Repair of a skull opening where brain tissue bulges out (encephalocele)
+64738	Cutting the lower jaw nerve through the bone, for nerve pain
+66155	Glaucoma drainage surgery with heat cautery and iris tissue removal
+66635	Removing part of the iris to improve vision (optical iridectomy)
+69450	Freeing a scarred eardrum through the ear canal
+69727	Removal of a bone-anchored hearing implant, small (under 100 sq mm)
+77436	Treatment planning for surface radiation therapy
+86510	Skin test for histoplasmosis (a fungal lung infection)
+93150	Turning on an implanted breathing-nerve stimulator for sleep apnea
+93152	Checking and programming a breathing-nerve stimulator during a sleep study
+93587	Vein imaging for a congenital heart defect, veins at or above the heart
+95199	Unlisted allergy or immune system service
+99191	Running a heart-lung pump to cool the body, 45 minutes
+G1004	Reporting code: imaging order checked with decision-support software
+G1010	Reporting code: imaging order checked with decision-support software

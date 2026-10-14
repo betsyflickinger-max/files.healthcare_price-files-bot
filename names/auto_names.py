@@ -117,7 +117,11 @@ summ = os.environ.get("GITHUB_STEP_SUMMARY")
 if summ:
     open(summ, "a").write(f"Named {len(new)} codes, {skipped} left with the insurer's wording. Tokens: {tin} in, {tout} out.\n")
 
-if E.get("APPLY") == "1" and new:
+# Oct 14: also patch names added by hand to plain_names_auto.tsv (or written by an earlier run) that the live page doesn't show yet
+_named = {**load(AUTO), **load(HAND)}
+_pending = [c for c, C in D["codes"].items() if c in _named and "name as written" in C.get("cat", "")]
+if _pending: print(f"{len(_pending)} names on file not yet on the live page; patching them too", flush=True)
+if E.get("APPLY") == "1" and (new or _pending):
     hand = load(HAND); names = {**load(AUTO), **hand}
     def patch(html):
         a, b, D = page_data(html); n = 0
