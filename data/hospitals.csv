@@ -762,7 +762,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 054155,"BAKERSFIELD BEHAVIORAL HEALTHCARE HOSPITAL, LLC",BAKERSFIELD,CA,Psychiatric,dallasbehavioral.com,https://www.bakersfieldbehavioral.com/474433670_BAKERSFIELD-BEHAVIORAL-HEALTHCARE-HOSPITAL-LLC_standardcharges.csv,raw/hospitals/2026-10/CA/6ee33919c686_474433670_BAKERSFIELD-BEHAVIORAL-HEALTHCARE-HOSPITAL-LLC_standardcharges.csv.zst,6ee33919c686bdde4ab1d6e29a0c69fe435c37b5743b6e536de6a83c1b2169df,15163,2026-10-05/nat,
 054157,GLENDORA  HOSPITAL,GLENDORA,CA,Psychiatric,,https://rca.elevatepfs.com/ptapp/api/cdm/export/oneclick?recno=9b3c3aba5efc8ad9baae58b428f343a23332f91e383565991ffcd4aa92500155,raw/hospitals/2026-10/CA/a65c1777edd9_oneclick.zst,a65c1777edd9f116b4b79ddc5b94852b41d81887711bf815d106ee8a80289127,32279241,2026-10-09/find,
 054158,"ALISO RIDGE BEHAVIORAL HEALTH, LLC",ALISO VIEJO,CA,Psychiatric,,,,,,,
-054159,"SACRAMENTO BEHAVIORAL HEALTHCARE HOSPITAL, LLC",NORTH SACRAMENTO,CA,Psychiatric,,,,,,,
+054159,"SACRAMENTO BEHAVIORAL HEALTHCARE HOSPITAL, LLC",NORTH SACRAMENTO,CA,Psychiatric,aurorasantarosa.com,,,,,,sibling 2026-10-14
 054160,RIVER VISTA BEHAVIORAL HEALTH,MADERA,CA,Psychiatric,,,,,,,
 060001,BANNER NORTH COLORADO MEDICAL CENTER,GREELEY,CO,Acute Care Hospitals,,https://images.pricetransparency.healthcare/public-mrfs/banner/841287638_banner-north-colorado-medical-center_standardcharges.csv,raw/hospitals/2026-10/CO/505667e76aaa_841287638_banner-north-colorado-medical-center_standardcharges.csv.zst,505667e76aaa7803d44a670ee04ddc3b07b81da8702657983a40c1eb1f168997,81066167,2026-10-09/find,
 060003,LONGMONT UNITED HOSPITAL,LONGMONT,CO,Acute Care Hospitals,centura.org,https://csdam.widen.net/content/ltomberpry/original/840460697-1366465866_longmont-united-hospital_standardcharges.csv,raw/hospitals/2026-10/CO/5ff8ea700d01_840460697-1366465866_longmont-united-hospital_standardcharges.csv.zst,5ff8ea700d01d6ac72ca88933d355830f659404b47918951336b05cb8f6ff1f4,660330895,2026-10-08/fill7,
@@ -917,7 +917,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 090005,SIBLEY MEMORIAL HOSPITAL,WASHINGTON,DC,Acute Care Hospitals,willsmemorialhospital.com,,,,,,osm 2026-10-10
 090008,UNITED MEDICAL CENTER,WASHINGTON,DC,Acute Care Hospitals,,,,,,,
 090011,MEDSTAR WASHINGTON HOSPITAL CENTER,WASHINGTON,DC,Acute Care Hospitals,medstarfranklin.org,https://www.medstarhealth.org/-/media/project/mho/medstar/billing-and-insurance/2026/521272129_medstar_washington_hospital_center_standardcharges.csv,raw/hospitals/2026-10/DC/f85d58b41059_521272129_medstar_washington_hospital_center_standardcharges.csv.zst,f85d58b4105960c206835b7147292a33fbe34786737b770438f38dbdc2cb4449,155342152,2026-10-08/fill11,
-092002,BRIDGEPOINT CONT CARE HOSPITAL - CAPITOL HILL,WASHINGTON,DC,Long-term,,,,,,,
+092002,BRIDGEPOINT CONT CARE HOSPITAL - CAPITOL HILL,WASHINGTON,DC,Long-term,bridgepointhealthcare.com,,,,,,osm 2026-10-14
 092003,BRIDGEPOINT CONT CARE HOSPITAL - NAT HARBORSIDE,WASHINGTON,DC,Long-term,,,,,,,
 093025,MEDSTAR NATIONAL REHABILITATION HOSPITAL,WASHINGTON,DC,Inpatient Rehabilitation,medstarhealth.org,,,,,,osm 2026-10-10
 093300,CHILDREN'S NATIONAL HOSPITAL,WASHINGTON,DC,Childrens,,,,,,,
@@ -1267,7 +1267,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 110092,DODGE COUNTY HOSPITAL,EASTMAN,GA,Acute Care Hospitals,,https://dodgecountyhospital.slicedhealth.io/pricer/580625140_dodge-county-hospital-authority_standardcharges.csv,raw/hospitals/2026-10/GA/fab529b7668c_580625140_dodge-county-hospital-authority_standardcharges.csv.zst,fab529b7668c94028359cbd778475831a0e279ecb623591342d3a000e3aec74b,27696367,2026-10-08/fillmoga,
 110095,TIFT REGIONAL MEDICAL CENTER,TIFTON,GA,Acute Care Hospitals,mysouthwell.com,,,,,,osm 2026-10-10
 110100,JEFFERSON HOSPITAL,LOUISVILLE,GA,Acute Care Hospitals,,https://use2webtechstgpricelist.blob.core.windows.net/pricelist/Complete%20File/230596940_jefferson-bucks-hospital_standardcharges.csv,raw/hospitals/2026-10/GA/e704ac4db4cc_230596940_jefferson-bucks-hospital_standardcharges.csv.zst,e704ac4db4cc67c9a46971655e2a3284308225231fa5d66debd65db1ad4a3be0,258217334,2026-10-05/nat,
-110101,"SOUTHWELL MEDICAL, A CAMPUS OF TRMC",ADEL,GA,Acute Care Hospitals,,,,,,,
+110101,"SOUTHWELL MEDICAL, A CAMPUS OF TRMC",ADEL,GA,Acute Care Hospitals,mysouthwell.com,,,,,,osm 2026-10-14
 110104,CRISP REGIONAL HOSPITAL,CORDELE,GA,Acute Care Hospitals,,https://apim.services.craneware.com/api-pricing-transparency/api/public/4cecbc1866d4b3969f2e6e4b402b4e46/charges/mrf,raw/hospitals/2026-10/GA/5144d2e9a54f_mrf.zst,5144d2e9a54f6f2ae3f75705264aa010ad3a7cb79aa254c7c738670fe843b4bf,11850658,2026-10-05/nat,
 110105,COLQUITT REGIONAL MEDICAL CENTER,MOULTRIE,GA,Acute Care Hospitals,,https://colquittregional.com/wp-content/uploads/580607088_hospital-authority-of-colquitt-county_standardcharges.csv,raw/hospitals/2026-10/GA/a75acb50733c_580607088_hospital-authority-of-colquitt-county_standardcharges.csv.zst,a75acb50733ce104138acde10f82cf62dce5f97f2d3f2fbe62e3cce467755947,71812480,2026-10-09/find,
 110107,ATRIUM HEALTH NAVICENT THE MEDICAL CENTER,MACON,GA,Acute Care Hospitals,navicenthealth.org,https://sthpiprd.blob.core.windows.net/machine-readable-files/11181/582149128_the-medical-center-of-central-georgia-inc_standardcharges.csv,raw/hospitals/2026-10/GA/f37ddaed2dd0_582149128_the-medical-center-of-central-georgia-inc_standardcharges.csv.zst,f37ddaed2dd071324aec3f87ef45544007559b15f4b9f3f231405765ad44654f,1427309937,2026-10-05/nat,
@@ -1459,7 +1459,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 161320,COMMUNITY MEMORIAL HOSPITAL MEDICAL CENTER,SUMNER,IA,Critical Access Hospitals,,,,,,,
 161321,AVERA MERRILL PIONEER HOSPITAL,ROCK RAPIDS,IA,Critical Access Hospitals,avera.org,,,,,,sibling 2026-10-11
 161322,DALLAS COUNTY HOSPITAL,PERRY,IA,Critical Access Hospitals,dallascohospital.org,,,,,,osm 2026-10-10
-161323,MITCHELL COUNTY REGIONAL HEALTH,OSAGE,IA,Critical Access Hospitals,,,,,,,
+161323,MITCHELL COUNTY REGIONAL HEALTH,OSAGE,IA,Critical Access Hospitals,mcrhc.com,,,,,,osm 2026-10-14
 161324,GEORGE C GRAPE COMMUNITY HOSPITAL,HAMBURG,IA,Critical Access Hospitals,grapehospital.com,,,,,,osm 2026-10-10
 161325,GREENE COUNTY MEDICAL CENTER,JEFFERSON,IA,Critical Access Hospitals,,https://apim.services.craneware.com/api-pricing-transparency/api/public/4cf51e9a0a8b4190896bc4ad80d1d24d/charges/mrf,raw/hospitals/2026-10/IA/801fe62d6795_mrf.zst,801fe62d67957a61a134ec15592b960c0b1b1b67b38e7cb4900d7d5939cc444a,14997932,2026-10-05/nat,
 161326,MADISON COUNTY HEALTH CARE SYSTEM,WINTERSET,IA,Critical Access Hospitals,,,,,,,
@@ -2989,11 +2989,11 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 261336,IRON COUNTY MEDICAL CENTER,PILOT KNOB,MO,Critical Access Hospitals,,https://icmedcenter.slicedhealth.io/pricer/200889615_iron-county-hospital-district-doing-business-as:-iron-county-medical-center_standardcharges.csv,raw/hospitals/2026-10/MO/3aed46b78fc2_200889615_iron-county-hospital-district-doing-business-as_-iron-county-medical-center_standardcharges.csv.zst,3aed46b78fc2d9b5fdd2dd10a5569b34ef28a133eea4b98b140d9e6456f353f3,15305310,2026-10-09/find,
 261337,MISSOURI BAPTIST SULLIVAN HOSPITAL,SULLIVAN,MO,Critical Access Hospitals,bjc.org,https://www.bjc.org/hpt/36/431459495_MissouriBaptistSullivanHospital_standardcharges.json,raw/hospitals/2026-10/MO/878e46c57f3b_431459495_MissouriBaptistSullivanHospital_standardcharges.json.zst,878e46c57f3bb774aca23c782f3e439b6ecd12e379b133432bd98408c1bfebd9,119472394,2026-10-05/nat,
 261338,MERCY HOSPITAL CARTHAGE,CARTHAGE,MO,Critical Access Hospitals,mercy.net,https://www.mercy.net/content/dam/mercy/en/web-assets/charge-files/453808607_mercy-hospital-carthage_standardcharges.zip,raw/hospitals/2026-10/MO/c2a9e96d53e7_453808607_mercy-hospital-carthage_standardcharges.zip.zst,c2a9e96d53e7b310b26283427728020d59962828113ddeecb2360d0d7725bad9,79348493,2026-10-05/nat,
-261340,MOSAIC MEDICAL CENTER - MARYVILLE,MARYVILLE,MO,Critical Access Hospitals,,,,,,,
+261340,MOSAIC MEDICAL CENTER - MARYVILLE,MARYVILLE,MO,Critical Access Hospitals,mymosaiclifecare.org,,,,,,osm 2026-10-14
 262010,KINDRED HOSPITAL ST LOUIS SOUTH,SAINT LOUIS,MO,Long-term,kindredhospitals.com,,,,,,chain 2026-10-10
 262013,SELECT SPECIALTY HOSPITAL-ST LOUIS,SAINT CHARLES,MO,Long-term,,,,,,,
 262016,"LANDMARK HOSPITAL OF JOPLIN, LLC",JOPLIN,MO,Long-term,lhofjoplin.com,,,,,,osm 2026-10-10
-262017,"SELECT SPECIALTY HOSPITAL SPRINGFIELD, INC",SPRINGFIELD,MO,Long-term,,,,,,,
+262017,"SELECT SPECIALTY HOSPITAL SPRINGFIELD, INC",SPRINGFIELD,MO,Long-term,springfieldhospital.org,,,,,,osm 2026-10-14
 262018,KINDRED HOSPITAL NORTHLAND,KANSAS CITY,MO,Long-term,kindredhospitals.com,,,,,,osm 2026-10-10
 262019,MOSIAC LIFE CARE AT ST JOSEPH,SAINT JOSEPH,MO,Long-term,,,,,,,
 262020,"LANDMARK HOSPITAL OF COLUMBIA, LLC",COLUMBIA,MO,Long-term,lhofcolumbia.com,,,,,,osm 2026-10-10
@@ -3017,7 +3017,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 264012,CENTERPOINTE HOSPITAL,SAINT CHARLES,MO,Psychiatric,centerpointehospital.com,,,,,,guess 2026-10-10
 264020,ROYAL OAKS HOSPITAL,WINDSOR,MO,Psychiatric,,https://compasshealthnetwork.org/wp-content/uploads/2026/04/300255522_pathways-psychiatric-hospital-inc_standardcharges.csv,raw/hospitals/2026-10/MO/9452fc5d7250_300255522_pathways-psychiatric-hospital-inc_standardcharges.csv.zst,9452fc5d72507cf8fa898ad03e381033f295f1ea9456c0c279ff2cd40bc70887,22119,2026-10-09/find,
 264024,LAKELAND BEHAVIORAL HEALTH SYSTEM,SPRINGFIELD,MO,Psychiatric,lakelandbehavioralhealth.com,,,,,,guess 2026-10-10
-264031,OSAGE BEACH CENTER FOR BEHAVIORAL HEALTH,OSAGE BEACH,MO,Psychiatric,,,,,,,
+264031,OSAGE BEACH CENTER FOR BEHAVIORAL HEALTH,OSAGE BEACH,MO,Psychiatric,osagebeachccd.com,,,,,,osm 2026-10-14
 264032,CENTERPOINTE HOSPITAL OF COLUMBIA,COLUMBIA,MO,Psychiatric,centerpointehospitalcolumbia.com,,,,,,osm 2026-10-10
 264033,PERIMETER BEHAVIORAL HOSPITAL OF SPRINGFIELD,SPRINGFIELD,MO,Psychiatric,perimeterbehavioral.com,https://www.perimeterhealthcare.com/springfield/830966748_Springfield-Behavioral-Hospital-LLC_standardcharges.csv,raw/hospitals/2026-10/MO/848a17e291ef_830966748_Springfield-Behavioral-Hospital-LLC_standardcharges.csv.zst,848a17e291ef6322f73cb4d72f9e2fb0e06754d0aceec81a07a2f33d28300a14,4058,2026-10-05/nat,
 264034,SOUTHEAST BEHAVIORAL HOSPITAL,CAPE GIRARDEAU,MO,Psychiatric,southeastbehavioral.com,,,,,,osm 2026-10-10
@@ -3334,7 +3334,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 350070,ESSENTIA HEALTH,FARGO,ND,Acute Care Hospitals,,https://www.essentiahealth.org/standard-charges/2026/200479568_Essentia-Ada_standardcharges.csv,raw/hospitals/2026-10/ND/8797768f0a33_200479568_Essentia-Ada_standardcharges.csv.zst,8797768f0a33627dcf1c96dd4ba6b72d9680ae7732a4ddf6d7111f81190ae90d,410535705,2026-10-08/fill11,
 351300,TIOGA MEDICAL CENTER,TIOGA,ND,Critical Access Hospitals,,https://secure.claraprice.net/price-transparency/CKCV-1764013429670/machine-readable/450308484_tioga-medical-center_standardcharges.json,raw/hospitals/2026-10/ND/b999e2623385_450308484_tioga-medical-center_standardcharges.json.zst,b999e26233851e4358f6006c74f9ff0619cb2358ae04c20130c72f4bdc1dddf2,2620938,2026-10-08/fill11,
 351301,MOUNTRAIL COUNTY MEDICAL CENTER INC,STANLEY,ND,Critical Access Hospitals,,https://secure.claraprice.net/price-transparency/KNHL-1747862097603/machine-readable/450447670_mountrail-county-medical-center_standardcharges.json,raw/hospitals/2026-10/ND/a7b6773b091a_450447670_mountrail-county-medical-center_standardcharges.json.zst,a7b6773b091acd47c9e199667392d5b6dd4769095090c1c2e1583bc952e19f5e,12006824,2026-10-05/nat,
-351302,MCKENZIE COUNTY HEALTHCARE SYSTEMS INC,WATFORD CITY,ND,Critical Access Hospitals,,,,,,,
+351302,MCKENZIE COUNTY HEALTHCARE SYSTEMS INC,WATFORD CITY,ND,Critical Access Hospitals,mckenziehealth.com,,,,,,osm 2026-10-14
 351303,GARRISON MEMORIAL HOSPITAL,GARRISON,ND,Critical Access Hospitals,,,,,,,
 351304,CHI ST ALEXIUS HEALTH TURTLE LAKE,TURTLE LAKE,ND,Critical Access Hospitals,chistalexiushealth.org,https://www.chistalexiushealth.org/content/dam/stalexiushealthorg/documents/financial/price-transparency-standard-charges/450226711-1013961820_st-alexius-medical-center_standardcharges.json,raw/hospitals/2026-10/ND/c804132c717c_450226711-1013961820_st-alexius-medical-center_standardcharges.json.zst,c804132c717cce2142c5d40deb3bd818ce3c13ebb09d8557f69e51539e5074cb,46081127,2026-10-05/nat,
 351305,TRINITY KENMARE COMMUNITY HOSPITAL,KENMARE,ND,Critical Access Hospitals,,https://hospitalpricedisclosure.com/download.aspx?pi=oJubMF8*_*EJI5yGO8tB02EA*-*,raw/hospitals/2026-10/ND/6bbec91ef86b_download.aspx.zst,6bbec91ef86b0b11360ffe98fc9464722861fbabd60d47b5a5321f91b8225114,11722865,2026-10-09/find,
@@ -3359,7 +3359,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 351325,ST LUKE'S HOSPITAL,CROSBY,ND,Critical Access Hospitals,,,,,,,
 351326,FIRST CARE HEALTH CENTER,PARK RIVER,ND,Critical Access Hospitals,,https://www.firstcarehc.com/cms-hpt.txt,raw/hospitals/2026-10/ND/846bacd063f5_cms-hpt.txt.zst,846bacd063f54ece1725129e7d65dae1fddde7340c9f46d18db866c28951813c,210,2026-10-09/find,
 351327,SMP HEALTH ST ALOISIUS,HARVEY,ND,Critical Access Hospitals,,,,,,,
-351328,LINTON HOSPITAL - CAH,LINTON,ND,Critical Access Hospitals,,,,,,,
+351328,LINTON HOSPITAL - CAH,LINTON,ND,Critical Access Hospitals,lintonhospital.org,,,,,,osm 2026-10-14
 351329,SANFORD HILLSBORO,HILLSBORO,ND,Critical Access Hospitals,sanfordhealth.org,https://sthpiprd.blob.core.windows.net/machine-readable-files/8382/450409348_sanford-hillsboro-medical-center_standardcharges.csv,raw/hospitals/2026-10/ND/32eb5a92dd58_450409348_sanford-hillsboro-medical-center_standardcharges.csv.zst,32eb5a92dd5887ecea1230867535b28eb00182cc022d0b15df637ad318b3c2d1,49751401,2026-10-05/nat,
 351330,WEST RIVER REGIONAL MEDICAL CENTER,HETTINGER,ND,Critical Access Hospitals,,https://machine-readable-files.com/west-river-health/450340688_west-river-health_standardcharges.csv,,,,,
 351331,TOWNER COUNTY MEDICAL CENTER,CANDO,ND,Critical Access Hospitals,,https://secure.claraprice.net/price-transparency/ITXC-1776952260912/machine-readable/450425948_towner-county-medical-center_standardcharges.json,raw/hospitals/2026-10/ND/6857550dcfd4_450425948_towner-county-medical-center_standardcharges.json.zst,6857550dcfd4f17ece612970bd217215b27e000672d36b227f8751064ff86521,5959275,2026-10-09/find,
@@ -3415,7 +3415,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 281311,FRANKLIN COUNTY MEMORIAL HOSPITAL,FRANKLIN,NE,Critical Access Hospitals,fcmh.com,,,,,,osm 2026-10-10
 281312,GENOA COMMUNITY HOSPITAL,GENOA,NE,Critical Access Hospitals,genoamedical.org,,,,,,osm 2026-10-10
 281313,GOTHENBURG HEALTH,GOTHENBURG,NE,Critical Access Hospitals,gothenburghealth.org,,,,,,guess 2026-10-10
-281314,ANNIE JEFFREY MEMORIAL COUNTY HEALTH CENTER,OSCEOLA,NE,Critical Access Hospitals,,,,,,,
+281314,ANNIE JEFFREY MEMORIAL COUNTY HEALTH CENTER,OSCEOLA,NE,Critical Access Hospitals,ajhc.org,,,,,,osm 2026-10-14
 281315,BRODSTONE HEALTHCARE,SUPERIOR,NE,Critical Access Hospitals,brodstonehealthcare.org,https://secure.claraprice.net/price-transparency/WRBJ-1711389947655/machine-readable/brodstone-memorial-hospital_standardcharges.json,,,,,
 281316,WEBSTER COUNTY COMMUNITY HOSPITAL,RED CLOUD,NE,Critical Access Hospitals,,https://www.wcch.org/docs/ahwythecountycommunityhospitallibraries/hcl/mrf3q262/202468795_wythe-county-community_standardcharges.csv.zip,raw/hospitals/2026-10/NE/eb8ceb14cdae_202468795_wythe-county-community_standardcharges.csv.zip.zst,eb8ceb14cdae8669085697b07cb760c61be526c4ff71bfd317934f575aa2edca,1356646,2026-10-05/nat,
 281318,MORRILL COUNTY COMMUNITY HOSPITAL,BRIDGEPORT,NE,Critical Access Hospitals,morrillcountyhospital.com,,,,,,osm 2026-10-10
@@ -3432,7 +3432,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 281331,AVERA CREIGHTON HOSPITAL,CREIGHTON,NE,Critical Access Hospitals,,https://www.avera.org/app/files/public/94f0fb48-c0d0-4b65-b98b-5628b62587c7/460225483_avera-creighton-hospital_standardcharges.csv,,,,,
 281332,BUTLER COUNTY HEALTH,DAVID CITY,NE,Critical Access Hospitals,bchccnet.org,,,,,,osm 2026-10-10
 281333,ROCK COUNTY HOSPITAL,BASSETT,NE,Critical Access Hospitals,rockcountyhospital.com,,,,,,osm 2026-10-10
-281334,BOONE COUNTY HEALTH CENTER,ALBION,NE,Critical Access Hospitals,,,,,,,
+281334,BOONE COUNTY HEALTH CENTER,ALBION,NE,Critical Access Hospitals,boonecohealth.org,,,,,,osm 2026-10-14
 281335,CALLAWAY DISTRICT HOSPITAL,CALLAWAY,NE,Critical Access Hospitals,,https://secure.claraprice.net/price-transparency/IHDY-1698614401401/machine-readable/470533576_callaway-district-hospital_standardcharges.json,raw/hospitals/2026-10/NE/1dc4bc6447bc_470533576_callaway-district-hospital_standardcharges.json.zst,1dc4bc6447bc10feca8383617f04a48d8f1ae8b1cb8cbd0403bc16de0f2ee546,5524874,2026-10-05/nat,
 281336,YORK GENERAL HEALTH CARE SERVICES,YORK,NE,Critical Access Hospitals,yorkgeneral.org,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbYGHYORKNE&type=CDMWithoutLabel&fileType=CSV,,,,,
 281338,HOWARD COUNTY MEDICAL CENTER,ST PAUL,NE,Critical Access Hospitals,,https://sthpiprd.blob.core.windows.net/machine-readable-files/8107/470681056_howard-county-medical-center_standardcharges.csv,raw/hospitals/2026-10/NE/94785ebbc44f_470681056_howard-county-medical-center_standardcharges.csv.zst,94785ebbc44fd3456ab151ce4f8e3734bc91b698d48413f46bcd347a4c5de960,89785868,2026-10-05/nat,
@@ -3634,7 +3634,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 321313,REHOBOTH MCKINLEY CHRISTIAN HEALTH CARE SERVICES,GALLUP,NM,Critical Access Hospitals,,https://secure.claraprice.net/price-transparency/ANSH-1701370906574/machine-readable/850313268_rehoboth-mckinley-christian-health-care-services_standardcharges.json,raw/hospitals/2026-10/NM/b0d140b7653e_850313268_rehoboth-mckinley-christian-health-care-services_standardcharges.json.zst,b0d140b7653e1c66806a2eb571fe198f482f0e300c00eabb030b59ba952a3bc9,13171702,2026-10-05/nat,
 322002,KINDRED HOSPITAL ALBUQUERQUE,ALBUQUERQUE,NM,Long-term,abqhospital.com,,,,,,osm 2026-10-10
 322003,"ALBUQUERQUE - AMG SPECIALTY HOSPITAL, LLC",ALBUQUERQUE,NM,Long-term,,,,,,,
-322004,ADVANCED CARE HOSPITAL OF SOUTHERN NEW MEXICO LLC,LAS CRUCES,NM,Long-term,,,,,,,
+322004,ADVANCED CARE HOSPITAL OF SOUTHERN NEW MEXICO LLC,LAS CRUCES,NM,Long-term,achsnm.ernesthealth.com,,,,,,osm 2026-10-14
 323026,NEW MEXICO REHABILITATION CENTER,ROSWELL,NM,Inpatient Rehabilitation,,,,,,,
 323027,ENCOMPASS HEALTH REHABILITATION HOSPITAL OF ALBUQU,ALBUQUERQUE,NM,Inpatient Rehabilitation,encompasshealth.com,,,,,,chain 2026-10-10
 323028,LOVELACE UNM REHABILITATION HOSPITAL,ALBUQUERQUE,NM,Inpatient Rehabilitation,lovelace.com,,,,,,osm 2026-10-10
@@ -4237,7 +4237,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 373037,TULSA REHABILITATION HOSPITAL LLC,TULSA,OK,Inpatient Rehabilitation,,,,,,,
 373038,"OKLAHOMA CITY REHABILITATION HOSPITAL, LLC",OKLAHOMA CITY,OK,Inpatient Rehabilitation,mercy.net,,,,,,osm 2026-10-10
 373039,ASCENSION ST JOHN REHABILITATION HOSPITAL OF OWASS,OWASSO,OK,Inpatient Rehabilitation,,,,,,,
-373300,J D MCCARTY CENTER FOR CHILDREN,NORMAN,OK,Childrens,,,,,,,
+373300,J D MCCARTY CENTER FOR CHILDREN,NORMAN,OK,Childrens,jdmc.org,,,,,,osm 2026-10-14
 373303,"THE CHILDREN'S CENTER, INC",BETHANY,OK,Childrens,,,,,,,
 374000,GRIFFIN MEMORIAL HOSPITAL,NORMAN,OK,Psychiatric,,,,,,,
 374001,NORTHWEST CENTER FOR BEHAVIORAL HEALTH (NCBH),FORT SUPPLY,OK,Psychiatric,,,,,,,
@@ -4452,7 +4452,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 391306,ENDLESS MOUNTAINS HEALTH SYSTEMS,MONTROSE,PA,Critical Access Hospitals,,https://www.endlesscare.org/s/232720289_endless-mountains-health-systems-inc_standardcharges.csv,raw/hospitals/2026-10/PA/cf149de7038b_232720289_endless-mountains-health-systems-inc_standardcharges.csv.zst,cf149de7038b9d0bdd566a47369e978e2497fb56f2b101a22529c915a2f9cbd5,2165114,2026-10-05/nat,
 391307,PENN HIGHLANDS TYRONE,TYRONE,PA,Critical Access Hospitals,phhealthcare.org,https://www.phhealthcare.org/download/?id=15375,,,,,
 391308,LECOM HEALTH CORRY MEMORIAL HOSPITAL,CORRY,PA,Critical Access Hospitals,lecomhealth.com,,,,,,osm 2026-10-10
-391309,BARNES-KASSON COUNTY HOSPITAL,SUSQUEHANNA,PA,Critical Access Hospitals,,,,,,,
+391309,BARNES-KASSON COUNTY HOSPITAL,SUSQUEHANNA,PA,Critical Access Hospitals,barnes-kasson.org,,,,,,osm 2026-10-14
 391312,PENN HIGHLANDS BROOKVILLE,BROOKVILLE,PA,Critical Access Hospitals,phhealthcare.org,https://www.phhealthcare.org/download/?id=15368,,,,,
 391313,UPMC COLE,COUDERSPORT,PA,Critical Access Hospitals,chp.edu,https://dam.upmc.com/-/media/upmc/locations/hospitals/documents/cdm-json-files/240802108_upmc-cole_standardcharges.csv?,raw/hospitals/2026-10/PA/3a4078fc05bd_240802108_upmc-cole_standardcharges.csv.zst,3a4078fc05bd08103707af70090acb273c5b4b96d0b8011556faadf053e61f2e,66556104,2026-10-05/nat,
 391314,TITUSVILLE AREA HOSPITAL,TITUSVILLE,PA,Critical Access Hospitals,titusvillehospital.org,,,,,,osm 2026-10-10
@@ -5033,7 +5033,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 450688,DALLAS REGIONAL MEDICAL CENTER,MESQUITE,TX,Acute Care Hospitals,dallasregionalmedicalcenter.com,https://dallasregionalmedicalcenter.com/wp-content/uploads/2026/09/100292_DallasRegionalMedicalCenter_standardcharges.json,raw/hospitals/2026-10/TX/2cabd8a4e83a_100292_DallasRegionalMedicalCenter_standardcharges.json.zst,2cabd8a4e83a8f0d67523ea7d8ce5580c9e9dccca852006ba0c3277a13f42a7f,47896943,2026-10-08/fill7,
 450690,UNIVERSITY OF TEXAS HEALTH SCIENCE CENTER AT TYLER,TYLER,TX,Acute Care Hospitals,,,,,,,
 450694,EL CAMPO MEMORIAL HOSPITAL,EL CAMPO,TX,Acute Care Hospitals,,"https://linkprotect.cudasvc.com/url?a=https%3a%2f%2fapp.box.com%2fshared%2fstatic%2fvucltv6rqwl6olqb1bdktazi7mep60wa.csv&c=E,1,ARX7dLu5Bes6WrxpaHEBJHgZzZS66UCmJFriYJHqvDHU3OepMLscOHWSwOuVlYW_QU4YtKptlt0Uj-ZpRchp68JtXqsbc1dzuG8l1cB_SnpV&typo=1",raw/hospitals/2026-10/TX/7e99f17242ee_url.zst,7e99f17242ee82e15740a0bf6573b7c59a34a0c49fd752175312b6d7f3c5d102,3772606,2026-10-09/find,
-450698,LAMB HEALTHCARE CENTER,LITTLEFIELD,TX,Acute Care Hospitals,,,,,,,
+450698,LAMB HEALTHCARE CENTER,LITTLEFIELD,TX,Acute Care Hospitals,lambhc.org,,,,,,osm 2026-10-14
 450702,LONGVIEW REGIONAL MEDICAL CENTER,LONGVIEW,TX,Acute Care Hospitals,longviewregional.com,https://www.longviewregional.com/Uploads/Public/Documents/charge-masters/charge-masters-2024/621762420_longview-regional-medical-center_standardcharges.csv,raw/hospitals/2026-10/TX/03f47e33037f_621762420_longview-regional-medical-center_standardcharges.csv.zst,03f47e33037f3c69473bd4fd565e29c0bbbb4ab80451e9f5e0fdbe242e87fba6,150804484,2026-10-04/p2do,
 450709,HOUSTON METHODIST CLEAR LAKE HOSPITAL,NASSAU BAY,TX,Acute Care Hospitals,houstonmethodist.org,https://www.houstonmethodist.org/-/media/files/patient-resources/464389870_houston-methodist-clear-lake-hospital_standardcharges.ashx,raw/hospitals/2026-10/TX/18a206d1e780_464389870_houston-methodist-clear-lake-hospital_standardcharges.ashx.zst,18a206d1e78078bd4d6ebdf6b1776d28d2276fe04325ce99008cdad2855c2226,,2026-10-09/retry,
 450711,RIO GRANDE REGIONAL HOSPITAL,MCALLEN,TX,Acute Care Hospitals,riohealth.com,,,,,,osm 2026-10-10
@@ -5364,7 +5364,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 670136,BAYLOR SCOTT & WHITE MEDICAL CENTER- AUSTIN,AUSTIN,TX,Acute Care Hospitals,bswhealth.com,https://wadcdn.azureedge.net/bswhealth/com/siteassets/pricing-transparency/813040663_baylor-scott--white-medical-center--austin_standardcharges.csv,raw/hospitals/2026-10/TX/b545804f6108_813040663_baylor-scott--white-medical-center--austin_standardcharges.csv.zst,b545804f6108d82cf280b579649de17af941f281d80403da9e359fb5e3af9ba4,371666748,2026-10-04/p2do,
 670260,TEXAS HEALTH HOSPITAL FRISCO,FRISCO,TX,Acute Care Hospitals,texashealth.org,https://sthpiprd.blob.core.windows.net/machine-readable-files/13794/831954982_texas-health-hospital-frisco_standardcharges.csv,raw/hospitals/2026-10/TX/183f6df5d2e7_831954982_texas-health-hospital-frisco_standardcharges.csv.zst,183f6df5d2e7c8689adc83aeb6eee8720edc2f959c50d64d6b48ea9c9a7c620d,1942056597,2026-10-04/p2do,
 670265,LEGENT ORTHOPEDIC HOSPITAL,GRAPEVINE,TX,Acute Care Hospitals,,,,,,,
-670266,TOWNSEN MEMORIAL HOSPITAL,HUMBLE,TX,Acute Care Hospitals,,,,,,,
+670266,TOWNSEN MEMORIAL HOSPITAL,HUMBLE,TX,Acute Care Hospitals,townsenmemorialhospital.com,,,,,,guess 2026-10-14
 670267,THE WOODLANDS SPECIALTY HOSPITAL,SPRING,TX,Acute Care Hospitals,,https://secure.claraprice.net/price-transparency/MWAZ-1786657225344/machine-readable/474624853_woodlands-oaks-hospital_standardcharges.json,raw/hospitals/2026-10/TX/658be37784d1_474624853_woodlands-oaks-hospital_standardcharges.json.zst,658be37784d15bb146aebf33cda5c64be06f30c86b7ca606e9922710b7f4015b,8214905,2026-10-09/find,
 670285,ELITE HOSPITAL KINGWOOD,KINGWOOD,TX,Acute Care Hospitals,,,,,,,
 670300,METHODIST MIDLOTHIAN MEDICAL CENTER,MIDLOTHIAN,TX,Acute Care Hospitals,methodisthealthsystem.org,https://www.methodisthealthsystem.org/sites/default/files/Price%20Transparency/750800661_MethodistMidlothianMedicalCenter_standardcharges.zip,raw/hospitals/2026-10/TX/7f3301e8f2a2_750800661_MethodistMidlothianMedicalCenter_standardcharges.zip.zst,7f3301e8f2a209aaa7570ee23a579afd8207f03e8f894bf03750ed99e682cd89,22262795,2026-10-04/p2do,

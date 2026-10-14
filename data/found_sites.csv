@@ -2,132 +2,35 @@ ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
 010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
 043037,MERCY REHABILITATION HOSPITAL,FORT SMITH,AR,Inpatient Rehabilitation,mercy.net,sibling,95,Mercy Rehabilitation Hospital South,https://mercy.net/cms-hpt.txt,"no - same name in another state, check by hand"
 050191,ST MARY MEDICAL CENTER,LONG BEACH,CA,Acute Care Hospitals,providence.org,sibling,100,St Mary Medical Center,https://providence.org/cms-hpt.txt,"no - same name in another state, check by hand"
-050262,RONALD REAGAN UCLA MEDICAL CENTER,LOS ANGELES,CA,Acute Care Hospitals,uclahealth.org,sibling,100,Ronald Reagan UCLA Medical Center,https://uclahealth.org/cms-hpt.txt,yes
 050557,MEMORIAL MEDICAL CENTER,MODESTO,CA,Acute Care Hospitals,adventisthealth.org,sibling,94,WHITE MEMORIAL MEDICAL CENTER,https://adventisthealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-054146,TELECARE HERITAGE PSYCHIATRIC HEALTH FACILITY,OAKLAND,CA,Psychiatric,telecarecorp.com,sibling,100,Telecare Heritage Psychiatric Health Facility,https://telecarecorp.com/cms-hpt.txt,yes
-054149,WILLOW ROCK CENTER,SAN LEANDRO,CA,Psychiatric,telecarecorp.com,sibling,90,Telecare Willow Rock Center,https://telecarecorp.com/cms-hpt.txt,yes
-054151,"AURORA BEHAVIORAL HEALTHCARE-SANTA ROSA, LLC",SANTA ROSA,CA,Psychiatric,aurorasantarosa.com,guess,85,Santa Rosa Behavioral Healthcare Hospital,http://aurorasantarosa.com/cms-hpt.txt,yes
-073025,MOUNT SINAI REHABILITATION HOSPITAL INC,HARTFORD,CT,Inpatient Rehabilitation,trinityhealthofne.org,sibling,100,Mount Sinai Rehabilitation Hospital,https://trinityhealthofne.org/cms-hpt.txt,yes
-102021,BAYCARE ALLIANT HOSPITAL,DUNEDIN,FL,Long-term,baycare.org,sibling,100,BayCare Alliant Hospital,https://baycare.org/cms-hpt.txt,yes
-102026,ADVENTHEALTH CONNERTON,LAND O LAKES,FL,Long-term,adventhealth.com,sibling,100,Adventhealth Connerton,https://adventhealth.com/cms-hpt.txt,yes
-103069,REHABILITATION HOSPITAL OF FORT MYERS,FORT MYERS,FL,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Fort Myers,https://encompasshealth.com/cms-hpt.txt,yes
-110041,NORTHEAST GEORGIA MEDICAL CENTER HABERSHAM,DEMOREST,GA,Acute Care Hospitals,nghs.com,sibling,100,Northeast Georgia Medical Center Habersham,https://nghs.com/cms-hpt.txt,yes
-112000,WELLSTAR ROOSEVELT LONG TERM ACUTE CARE AT WARM SP,WARM SPRINGS,GA,Long-term,wellstar.org,sibling,96,Wellstar Roosevelt Long Term Acute Care at Warm Springs,https://wellstar.org/cms-hpt.txt,yes
-113029,ATRIUM HEALTH NAVICENT REHABILITATION HOSPITAL,MACON,GA,Inpatient Rehabilitation,navicenthealth.org,sibling,100,Atrium Health Navicent Rehabilitation Hospital,https://navicenthealth.org/cms-hpt.txt,yes
-113032,REHABILITATION HOSPITAL OF NEWNAN,NEWNAN,GA,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Newnan,https://encompasshealth.com/cms-hpt.txt,yes
-113035,REHABILITATION HOSPITAL OF HENRY,MCDONOUGH,GA,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Henry,https://encompasshealth.com/cms-hpt.txt,yes
-113036,REHABILITATION HOSPITAL OF COLUMBUS,COLUMBUS,GA,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Columbus,https://encompasshealth.com/cms-hpt.txt,yes
-113037,REHABILITATION HOSPITAL OF ATLANTA,ATLANTA,GA,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Atlanta,https://encompasshealth.com/cms-hpt.txt,yes
-113038,REHABILITATION HOSPITAL OF ATHENS,ATHENS,GA,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Athens,https://encompasshealth.com/cms-hpt.txt,yes
-121306,SAMUEL MAHELONA MEMORIAL HOSPITAL,KAPAA,HI,Critical Access Hospitals,kauai.hhsc.org,sibling,100,Samuel Mahelona Memorial Hospital,https://kauai.hhsc.org/cms-hpt.txt,yes
-121307,HONOKA'A HOSPITAL AND SKILLED NURSING,HONOKAA,HI,Critical Access Hospitals,kauhospital.org,sibling,94,Honoka'a Hospital and Skilled Nursing Facility,https://kauhospital.org/cms-hpt.txt,yes
-122001,LEAHI HOSPITAL,HONOLULU,HI,Long-term,kauhospital.org,sibling,100,Leahi Hospital,https://kauhospital.org/cms-hpt.txt,yes
-160033,GENESIS MEDICAL CENTER-DAVENPORT,DAVENPORT,IA,Acute Care Hospitals,mercyone.org,sibling,94,MercyOne Genesis Davenport Medical Center,https://mercyone.org/cms-hpt.txt,yes
+054159,"SACRAMENTO BEHAVIORAL HEALTHCARE HOSPITAL, LLC",NORTH SACRAMENTO,CA,Psychiatric,aurorasantarosa.com,sibling,100,Sacramento Behavioral Healthcare Hospital,http://aurorasantarosa.com/cms-hpt.txt,yes
+092002,BRIDGEPOINT CONT CARE HOSPITAL - CAPITOL HILL,WASHINGTON,DC,Long-term,bridgepointhealthcare.com,osm,92,"BridgePoint Continuing Care Hospital - Capitol Hill, DC",https://bridgepointhealthcare.com/cms-hpt.txt,yes
+110101,"SOUTHWELL MEDICAL, A CAMPUS OF TRMC",ADEL,GA,Acute Care Hospitals,mysouthwell.com,osm,87,Southwell Medical,https://mysouthwell.com/cms-hpt.txt,yes
 160045,ST LUKES HOSPITAL,CEDAR RAPIDS,IA,Acute Care Hospitals,avera.org,sibling,92,Avera St. Luke's Hospital,https://avera.org/cms-hpt.txt,"no - same name in another state, check by hand"
-160057,SOUTHEAST IOWA REGIONAL MEDICAL CENTER,WEST BURLINGTON,IA,Acute Care Hospitals,greatriverhealth.org,sibling,93,Southeast Iowa Regional Medical Center Fort Madison,https://greatriverhealth.org/cms-hpt.txt,yes
-161307,HANCOCK COUNTY HEALTH SYSTEM,BRITT,IA,Critical Access Hospitals,mercyonenorthiowaaffiliates.org,sibling,100,Hancock County Health System,https://mercyonenorthiowaaffiliates.org/cms-hpt.txt,yes
-161321,AVERA MERRILL PIONEER HOSPITAL,ROCK RAPIDS,IA,Critical Access Hospitals,avera.org,sibling,100,Avera Merrill Pioneer Hospital,https://avera.org/cms-hpt.txt,yes
-161328,REGIONAL HEALTH SERVICES OF HOWARD COUNTY,CRESCO,IA,Critical Access Hospitals,avera.org,sibling,100,Regional Health Services of Howard County,https://avera.org/cms-hpt.txt,yes
-161346,SIOUX CENTER HEALTH,SIOUX CENTER,IA,Critical Access Hospitals,avera.org,sibling,93,Sioux Center Health Avera,https://avera.org/cms-hpt.txt,yes
+161323,MITCHELL COUNTY REGIONAL HEALTH,OSAGE,IA,Critical Access Hospitals,mcrhc.com,osm,95,Mitchell County Regional Health Center,https://mcrhc.com/cms-hpt.txt,yes
 130065,MOUNTAIN VIEW HOSPITAL,IDAHO FALLS,ID,Acute Care Hospitals,mountainviewhospital.org,sibling,100,Mountain View Hospital,https://mountainviewhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-140124,JOHN H STROGER JR HOSPITAL,CHICAGO,IL,Acute Care Hospitals,cookcountyhealth.org,sibling,100,John H. Stroger Jr. Hospital,https://cookcountyhealth.org/cms-hpt.txt,yes
 140145,ST JOSEPHS HOSPITAL,BREESE,IL,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Joseph's Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
-140233,SAINT ANTHONY MEDICAL CENTER,ROCKFORD,IL,Acute Care Hospitals,osfhealthcare.org,sibling,96,OSF Saint Anthony Medical Center,https://osfhealthcare.org/cms-hpt.txt,yes
 141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,bjc.org,sibling,100,Memorial Hospital,https://bjc.org/cms-hpt.txt,"no - same name in another state, check by hand"
-141339,TAYLORVILLE MEMORIAL HOSPITAL,TAYLORVILLE,IL,Critical Access Hospitals,memorial.health,sibling,100,Taylorville Memorial Hospital,https://memorial.health/cms-hpt.txt,yes
-142013,OSF HEALTHCARE DIVINE MERCY CONTINUING CARE HOSP,PEORIA,IL,Long-term,osfhealthcare.org,sibling,96,OSF Healthcare Divine Mercy Continuing Care Hospital,https://osfhealthcare.org/cms-hpt.txt,yes
-143030,THE REHABILITATION INSTITUTE OF SOUTHERN ILLINOIS,SHILOH,IL,Inpatient Rehabilitation,encompasshealth.com,sibling,100,The Rehabilitation Institute of Southern Illinois,https://encompasshealth.com/cms-hpt.txt,yes
-143032,THE QUAD CITIES REHABILITATION INSTITUTE,MOLINE,IL,Inpatient Rehabilitation,encompasshealth.com,sibling,100,The Quad Cities Rehabilitation Institute,https://encompasshealth.com/cms-hpt.txt,yes
-151300,COMMUNITY HOSPITAL OF BREMEN INC,BREMEN,IN,Critical Access Hospitals,beaconhealthsystem.org,sibling,100,Community Hospital of Bremen,https://beaconhealthsystem.org/cms-hpt.txt,yes
-152020,ASCENSION ST VINCENT SETON SPECIALTY HOSPITAL,INDIANAPOLIS,IN,Long-term,healthcare.ascension.org,sibling,92,"Ascension St. Vincent Seton (St. Vincent Seton Specialty Hospital, Inc.)",https://healthcare.ascension.org/cms-hpt.txt,yes
-152025,CENTRAL INDIANA AMG SPECIALTY HOSPITAL LLC,MUNCIE,IN,Long-term,amgihm.com,sibling,100,AMG Specialty Hospital - Central Indiana,https://amgihm.com/cms-hpt.txt,yes
 171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,saintlukeskc.org,sibling,91,Wright Memorial Hospital,https://saintlukeskc.org/cms-hpt.txt,"no - same name in another state, check by hand"
 181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,waynecountyhospital.org,guess,100,WAYNE COUNTY HOSPITAL,https://waynecountyhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-182002,"CONTINUING CARE HOSPITAL, INC",LEXINGTON,KY,Long-term,chisaintjosephhealth.org,sibling,100,Continuing Care Hospital,https://chisaintjosephhealth.org/cms-hpt.txt,yes
-182005,COMMONWEALTH REGIONAL SPECIALTY HOSPITAL,BOWLING GREEN,KY,Long-term,medcenterhealth.org,sibling,100,Commonwealth Regional Specialty Hospital,https://medcenterhealth.org/cms-hpt.txt,yes
-182010,ARH ADVANCED CARE - BIG SANDY,SOUTH WILLIAMSON,KY,Long-term,arh.org,sibling,100,ARH Advanced Care - Big Sandy,https://arh.org/cms-hpt.txt,yes
-182011,ARH ADVANCED CARE - KY RIVER,HAZARD,KY,Long-term,arh.org,sibling,100,ARH Advanced Care - KY River,https://arh.org/cms-hpt.txt,yes
-183033,BAPTIST HEALTH REHABILITATION HOSPITAL,LOUISVILLE,KY,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Baptist Health Rehabilitation Hospital,https://encompasshealth.com/cms-hpt.txt,yes
-184007,THE BROOK HOSPITAL - DUPONT,LOUISVILLE,KY,Psychiatric,thebrookhospitals.com,sibling,100,The Brook Hospital - Dupont,https://thebrookhospitals.com/cms-hpt.txt,yes
-190044,ACADIA GENERAL HOSPITAL,CROWLEY,LA,Acute Care Hospitals,ochsner.org,sibling,93,Ochsner Acadia General Hospital,https://ochsner.org/cms-hpt.txt,yes
-192015,OCHSNER EXTENDED CARE HOSPITAL,JEFFERSON,LA,Long-term,ochsner.org,sibling,100,Ochsner Extended Care Hospital,https://ochsner.org/cms-hpt.txt,yes
-192016,SPECIALTY HOSPITAL,MONROE,LA,Long-term,ochsner.org,sibling,91,Ochsner Specialty Hospital,https://ochsner.org/cms-hpt.txt,yes
-210038,UNIVERSITY OF MD MEDICAL CENTER MIDTOWN CAMPUS,BALTIMORE,MD,Acute Care Hospitals,umms.org,sibling,95,University of Maryland Medical Center - Midtown Campus,https://umms.org/cms-hpt.txt,yes
-213030,REHABILITATION HOSPITAL OF BOWIE,BOWIE,MD,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Bowie,https://encompasshealth.com/cms-hpt.txt,yes
-214004,SPRINGFIELD HOSPITAL CENTER,SYKESVILLE,MD,Psychiatric,springfieldhospital.org,guess,93,Springfield Hospital,https://springfieldhospital.org/cms-hpt.txt,yes
-214020,LUMINIS HEALTH J KENT MCNEW FAMILY MEDICAL CENTER,ANNAPOLIS,MD,Psychiatric,luminishealth.org,sibling,100,Luminis Health J Kent Mcnew Family Medical Center,https://luminishealth.org/cms-hpt.txt,yes
-230024,SINAI-GRACE HOSPITAL,DETROIT,MI,Acute Care Hospitals,dmc.org,sibling,95,DMC Sinai-Grace Hospital,https://dmc.org/cms-hpt.txt,yes
-230104,HARPER UNIVERSITY HOSPITAL,DETROIT,MI,Acute Care Hospitals,dmc.org,sibling,96,DMC Harper University Hospital,https://dmc.org/cms-hpt.txt,yes
-230273,DETROIT RECEIVING HOSPITAL,DETROIT,MI,Acute Care Hospitals,dmc.org,sibling,96,DMC Detroit Receiving Hospital,https://dmc.org/cms-hpt.txt,yes
-232037,UNIVERSITY OF MICHIGAN HEALTH-SPARROW SPECIALTY HO,LANSING,MI,Long-term,uofmhealthsparrow.org,sibling,95,University of Michigan Health-Sparrow Specialty Hospital,https://uofmhealthsparrow.org/cms-hpt.txt,yes
-233027,REHABILITATION INSTITUTE OF MICHIGAN,DETROIT,MI,Inpatient Rehabilitation,dmc.org,sibling,97,DMC Rehabilitation Institute of Michigan,https://dmc.org/cms-hpt.txt,yes
-240040,RANGE REGIONAL HEALTH SERVICES,HIBBING,MN,Acute Care Hospitals,fairview.org,sibling,100,Range Regional Health Services,https://fairview.org/cms-hpt.txt,yes
-241348,AVERA TYLER HOSPITAL,TYLER,MN,Critical Access Hospitals,avera.org,sibling,100,Avera Tyler Hospital,https://avera.org/cms-hpt.txt,yes
-263034,MERCY REHABILITATION HOSPITAL SOUTH,SAINT LOUIS,MO,Inpatient Rehabilitation,mercy.net,sibling,100,Mercy Rehabilitation Hospital South,https://mercy.net/cms-hpt.txt,yes
+261340,MOSAIC MEDICAL CENTER - MARYVILLE,MARYVILLE,MO,Critical Access Hospitals,mymosaiclifecare.org,osm,100,Mosaic Medical Center - Maryville,https://mymosaiclifecare.org/cms-hpt.txt,yes
+262017,"SELECT SPECIALTY HOSPITAL SPRINGFIELD, INC",SPRINGFIELD,MO,Long-term,springfieldhospital.org,osm,85,Springfield Hospital,https://springfieldhospital.org/cms-hpt.txt,yes
+264031,OSAGE BEACH CENTER FOR BEHAVIORAL HEALTH,OSAGE BEACH,MO,Psychiatric,osagebeachccd.com,osm,100,Osage Beach Center for Behavioral Health,http://osagebeachccd.com/cms-hpt.txt,yes
 250782,GREENE COUNTY HOSPITAL,LEAKESVILLE,MS,Rural Emergency Hospital,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
-271333,BILLINGS CLINIC BROADWATER,TOWNSEND,MT,Critical Access Hospitals,stillwaterbillingsclinic.org,sibling,100,Billings Clinic Broadwater,https://stillwaterbillingsclinic.org/cms-hpt.txt,yes
 271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,trinityhealth.org,guess,97,Trinity Hospitals,https://trinityhealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-340051,WATAUGA MEDICAL CENTER,BOONE,NC,Acute Care Hospitals,unchealth.org,sibling,100,Watauga Medical Center,https://unchealth.org/cms-hpt.txt,yes
+351302,MCKENZIE COUNTY HEALTHCARE SYSTEMS INC,WATFORD CITY,ND,Critical Access Hospitals,mckenziehealth.com,osm,65,McKenzie Health,https://mckenziehealth.com/cms-hpt.txt,yes
+351328,LINTON HOSPITAL - CAH,LINTON,ND,Critical Access Hospitals,lintonhospital.org,osm,47,Linton Regional Medical Center,https://lintonhospital.org/cms-hpt.txt,yes
+281314,ANNIE JEFFREY MEMORIAL COUNTY HEALTH CENTER,OSCEOLA,NE,Critical Access Hospitals,ajhc.org,osm,100,Annie Jeffrey Memorial County Health Center,http://ajhc.org/cms-hpt.txt,yes
 281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,mhcs.us,sibling,100,Memorial Hospital,https://mhcs.us/cms-hpt.txt,"no - same name in another state, check by hand"
-330107,PECONIC BAY MEDICAL CENTER,RIVERHEAD,NY,Acute Care Hospitals,northwell.edu,sibling,100,Peconic Bay Medical Center,https://northwell.edu/cms-hpt.txt,yes
-330127,JACOBI MEDICAL CENTER,BRONX,NY,Acute Care Hospitals,nychealthandhospitals.org,sibling,100,Jacobi Medical Center,https://nychealthandhospitals.org/cms-hpt.txt,yes
-330162,NORTHERN WESTCHESTER HOSPITAL,MOUNT KISCO,NY,Acute Care Hospitals,northwell.edu,sibling,100,Northern Westchester Hospital,https://northwell.edu/cms-hpt.txt,yes
-330204,BELLEVUE HOSPITAL CENTER,NEW YORK,NY,Acute Care Hospitals,nychealthandhospitals.org,sibling,100,Bellevue Hospital Center,https://nychealthandhospitals.org/cms-hpt.txt,yes
-330261,PHELPS HOSPITAL,SLEEPY HOLLOW,NY,Acute Care Hospitals,northwell.edu,sibling,100,Phelps Hospital,https://northwell.edu/cms-hpt.txt,yes
-331312,"DELAWARE VALLEY HOSPITAL, INC",WALTON,NY,Critical Access Hospitals,nyuhs.org,sibling,96,UHS Delaware Valley Hospital,https://nyuhs.org/cms-hpt.txt,yes
-332008,HENRY J CARTER SPECIALTY HOSPITAL,NEW YORK,NY,Long-term,nychealthandhospitals.org,sibling,100,Henry J. Carter Specialty Hospital,https://nychealthandhospitals.org/cms-hpt.txt,yes
-360082,EUCLID HOSPITAL,EUCLID,OH,Acute Care Hospitals,my.clevelandclinic.org,sibling,100,euclid hospital,https://my.clevelandclinic.org/cms-hpt.txt,yes
-360091,MEDINA HOSPITAL,MEDINA,OH,Acute Care Hospitals,my.clevelandclinic.org,sibling,100,medina hospital,https://my.clevelandclinic.org/cms-hpt.txt,yes
+281334,BOONE COUNTY HEALTH CENTER,ALBION,NE,Critical Access Hospitals,boonecohealth.org,osm,100,Boone County Health Center,https://boonecohealth.org/cms-hpt.txt,yes
+322004,ADVANCED CARE HOSPITAL OF SOUTHERN NEW MEXICO LLC,LAS CRUCES,NM,Long-term,achsnm.ernesthealth.com,osm,73,"Rehabilitation Hospital of Southern New Mexico, Inc.",https://achsnm.ernesthealth.com/cms-hpt.txt,yes
 360156,MEMORIAL HOSPITAL,FREMONT,OH,Acute Care Hospitals,wvumedicine.org,sibling,92,Grant Memorial Hospital,https://wvumedicine.org/cms-hpt.txt,"no - same name in another state, check by hand"
 360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,mercyregionalmedical.com,guess,100,Mercy Regional Medical Center,https://mercyregionalmedical.com/cms-hpt.txt,"no - same name in another state, check by hand"
-361316,BUCYRUS COMMUNITY HOSPITAL,BUCYRUS,OH,Critical Access Hospitals,avitahealth.org,sibling,100,Bucyrus Community Hospital,https://avitahealth.org/cms-hpt.txt,yes
-361325,GALION COMMUNITY HOSPITAL,GALION,OH,Critical Access Hospitals,avitahealth.org,sibling,100,Galion Community Hospital,https://avitahealth.org/cms-hpt.txt,yes
-363038,CLEVELAND CLINIC REHABILITATION HOSPITALS LLC,AVON,OH,Inpatient Rehabilitation,my.clevelandclinic.org,sibling,93,"Cleveland Clinic Rehabilitation Hospital, Avon",https://my.clevelandclinic.org/cms-hpt.txt,yes
-363042,"MOUNT CARMEL REHABILITATION HOSPITAL, AN AFFILIATE",WESTERVILLE,OH,Inpatient Rehabilitation,encompasshealth.com,sibling,93,"Mount Carmel Rehabilitation Hospital, an affiliate of Encompass Health",https://encompasshealth.com/cms-hpt.txt,yes
+373300,J D MCCARTY CENTER FOR CHILDREN,NORMAN,OK,Childrens,jdmc.org,osm,78,JD McCarty Center,https://jdmc.org/cms-hpt.txt,yes
 390009,SAINT VINCENT HOSPITAL,ERIE,PA,Acute Care Hospitals,ahn.org,sibling,100,SAINT VINCENT HOSPITAL,https://ahn.org/cms-hpt.txt,"no - same name in another state, check by hand"
-393030,ALLIED SERVICES INSTITUTE OF REHABILITATION,SCRANTON,PA,Inpatient Rehabilitation,allied-services.org,sibling,100,allied services institute of rehabilitation,https://allied-services.org/cms-hpt.txt,yes
-393307,ST CHRISTOPHER'S HOSPITAL FOR CHILDREN,PHILADELPHIA,PA,Childrens,towerhealth.org,sibling,100,St. Christopher's Hospital For Children,https://towerhealth.org/cms-hpt.txt,yes
-400011,"HOSPITAL MENONITA HUMACAO, INC",HUMACAO,PR,Acute Care Hospitals,sistemamenonita.com,sibling,100,Hospital Menonita Humacao,https://sistemamenonita.com/cms-hpt.txt,yes
-400048,HOSPITAL MENONITA GUAYAMA,GUAYAMA,PR,Acute Care Hospitals,sistemamenonita.com,sibling,100,Hospital Menonita Guayama,https://sistemamenonita.com/cms-hpt.txt,yes
-400113,HOSPITAL MENONITA PONCE,PONCE,PR,Acute Care Hospitals,sistemamenonita.com,sibling,100,Hospital Menonita Ponce,https://sistemamenonita.com/cms-hpt.txt,yes
-410006,NEWPORT HOSPITAL,NEWPORT,RI,Acute Care Hospitals,lifespan.org,sibling,100,Newport Hospital,https://lifespan.org/cms-hpt.txt,yes
-420026,MUSC HEALTH COLUMBIA MEDICAL CENTER DOWNTOWN,COLUMBIA,SC,Acute Care Hospitals,muschealth.org,sibling,96,MUSC Columbia Medical Center Downtown,https://muschealth.org/cms-hpt.txt,yes
-431302,AVERA MISSOURI RIVER HEALTH CENTER,GETTYSBURG,SD,Critical Access Hospitals,avera.org,sibling,100,Avera Missouri River Health Center,https://avera.org/cms-hpt.txt,yes
+391309,BARNES-KASSON COUNTY HOSPITAL,SUSQUEHANNA,PA,Critical Access Hospitals,barnes-kasson.org,osm,100,Barnes-Kasson County Hospital,http://barnes-kasson.org/cms-hpt.txt,yes
 431316,COMMUNITY MEMORIAL HOSPITAL,REDFIELD,SD,Critical Access Hospitals,avera.org,sibling,95,Community Memorial Hospital Avera,https://avera.org/cms-hpt.txt,"no - same name in another state, check by hand"
-440003,HIGHPOINT HEALTH-SUMNER WITH ASCENSION SAINT THOMA,GALLATIN,TN,Acute Care Hospitals,highpointhealthsystem.com,sibling,99,Highpoint Health - Sumner with Ascension Saint Thomas,https://highpointhealthsystem.com/cms-hpt.txt,yes
-443039,PATRICIA NEAL REHABILITATION HOSPITAL,KNOXVILLE,TN,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Patricia Neal Rehabilitation Hospital,https://encompasshealth.com/cms-hpt.txt,yes
-452018,TEXAS HEALTH SPECIALTY HOSPITAL FORT WORTH,FORT WORTH,TX,Long-term,texashealth.org,sibling,100,Texas Health Specialty Hospital Fort Worth,https://texashealth.org/cms-hpt.txt,yes
-452041,CARRUS SPECIALTY HOSPITAL,SHERMAN,TX,Long-term,carrushealth.com,guess,100,Carrus Specialty Hospital,https://carrushealth.com/cms-hpt.txt,yes
-452102,COVENANT SPECIALTY HOSPITAL,LUBBOCK,TX,Long-term,providence.org,sibling,100,Covenant Specialty Hospital,https://providence.org/cms-hpt.txt,yes
-453025,TIRR MEMORIAL HERMANN,HOUSTON,TX,Inpatient Rehabilitation,memorialhermann.org,sibling,100,TIRR Memorial Hermann,https://memorialhermann.org/cms-hpt.txt,yes
-454158,VOYAGES BEHAVIORAL HEALTH OF CONROE,CONROE,TX,Psychiatric,pamhealth.com,sibling,100,Voyages Behavioral Health of Conroe,https://pamhealth.com/cms-hpt.txt,yes
-670031,ST LUKE'S PATIENTS MEDICAL CENTER,PASADENA,TX,Acute Care Hospitals,commonspirit.org,sibling,95,St. Luke's Health - Patients Medical Center,https://commonspirit.org/cms-hpt.txt,yes
-670053,ST LUKE'S SUGAR LAND HOSPITAL,SUGAR LAND,TX,Acute Care Hospitals,commonspirit.org,sibling,94,St. Luke's Health - Sugar Land Hospital,https://commonspirit.org/cms-hpt.txt,yes
-670075,ST LUKE'S HOSPITAL AT THE VINTAGE,HOUSTON,TX,Acute Care Hospitals,commonspirit.org,sibling,94,St. Luke's Health - The Vintage Hospital,https://commonspirit.org/cms-hpt.txt,yes
-670336,BANDERA FAMILY HOSPITAL,SAN ANTONIO,TX,Acute Care Hospitals,fhsmc.com,sibling,100,Bandera Family Hospital,https://fhsmc.com/cms-hpt.txt,yes
-673062,CLEARSKY REHABILITATION HOSPITAL OF WEATHERFORD,WEATHERFORD,TX,Inpatient Rehabilitation,clearskyhealth.com,sibling,100,ClearSky Rehabilitation Hospital of Weatherford,https://clearskyhealth.com/cms-hpt.txt,yes
-673070,SOUTH PLAINS REHABILITATION HOSPITAL AN AFFILIATE,LUBBOCK,TX,Inpatient Rehabilitation,encompasshealth.com,sibling,91,"South Plains Rehabilitation Hospital, an affiliate of UMC and Encompass Health",https://encompasshealth.com/cms-hpt.txt,yes
-673088,CLEARSKY REHABILITATION HOSPITAL OF MANSFIELD,MANSFIELD,TX,Inpatient Rehabilitation,clearskyhealth.com,sibling,100,ClearSky Rehabilitation Hospital of Mansfield,https://clearskyhealth.com/cms-hpt.txt,yes
-673089,CLEARSKY REHABILITATION HOSPITAL OF HARKER HEIGHTS,HARKER HEIGHTS,TX,Inpatient Rehabilitation,clearskyhealth.com,sibling,100,ClearSky Rehabilitation Hospital of Harker Heights,https://clearskyhealth.com/cms-hpt.txt,yes
-743027,CLEARSKY REHABILITATION HOSPITAL OF BAYTOWN LLC,BAYTOWN,TX,Inpatient Rehabilitation,clearskyhealth.com,sibling,100,ClearSky Rehabilitation Hospital of Baytown,https://clearskyhealth.com/cms-hpt.txt,yes
-743032,CLEARSKY REHABILITATION HOSPITAL OF ROCKWALL COUNT,HEATH,TX,Inpatient Rehabilitation,clearskyhealth.com,sibling,99,ClearSky Rehabilitation Hospital of Rockwall County,https://clearskyhealth.com/cms-hpt.txt,yes
-743035,REHABILITATION HOSPITAL OF AMARILLO,AMARILLO,TX,Inpatient Rehabilitation,encompasshealth.com,sibling,100,Rehabilitation Hospital of Amarillo,https://encompasshealth.com/cms-hpt.txt,yes
+450698,LAMB HEALTHCARE CENTER,LITTLEFIELD,TX,Acute Care Hospitals,lambhc.org,osm,100,Lamb Healthcare Center,https://www.lambhc.org/cms-hpt.txt,yes
+670266,TOWNSEN MEMORIAL HOSPITAL,HUMBLE,TX,Acute Care Hospitals,townsenmemorialhospital.com,guess,100,Townsen Memorial Hospital,https://townsenmemorialhospital.com/cms-hpt.txt,yes
 461310,BLUE MOUNTAIN HOSPITAL,BLANDING,UT,Critical Access Hospitals,bluemountainhospital.org,guess,92,Blue Mountain Hospital District,https://bluemountainhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-490084,VCU HEALTH TAPPAHANNOCK HOSPITAL,TAPPAHANNOCK,VA,Acute Care Hospitals,vcuhealth.org,sibling,100,VCU Health Tappahannock Hospital,https://vcuhealth.org/cms-hpt.txt,yes
-490116,LEWISGALE HOSPITAL PULASKI,PULASKI,VA,Acute Care Hospitals,hcavirginia.com,sibling,100,LEWISGALE HOSPITAL-PULASKI,https://hcavirginia.com/cms-hpt.txt,yes
-490145,STONESPRINGS HOSPITAL CENTER,DULLES,VA,Acute Care Hospitals,hcavirginia.com,sibling,100,STONESPRINGS HOSPITAL CENTER,https://hcavirginia.com/cms-hpt.txt,yes
-492007,HOSPITAL FOR EXTENDED RECOVERY,NORFOLK,VA,Long-term,sentara.com,sibling,100,Hospital for Extended Recovery,https://sentara.com/cms-hpt.txt,yes
-494029,SOUTHWESTERN VIRGINIA MENTAL HEALTH INSTITUTE,MARION,VA,Psychiatric,dbhds.virginia.gov,sibling,100,Southwestern Virginia Mental Health Institute,https://dbhds.virginia.gov/cms-hpt.txt,yes
-500037,ASTRIA TOPPENISH HOSPITAL,TOPPENISH,WA,Acute Care Hospitals,astria.health,sibling,100,Astria Toppenish Hospital,https://astria.health/cms-hpt.txt,yes
-503025,PROVIDENCE ST LUKE'S REHABILITATION MEDICAL CENTER,SPOKANE,WA,Inpatient Rehabilitation,providence.org,sibling,100,Providence St Luke's Rehabilitation Medical Center,https://providence.org/cms-hpt.txt,yes
-520044,ST NICHOLAS HOSPITAL,SHEBOYGAN,WI,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Nicholas Hospital,https://hshs.org/cms-hpt.txt,yes
-520057,SSM HEALTH ST CLARE HOSPITAL - BARABOO,BARABOO,WI,Acute Care Hospitals,ssmhealth.com,sibling,100,SSM Health St. Clare Hospital - Baraboo,https://ssmhealth.com/cms-hpt.txt,yes
-520062,OCONOMOWOC MEMORIAL HOSPITAL,OCONOMOWOC,WI,Acute Care Hospitals,rogersbh.org,sibling,94,Rogers Memorial Hospital Oconomowoc,https://rogersbh.org/cms-hpt.txt,yes
 520075,ST VINCENT HOSPITAL,GREEN BAY,WI,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Vincent Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
-520083,SSM HEALTH ST MARY'S HOSPITAL - MADISON,MADISON,WI,Acute Care Hospitals,ssmhealth.com,sibling,100,SSM Health St. Mary's Hospital - Madison,https://ssmhealth.com/cms-hpt.txt,yes
-520088,SSM HEALTH ST AGNES HOSPITAL-FOND DU LAC,FOND DU LAC,WI,Acute Care Hospitals,ssmhealth.com,sibling,100,SSM Health St. Agnes Hospital - Fond du Lac,https://ssmhealth.com/cms-hpt.txt,yes
-520208,SSM HEALTH ST MARY'S HOSPITAL - JANESVILLE,JANESVILLE,WI,Acute Care Hospitals,ssmhealth.com,sibling,100,SSM Health St. Mary's Hospital - Janesville,https://ssmhealth.com/cms-hpt.txt,yes
-520210,MARSHFIELD MEDICAL CENTER - EAU CLAIRE,EAU CLAIRE,WI,Acute Care Hospitals,marshfieldclinic.org,sibling,94,Marshfield Medical Center Eau Claire Hospital,https://marshfieldclinic.org/cms-hpt.txt,yes
-521323,MARSHFIELD MEDICAL CENTER - NEILLSVILLE,NEILLSVILLE,WI,Critical Access Hospitals,marshfieldclinic.org,sibling,95,Marshfield Medical Center Neillsville Hospital,https://marshfieldclinic.org/cms-hpt.txt,yes
-521328,MARSHFIELD MEDICAL CENTER - LADYSMITH,LADYSMITH,WI,Critical Access Hospitals,marshfieldclinic.org,sibling,94,Marshfield Medical Center Ladysmith Hospital,https://marshfieldclinic.org/cms-hpt.txt,yes
-523302,CHILDRENS HOSPITAL OF WISCONSIN FOX VALLEY,NEENAH,WI,Childrens,childrenswisconsin.org,guess,100,Children's Hospital of Wisconsin - Fox Valley,http://childrenswisconsin.org/cms-hpt.txt,yes
