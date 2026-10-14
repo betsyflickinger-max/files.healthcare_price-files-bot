@@ -52,7 +52,7 @@ import deep_find as deep  # noqa: E402
 import discover  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
-from name_ok import name_ok  # noqa: E402
+from name_ok import distinct as name_distinct, name_ok  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 LIST, LOG = ROOT / "data" / "hospitals.csv", ROOT / "data" / "web_search_log.csv"
@@ -193,10 +193,25 @@ def names_in_file(text):
     return [str(x) for x in out if x], addr
 
 
+STATE_NAMES = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado",
+               "CT": "Connecticut", "DE": "Delaware", "DC": "District of Columbia", "FL": "Florida", "GA": "Georgia",
+               "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+               "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts",
+               "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana",
+               "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico",
+               "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+               "OR": "Oregon", "PA": "Pennsylvania", "PR": "Puerto Rico", "RI": "Rhode Island", "SC": "South Carolina",
+               "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia",
+               "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"}
+REJECT = {}   # (ccn, link) a person ruled out: data/web_search_reject.csv
+
+
 def check_file(h, url, dup, names_=None, strict=False, legal=""):
     """Does the head of this link look like a CMS price file for this hospital? strict = the city must be in it.
     A match on the LEGAL name only is weak (sister hospitals share one legal entity: every Baptist Health hospital in
     Montgomery is "Health Care Authority for Baptist Health"), so it needs the everyday name's words in the link too."""
+    if (h["ccn"], url) in REJECT:
+        return None, "ruled out by hand: " + REJECT[(h["ccn"], url)]
     text, info = head_text(url)
     if info.startswith("zip file"):
         return "held", "zipped file link; the server wouldn't let the bot peek inside without downloading it all"
@@ -222,8 +237,17 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
                 best, bname, via = lb, legal, " (legal name; hospital's name is in the link)"
             else:
                 return "held", f"file names the legal entity '{legal[:50]}', shared by sister hospitals; link doesn't name this one"
+    # Oct 14 spot check: "Newport Hospital" (RI) was taken for Newport Community Hospital (WA), Mosaic Medical Center
+    # Albany (MO) for The Medical Center at Albany (KY). A file whose address names a state must name this one.
+    st_name = STATE_NAMES.get(h["state"], "")
+    if addr and re.search(r"\b[A-Z]{2}\b\s*,?\s*\d{5}|" + "|".join(STATE_NAMES.values()), addr) and not (
+            re.search(rf"\b{h['state']}\b", addr) or (st_name and st_name.lower() in addr.lower())):
+        return None, f"file is for '{bname[:50]}' in another state"
     if strict and not city_ok:
         return None, f"file names '{bname[:50]}' but not {h['city'].title()}"
+    # a one-word name ("Piedmont") matches a sister hospital's file too easily: the city must be in the file
+    if words and not via and not city_ok and all(len(name_distinct(o)) <= 1 for o in ours):
+        return "held", f"file names '{bname[:60]}', but the hospital's name is one word and the file doesn't name {h['city'].title()}"
     if (words or via) and (city_ok or not dup):
         return "yes", f"file names '{bname[:60]}' ({round(best)}){via}"
     if best >= 70 or words:
@@ -441,6 +465,9 @@ def main():
     if a.limit:
         todo = todo[:a.limit]
     global NAMES, NAT, VENDORS
+    rj = ROOT / "data" / "web_search_reject.csv"
+    if rj.exists():
+        REJECT.update({(r["ccn"], r["mrf_url"]): r["reason"] for r in csv.DictReader(open(rj, encoding="utf-8"))})
     NAMES = deep.enrollment_names()
     NAT = deep.National(rows)
     VENDORS = [] if E.get("NO_ARCHIVES") == "1" else deep.vendor_urls()
