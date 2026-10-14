@@ -52,6 +52,7 @@ SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcp
 PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 1, "cigna": 1, "small": 12, "bcbs": 4, "parts": 30}  # files per machine
 # bcbs = Blue plans' ~0.1-1.4 GB files; parts = multi-part networks whose parts are all under 50 MB (BCBS Tennessee)
 RESERVE = 0  # slots to leave free for other jobs; 0 = use every free machine
+ST_ROOM = 4  # while the seven-state website build runs, Texas/DFW files leave this many machines free for it
 SCOPE = "dfw"  # biggest files; anything else: 4 vCPU / 8 GB
 MAX_MACHINES = 14  # the account allows 15; droplets.room() still keeps us inside it (Oct 13: was 9)
 STUCK_HOURS = 48
@@ -239,16 +240,21 @@ def launch(s3, b, man, now, dry):
     # new files first, then re-reads; within each, biggest first: they take longest
     loads.sort(key=lambda x: (x[2][0].get("backfill") == "1", x[1] not in ("uhc", "aetna"), x[0]))
     try:  # a website build reads these tables; new ones landing mid-build would make it stop and start over
-        building = [n for n in droplets.names() if n.startswith("upfront-site-")]
+        names = droplets.names()
     except Exception:
-        building = []
+        names = []
+    # Oct 14: the seven-state build (upfront-site-st-*) reads only data/s7, so it holds back only the s7 files;
+    # Texas and DFW files go ahead but leave ST_ROOM machines free so that build keeps moving.
+    st_build = any(n.startswith("upfront-site-st-") for n in names)
+    building = [n for n in names if n.startswith("upfront-site-") and (SCOPE == "s7" or not n.startswith("upfront-site-st-"))]
+    keep_free = ST_ROOM if st_build and SCOPE != "s7" else 0
     if building and queued and not dry:
         for m in queued:
             m["detail"] = f"waiting: a website build is running ({len(building)} machines); starts when it finishes"
         print(f"Website build running ({len(building)} machines): {len(queued)} queued files wait")
         return []
     try:  # stay inside both our own cap and the account's limit (other jobs may be using machines)
-        free = min(MAX_MACHINES - len(droplets.mine()), droplets.room() - RESERVE) if not dry else MAX_MACHINES
+        free = min(MAX_MACHINES - len(droplets.mine()), droplets.room() - RESERVE - keep_free) if not dry else MAX_MACHINES
     except Exception:
         free = 1
     # Use every free slot (Oct 13): split the biggest multi-file loads until there is one load per free machine.
