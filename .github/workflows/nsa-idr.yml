@@ -1,0 +1,46 @@
+name: No Surprises arbitration files
+
+# CMS posts the Federal IDR public use files about twice a year (Jan and Jul so far). Runs early Feb and Aug,
+# with a follow-up a month later in case CMS is late. Unchanged files are skipped (CMS's change date and size),
+# so a run with nothing new takes about a minute.
+on:
+  schedule:
+    - cron: "23 14 1 2,3,8,9 *"   # 1st of Feb, Mar, Aug, Sep, 9:23am Central
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild every quarter's tables even if unchanged (yes/no)"
+        default: "no"
+      only:
+        description: "Only this quarter, e.g. 2025-q4 (blank = all)"
+        default: ""
+
+concurrency:
+  group: nsa-idr
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  idr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 requests==2.32.3 pyarrow==26.0.0 python-calamine==0.8.3
+      - run: python nsa/idr_files.py ${{ inputs.force == 'yes' && '--force' || '' }} ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/idr 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "No Surprises arbitration files $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
