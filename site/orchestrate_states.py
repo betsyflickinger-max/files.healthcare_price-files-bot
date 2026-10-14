@@ -83,6 +83,36 @@ def rebalance(st, left, run):
         run(s, st['machines'][s] - 1)
 
 
+# Oct 14: a GitHub notice (issue, which GitHub emails to Betsy) as each state finishes, naming where its machines went.
+# Announced one run after the state is first seen done, so the freed slots' moves (written by rebalance) are included.
+# States finished before this was added were already reported by hand.
+ANNOUNCE_FROM = '2026-10-14 21:30'   # UTC
+NAMES = {v: v.title() for v in STATES.values()}
+def ct_now():
+    from zoneinfo import ZoneInfo
+    import datetime as dt
+    return dt.datetime.now(ZoneInfo('America/Chicago')).strftime('%b %d %-I:%M %p CT')
+def announce(st, left):
+    if 'announced' not in st:
+        st['announced'] = [x for x in STATES.values() if x not in left and
+                           s3.head_object(Bucket=B, Key=tout(x) + 'embed.json')['LastModified'].strftime('%Y-%m-%d %H:%M') < ANNOUNCE_FROM]
+        st['announce_log_i'] = len(st.get('log', []))
+    seen = st.setdefault('done_seen', [])
+    new = [x for x in STATES.values() if x not in left and x not in st['announced']]
+    if not new: return
+    if left and not all(x in seen for x in new):
+        seen.extend(x for x in new if x not in seen); return
+    moves = st.get('log', [])[st['announce_log_i']:]
+    still = [f"- {NAMES[x]}: {sum(1 for k in ls(wk(x) + 'B/') if k.endswith('.json'))} of {NB} batches done, {st['machines'][x]} machines"
+             for x in left]
+    title = ' + '.join(NAMES[x] for x in new) + (' done: all 7 states built' if not left else ' done; machines moved on')
+    body = '\n'.join([f"{', '.join(NAMES[x] for x in new)} finished its Price Finder data ({ct_now()}).", '',
+                      '**Where the free machines went**', *(['- ' + m for m in moves] or ['- none yet (slots go out on the next runs)']), '',
+                      '**Still building**', *(still or ['- nothing: every state is built; the hospital + publish step starts now'])])
+    issue(title, body)
+    st['announced'] += new; st['announce_log_i'] = len(st.get('log', []))
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -135,6 +165,7 @@ def main():
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
         rebalance(st, left, run)
+        announce(st, left)
         log('states still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
