@@ -176,7 +176,10 @@ def names_in_file(text):
     return [str(x) for x in out if x], addr
 
 
-def check_file(h, url, dup, names_=None, strict=False):
+def check_file(h, url, dup, names_=None, strict=False, legal=""):
+    """Does the head of this link look like a CMS price file for this hospital? strict = the city must be in it.
+    A match on the LEGAL name only is weak (sister hospitals share one legal entity: every Baptist Health hospital in
+    Montgomery is "Health Care Authority for Baptist Health"), so it needs the everyday name's words in the link too."""
     text, info = head_text(url)
     if info == "zip file":
         return "held", "zipped file link (can't check the hospital name inside without downloading it)"
@@ -185,13 +188,25 @@ def check_file(h, url, dup, names_=None, strict=False):
     names, addr = names_in_file(text)
     if names is None:
         return None, f"file link is not a CMS price file ({info[:40]})"
-    ours = names_ or [h["name"]]
+    ours = [o for o in (names_ or [h["name"]]) if o != legal] or [h["name"]]
     scored = sorted(((discover.score(o, n), n) for n in names for o in ours), reverse=True) or [(0, "?")]
     best, bname = scored[0]
     words = any(fs.words_in(o, n) for n in names for o in ours)
     city_ok = h["city"].lower() in (addr or text[:5000]).lower()
-    if (best >= 85 or words) and (city_ok or (not dup and not strict)):
-        return "yes", f"file names '{bname[:60]}' ({round(best)})"
+    via = ""
+    if not (best >= 85 or words) and legal:
+        lb = max([discover.score(legal, n) for n in names] + [0])
+        flat = re.sub(r"[^a-z0-9]", "", urllib.parse.unquote(url).lower())
+        in_link = all(w in flat for w in deep.core(h["name"])) and deep.core(h["name"])
+        if lb >= 90 and city_ok:
+            if in_link:
+                best, bname, via = lb, legal, " (legal name; hospital's name is in the link)"
+            else:
+                return "held", f"file names the legal entity '{legal[:50]}', shared by sister hospitals; link doesn't name this one"
+    if strict and not city_ok:
+        return None, f"file names '{bname[:50]}' but not {h['city'].title()}"
+    if (best >= 85 or words or via) and (city_ok or not dup):
+        return "yes", f"file names '{bname[:60]}' ({round(best)}){via}"
     if best >= 70 or words:
         return "held", f"file names '{bname[:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
     return None, f"file is for '{bname[:60]}', not this hospital"
@@ -203,7 +218,8 @@ def check_index_url(h, url, dup, names_=None):
     ents = discover.parse(text) if text and not text.lstrip().startswith("<") else []
     if not ents:
         return None
-    ours = names_ or [h["name"]]
+    legal = NAMES.get(h["ccn"], {}).get("legal", "")
+    ours = [o for o in (names_ or [h["name"]]) if o != legal] or [h["name"]]
     sc, e, o = max(((discover.score(o, x.get("location-name", "")), x, o) for x in ents for o in ours), key=lambda t: t[0])
     if sc >= 85:
         rough = not fs.words_in(o, e.get("location-name", ""))
@@ -214,7 +230,8 @@ def check_index_url(h, url, dup, names_=None):
 
 def verify(h, ans, dup, names_=None):
     """Returns (result, how, domain, mrf_url, why)."""
-    names_ = names_ or [h["name"]]
+    legal = NAMES.get(h["ccn"], {}).get("legal", "")
+    names_ = [n for n in (names_ or [h["name"]]) if n != legal] or [h["name"]]
     hosts, why = [], []
     for k in ("website", "system_website", "price_page", "cms_hpt_txt"):
         d = discover.host(ans.get(k) or "")
@@ -256,7 +273,7 @@ def verify(h, ans, dup, names_=None):
         if r:
             held = held or ("held", f"index {ans['cms_hpt_txt'][:100]}; same name in another state", "", r["mrf"], "")
     for u in files:
-        ok, msg = check_file(h, u, dup, names_)
+        ok, msg = check_file(h, u, dup, names_, legal=NAMES.get(h["ccn"], {}).get("legal", ""))
         if ok == "yes":
             return "found", "file: " + msg, "", u, ""
         if ok == "held":
@@ -281,7 +298,7 @@ def deep_layer(h, hosts, pages, names_, dup, done_hosts):
             if r:
                 held = held or ("held", f"crawl: index {u[:100]} lists '{r['loc'][:60]}'", "", r["mrf"], "")
         for u in files[:12]:
-            ok, msg = check_file(h, discover.clean(u), dup, names_)
+            ok, msg = check_file(h, discover.clean(u), dup, names_, legal=NAMES.get(h["ccn"], {}).get("legal", ""))
             if ok == "yes":
                 return "found", f"crawl ({n} pages on {d}): " + msg, "", discover.clean(u), ""
             if ok == "held":
@@ -298,7 +315,7 @@ def deep_layer(h, hosts, pages, names_, dup, done_hosts):
                 if r and r["accepted"] == "yes":
                     return "found", f"archive: index {u[:100]} lists '{r['loc'][:60]}' ({r['score']})", "", r["mrf"], ""
                 continue
-            ok, msg = check_file(h, discover.clean(u), dup, names_, strict=not own)
+            ok, msg = check_file(h, discover.clean(u), dup, names_, strict=not own, legal=NAMES.get(h["ccn"], {}).get("legal", ""))
             if ok == "yes":
                 return "found", "archive: " + msg, "", discover.clean(u), ""
             if ok == "held":
@@ -314,12 +331,10 @@ def deep_layer(h, hosts, pages, names_, dup, done_hosts):
 def national_layer(h, names_, dup):
     held = None
     for idx, mrf, loc in NAT.candidates(h, names_) if NAT else []:
-        ok, msg = check_file(h, mrf, dup, names_, strict=True)
+        ok, msg = check_file(h, mrf, dup, names_, strict=True, legal=NAMES.get(h["ccn"], {}).get("legal", ""))
         if ok == "yes":
             return "found", f"national: {idx[:80]} lists '{loc[:50]}'; " + msg, "", mrf, ""
-        if ok == "held":
-            held = held or ("held", f"national: {idx[:80]} lists '{loc[:50]}'; " + msg, "", mrf, "")
-    return held
+    return held   # national near-misses are other hospitals with similar names: never held for a hand check
 
 
 def logged_hosts(L):

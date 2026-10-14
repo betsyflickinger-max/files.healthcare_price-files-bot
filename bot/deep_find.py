@@ -209,7 +209,7 @@ def wayback(prefix, rx, match="domain", limit=150):
             try:
                 r = requests.get("https://web.archive.org/cdx/search/cdx", params={
                     "url": prefix, "matchType": match, "output": "json", "fl": "original,timestamp,statuscode",
-                    "filter": f"original:.*({rx}).*", "collapse": "urlkey", "limit": str(limit)}, timeout=90)
+                    "filter": f"original:(?i).*({rx.replace('(?i)', '')}).*", "collapse": "urlkey", "limit": str(limit)}, timeout=90)
                 if r.status_code == 200:
                     rows = r.json()[1:] if r.text.strip() else []
                     return [(x[0], x[1]) for x in rows]
@@ -241,7 +241,7 @@ def vendor_urls():
     """Every file link the archives have seen on the big price-file vendors' sites (fetched once per run)."""
     out = []
     for v in VENDORS:
-        got = [u for u, ts in sorted(wayback(v, r"\.json|\.csv|\.zip|download|mrf", match="prefix", limit=60000),
+        got = [u for u, ts in sorted(wayback(v, r"(?i)\.json|\.csv|\.zip|download|mrf", match="prefix", limit=60000),
                                      key=lambda x: x[1], reverse=True)]
         out += got
         print(f"  vendor archive {v.split('/')[0]}: {len(got):,} file links", flush=True)
