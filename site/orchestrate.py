@@ -168,7 +168,10 @@ def ensure(st, role, size, script, env, done):
 
 def issue(title, body):
     try:
-        subprocess.run(['gh', 'issue', 'create', '--title', title, '--body', body], check=False)
+        # Oct 14: time limit + no prompts, so a stuck gh call can't freeze the 5-minute build loop
+        r = subprocess.run(['gh', 'issue', 'create', '--title', title, '--body', body], check=False, timeout=90,
+                           stdin=subprocess.DEVNULL, capture_output=True, text=True, env=dict(os.environ, GH_PROMPT_DISABLED='1'))
+        log('issue:', (r.stdout or r.stderr).strip()[:200])
     except Exception as e: log('issue failed', e)
 
 
