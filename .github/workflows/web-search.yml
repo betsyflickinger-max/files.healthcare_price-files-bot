@@ -32,6 +32,7 @@ concurrency:
 permissions:
   contents: write
   issues: write
+  actions: write
 
 jobs:
   search:
@@ -65,6 +66,14 @@ jobs:
           git add data/hospitals.csv data/web_search_log.csv
           git commit -m "Web search for missing price files $(date -u +%F): $(grep '^done' out.txt | cut -c1-200)" || exit 0
           git pull --rebase -q origin main && git push origin HEAD:main
+      - name: Out of time? Start a fresh run for the rest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if grep -qE "left [1-9]" out.txt; then
+            gh workflow run web-search.yml --ref main -f states="${{ inputs.states }}" -f model="${{ inputs.model || 'claude-haiku-5-5' }}" \
+              -f research_days="${{ inputs.research_days || '30' }}" -f also_broken="${{ inputs.also_broken || false }}"
+          fi
       - name: Open an issue for finds that need a hand check
         env:
           GH_TOKEN: ${{ github.token }}

@@ -5,7 +5,13 @@ domains; after Oct 10-14 about 1,500 hospitals were still missing. This bot asks
 ANTHROPIC_API_KEY) to search the web for each one: its own website, its health system's website, its price
 transparency page, its cms-hpt.txt and direct links to its machine-readable file.
 
-Nothing Claude says is trusted. A find is ACCEPTED only when the bot checks it itself:
+Layer 2 (bot/deep_find.py, free): before and after Claude's search, the bot also matches the hospital (by its
+everyday, legal and doing-business-as names from Medicare's enrollment list) against every cms-hpt.txt we know
+nationwide, crawls its sites (price pages, common paths, sitemaps) and searches the Wayback Machine / Common Crawl
+and the big price-file vendors' sites for any file link ever posted. Hospitals searched recently and not found get
+the free layers again without a new Claude search (--no-deep-again turns that off).
+
+Nothing Claude or the crawl finds is trusted. A find is ACCEPTED only when the bot checks it itself:
   index  https://<domain>/cms-hpt.txt (or the exact cms-hpt.txt link found) lists a location whose name matches the
          hospital (same rule as find_sites.py: score >= 85)            -> index_domain in data/hospitals.csv
   file   a file link whose first bytes are a CMS standard-charges file (hospital_name / standard_charge fields) and
@@ -42,6 +48,7 @@ from pathlib import Path
 import requests
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+import deep_find as deep  # noqa: E402
 import discover  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
@@ -52,7 +59,8 @@ E = {k: v.strip() for k, v in os.environ.items()}
 MODEL = E.get("MODEL") or "claude-haiku-5-5"
 MAX_SEARCHES = int(E.get("MAX_SEARCHES") or 4)
 LOG_FIELDS = ["ccn", "name", "city", "state", "type", "searched_at", "times_searched", "model", "result", "how",
-              "domain", "mrf_url", "price_page", "why", "notes", "searches"]
+              "domain", "mrf_url", "price_page", "why", "notes", "searches", "answer"]
+NAMES, NAT, VENDORS = {}, None, []   # filled in main(): legal/DBA names, national index, vendor archive links
 
 PROMPT = """You help a public healthcare price-transparency project find US hospitals' federally required price files.
 Since 2021 every US hospital must post a machine-readable file of its standard charges (JSON or CSV, sometimes zipped)
@@ -79,8 +87,13 @@ STATE = {"tools": TOOLS_FULL, "beta": "web-fetch-2025-09-10"}
 
 
 def ask(h, extra):
+    n = NAMES.get(h["ccn"], {})
+    more = "".join(f"{k}: {v}\n" for k, v in (("Legal name", n.get("legal")), ("Doing business as", n.get("dba")),
+                                               ("Address", n.get("address")), ("NPI", n.get("npi"))) if v)
     user = (f"Hospital: {h['name']}\nCity: {h['city'].title()}, {h['state']}\nMedicare CCN: {h['ccn']}\n"
-            f"Type: {h['type']}\n{extra}")
+            f"Type: {h['type']}\n{more}{extra}"
+            "Price files are often named for the legal name, like <EIN>_<legal-name>_standardcharges.json, and are often "
+            "hosted by a vendor (Panacea, Hospital Price Index, Craneware, Hyve, PARA...) rather than the hospital's site.")
     for attempt in range(6):
         headers = {"x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"}
         if STATE["beta"]:
@@ -163,7 +176,7 @@ def names_in_file(text):
     return [str(x) for x in out if x], addr
 
 
-def check_file(h, url, dup):
+def check_file(h, url, dup, names_=None, strict=False):
     text, info = head_text(url)
     if info == "zip file":
         return "held", "zipped file link (can't check the hospital name inside without downloading it)"
@@ -172,33 +185,36 @@ def check_file(h, url, dup):
     names, addr = names_in_file(text)
     if names is None:
         return None, f"file link is not a CMS price file ({info[:40]})"
-    scored = sorted(((discover.score(h["name"], n), n) for n in names), reverse=True) or [(0, "?")]
+    ours = names_ or [h["name"]]
+    scored = sorted(((discover.score(o, n), n) for n in names for o in ours), reverse=True) or [(0, "?")]
     best, bname = scored[0]
-    words = any(fs.words_in(h["name"], n) for n in names)
+    words = any(fs.words_in(o, n) for n in names for o in ours)
     city_ok = h["city"].lower() in (addr or text[:5000]).lower()
-    if (best >= 85 or words) and (city_ok or not dup):
+    if (best >= 85 or words) and (city_ok or (not dup and not strict)):
         return "yes", f"file names '{bname[:60]}' ({round(best)})"
     if best >= 70 or words:
         return "held", f"file names '{bname[:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
     return None, f"file is for '{bname[:60]}', not this hospital"
 
 
-def check_index_url(h, url, dup):
+def check_index_url(h, url, dup, names_=None):
     """A cms-hpt.txt at an exact link (some sites keep it off the root)."""
     text, info = head_text(url, 2_000_000)
     ents = discover.parse(text) if text and not text.lstrip().startswith("<") else []
     if not ents:
         return None
-    sc, e = max(((discover.score(h["name"], x.get("location-name", "")), x) for x in ents), key=lambda t: t[0])
+    ours = names_ or [h["name"]]
+    sc, e, o = max(((discover.score(o, x.get("location-name", "")), x, o) for x in ents for o in ours), key=lambda t: t[0])
     if sc >= 85:
-        rough = not fs.words_in(h["name"], e.get("location-name", ""))
+        rough = not fs.words_in(o, e.get("location-name", ""))
         return dict(domain=discover.host(url), mrf=e["mrf-url"], score=round(sc), loc=e.get("location-name", ""),
                     accepted="held" if dup or rough else "yes")
     return None
 
 
-def verify(h, ans, dup):
+def verify(h, ans, dup, names_=None):
     """Returns (result, how, domain, mrf_url, why)."""
+    names_ = names_ or [h["name"]]
     hosts, why = [], []
     for k in ("website", "system_website", "price_page", "cms_hpt_txt"):
         d = discover.host(ans.get(k) or "")
@@ -211,11 +227,19 @@ def verify(h, ans, dup):
             hosts.append(d)
     held = None
     for d in hosts[:5]:
-        try:
-            res = fs.try_domain(h, d, "web", fs.DUP)
-        except Exception:
-            res = None
-        if res and res["accepted"] == "yes" and not fs.words_in(h["name"], res["location"]):
+        res = None
+        for nm in names_:
+            try:
+                r_ = fs.try_domain(dict(h, name=nm), d, "web", fs.DUP)
+            except Exception:
+                r_ = None
+            if r_ and r_["accepted"] == "yes" and not fs.words_in(nm, r_["location"]):
+                r_ = dict(r_, accepted="no - rough match")
+            if r_ and (res is None or r_["accepted"] == "yes"):
+                res = r_
+            if res and res["accepted"] == "yes":
+                break
+        if res and res["accepted"] == "yes" and not any(fs.words_in(nm, res["location"]) for nm in names_):
             # a big system index ("CHI St. Vincent" for CHI St Vincent Infirmary) may list a sister hospital or the whole
             # system: every distinctive word of the name must be in the listed location, else a person checks it
             res = dict(res, accepted="no - rough match")
@@ -226,13 +250,13 @@ def verify(h, ans, dup):
                             + ("rough match" if "rough" in res["accepted"] else "same name in another state"), d, "", "")
         why.append(f"{d}: no matching cms-hpt.txt")
     if ans.get("cms_hpt_txt", "").startswith("http"):
-        r = check_index_url(h, discover.clean(ans["cms_hpt_txt"]), dup)
+        r = check_index_url(h, discover.clean(ans["cms_hpt_txt"]), dup, names_)
         if r and r["accepted"] == "yes":
             return "found", f"index {ans['cms_hpt_txt'][:100]} lists '{r['loc'][:60]}' ({r['score']})", "", r["mrf"], ""
         if r:
             held = held or ("held", f"index {ans['cms_hpt_txt'][:100]}; same name in another state", "", r["mrf"], "")
     for u in files:
-        ok, msg = check_file(h, u, dup)
+        ok, msg = check_file(h, u, dup, names_)
         if ok == "yes":
             return "found", "file: " + msg, "", u, ""
         if ok == "held":
@@ -241,6 +265,73 @@ def verify(h, ans, dup):
     if held:
         return held
     return ("not found", "", "", "", "; ".join(why)[:300] or "nothing found")
+
+
+def deep_layer(h, hosts, pages, names_, dup, done_hosts):
+    """Layer 2 on the hospital's sites: crawl (price pages, common paths, sitemap), then archives (Wayback, Common
+    Crawl, vendor sites). Returns (result, how, domain, mrf_url, why) or None; adds crawled hosts to done_hosts."""
+    held, why = None, []
+    for i, d in enumerate([x for x in hosts if x and x not in done_hosts][:3]):
+        done_hosts.add(d)
+        files, idx, n = deep.crawl(d, [p for p in pages if discover.host(p) == d])
+        for u in idx:
+            r = check_index_url(h, discover.clean(u), dup, names_)
+            if r and r["accepted"] == "yes":
+                return "found", f"crawl: index {u[:100]} lists '{r['loc'][:60]}' ({r['score']})", "", r["mrf"], ""
+            if r:
+                held = held or ("held", f"crawl: index {u[:100]} lists '{r['loc'][:60]}'", "", r["mrf"], "")
+        for u in files[:12]:
+            ok, msg = check_file(h, discover.clean(u), dup, names_)
+            if ok == "yes":
+                return "found", f"crawl ({n} pages on {d}): " + msg, "", discover.clean(u), ""
+            if ok == "held":
+                held = held or ("held", "crawl: " + msg, "", discover.clean(u), "")
+        why.append(f"{d}: crawled {n} pages, {len(files)} file-like links")
+        if E.get("NO_ARCHIVES") == "1":
+            continue
+        arch = deep.archives(d, names_, VENDORS if i == 0 else ())
+        dead = []
+        for u in arch[:14]:
+            own = discover.host(u) == d
+            if "cms-hpt" in u.lower():
+                r = check_index_url(h, discover.clean(u), dup, names_)
+                if r and r["accepted"] == "yes":
+                    return "found", f"archive: index {u[:100]} lists '{r['loc'][:60]}' ({r['score']})", "", r["mrf"], ""
+                continue
+            ok, msg = check_file(h, discover.clean(u), dup, names_, strict=not own)
+            if ok == "yes":
+                return "found", "archive: " + msg, "", discover.clean(u), ""
+            if ok == "held":
+                held = held or ("held", "archive: " + msg, "", discover.clean(u), "")
+            elif "HTTP 404" in msg or "HTTP 410" in msg:
+                dead.append(u)
+        why.append(f"archives: {len(arch)} links" + (f", {len(dead)} gone now (e.g. {dead[0][:90]})" if dead else ""))
+    if held:
+        return held
+    return ("not found", "", "", "", "; ".join(why)) if why else None
+
+
+def national_layer(h, names_, dup):
+    held = None
+    for idx, mrf, loc in NAT.candidates(h, names_) if NAT else []:
+        ok, msg = check_file(h, mrf, dup, names_, strict=True)
+        if ok == "yes":
+            return "found", f"national: {idx[:80]} lists '{loc[:50]}'; " + msg, "", mrf, ""
+        if ok == "held":
+            held = held or ("held", f"national: {idx[:80]} lists '{loc[:50]}'; " + msg, "", mrf, "")
+    return held
+
+
+def logged_hosts(L):
+    """Sites an earlier search found for this hospital (domain, price page, and those named in 'why')."""
+    hs = [L.get("domain", ""), discover.host(L.get("price_page", ""))]
+    hs += re.findall(r"([a-z0-9.-]+\.[a-z]{2,}): (?:no matching|crawled)", L.get("why", ""))
+    try:
+        a = json.loads(L.get("answer") or "{}")
+        hs += [discover.host(a.get(k) or "") for k in ("website", "system_website", "price_page", "cms_hpt_txt")]
+    except json.JSONDecodeError:
+        pass
+    return [x for x in dict.fromkeys(hs) if x and not x.endswith(discover.SHARED_HOSTS)]
 
 
 def targets(rows, a):
@@ -273,7 +364,9 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--states", default="")
     ap.add_argument("--also-broken", action="store_true")
-    ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--workers", type=int, default=12)
+    ap.add_argument("--no-deep-again", action="store_true",
+                    help="don't run the free layers again on hospitals searched recently and not found")
     a = ap.parse_args()
     if not E.get("ANTHROPIC_API_KEY"):
         sys.exit("ANTHROPIC_API_KEY is not set")
@@ -286,9 +379,20 @@ def main():
     fs.DUP = {n for n, s in states_by.items() if len(s) > 1}
     log = {r["ccn"]: r for r in csv.DictReader(open(LOG, encoding="utf-8"))} if LOG.exists() else {}
     cut = (date.today() - timedelta(days=int(E.get("RESEARCH_DAYS") or 30))).isoformat()
-    todo = [r for r in targets(rows, a) if log.get(r["ccn"], {}).get("searched_at", "") < cut]
+    todo = []
+    for r in targets(rows, a):
+        L = log.get(r["ccn"], {})
+        if L.get("searched_at", "") < cut:
+            todo.append(r)
+        elif not a.no_deep_again and L.get("result") in ("not found", "error") and "deep" not in L.get("model", ""):
+            r["_deep_only"] = True   # searched recently: free layers only, no new Claude search
+            todo.append(r)
     if a.limit:
         todo = todo[:a.limit]
+    global NAMES, NAT, VENDORS
+    NAMES = deep.enrollment_names()
+    NAT = deep.National(rows)
+    VENDORS = [] if E.get("NO_ARCHIVES") == "1" else deep.vendor_urls()
     print(f"{len(todo):,} hospitals to search (model {MODEL}, up to {MAX_SEARCHES} searches each)", flush=True)
     t0, stop = time.time(), float(E.get("STOP_AFTER_MIN") or 320) * 60
     today = date.today().isoformat()
@@ -298,29 +402,72 @@ def main():
     def one(h):
         if time.time() - t0 > stop:
             return h, None
+        dup, names_ = h["_norm"] in fs.DUP, deep.all_names(h, NAMES)
+        L = log.get(h["ccn"], {})
+        try:
+            prev = json.loads(L.get("answer") or "{}")
+        except json.JSONDecodeError:
+            prev = {}
+        prev.setdefault("price_page", L.get("price_page", ""))
+        prev.setdefault("notes", L.get("notes", ""))
+        held = None
+        # layer 2a: every index we know, nationwide
+        res = national_layer(h, names_, dup)
+        if res and res[0] == "found":
+            return h, res + (prev, 0)
+        held = held or res
+        # layer 2b: crawl + archives on the sites we already know
+        done_hosts = set()
+        known = [h.get("index_domain", "")] + logged_hosts(L)
+        res = deep_layer(h, known, [prev.get("price_page", "")], names_, dup, done_hosts)
+        if res and res[0] == "found":
+            return h, res + (prev, 0)
+        if res and res[0] == "held":
+            held = held or res
+        why0 = res[4] if res else ""
+        if h.get("_deep_only"):
+            return h, (held or ("not found", "", "", "", why0 or "free layers found nothing")) + (prev, 0)
+        # layer 1: Claude searches the web
         extra = ""
         if h.get("index_domain"):
             extra = f"Note: {h['index_domain']}/cms-hpt.txt is missing or does not list this hospital.\n"
         ans, ns = ask(h, extra)
         if ans is None:
-            return h, ("error", "", "", "", "API error", {}, 0)
+            return h, (held or ("error", "", "", "", "API error")) + (prev, 0)
         if not isinstance(ans, dict):
             ans = {"notes": str(ans)[:200]}
-        res = verify(h, ans, h["_norm"] in fs.DUP)
-        return h, res + (ans, ns)
+        res = verify(h, ans, dup, names_)
+        if res[0] == "found":
+            return h, res + (ans, ns)
+        held = held or (res if res[0] == "held" else None)
+        # layer 2c: crawl + archives on the sites Claude found
+        hosts = [discover.host(ans.get(k) or "") for k in ("website", "system_website", "price_page", "cms_hpt_txt")]
+        hosts += [discover.host(u) for u in (ans.get("file_urls") or []) if isinstance(u, str)]
+        hosts = [x for x in dict.fromkeys(hosts) if x and not x.endswith(discover.SHARED_HOSTS)]
+        res2 = deep_layer(h, hosts, [ans.get("price_page") or ""], names_, dup, done_hosts)
+        if res2 and res2[0] == "found":
+            return h, res2 + (ans, ns)
+        if res2 and res2[0] == "held":
+            held = held or res2
+        why = "; ".join(x for x in (res[4], res2[4] if res2 else "", why0) if x)[:400]
+        return h, (held or ("not found", "", "", "", why)) + (ans, ns)
 
+    left = 0
     with ThreadPoolExecutor(a.workers) as ex:
         for i, (h, res) in enumerate(ex.map(one, todo), 1):
             if res is None:
+                left += 1   # out of time: the workflow starts a fresh run for these
                 continue
             result, how, dom, mrf, why, ans, ns = res
             counts[result] = counts.get(result, 0) + 1
             L = log.get(h["ccn"], {})
             log[h["ccn"]] = dict(ccn=h["ccn"], name=h["name"], city=h["city"], state=h["state"], type=h["type"],
-                                 searched_at=today, times_searched=str(int(L.get("times_searched") or 0) + 1), model=MODEL,
+                                 searched_at=today if not h.get("_deep_only") else L.get("searched_at", today),
+                                 times_searched=str(int(L.get("times_searched") or 0) + 1),
+                                 model=(MODEL if not h.get("_deep_only") else L.get("model", "")) + "+deep",
                                  result=result, how=how, domain=dom, mrf_url=mrf, price_page=(ans.get("price_page") or "")[:300],
                                  why=why, notes=" ".join(x for x in (ans.get("status_note") or "", ans.get("notes") or "") if x)[:300],
-                                 searches=str(ns))
+                                 searches=str(ns), answer=json.dumps(ans, ensure_ascii=False)[:1500])
             if result == "found":
                 if dom:
                     h["index_domain"] = dom
@@ -332,7 +479,7 @@ def main():
             if i % 25 == 0:
                 print(f"  {i:,}/{len(todo):,}: {counts} · {USE['searches']} searches", flush=True)
     for r in rows:
-        r.pop("_norm", None); r.pop("_status", None)
+        r.pop("_norm", None); r.pop("_status", None); r.pop("_deep_only", None)
     with open(LIST, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fields); w.writeheader(); w.writerows(rows)
     with open(LOG, "w", newline="", encoding="utf-8") as f:
@@ -353,7 +500,7 @@ def main():
     summary = (f"done: searched {n:,} hospitals; found {counts['found']:,}, held {counts['held']:,} for a hand check, "
                f"not found {counts['not found']:,}, errors {counts.get('error', 0):,}. {USE['searches']:,} web searches, "
                f"{USE['fetches']:,} page fetches, {USE['in']:,} tokens in / {USE['out']:,} out: about ${cost:,.2f} "
-               f"(${cost / max(n, 1):.3f} per hospital)")
+               f"(${cost / max(n, 1):.3f} per hospital); left {left}")
     print(summary)
 
 
