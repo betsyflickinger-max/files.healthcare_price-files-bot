@@ -98,7 +98,7 @@ def launch(role, size, script, env):
     ud = userdata(script, dict(env, ROLE=role))
     for region in REGIONS:
         try:
-            d = do('POST', '/droplets', {'name': name, 'region': region, 'size': size, 'image': 'ubuntu-24-04-x64', 'user_data': ud, 'tags': ['site-build']})
+            d = do('POST', '/droplets', {'name': name, 'region': region, 'size': size, 'image': 'ubuntu-24-04-x64', 'user_data': ud, 'tags': ['site-build'], 'monitoring': True})
             log('launched', name, region, d['droplet']['id']); return True
         except urllib.error.HTTPError as e:
             log('launch failed', name, region, e.read()[:150])

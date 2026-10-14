@@ -34,7 +34,7 @@ def create(name, user_data, size=DEFAULT_SIZE):
     for s in dict.fromkeys(sizes):
         for region in [REGION] + FALLBACK_REGIONS:
             body = dict(name=name, region=region, size=s, image=IMAGE, tags=["upfront", TAG], user_data=user_data,
-                        monitoring=False, ipv6=False)
+                        monitoring=True, ipv6=False)  # free agent: CPU/memory/disk graphs, readable by API
             r = requests.post(f"{API}/droplets", json=body, headers=_h(), timeout=60)
             if r.status_code != 422:
                 break
