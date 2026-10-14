@@ -96,13 +96,13 @@ def load(s3, b, scope):
     for n in csv.DictReader(open(HERE / NETWORKS.get(scope, "networks.csv"))):
         if n["slot"] in man:
             pass
-        elif scope == "dfw":  # first run: start from the tables already in R2
+        elif scope == "dfw" and n.get("current_table"):  # first run: start from the tables already in R2
             man[n["slot"]] = dict(slot=n["slot"], insurer=n["insurer"], network_label=n["network_label"],
                                   machine_group=n["machine_group"], url=n["current_url"],
                                   url_date=url_date(n["current_url"]), table=n["current_table"],
                                   file_last_updated_on=n["last_updated_on"], status="processed",
                                   processed_on="(before the bot)", fails="0")
-        else:  # a new area: nothing read yet, so every network gets read once
+        else:  # a new area, or a network added later (no table yet): read it once
             man[n["slot"]] = dict(slot=n["slot"], insurer=n["insurer"], network_label=n["network_label"],
                                   machine_group=n["machine_group"], url=n["current_url"],
                                   url_date=(date.today() - timedelta(days=40)).isoformat(), table="",

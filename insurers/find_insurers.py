@@ -154,7 +154,8 @@ ALIASES = {"Aetna": r"aetna", "Alliant": r"alliant", "Ambetter": r"ambetter", "A
            "Anthem Georgia": r"anthem", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
            "BCBSOK": r"blue ?cross.*oklahoma", "BCBST": r"blue ?cross.*tennessee", "BCBSTX": r"blue ?cross.*texas",
            "BSW Health Plan": r"baylor scott", "Blue KC": r"blue ?cross.*kansas city|blue ?kc", "Cigna": r"cigna",
-           "Curative": r"curative", "Oscar": r"oscar", "UnitedHealthcare": r"united ?health", "Wellpoint": r"wellpoint"}
+           "Curative": r"curative", "CHRISTUS Health Plan": r"christus", "Community Health Choice": r"community health choice",
+           "Moda": r"\bmoda\b", "Oscar": r"oscar", "UnitedHealthcare": r"united ?health", "Wellpoint": r"wellpoint"}
 # companies whose files we already know how to find nationally (one company-wide listing covers every state)
 NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r"aetna", "Oscar": r"oscar",
             "Ambetter (Centene)": r"ambetter", "Anthem / Wellpoint (Elevance)": r"anthem|wellpoint|empire blue"}
