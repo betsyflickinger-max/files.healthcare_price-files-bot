@@ -48,6 +48,10 @@ def days_old(s):
         return None
 
 
+HERE = Path(__file__).resolve().parent
+NETS = {"s7": "networks_s7.csv"}  # dfw and tx use networks.csv
+
+
 def main():
     s3 = s3c()
     cards = defaultdict(lambda: defaultdict(lambda: dict(networks=0, reachable=0, problems=[], dated=0, current=0, rows=0, dollar=0, zero=0,
@@ -57,6 +61,7 @@ def main():
             man = list(csv.DictReader(io.StringIO(s3.get_object(Bucket=B, Key=pfx + "manifest.csv")["Body"].read().decode())))
         except Exception as e:
             print(f"{scope}: no manifest ({e})"); continue
+        off = {n["slot"] for n in csv.DictReader(open(HERE / NETS.get(scope, "networks.csv"))) if n.get("enabled", "yes") != "yes"}
         census = {}
         for page in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix=f"bot/insurers/census/{MONTH}/{cdir}/"):
             for o in page.get("Contents", []):
@@ -66,7 +71,9 @@ def main():
             c["networks"] += 1
             d = (m.get("detail") or "").lower()
             broken = m.get("status") == "failed" or "link broken" in d or "could not check" in d or "keeping the last good" in d
-            if broken:
+            if m.get("slot") in off:  # the bot stopped looking: the insurer's file page or links are gone
+                c["problems"].append(f"{m.get('network_label')}: file no longer posted where the insurer listed it; showing our last copy")
+            elif broken:
                 c["problems"].append(f"{m.get('network_label')}: {(m.get('detail') or m.get('status'))[:120]}")
             elif m.get("status") in ("processed", "queued", "running") and m.get("table"):
                 c["reachable"] += 1
