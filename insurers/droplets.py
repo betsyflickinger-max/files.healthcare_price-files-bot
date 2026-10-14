@@ -68,9 +68,17 @@ def names():
     return [d["name"] for d in r.json()["droplets"]]
 
 
+def limit():
+    """How many machines the account may have at once, read live from DigitalOcean every time (Oct 14, 2026:
+    Betsy raises this limit from time to time, so nothing in the code hard-codes it)."""
+    r = requests.get(f"{API}/account", headers=_h(), timeout=60)
+    r.raise_for_status()
+    return int(r.json()["account"].get("droplet_limit") or 3)
+
+
 def room():
     """Free machine slots on the account (DigitalOcean caps how many can exist at once)."""
-    acct = requests.get(f"{API}/account", headers=_h(), timeout=60).json()["account"]
+    lim = limit()
     r = requests.get(f"{API}/droplets", params={"per_page": 200}, headers=_h(), timeout=60)
     r.raise_for_status()
-    return int(acct.get("droplet_limit") or 3) - len(r.json()["droplets"])
+    return lim - len(r.json()["droplets"])

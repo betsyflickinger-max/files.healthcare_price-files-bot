@@ -54,7 +54,8 @@ PER_MACHINE = {"uhc": 1, "aetna": 1, "bcbstx": 1, "cigna": 1, "small": 12, "bcbs
 RESERVE = 0  # slots to leave free for other jobs; 0 = use every free machine
 ST_ROOM = 4  # while the seven-state website build runs, Texas/DFW files leave this many machines free for it
 SCOPE = "dfw"  # biggest files; anything else: 4 vCPU / 8 GB
-MAX_MACHINES = 14  # the account allows 15; droplets.room() still keeps us inside it (Oct 13: was 9)
+# Machine cap (Oct 14, 2026): no fixed number. droplets.room() reads the account's live limit from DigitalOcean on
+# every pass, so a raised limit is used on the very next 10-minute pass (was a hard-coded 14, then 9 before Oct 13).
 STUCK_HOURS = 48
 STALE_DAYS = 45      # flag a network whose file hasn't changed in this long
 PEEK = 256 * 1024
@@ -254,7 +255,7 @@ def launch(s3, b, man, now, dry):
         print(f"Website build running ({len(building)} machines): {len(queued)} queued files wait")
         return []
     try:  # stay inside both our own cap and the account's limit (other jobs may be using machines)
-        free = min(MAX_MACHINES - len(droplets.mine()), droplets.room() - RESERVE - keep_free) if not dry else MAX_MACHINES
+        free = droplets.room() - RESERVE - keep_free if not dry else 15
     except Exception:
         free = 1
     # Use every free slot (Oct 13): split the biggest multi-file loads until there is one load per free machine.
