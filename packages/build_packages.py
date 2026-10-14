@@ -35,6 +35,7 @@ def main():
     ap.add_argument("--rates", default="data/full/rates/")
     ap.add_argument("--npis", default="data/2026-09-29/dfw_npis_all.parquet")
     ap.add_argument("--area", default="dfw")
+    ap.add_argument("--reuse", action="store_true", help="use this month's saved price rows instead of re-reading every table")
     a = ap.parse_args()
     defs = list(csv.DictReader(open(HERE / "packages.csv")))
     codes = sorted({c for d in defs for c in d["codes"].split("|")})
@@ -48,9 +49,18 @@ def main():
     con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='10GB'")
     con.execute(f"""create secret r2 (type r2, key_id '{E["R2_ACCESS_KEY_ID"]}', secret '{E["R2_SECRET_ACCESS_KEY"]}', account_id '{E["R2_ACCOUNT_ID"]}')""")
     lst = ", ".join(f"'{c}'" for c in codes)
+    raw = f"data/packages/{MONTH}/{a.area}_rows.parquet"   # the matching price rows, saved so a re-run needn't re-read every table
     con.execute("""create table r (billing_code varchar, billing_class varchar, npi varchar, rate double, network varchar, insurer varchar,
                    source_url varchar, file_date varchar)""")
     t0 = time.time()
+    if a.reuse:
+        try:
+            s3.download_file(B, raw, "/tmp/rows.parquet")
+            con.execute("insert into r select * from read_parquet('/tmp/rows.parquet')")
+            tables = []
+            print("reusing saved price rows", flush=True)
+        except Exception as e:
+            print(f"no saved rows ({e}); reading every table", flush=True)
     for i, k in enumerate(sorted(tables), 1):
         t = f"read_parquet('r2://{B}/{k}')"
         m = f"read_parquet('r2://{B}/{k.replace('/rates/', '/membership/')}')"
@@ -67,14 +77,25 @@ def main():
             print(f"  {i}/{len(tables)} tables, {con.execute('select count(*) from r').fetchone()[0]:,} rows, {time.time() - t0:.0f} s", flush=True)
     n_rows = con.execute("select count(*) from r").fetchone()[0]
     print(f"{len(tables)} tables read, {n_rows:,} matching price rows, {time.time() - t0:.0f} s", flush=True)
+    if tables:
+        con.execute("copy r to '/tmp/rows.parquet' (format parquet, compression zstd)")
+        s3.upload_file("/tmp/rows.parquet", B, raw)
 
     s3.download_file(B, a.npis, "/tmp/npis.parquet")
     con.execute("create table d as select * from read_csv(?, header=true, all_varchar=true)", [str(HERE / "packages.csv")])
-    con.execute("""create table dc as select package, "name", role, unnest(string_split(codes, '|')) code, billing_class, in_total, note from d""")
+    con.execute("""create table dc as select package, "name", role, unnest(string_split(codes, '|')) code, billing_class, in_total, note, taxonomy from d""")
     # every listed price per package part (one row per provider: if a provider has several prices, its lowest and highest stay visible)
+    con.execute("""create table nt as select npi, any_value("name") as fname, any_value(city) as city, any_value(entity_type) as et,
+                   any_value(taxonomy_1) as tax from read_parquet('/tmp/npis.parquet') group by npi""")
+    # Insurers list prices for providers who never do the procedure ("ghost rates"). Keep only facilities that are hospitals or
+    # surgery centers, and individual clinicians whose listed specialty matches the part (packages.csv 'taxonomy' prefixes).
     con.execute("""create table parts as select dc.package, dc."name", dc.role, dc.in_total, r.network, r.insurer, r.npi, r.billing_code,
                      min(r.rate) lo, max(r.rate) hi, any_value(r.source_url) source_url, max(r.file_date) file_date
-                   from r join dc on dc.code = r.billing_code and r.billing_class = dc.billing_class group by all""")
+                   from r join dc on dc.code = r.billing_code and r.billing_class = dc.billing_class
+                   join nt on nt.npi = r.npi
+                   where len([prefix for prefix in string_split(dc.taxonomy, '|') if starts_with(coalesce(nt.tax, ''), prefix)]) > 0
+                     and ((dc.role = 'facility' and nt.et = '2') or (dc.role <> 'facility' and nt.et = '1'))
+                   group by all""")
     con.execute("""create table doc as select package, network, role, count(distinct npi) n, min(lo) lo, quantile_disc(lo, 0.5) mid, max(hi) hi
                    from parts where role <> 'facility' group by all""")
     con.execute(f"""create table pk as
@@ -88,9 +109,8 @@ def main():
         join doc dr on dr.package = f.package and dr.network = f.network and dr.role = 'doctor'
         left join doc an on an.package = f.package and an.network = f.network and an.role = 'anesthesia'
         left join doc pa on pa.package = f.package and pa.network = f.network and pa.role = 'pathology'
-        left join (select npi, any_value("name") as fname, any_value(city) as city, any_value(entity_type) as et
-                   from read_parquet('/tmp/npis.parquet') group by npi) n on n.npi = f.npi
-        where f.role = 'facility' and coalesce(n.et, '2') <> '1'""")  # a facility fee belongs to an organization, not one doctor
+        left join nt n on n.npi = f.npi
+        where f.role = 'facility'""")  # a facility fee belongs to an organization, not one doctor
     con.execute("copy pk to '/tmp/pk.parquet' (format parquet, compression zstd)")
     s3.upload_file("/tmp/pk.parquet", B, f"data/packages/{MONTH}/{a.area}.parquet")
 
