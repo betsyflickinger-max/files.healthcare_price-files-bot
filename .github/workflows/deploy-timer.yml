@@ -1,0 +1,39 @@
+name: Deploy bot timer
+
+# Puts the Cloudflare timer (timer/worker.js) live: it starts the bot workflows on time every minute, because GitHub's
+# own schedule skips runs when GitHub is busy. Uses the Cloudflare key the site deploys already use, and gives the
+# timer the machines' GitHub key (BOT_GITHUB_TOKEN) so it can start workflows. Runs by hand, and on any timer change.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["timer/**", ".github/workflows/deploy-timer.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the GitHub key the timer will use
+        run: |
+          T=$(echo -n "$BOT_GITHUB_TOKEN" | tr -d '[:space:]')
+          [ -n "$T" ] || { echo "::error::BOT_GITHUB_TOKEN is not set"; exit 1; }
+          code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $T" https://api.github.com/repos/${{ github.repository }}/actions/workflows/insurers.yml)
+          echo "BOT_GITHUB_TOKEN check: HTTP $code (200 = works)"
+          [ "$code" = "200" ] || { echo "::error::BOT_GITHUB_TOKEN did not work (HTTP $code): make a new one (Actions: read and write on price-files-bot)"; exit 1; }
+      - name: Deploy the timer and give it the GitHub key
+        working-directory: timer
+        run: |
+          export CLOUDFLARE_API_TOKEN=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')
+          export CLOUDFLARE_ACCOUNT_ID=$(echo -n "$R2_ACCOUNT_ID" | tr -d '[:space:]')
+          npx -y wrangler@4 deploy
+          echo -n "$BOT_GITHUB_TOKEN" | tr -d '[:space:]' | npx -y wrangler@4 secret put GH_TOKEN
+          echo "Timer deployed; it starts the bot workflows every minute from now on."
