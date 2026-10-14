@@ -43,6 +43,7 @@ from rapidfuzz import fuzz
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "bot"))
 import deep_find as deep  # noqa: E402
+import fetch_plus  # noqa: E402
 import discover  # noqa: E402
 
 E = {k: v.strip() for k, v in os.environ.items()}
@@ -80,12 +81,16 @@ US state for the current or coming plan year, using web search (the state market
 Reply with ONLY a JSON object: {"insurers": ["Company name", ...]}"""
 
 
-def call(system, user, tools=True, max_tokens=2500):
+def call_model(model, system, user):
+    return call(system, user, model=model)
+
+
+def call(system, user, tools=True, max_tokens=2500, model=None):
     for attempt in range(6):
         h = {"x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"}
         if STATE["beta"] and tools:
             h["anthropic-beta"] = STATE["beta"]
-        body = {"model": MODEL, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]}
+        body = {"model": model or MODEL, "max_tokens": max_tokens, "system": system, "messages": [{"role": "user", "content": user}]}
         if tools:
             body["tools"] = STATE["tools"]
         try:
@@ -137,6 +142,31 @@ def puf_issuers():
     return []
 
 
+NET_URLS = {}   # (state, issuer_id) -> network web links from CMS's network file
+
+
+def puf_network_urls(year=None):
+    year = int(E.get("PUF_YEAR") or date.today().year + 1)
+    for y in (year, year - 1):
+        try:
+            r = requests.get(f"https://download.cms.gov/marketplace-puf/{y}/network-puf.zip", timeout=300)
+            if r.status_code != 200:
+                continue
+            z = zipfile.ZipFile(io.BytesIO(r.content))
+            src = z.read([n for n in z.namelist() if n.endswith(".csv")][0]).decode("utf-8-sig", "replace")
+            for row in csv.DictReader(io.StringIO(src)):
+                u = (row.get("NetworkURL") or "").strip()
+                if u:
+                    u = u if u.startswith("http") else "https://" + u.lstrip("/")
+                    lst = NET_URLS.setdefault((row["StateCode"], row["IssuerId"]), [])
+                    if u not in lst and len(lst) < 3:
+                        lst.append(u)
+            print(f"  CMS {y} network file: links for {len(NET_URLS):,} insurer-state pairs", flush=True)
+            return
+        except Exception as e:  # noqa: BLE001
+            print("  ! network PUF", y, str(e)[:120], flush=True)
+
+
 def sbe_issuers(states):
     out = []
     for st in states:
@@ -186,7 +216,19 @@ def national(t):
 
 # ---------- verify ----------
 def head_json(url, limit=600_000):
-    """First bytes of a link as text, un-gzipped if needed (.json.gz). ('', reason) if not readable."""
+    """First bytes of a link as text, un-gzipped if needed (.json.gz). ('', reason) if not readable.
+    Oct 14: a bot wall gets a Chrome-like request (bot/fetch_plus.py)."""
+    text, info, final = _head_json(url, limit)
+    if not text and (info.startswith("HTTP 4") or info.startswith("HTTP 5") or "Error" in info):
+        st, ct, buf, fu = fetch_plus.cffi_head(url, limit)
+        if st == 200 and not fetch_plus.challenged(st, buf):
+            if buf[:2] == b"\x1f\x8b":
+                buf = zlib.decompressobj(16 + zlib.MAX_WBITS).decompress(buf, limit * 4)
+            return buf.decode("utf-8", "replace"), ct + " (chrome-like)", fu
+    return text, info, final
+
+
+def _head_json(url, limit=600_000):
     try:
         with requests.get(url, headers={"User-Agent": discover.UA}, timeout=(8, 40), stream=True, verify=False,
                           allow_redirects=True) as r:
@@ -246,9 +288,16 @@ def page_links(url):
             if re.search(r"(?i)\.json(\.gz)?(\?|$)|index|toc|table.of.contents|in.network", u)][:20]
 
 
+ESCALATE = E.get("ESCALATE_MODEL") or "claude-sonnet-5-5"
+
+
 def search_one(t):
-    ans, ns = call(PROMPT, f"Insurer: {t['issuer']}\nState: {t['state']}\n"
-                   + (f"CMS issuer ID: {t['issuer_id']}\n" if t["issuer_id"] else ""))
+    model = ESCALATE if t.get("_escalate") else MODEL
+    prior = t.get("_prior", "")
+    ans, ns = call_model(model, PROMPT, f"Insurer: {t['issuer']}\nState: {t['state']}\n"
+                         + (f"CMS issuer ID: {t['issuer_id']}\n" if t["issuer_id"] else "")
+                         + (f"An earlier search found: {prior}\nLook harder: the insurer's own site, its parent company's "
+                            "site, and file hosts such as HealthSparq, Sapphire, Azure/S3 buckets and CloudFront.\n" if prior else ""))
     if ans is None:
         return t, ("error", "", "", "API error", {}, 0)
     if not isinstance(ans, dict):
@@ -263,9 +312,16 @@ def search_one(t):
         if res == "held":
             held = held or ("held", u, msg, "", ans, ns)
         why.append(msg)
-    # free layer: file links on the page, then the archives for the insurer's site
-    cands = page_links(page) if page.startswith("http") else []
-    host = discover.host(page) if page else ""
+    # free layer: file links on the page (plain fetch, then a real browser for JavaScript pages and portals),
+    # then the archives for the insurer's site. Pages also come from CMS's network file (each plan's network link).
+    homes = [f"https://{discover.host(u)}/" for u in NET_URLS.get((t["state"], t["issuer_id"]), [])
+             if discover.host(u) and not re.search(r"sapphire|healthsparq|kyruus|vitals", u)]
+    pages = [x for x in dict.fromkeys([page] + homes) if x.startswith("http")]
+    cands = [u for pg in pages[:3] for u in page_links(pg)]
+    if not cands and pages and E.get("FETCH_BROWSER") != "0":
+        cands = [u for u in fetch_plus.browser_links(pages[:2], wait_ms=8000)
+                 if re.search(r"(?i)\.json(\.gz)?(\?|$)|index|toc|table.of.contents|in.network", u)]
+    host = discover.host(page) if page else (discover.host(pages[0]) if pages else "")
     if host and E.get("NO_ARCHIVES") != "1":
         cands += [u for u, ts in sorted(deep.wayback(host, TIC_RX.replace("(?i)", "")), key=lambda x: x[1], reverse=True)
                   if re.search(r"(?i)\.json(\.gz)?(\?|$)", u)][:10]
@@ -289,12 +345,15 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--no-sbe", action="store_true")
+    ap.add_argument("--retry-not-found", action="store_true", help="search again insurers not found / portal only")
+    ap.add_argument("--escalate", action="store_true", help="use the stronger model (ESCALATE_MODEL) for those retries")
     a = ap.parse_args()
     if not E.get("ANTHROPIC_API_KEY"):
         sys.exit("ANTHROPIC_API_KEY is not set")
     want = {s.strip().upper() for s in a.states.split(",") if s.strip()}
     prev = {(r["state"], r["issuer"].lower()): r for r in csv.DictReader(open(OUT, encoding="utf-8"))} if OUT.exists() else {}
     targets = puf_issuers()
+    puf_network_urls()
     sbe = [s for s in SBE if not want or s in want]
     if not a.no_sbe:
         targets += sbe_issuers(sbe)
@@ -321,8 +380,13 @@ def main():
                            searched_at=today)
             continue
         p = prev.get(k, {})
-        if p.get("result", "").startswith("found") or p.get("searched_at", "") >= cut:
+        if p.get("result", "").startswith("found") or p.get("result") in ("already reading", "known (national insurer)"):
             continue
+        if p.get("searched_at", "") >= cut:
+            if not (a.retry_not_found and p.get("result") in ("not found", "portal only", "held", "error")):
+                continue
+            t = dict(t, _escalate=a.escalate, _prior="; ".join(x for x in (p.get("price_page", ""), p.get("url", ""),
+                                                                       p.get("notes", "")) if x)[:400])
         todo.append(t)
     if a.limit:
         todo = todo[:a.limit]
