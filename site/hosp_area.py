@@ -103,6 +103,7 @@ def plan_areas(O):
     out = {}
     for a, jobs in sorted(areas.items()):
         p = newest_build(O.s3, O.B, a)
+        if not p and S7: p = f"site/every-st/{a}/{O.BID.split('-', 2)[2]}/"   # the state's insurer build is still running; same folder
         if p: out[a] = dict(prefix=p, jobs=jobs)
         else: O.log('no insurer build for', a, '- skipped')
     O.log(sum(len(v['jobs']) for v in out.values()), 'hospital files in', len(out), 'areas;', nozip, 'saved files with no Medicare ZIP')
@@ -137,10 +138,11 @@ def run():
     sys.path.insert(0, HERE)
     import orchestrate as O
     SP = O.SP
-    if S7 and O.getj(f"site/builds/st-{O.BID.split('-', 2)[2]}/state.json", {}).get('stage') != 'hosp':
-        O.log('state pages: insurer builds not finished yet (orchestrate_states.py); nothing to do'); return
+    # Oct 13: the state pages' hospital files are parsed while the insurer builds still run (plan + parse need no insurer
+    # build); h2 and publish wait for orchestrate_states.py to reach its 'hosp' stage
+    ready = not S7 or O.getj(f"site/builds/st-{O.BID.split('-', 2)[2]}/state.json", {}).get('stage') == 'hosp'
     st = O.getj(SP + 'state.json', {'stage': 'plan', 'launches': {}, 'problems': [], 'published': {}})
-    O.log('hospital build', O.BID, 'stage', st['stage'])
+    O.log('hospital build', O.BID, 'stage', st['stage'], '' if ready else '(insurer builds still running: parse only)')
     if st['stage'] == 'plan':
         areas = plan_areas(O)
         O.putj(SP + 'areas.json', areas)
@@ -152,7 +154,7 @@ def run():
         todo.sort(key=lambda j: j['id'])
         O.putj(SP + 'todo.json', todo)
         O.bundle()
-        st.update(stage='parse', shards=min(6, max(1, len(todo) // 20)), todo=len(todo), areas=sorted(areas))
+        st.update(stage='parse', shards=min(8, max(1, len(todo) // 20)), todo=len(todo), areas=sorted(areas))
         O.log(len(todo), 'hospital files to parse on', st['shards'], 'machines')
     if st['stage'] == 'parse':
         todo = O.getj(SP + 'todo.json', [])
@@ -169,7 +171,9 @@ def run():
         O.log('parse:', len(todo) - len(failed), 'of', len(todo), 'files parsed;', busy, 'machines working')
         if not busy:
             st['parse_failed'] = failed; st['stage'] = 'h2'
-    if st['stage'] == 'h2':
+    if st['stage'] == 'h2' and not ready:
+        O.log('hospital files parsed; waiting for the state insurer builds before building each state\'s hospital pages')
+    if st['stage'] == 'h2' and ready:
         areas = st['areas']
         small = [a for a in areas if a not in SOLO]
         groups = [[a] for a in areas if a in SOLO] + [small[i::4] for i in range(4) if small[i::4]]
