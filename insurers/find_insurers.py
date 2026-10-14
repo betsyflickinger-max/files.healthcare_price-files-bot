@@ -263,7 +263,54 @@ def kind_of(text):
 
 def entity_ok(issuer, ent):
     a, b = issuer.lower(), ent.lower()
+    if "d/b/a" in b or " dba " in b:   # "USAble Mutual Insurance Company d/b/a Arkansas Blue Cross and Blue Shield"
+        b = re.split(r"d/b/a| dba ", b)[-1]
     return bool(ent) and (fuzz.token_set_ratio(a, b) >= 80 or fuzz.partial_ratio(a, b) >= 85)
+
+
+STATES_FULL = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado",
+               "CT": "Connecticut", "DE": "Delaware", "DC": "District of Columbia", "FL": "Florida", "GA": "Georgia",
+               "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas",
+               "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts",
+               "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana",
+               "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico",
+               "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma",
+               "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota",
+               "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington",
+               "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"}
+
+
+CORP = r"\b(mutual|insurance|company|corporation|corp|health|plans?|services|inc|llc|co)\b"
+
+
+def _of(name):
+    """The place in "... of <place>" (Blue Cross and Blue Shield of Texas -> texas), state codes spelled out."""
+    m = re.search(r"\bof\s+([a-z .&]+?)(?:,|\bd/?b/?a\b|$)", name.lower())
+    if not m:
+        return ""
+    place = re.sub(r"\s+", " ", re.sub(CORP, " ", m.group(1))).strip(" .&")
+    return STATES_FULL.get(place.upper(), place).lower()
+
+
+def judge(t, url, k, ent):
+    """Oct 14 spot check rules. A find is held (not used) when: it's an allowed-amounts file (out-of-network, not
+    negotiated rates); the reporting entity is a sister company in another state (Regence BlueCross BlueShield of
+    Oregon for the Utah plan, Blue Cross and Blue Shield of Kansas City for Kansas); or it's one employer's index
+    ("/aso/" self-funded plan) rather than the insurer's own."""
+    if k == "allowed-amounts file":
+        return "held", f"an allowed-amounts (out-of-network) file for '{ent[:50]}', not negotiated rates"
+    if not entity_ok(t["issuer"], ent):
+        return "held", f"{k} for '{ent[:60]}' (doesn't clearly match {t['issuer'][:40]})"
+    a, b = _of(t["issuer"]), _of(ent)
+    if a and b and a != b:
+        return "held", f"{k} for '{ent[:60]}': a sister company ({b.title()}), not {a.title()}"
+    other = [n for c, n in STATES_FULL.items() if c != t["state"] and re.search(rf"\b{n}\b", ent, re.I)
+             and not re.search(rf"\b{n}\b", t["issuer"], re.I)]
+    if other:
+        return "held", f"{k} for '{ent[:60]}', which names {other[0]}, not {STATES_FULL.get(t['state'], t['state'])}"
+    if k == "toc" and re.search(r"/aso/", url, re.I):
+        return "held", f"one self-funded employer's index from '{ent[:50]}', not the insurer's own"
+    return ("found " + ("toc" if k == "toc" else "file")), f"{k} for '{ent[:60]}'"
 
 
 def check(t, url):
@@ -275,9 +322,7 @@ def check(t, url):
     k, ent = kind_of(text)
     if not k:
         return None, f"{url[:80]}: not a price-transparency file"
-    if entity_ok(t["issuer"], ent):
-        return ("found " + ("toc" if k == "toc" else "file")), f"{k} for '{ent[:60]}'"
-    return "held", f"{k} for '{ent[:60]}' (doesn't clearly match {t['issuer'][:40]})"
+    return judge(t, url, k, ent)
 
 
 def page_links(url):
