@@ -68,8 +68,9 @@ def due(h, hosp_prev, today, force):
         return True                                     # overdue (e.g. a run hit the time limit)
     if hosp_prev.get("status") in PROBLEM and hosp_prev.get("status") != "no price file found" and age >= 1:
         return True                                     # retry broken links daily
-    found = (h.get("found_by") or "").split()[-1:]      # a site/file link found (find_sites, search_files) since the
-    if found and found[0] > last[:10] and age >= 1:     # last check: check it on the next daily run, not next week
+    found = (h.get("found_by") or "").split()[-1:]      # a site/file link found (find_sites, search_files) on or after
+    if found and found[0] >= last[:10] and (           # the last check: check it on the very next run, not next week
+            age >= 1 or hosp_prev.get("status") in PROBLEM):
         return True
     return bucket and age >= 1
 
