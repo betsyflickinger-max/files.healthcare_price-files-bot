@@ -113,6 +113,17 @@ def announce(st, left):
     st['announced'] += new; st['announce_log_i'] = len(st.get('log', []))
 
 
+# Oct 14: when a state's page data is written (embed.json), its other machines can still be busy for up to an hour on
+# batches another machine already finished (Missouri c1, Colorado c1/c2/c4/c5 held 5 slots this way). Shut them down so
+# rebalance() hands the slots to the states still building in the same pass.
+def release_finished(left):
+    for d in O.droplets():
+        for slug in STATES.values():
+            if slug not in left and d['name'].startswith(f'upfront-site-{O.BID}-{slug}-c'):
+                try: O.do('DELETE', f"/droplets/{d['id']}"); log('released', d['name'], '(its state is done)')
+                except Exception as e: log('release failed', d['name'], repr(e)[:150])
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -164,6 +175,7 @@ def main():
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
+        release_finished(left)
         rebalance(st, left, run)
         try: announce(st, left)   # a failed notice must never stop the build from saving its state
         except Exception as e: log('notice failed:', repr(e)[:200])
