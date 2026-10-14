@@ -22,7 +22,7 @@ permissions:
 jobs:
   insurers:   # split + build on rented machines: no website deploys, so it doesn't wait for the site-build lock
     concurrency:
-      group: state-build
+      group: state-build-v2   # Oct 14: the old group name got stuck holding a cancelled run
       cancel-in-progress: false
     runs-on: ubuntu-latest
     outputs:
