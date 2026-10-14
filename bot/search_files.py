@@ -52,6 +52,7 @@ import deep_find as deep  # noqa: E402
 import discover  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
+from name_ok import name_ok  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 LIST, LOG = ROOT / "data" / "hospitals.csv", ROOT / "data" / "web_search_log.csv"
@@ -191,10 +192,12 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
     ours = [o for o in (names_ or [h["name"]]) if o != legal] or [h["name"]]
     scored = sorted(((discover.score(o, n), n) for n in names for o in ours), reverse=True) or [(0, "?")]
     best, bname = scored[0]
-    words = any(fs.words_in(o, n) for n in names for o in ours)
+    # every distinctive word of the hospital's name must be in the file's name (Oct 14: a close score alone let
+    # "Shriners Hospitals for Children - Boston" take the system file, "Cornerstone ... West Monroe" take Muskogee's)
+    words = any(name_ok(o, n) for n in names for o in ours)
     city_ok = h["city"].lower() in (addr or text[:5000]).lower()
     via = ""
-    if not (best >= 85 or words) and legal:
+    if not words and legal:
         lb = max([discover.score(legal, n) for n in names] + [0])
         flat = re.sub(r"[^a-z0-9]", "", urllib.parse.unquote(url).lower())
         in_link = all(w in flat for w in deep.core(h["name"])) and deep.core(h["name"])
@@ -205,7 +208,7 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
                 return "held", f"file names the legal entity '{legal[:50]}', shared by sister hospitals; link doesn't name this one"
     if strict and not city_ok:
         return None, f"file names '{bname[:50]}' but not {h['city'].title()}"
-    if (best >= 85 or words or via) and (city_ok or not dup):
+    if (words or via) and (city_ok or not dup):
         return "yes", f"file names '{bname[:60]}' ({round(best)}){via}"
     if best >= 70 or words:
         return "held", f"file names '{bname[:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
@@ -503,14 +506,19 @@ def main():
     pin, pout, ps = float(E.get("PRICE_IN") or 1), float(E.get("PRICE_OUT") or 5), float(E.get("PRICE_SEARCH") or 10)
     cost = USE["in"] / 1e6 * pin + USE["out"] / 1e6 * pout + USE["searches"] / 1000 * ps
     n = sum(counts.values())
-    held_rows = [r for r in log.values() if r.get("result") == "held"]   # every open hand check, not just this run's
+    held_rows = sorted((r for r in log.values() if r.get("result") == "held"), key=lambda r: (r["state"], r["ccn"]))
+    with open(ROOT / "data" / "web_search_held.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.DictWriter(f, ["state", "ccn", "name", "city", "domain", "mrf_url", "how"], extrasaction="ignore")
+        w.writeheader(); w.writerows(held_rows)
     with open(ROOT / "held_web.md", "w") as f:
         if held_rows:
+            f.write(f"**{len(held_rows)} hospitals.** The full list is in `data/web_search_held.csv`"
+                    + (" (the first 150 are below; an issue can't hold more)" if len(held_rows) > 150 else "") + ".\n\n")
             f.write("The web-search bot found these, but the match isn't certain enough to add automatically "
                     "(same name in another state, a rough name match, or a zip file). If one is right, put the domain "
                     "in `index_domain` or the file link in `mrf_url` in data/hospitals.csv.\n\n"
                     "| State | Hospital | City | Website | File link | Why held |\n|---|---|---|---|---|---|\n")
-            for r in held_rows:
+            for r in held_rows[:150]:
                 f.write(f"| {r['state']} | {r['name']} | {r['city']} | {r['domain']} | {r['mrf_url'][:90]} | {r['how'][:120]} |\n")
     summary = (f"done: searched {n:,} hospitals; found {counts['found']:,}, held {counts['held']:,} for a hand check, "
                f"not found {counts['not found']:,}, errors {counts.get('error', 0):,}. {USE['searches']:,} web searches, "
