@@ -1,6 +1,7 @@
 name: Plan Calculator data
 
-# Every day, looks for CMS's next-year marketplace plan files. The day they appear, it builds the
+# Every day, looks for next-year marketplace plans: CMS's plan files (PUFs), or before they're out the
+# HealthCare.gov Marketplace API (secret MARKETPLACE_API_KEY). The day they appear, it builds the
 # DFW plan and cost-sharing tables, runs the out-of-pocket math against the current rate file, saves
 # everything to calculator/data/<year>/ and R2, and opens an issue so the page can be updated.
 on:
@@ -33,14 +34,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - id: y
+        env:
+          MARKETPLACE_API_KEY: ${{ secrets.MARKETPLACE_API_KEY }}
         run: |
           Y="${{ inputs.year }}"; [ -z "$Y" ] && Y=$(( $(date -u +%Y) + 1 ))
-          echo "year=$Y" >> "$GITHUB_OUTPUT"
-          if [ -f "calculator/data/$Y/calc_data_$Y.json" ] && [ "${{ inputs.force }}" != "true" ]; then
-            echo "go=no" >> "$GITHUB_OUTPUT"; echo "$Y already built"; exit 0; fi
+          D=calculator/data/$Y; echo "year=$Y" >> "$GITHUB_OUTPUT"
+          built=no; [ -f "$D/calc_data_$Y.json" ] && built=puf; [ -f "$D/SOURCE.txt" ] && built=api
+          [ "${{ inputs.force }}" = "true" ] && built=no
           code=$(curl -s -o /dev/null -w '%{http_code}' -I "https://download.cms.gov/marketplace-puf/$Y/benefits-and-cost-sharing-puf.zip")
-          echo "CMS $Y files: HTTP $code"
-          [ "$code" = "200" ] && echo "go=yes" >> "$GITHUB_OUTPUT" || echo "go=no" >> "$GITHUB_OUTPUT"
+          echo "CMS $Y files: HTTP $code; already built from: $built"
+          # PUFs are the reference copy: build from them the day they appear (replacing an earlier API build).
+          if [ "$code" = "200" ] && [ "$built" != "puf" ]; then echo "go=yes" >> "$GITHUB_OUTPUT"; echo "src=puf" >> "$GITHUB_OUTPUT"; exit 0; fi
+          # Until then, use the HealthCare.gov Marketplace API once it serves the year (needs the free key).
+          if [ "$built" = "no" ] && [ -n "$MARKETPLACE_API_KEY" ]; then
+            yrs=$(curl -s "https://marketplace.api.healthcare.gov/api/v1/market-years?apikey=$MARKETPLACE_API_KEY")
+            echo "API market years: $yrs"
+            if echo "$yrs" | grep -q "$Y"; then echo "go=yes" >> "$GITHUB_OUTPUT"; echo "src=api" >> "$GITHUB_OUTPUT"; exit 0; fi
+          fi
+          echo "go=no" >> "$GITHUB_OUTPUT"
       - if: steps.y.outputs.go == 'yes'
         uses: actions/setup-python@v5
         with:
@@ -63,9 +74,16 @@ jobs:
           PY
       - name: Build
         if: steps.y.outputs.go == 'yes'
+        env:
+          MARKETPLACE_API_KEY: ${{ secrets.MARKETPLACE_API_KEY }}
         run: |
           Y=${{ steps.y.outputs.year }}; D=calculator/data/$Y
-          python calculator/puf_to_dfw.py $Y --out $D | tee build.txt
+          rm -f $D/SOURCE.txt
+          if [ "${{ steps.y.outputs.src }}" = "api" ]; then
+            python calculator/api_to_dfw.py $Y --out $D | tee build.txt
+          else
+            python calculator/puf_to_dfw.py $Y --out $D | tee build.txt
+          fi
           python calculator/oop.py $Y --rates $(ls rates.csv* | head -1) --tables $D --out work | tee -a build.txt
           cp work/calc_data_$Y.json work/unmatched_networks_$Y.csv $D/
           gzip -c work/exchange_oop_$Y.csv > $D/exchange_oop_$Y.csv.gz
@@ -80,9 +98,10 @@ jobs:
               s3.upload_file(str(p), b, f"site/calculator/$Y/{p.name}")
           PY
           git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
-          git add $D && git commit -m "Plan Calculator data for $Y" && git pull --rebase -q origin main && git push origin HEAD:main
-          { echo "CMS posted the $Y marketplace plan files. The calculator data is built: \`$D/calc_data_$Y.json\` (also in R2 \`site/calculator/$Y/\`)."
+          git add $D && git commit -m "Plan Calculator data for $Y (${{ steps.y.outputs.src }})" && git pull --rebase -q origin main && git push origin HEAD:main
+          if [ "${{ steps.y.outputs.src }}" = "api" ]; then WHO="The HealthCare.gov Marketplace API now has $Y plans (CMS's plan files aren't out yet; they'll replace this build automatically when they are)"; T="$Y plans are on the Marketplace API: Plan Calculator data ready"; else WHO="CMS posted the $Y marketplace plan files"; T="$Y plan files are out: Plan Calculator data ready"; fi
+          { echo "$WHO. The calculator data is built: \`$D/calc_data_$Y.json\` (also in R2 \`site/calculator/$Y/\`)."
             echo; echo "Rate file used: \`$(cat rates_key.txt)\`"; echo; echo '```'; cat build.txt; echo '```'
             echo; echo "Before publishing: check the unmatched networks above (renamed networks need a line in LINK in calculator/oop.py), then swap the data block in the Plan Calculator page."
           } > issue.md
-          gh issue create --title "$Y plan files are out: Plan Calculator data ready" --body-file issue.md
+          gh issue create --title "$T" --body-file issue.md
