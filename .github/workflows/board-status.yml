@@ -35,6 +35,9 @@ jobs:
           cache: pip
       - run: pip install boto3==1.35.36
       - run: python board/status.py
+      - name: Bot health data for the dashboard (ops_*.json, private copy only)
+        continue-on-error: true   # a problem here must never stop the status snapshot
+        run: python board/ops.py
       - name: Publish to the private repo (branch board-status)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
