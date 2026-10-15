@@ -59,8 +59,8 @@ jobs:
           done
           gh workflow run state-pages.yml --ref main   # out of time: hand over to a fresh run
   pages:   # hospitals + publishing deploys the site, so it shares the website build's lock
-    needs: insurers
-    if: needs.insurers.outputs.ready == '1'
+    # Oct 15 (Betsy): runs beside the insurer builds, not after all of them: each state's page goes live as soon as that
+    # state is built. Stops when nothing is left to do for now (/tmp/hosp_idle), so it never holds the lock while waiting.
     concurrency:
       group: site-build
       cancel-in-progress: false
@@ -89,6 +89,7 @@ jobs:
           for i in $(seq 1 100); do
             HOSP_SCOPE=s7 python site/hosp_area.py run | tee -a "$GITHUB_STEP_SUMMARY"
             [ "$(python site/build_stage.py site/builds/hosp-st-$(date +%Y-%m)/state.json)" = done ] && exit 0
+            [ -f /tmp/hosp_idle ] && exit 0   # waiting on a state's insurer build; the next hourly run picks it up
             sleep 180
           done
           gh workflow run state-pages.yml --ref main

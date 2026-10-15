@@ -83,8 +83,8 @@ def batches_done(slug):
     split = int(WBIG.get(slug, {}).get('SPLIT', '1'))
     pieces = [n for n in names if '_' in n and n.split('_')[0] not in whole]
     return len(whole) + (len(pieces) // split if split > 1 else 0)
-def rebalance(st, left, run):
-    free = free_slots()
+def rebalance(st, left, run, cap=10**9):
+    free = min(free_slots(), cap - sum(st['machines'][x] for x in left))
     if free < 1 or not left: return
     # work left in units a machine takes one at a time: a split state's batches count as SPLIT pieces each
     todo = {s: (NB - batches_done(s)) * int(WBIG.get(s, {}).get('SPLIT', '1')) for s in left}
@@ -94,7 +94,8 @@ def rebalance(st, left, run):
         s = max(room, key=lambda x: todo[x] / (st['machines'][x] + 1))
         if todo[s] / (st['machines'][s] + 1) < MIN_LEFT: break
         st['machines'][s] += 1; free -= 1
-        msg = f"{time.strftime('%b %d %H:%M')} UTC: free slot -> {s} ({st['machines'][s]} machines, {todo[s]} of {NB} buckets left)"
+        msg = (f"{time.strftime('%b %d %H:%M')} UTC: free slot -> {s} ({st['machines'][s]} machines, {batches_done(s)} of {NB} batches done"
+               f"{', ' + str(todo[s]) + ' pieces left' if int(WBIG.get(s, {}).get('SPLIT', '1')) > 1 else ''})")
         log(msg); st.setdefault('log', []).append(msg)
         run(s, st['machines'][s] - 1)
 
@@ -124,8 +125,13 @@ def announce(st, left):
     title = ' + '.join(NAMES[x] for x in new) + (' done: all 7 states built' if not left else ' done; machines moved on')
     body = '\n'.join([' '.join(f"{NAMES[x]} finished its Price Finder data at {finished_at(x)}." for x in new), '',
                       '**Where the free machines went**', *(['- ' + m for m in moves] or ['- none yet (slots go out on the next runs)']), '',
-                      '**Still building**', *(still or ['- nothing: every state is built; the hospital + publish step starts now'])])
+                      '**Still building**', *(still or ['- nothing: every state is built']), '',
+                      'Its Price Finder page goes live as soon as its hospital price files are added.'])
     O.issue(title, body)
+    try:   # Oct 15: start the publishing job now (it runs beside this build) instead of at the next hourly run
+        import subprocess
+        subprocess.run(['gh', 'workflow', 'run', 'state-pages.yml', '--ref', 'main'], timeout=60, stdin=subprocess.DEVNULL, capture_output=True)
+    except Exception as e: log('could not start the page publisher:', repr(e)[:150])
     st['announced'] += new; st['announce_log_i'] = len(st.get('log', []))
 
 
@@ -138,6 +144,30 @@ def release_finished(left):
             if slug not in left and d['name'].startswith(f'upfront-site-{O.BID}-{slug}-c'):
                 try: O.do('DELETE', f"/droplets/{d['id']}"); log('released', d['name'], '(its state is done)')
                 except Exception as e: log('release failed', d['name'], repr(e)[:150])
+
+
+# Oct 15 (Betsy): each state's page now goes live as soon as that state is built (hosp_area.py state_by_state), which needs a
+# hospital machine per finished state. Georgia had every slot, so up to HOSP_SLOTS slots are kept free while finished states
+# wait for their pages; the newest machines of the state with the most give them up (stage B has no claims: a stopped
+# machine's unfinished pieces are simply done by the others, and every finished piece is kept). They come back afterwards.
+HOSP_SLOTS = 3
+def hosp_waiting(left):
+    pub = getj(f'site/builds/hosp-st-{MONTH}/state.json', {}).get('published', {})
+    return [x for x in STATES.values() if x not in left and x not in pub]
+def build_cap(left):
+    """machines the state builds may use: the account limit, less the orchestrator's reserve and the hospital slots"""
+    want = min(HOSP_SLOTS, len(hosp_waiting(left)))
+    return int(O.do('GET', '/account')['account']['droplet_limit']) - O.RESERVE - want, want
+def make_room(st, left, cap):
+    while left and sum(st['machines'][x] for x in left) > cap:
+        s = max(left, key=lambda x: st['machines'][x])
+        if st['machines'][s] <= 1: break
+        st['machines'][s] -= 1
+        name = f"upfront-site-{O.BID}-{s}-c{st['machines'][s] + 1}"
+        for d in O.droplets():
+            if d['name'] == name:
+                try: O.do('DELETE', f"/droplets/{d['id']}"); log('stopped', name, 'to free a slot for finished states\' hospital pages')
+                except Exception as e: log('stop failed', name, repr(e)[:150])
 
 
 def main():
@@ -189,10 +219,13 @@ def main():
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
                            MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='360', **{**W, **WBIG.get(slug, {})})
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
+        release_finished(left)
+        cap, held = build_cap(left)
+        make_room(st, left, cap)
+        if held: log(held, 'slot(s) kept for finished states\' hospital pages')
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
-        release_finished(left)
-        rebalance(st, left, run)
+        rebalance(st, left, run, cap)
         try: announce(st, left)   # a failed notice must never stop the build from saving its state
         except Exception as e: log('notice failed:', repr(e)[:200])
         log('states still building:', ', '.join(left) or 'none')
