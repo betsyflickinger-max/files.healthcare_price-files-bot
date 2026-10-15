@@ -251,6 +251,19 @@ def bucket_done(k): return exists_key(f'{WK}B/{k}.json')
 def exists_key(key):
     try: s3.head_object(Bucket=B, Key=key); return True
     except Exception: return False
+# Oct 15: BCLAIM=1: claim a stage-B unit before working on it (WK/Bclaim/<u>), so machines don't all work the same
+# unfinished pieces (at 3:40am CT 2-3 Georgia machines were on each of pieces 33_2, 33_3, 34_1, 34_2, 35_0). A claim older
+# than BCLAIM_H hours (machine died) can be taken over; a skipped unit is picked up by whichever machine runs next.
+BCLAIM_S = float(E.get('BCLAIM_H', '3')) * 3600
+def bclaim(u):
+    key = f'{WK}Bclaim/{u}'
+    try:
+        o = s3.get_object(Bucket=B, Key=key); who = o['Body'].read().decode()
+        if who != ROLE and time.time() - o['LastModified'].timestamp() < BCLAIM_S: return False
+    except Exception: pass
+    s3.put_object(Bucket=B, Key=key, Body=ROLE.encode()); time.sleep(2)   # two machines can claim at once: last write wins
+    try: return s3.get_object(Bucket=B, Key=key)['Body'].read().decode() == ROLE
+    except Exception: return True
 def work(u):
     """One bucket (or one piece of one). DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
@@ -260,6 +273,7 @@ def work(u):
         return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{u}.json')['Body'].read()))
     except Exception: pass
     if sp is not None and bucket_done(k): return (u, 0, {}, {})   # an older machine finished the whole bucket meanwhile
+    if E.get('BCLAIM') and not bclaim(u): return (u, 0, {}, {})   # another machine is on it (not written: it isn't done)
     global FLAT
     if E.get('NOXPART'):
         xd = D / f'xpart/bucket={k}'; xd.mkdir(parents=True, exist_ok=True)
@@ -463,6 +477,17 @@ with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=in
         summary.update(summ)
         for kk, v in scp.items(): scope.setdefault(kk, set()).update(v)
         log(f'B {done}/{len(buckets)}', f'bucket {k}', f'{nx:,} rows', len(summary), 'codes so far')
+# Oct 15 (BCLAIM): when this machine's list is done but units other machines claimed aren't finished yet, wait and take
+# over any whose claim went stale (machine died) instead of exiting, so the last pieces are never left behind.
+if E.get('BCLAIM'):
+    base_ = list(range(NB)) if E.get('NOXPART') else sorted(int(p_.rsplit('=', 1)[1]) for p_ in glob.glob(f'{D}/xpart/bucket=*'))
+    while True:
+        left_ = plan_units(base_, {k_.rsplit('/', 1)[1][:-5] for k_, _ in ls(WK + 'B/') if k_.endswith('.json')}, SPLIT)
+        if not left_: break
+        log(f'{len(left_)} units not finished yet (claimed by other machines); checking again in 5 min'); LOGFLUSH(); time.sleep(300)
+        with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=int(E.get('MAXTASKS', '4'))) as P2:
+            for r_ in P2.imap_unordered(work, left_):
+                if r_[1]: log('took over', r_[0], f'{r_[1]:,} rows')
 # another machine may have finished buckets meanwhile: reload them all, and write embed only when every bucket is in
 summary, scope, done_units = {}, {}, set()
 for k_, _ in ls(WK + 'B/'):
