@@ -252,8 +252,9 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
         lb = max([discover.score(legal, n) for n in names] + [0])
         flat = re.sub(r"[^a-z0-9]", "", urllib.parse.unquote(url).lower())
         in_link = all(w in flat for w in deep.core(h["name"])) and deep.core(h["name"])
+        shared = LEGAL_COUNT.get(re.sub(r"[^a-z0-9]", "", legal.lower()), 0) > 1
         if lb >= 90 and city_ok:
-            if in_link:
+            if in_link and not shared:   # Oct 14: a legal entity shared by sister hospitals never counts on its own
                 best, bname, via = lb, legal, " (legal name; hospital's name is in the link)"
             else:
                 return "held", f"file names the legal entity '{legal[:50]}', shared by sister hospitals; link doesn't name this one"
@@ -445,8 +446,39 @@ def load_ownership():
         print("  ! CMS ownership:", str(e)[:120], flush=True)
 
 
+LEGAL_COUNT = {}   # legal name (letters only) -> how many hospitals share it; filled in main()
+NOT_CLOSED_RX = re.compile(r"\b(no|not|without|never)\b[^.;]{0,40}\b(clos|merg|shut|ceas|convert)|\bopen\b|still (active|operat)|"
+                           r"operating|is active", re.I)
 CLOSED_RX = re.compile(r"\b(closed|closure|ceased operations|no longer operat|shut down|merged into|now part of|"
                        r"converted to|demolish)", re.I)
+
+
+def dedupe_shared(log, rows):
+    by = {}
+    for L in log.values():
+        if L.get("result") == "found" and L.get("mrf_url"):
+            by.setdefault(L["mrf_url"], []).append(L)
+    byccn, moved = {r["ccn"]: r for r in rows}, 0
+    for url, ls in by.items():
+        if len(ls) < 2:
+            continue
+        sc = lambda L: int((re.search(r"\((\d+)\)", L.get("how", "")) or [0, 0])[1])
+        ls.sort(key=sc, reverse=True)
+        if sc(ls[0]) == sc(ls[1]):
+            keep = []          # a tie: nobody can tell which hospital the file is for
+        else:
+            keep = ls[:1]
+        for L in ls:
+            if L in keep:
+                continue
+            L["result"] = "held"
+            L["how"] = (f"same file was also found for {ls[0]['name'] if L is not ls[0] else ls[1]['name']}; "
+                        "a person should check which hospital it belongs to. " + L.get("how", ""))[:300]
+            h = byccn.get(L["ccn"])
+            if h and h.get("mrf_url") == url and (h.get("found_by") or "").startswith("web"):
+                h["mrf_url"], h["found_by"] = "", ""
+            moved += 1
+    return moved
 
 
 def logged_hosts(L):
@@ -544,6 +576,10 @@ def main():
     if rj.exists():
         REJECT.update({(r["ccn"], r["mrf_url"]): r["reason"] for r in csv.DictReader(open(rj, encoding="utf-8"))})
     NAMES = deep.enrollment_names()
+    for n in NAMES.values():
+        k = re.sub(r"[^a-z0-9]", "", (n.get("legal") or "").lower())
+        if k:
+            LEGAL_COUNT[k] = LEGAL_COUNT.get(k, 0) + 1
     load_dolthub()
     load_ownership()
     # federally owned hospitals (VA, Indian Health Service, military) are exempt from the price-file rule (45 CFR 180.30)
@@ -648,7 +684,8 @@ def main():
     def finish(held, why, ans):
         if held:
             return held
-        if CLOSED_RX.search((ans.get("status_note") or "") + " " + (ans.get("notes") or "")):
+        note = (ans.get("status_note") or "") + " " + (ans.get("notes") or "")
+        if CLOSED_RX.search(note) and not NOT_CLOSED_RX.search(note):   # Oct 14: "No closure found" is not closed
             return ("reported closed", "", "", "", ("the search reports it closed, merged or converted; " + why)[:400])
         return ("not found", "", "", "", why)
 
@@ -681,6 +718,11 @@ def main():
                 held_rows.append(log[h["ccn"]])
             if i % 25 == 0:
                 print(f"  {i:,}/{len(todo):,}: {counts} · {USE['searches']} searches", flush=True)
+    # Oct 14 evening: one file found for two hospitals (Bon Secours St Mary's file for Bon Secours Richmond Community):
+    # only the hospital the file names best keeps it; the other goes to the hand check
+    held_shared = dedupe_shared(log, rows)
+    if held_shared:
+        print(f"  same file found for several hospitals: {held_shared} moved to the hand check", flush=True)
     for r in rows:
         for k in ("_norm", "_status", "_deep_only", "_escalate"):
             r.pop(k, None)

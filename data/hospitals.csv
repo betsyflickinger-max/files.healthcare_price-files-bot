@@ -173,7 +173,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 040153,SOUTHWEST REGIONAL MEDICAL CENTER LLC,HOPE,AR,Acute Care Hospitals,swarmc.org,,,,,,osm 2026-10-10
 040154,BAPTIST HEALTH MEDICAL CENTER- CONWAY,CONWAY,AR,Acute Care Hospitals,,https://www.conwaymedicalcenter.com/wp-content/uploads/570314381_conway-medical-center_standardcharges(in).csv,raw/hospitals/2026-10/AR/5ab8b46bda2d_570314381_conway-medical-center_standardcharges_in_.csv.zst,5ab8b46bda2dcb42fe0dc8e84ff4153d403b20d0770ca0ecc8be853c5b0395b3,235573004,2026-10-05/nat,
 040156,"BAPTIST MEMORIAL HOSPITAL-CRITTENDEN, INC",WEST MEMPHIS,AR,Acute Care Hospitals,,https://sites.bmhcc.org/-/media/Pricing-Documents/AR/823844150_baptist-memorial-hospitalcrittendeninc_standardcharges.zip,,,,,web 2026-10-14
-040161,ARKANSAS HEART HOSPITAL-ENCORE,BRYANT,AR,Acute Care Hospitals,,https://arkansasheart.pt.panaceainc.com/MRFDownload/arkansasheart/encore,,,,,web 2026-10-14
+040161,ARKANSAS HEART HOSPITAL-ENCORE,BRYANT,AR,Acute Care Hospitals,,,,,,,
 040164,UNITY HEALTH - JACKSONVILLE,JACKSONVILLE,AR,Acute Care Hospitals,unity-health.org,,,,,,osm 2026-10-10
 040779,ST BERNARDS FIVE RIVERS MEDICAL CENTER,POCAHONTAS,AR,Rural Emergency Hospital,,https://www.stbernards.info/app/files/public/4589b01b-482d-4b7e-838a-3c633b628526/273970823_five-rivers-medical-center-inc_standardcharges.csv,,,,,web 2026-10-14
 040780,EUREKA SPRINGS HOSPITAL COMMISSION,EUREKA SPRINGS,AR,Rural Emergency Hospital,,,,,,,
@@ -1967,7 +1967,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 170120,LABETTE HEALTH,PARSONS,KS,Acute Care Hospitals,labettehealth.com,https://labettehealth.pt.panaceainc.com/MRFDownload/labettehealth/labettehealth,,,,,
 170122,"ASCENSION VIA CHRISTI HOSPITALS WICHITA, INC.",WICHITA,KS,Acute Care Hospitals,healthcare.ascension.org,https://healthcare.ascension.org/-/media/project/ascension/healthcare/price-transparency-files/ks-csv/481172106_ascension-via-christi-hospitals-wichita-inc_standardcharges.csv,raw/hospitals/2026-10/KS/ee6f0ec6d461_481172106_ascension-via-christi-hospitals-wichita-inc_standardcharges.csv.zst,ee6f0ec6d461656c721ee7900f9da3545f40023227f275ccf6eeb7493feb016b,2571881,2026-10-05/nat,
 170123,WESLEY MEDICAL CENTER,WICHITA,KS,Acute Care Hospitals,wesleymc.com,https://stctrprodsnsvc00455826e6.blob.core.windows.net/pt-final-posting-files/62-1762545_WESLEY-MEDICAL-CENTER_standardcharges.json?si=dpx-pt-json-access-policy&spr=https&sv=2026-02-06&sr=c&sig=ks%2BgfAjyEHlZmeP2PYJ%2f9NpMuCoRStjTb2bhIy9Y6LM%3D,raw/hospitals/2026-10/KS/5418f84eccc8_62-1762545_WESLEY-MEDICAL-CENTER_standardcharges.json.zst,5418f84eccc87e0909c9764d75407129751f23bf2e66c17341472223dc28c3b2,231375888,2026-10-05/nat,
-170137,LMH,LAWRENCE,KS,Acute Care Hospitals,,https://www.lmh.org/wp-content/uploads/2026/03/48-6033703_The-Lawrence-Memorial-Hospital_standardcharges.csv,,,,,web 2026-10-14
+170137,LMH,LAWRENCE,KS,Acute Care Hospitals,,,,,,,
 170142,"ASCENSION VIA CHRISTI HOSPITAL MANHATTAN, INC",MANHATTAN,KS,Acute Care Hospitals,healthcare.ascension.org,https://healthcare.ascension.org/-/media/project/ascension/healthcare/price-transparency-files/ks-csv/481186704_ascension-via-christi-hospital-manhattan-inc_standardcharges.csv,raw/hospitals/2026-10/KS/8086d9b77aad_481186704_ascension-via-christi-hospital-manhattan-inc_standardcharges.csv.zst,8086d9b77aadaa728ff6e46ad291ddc41b3b897c33ba0a8dd1e81b9c7f718fd4,96914765,2026-10-05/nat,
 170146,PROVIDENCE MEDICAL CENTER,KANSAS CITY,KS,Acute Care Hospitals,,https://sthpiprd.blob.core.windows.net/machine-readable-files/10169/470566524_providence-medical-center_standardcharges.csv,raw/hospitals/2026-10/KS/3e45fc5af989_470566524_providence-medical-center_standardcharges.csv.zst,3e45fc5af989285a355833c3713f8c98764fdc6e9dddb126ccf1ab394e52c469,45301383,2026-10-05/nat,
 170175,CENTURA ST. CATHERINE-DODGE CITY,DODGE CITY,KS,Acute Care Hospitals,centura.org,https://csdam.widen.net/content/io4ekzbiq8/original/480543721-1689317190_commonspirit-kansas-inc_standardcharges.csv,raw/hospitals/2026-10/KS/d2bff14dc6d8_480543721-1689317190_commonspirit-kansas-inc_standardcharges.csv.zst,d2bff14dc6d8a18636c73b06530b2ac1e9ad69d62a0857df0e7b4b94558db067,263998764,2026-10-05/nat,
@@ -1985,7 +1985,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 170197,KANSAS MEDICAL CENTER LLC,ANDOVER,KS,Acute Care Hospitals,ksmedcenter.com,,,,,,osm 2026-10-10
 170198,"SUMMIT SURGICAL, LLC",HUTCHINSON,KS,Acute Care Hospitals,summitks.com,,,,,,osm 2026-10-10
 170199,MINIMALLY INVASIVE SURGERY HOSPITAL,LENEXA,KS,Acute Care Hospitals,,https://mishhospital.com/s/MISH_CMS_Price_Transparency_v3_final.csv,raw/hospitals/2026-10/KS/b80fe0d5cfa1_MISH_CMS_Price_Transparency_v3_final.csv.zst,b80fe0d5cfa182c6e39355453994f126606faee4dfa75836c0d8e2fadcecf8a5,8125106,2026-10-05/nat,
-170200,"VIA CHRISTI HOSPITAL WICHITA ST TERESA, INC",WICHITA,KS,Acute Care Hospitals,,https://healthcare.ascension.org/-/media/project/ascension/healthcare/price-transparency-files/ks-csv/271965272_ascension-via-christi-hospital-wichita-st-teresa-inc_standardcharges.csv,,,,,web 2026-10-14
+170200,"VIA CHRISTI HOSPITAL WICHITA ST TERESA, INC",WICHITA,KS,Acute Care Hospitals,,,,,,,
 170203,MERCY SPECIALTY HOSPITAL SOUTHEAST KANSAS,GALENA,KS,Acute Care Hospitals,mercy.net,https://www.mercy.net/content/dam/mercy/en/web-assets/charge-files/843730625_mercy-hospital-southeast-kansas-specialty-hospital_standardcharges.zip,raw/hospitals/2026-10/KS/457fcf9c1e24_843730625_mercy-hospital-southeast-kansas-specialty-hospital_standardcharges.zip.zst,457fcf9c1e2408a55fda9cecd0b4a526f157f329996b173e17b347b3a62c1e59,13308156,2026-10-05/nat,
 170204,"ROCK REGIONAL HOSPITAL, LLC",DERBY,KS,Acute Care Hospitals,,,,,,,
 170208,"ADVENTHEALTH SOUTH OVERLAND PARK, INC",OVERLAND PARK,KS,Acute Care Hospitals,adventhealth.com,https://HospitalPriceDisclosure.com/download.aspx?pi=sIvIxvlGYnjW2*_*3S8glUsQ*-*,raw/hospitals/2026-10/KS/06630229537f_download.aspx.zst,06630229537f0ba3c063875814bbf3d9b3af0cd3755036d332f16465ddf6f37c,27757134,2026-10-05/nat,
@@ -3570,7 +3570,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 312023,ACUITY SPECIALTY HOSPITAL OF NEW JERSEY,ATLANTIC CITY,NJ,Long-term,,https://resources.selectmedical.com/Pricing-Transparency/critical-illness-recovery/26-4770769_Acuity_Hospital_of_New_Jersey_standardcharges.csv,,,,,web 2026-10-14
 312024,SILVER LAKE HOSPITAL LTACH,NEWARK,NJ,Long-term,silverlakehospital.org,,,,,,osm 2026-10-10
 312025,HACKENSACK MERIDIAN LTACH,PERTH AMBOY,NJ,Long-term,,,,,,,
-313025,KESSLER REHAB CENTER,WEST ORANGE,NJ,Inpatient Rehabilitation,,https://resources.selectmedical.com/Pricing-Transparency/inpatient-rehabilitation/22-3486125_Kessler_Institute_for_Rehabilitation-Chester_standardcharges.csv,,,,,web 2026-10-14
+313025,KESSLER REHAB CENTER,WEST ORANGE,NJ,Inpatient Rehabilitation,,,,,,,
 313027,LAWRENCE REHABILITATION HOSPITAL,LAWRENCEVILLE,NJ,Inpatient Rehabilitation,lawrencerehabhospital.com,,,,,,web 2026-10-14
 313029,ENCOMPASS HEALTH REHAB HOSPITAL OF TOMS RIVER,TOMS RIVER,NJ,Inpatient Rehabilitation,encompasshealth.com,,,,,,chain 2026-10-10
 313032,"KESSLER INSTITUTE FOR REHABILITATION,INC",MARLTON,NJ,Inpatient Rehabilitation,,https://resources.selectmedical.com/Pricing-Transparency/inpatient-rehabilitation/22-3486125_Kessler_Institute_for_Rehabilitation-Chester_standardcharges.csv,,,,,web 2026-10-14
@@ -3893,10 +3893,10 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 360012,MOUNT CARMEL ST ANN'S,WESTERVILLE,OH,Acute Care Hospitals,mountcarmelhealth.com,,,,,,osm 2026-10-10
 360013,WILSON MEMORIAL HOSPITAL,SIDNEY,OH,Acute Care Hospitals,wilsonhealth.org,,,,,,web 2026-10-14
 360014,OHIOHEALTH O'BLENESS HOSPITAL,ATHENS,OH,Acute Care Hospitals,ohiohealth.com,,,,,,osm 2026-10-10
-360016,THE JEWISH HOSPITAL-MERCY HEALTH,CINCINNATI,OH,Acute Care Hospitals,,https://www.mercy.com/-/media/mercy/patient-resources/hospital-pricing-transparency/271408630_jewish-hospital-llc_standardcharges.csv,,,,,web 2026-10-14
+360016,THE JEWISH HOSPITAL-MERCY HEALTH,CINCINNATI,OH,Acute Care Hospitals,,,,,,,
 360017,GRANT MEDICAL CENTER,COLUMBUS,OH,Acute Care Hospitals,ohiohealth.com,,,,,,osm 2026-10-10
 360020,SUMMA HEALTH SYSTEM,AKRON,OH,Acute Care Hospitals,summahealth.org,,,,,,osm 2026-10-10
-360025,FIRELANDS REGIONAL MEDICAL CENTER,SANDUSKY,OH,Acute Care Hospitals,,https://www.firelands.com/app/files/public/f431cc81-07d8-4f2b-a027-dab8621d088d/341401659%20_firelands-regional-medical-center_standardcharges.csv,,,,,web 2026-10-14
+360025,FIRELANDS REGIONAL MEDICAL CENTER,SANDUSKY,OH,Acute Care Hospitals,,,,,,,
 360026,KETTERING HEALTH GREENE MEMORIAL,XENIA,OH,Acute Care Hospitals,ketteringhealth.org,https://ketteringhealth.org/wp-content/uploads/2026/03/310809436_1255317848_greene-memorial-hospital-inc_standardcharges.json,raw/hospitals/2026-10/OH/4e3ebc960d6b_310809436_1255317848_greene-memorial-hospital-inc_standardcharges.json.zst,4e3ebc960d6b370db330c37a00d4b3b3c7e8d38ce06fd7e39161030b8e4492b1,51688074,2026-10-05/nat,
 360027,AKRON GENERAL MEDICAL CENTER,AKRON,OH,Acute Care Hospitals,my.clevelandclinic.org,https://clevelandclinic.pt.panaceainc.com/MRFDownload/clevelandclinic/akron-general,raw/hospitals/2026-10/OH/40608c26af4c_akron-general.zst,40608c26af4cba48da8bcb3a7ae7098badafda63561e5fb8312bb354c1798310,19023614,2026-10-05/nat,
 360029,WOOD COUNTY HOSPITAL,BOWLING GREEN,OH,Acute Care Hospitals,woodcountyhospital.org,https://www.woodcountyhospital.org/media/0x5fw0tn/344440884_wood-county_standardcharges.csv,raw/hospitals/2026-10/OH/7042c0acf229_344440884_wood-county_standardcharges.csv.zst,7042c0acf229b0f064c92a4fa0a72e82f6cf8712aa4fa119a830d01cf9982ddc,65516979,2026-10-05/nat,
@@ -3963,7 +3963,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 360161,MH ST JOSEPH WARREN HOSPITAL,WARREN,OH,Acute Care Hospitals,,,,,,,
 360163,CHRIST HOSPITAL,CINCINNATI,OH,Acute Care Hospitals,,https://bmtncl.files.cmp.optimizely.com/download/assets/31-0538525_TheChristHospitalHealthNetwork_StandardCharges.csv/9c55def043e911f19a46868e68cd3a8e,,,,,web 2026-10-14
 360170,BERGER HOSPITAL,CIRCLEVILLE,OH,Acute Care Hospitals,ohiohealth.com,,,,,,osm 2026-10-10
-360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,,https://www.mercy.com/-/media/mercy/patient-resources/hospital-pricing-transparency/340864230_mercy-health-allen-hospital-llc_standardcharges.csv,,,,,web 2026-10-14
+360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,,,,,,,
 360174,UPPER VALLEY MEDICAL CENTER,TROY,OH,Acute Care Hospitals,premierhealth.com,,,,,,osm 2026-10-10
 360175,TRIHEALTH CLINTON REGIONAL HOSPITAL,WILMINGTON,OH,Acute Care Hospitals,trihealth.com,,,,,,osm 2026-10-10
 360179,BETHESDA NORTH,CINCINNATI,OH,Acute Care Hospitals,trihealth.com,https://apps.trihealth.com/static/pricing/310537122_BETHESDAHOSPITALINC_STANDARDCHARGES.csv,raw/hospitals/2026-10/OH/e7898e6d1b49_310537122_BETHESDAHOSPITALINC_STANDARDCHARGES.csv.zst,e7898e6d1b4991fa38dffa3837ef26bef01b9bd5e85da386a68da6457201f99a,64285754,2026-10-05/nat,
@@ -4354,7 +4354,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 390086,PENN HIGHLANDS DUBOIS,DUBOIS,PA,Acute Care Hospitals,phhealthcare.org,https://www.phhealthcare.org/download/?id=15371,,,,,web 2026-10-14
 390090,WEST PENN HOSPITAL,PITTSBURGH,PA,Acute Care Hospitals,ahn.org,https://www.ahn.org/content/dam/ahn/en/dmxahn/documents/patients-visitors/patients/financial-services/hospital-charges/250969492-1194744805_west-penn-allegheny-health-system-inc_standardcharges.csv,,,,,web 2026-10-14
 390091,UPMC NORTHWEST,SENECA,PA,Acute Care Hospitals,dam.upmc.com,https://dam.upmc.com/-/media/upmc/locations/hospitals/documents/cdm-json-files/250489010_upmc-northwest_standardcharges.csv?,,,,,
-390093,INDEPENDENCE HEALTH SYSTEM CLARION HOSPITAL,CLARION,PA,Acute Care Hospitals,,https://www.independence.health/documents/content/251010039_Butler-Clarion_standardcharges.csv,,,,,web 2026-10-14
+390093,INDEPENDENCE HEALTH SYSTEM CLARION HOSPITAL,CLARION,PA,Acute Care Hospitals,,,,,,,
 390096,PENN STATE HEALTH ST. JOSEPH,READING,PA,Acute Care Hospitals,pennstatehealth.org,https://www.pennstatehealth.org/sites/default/files/Finance/Apr-2026/231352211_st.-joseph-regional-health-network-dba-st.-joseph-medical-center_standardcharges.csv,,,,,
 390097,HOLY REDEEMER HOSPITAL AND MEDICAL CENTER,MEADOWBROOK,PA,Acute Care Hospitals,redeemerhealth.org,https://sthpiprd.blob.core.windows.net/machine-readable-files/8118/231534300_holy-redeemer-health-system_standardcharges.csv,raw/hospitals/2026-10/PA/a8695acff01c_231534300_holy-redeemer-health-system_standardcharges.csv.zst,a8695acff01c1d642853d28837f67ecf87790657fa51b87f5c3ed174f550c8d5,105130622,2026-10-05/nat,
 390100,LANCASTER GENERAL HOSPITAL,LANCASTER,PA,Acute Care Hospitals,,https://tupa-q-001.sitecorecontenthub.cloud/api/public/content/231365353_lancaster-general-hospital_standardcharges.csv,,,,,web 2026-10-14
@@ -4386,7 +4386,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 390156,MERCY CATHOLIC MEDICAL CENTER- MERCY FITZGERALD,DARBY,PA,Acute Care Hospitals,,,,,,,
 390160,CANONSBURG GENERAL HOSPITAL,CANONSBURG,PA,Acute Care Hospitals,ahn.org,https://www.ahn.org/content/dam/ahn/en/dmxahn/documents/patients-visitors/patients/financial-services/hospital-charges/251737079_canonsburg-general-hospital_standardcharges.csv,,,,,web 2026-10-14
 390162,ST LUKE'S HOSPITAL - EASTON CAMPUS,EASTON,PA,Acute Care Hospitals,slhn.org,https://www.slhn.org/-/media/sluhn/billing/pdf/standard-charges/84-4475996_stlukeshospitaleastoncampus_standardcharges.ashx,raw/hospitals/2026-10/PA/286da94b4964_84-4475996_stlukeshospitaleastoncampus_standardcharges.ashx.zst,286da94b49646f1fbab79674e00a93c068f191c4042a2b89ae4b06443bd3fa83,242593926,2026-10-05/nat,
-390163,ACMH HOSPITAL,KITTANNING,PA,Acute Care Hospitals,,https://www.acmh.org/Files/Admin/250965237_Armstrong-County-Memorial-Hospital_standardcharges.csv,,,,,web 2026-10-14
+390163,ACMH HOSPITAL,KITTANNING,PA,Acute Care Hospitals,,,,,,,
 390164,UPMC PRESBYTERIAN SHADYSIDE,PITTSBURGH,PA,Acute Care Hospitals,dam.upmc.com,https://dam.upmc.com/-/media/upmc/locations/hospitals/documents/cdm-json-files/250965480_upmc-presbyterian-shadyside_standardcharges.csv?,,,,,
 390168,INDEPENDENCE HEALTH SYSTEM BUTLER MEMORIAL HOSPITA,BUTLER,PA,Acute Care Hospitals,,,,,,,
 390173,INDIANA REGIONAL MEDICAL CENTER,INDIANA,PA,Acute Care Hospitals,indianarmc.org,https://www.irmc.org/clientfiles/getfile/250965404_Indiana-Regional-Medical-Center_standardcharges.csv,,,,,
@@ -5515,7 +5515,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 490007,SENTARA NORFOLK GENERAL HOSPITAL,NORFOLK,VA,Acute Care Hospitals,sentara.com,https://www.sentara.com/Documents/s/sentaranorfolkgeneralhospitalstandardchargesxlsx-1395284,raw/hospitals/2026-10/VA/a83c1468ef9e_sentaranorfolkgeneralhospitalstandardchargesxlsx-1395284.zst,a83c1468ef9e947134188615058a1c68ec1ee74c0c25469e5ed87e06e1927c1c,42462958,2026-10-05/nat,
 490009,UNIVERSITY OF VIRGINIA MEDICAL CENTER,CHARLOTTESVILLE,VA,Acute Care Hospitals,,https://brand.uvahealth.com/api/asset/eyJjbGllbnRJZCI6bnVsbCwiaWQiOjEwMzY1MywidGltZXN0YW1wIjoxNzc0ODg0MjgyLCJ2ZXJzaW9uIjoxNzc0NTU3ODAxfQ:uva-health:HZO3laOkYrq590lgmFn0RvRs16GKxxflQ01jS9Zgweg/download,,,,,web 2026-10-14
 490013,SENTARA HALIFAX REGIONAL HOSPITAL,SOUTH BOSTON,VA,Acute Care Hospitals,sentara.com,https://www.sentara.com/Documents/s/sentarahalifaxregionalhospitalstandardchargesxlsx-1395297,raw/hospitals/2026-10/VA/4078a641155c_sentarahalifaxregionalhospitalstandardchargesxlsx-1395297.zst,4078a641155ca0e89075a1c98e1a6f79399f5803767b3248366fedfc2a6f0d78,19845788,2026-10-05/nat,
-490017,BON SECOURS MARYVIEW MEDICAL CENTER,PORTSMOUTH,VA,Acute Care Hospitals,,https://www.bonsecours.com/-/media/bon-secours/patients-and-visitors/corporate/pricing/540506463_maryview-hospital-llc_standardcharges.csv,,,,,web 2026-10-14
+490017,BON SECOURS MARYVIEW MEDICAL CENTER,PORTSMOUTH,VA,Acute Care Hospitals,,,,,,,
 490018,AUGUSTA HEALTH,FISHERSVILLE,VA,Acute Care Hospitals,augustahealth.com,https://hospitalpricedisclosure.com/Download.aspx?pxi=d6jdJrXuX3vgSYRgOlRq3w*-*&f=iFd*_*cEPwhQHJy3lVvHy9uQ*-*,raw/hospitals/2026-10/VA/ccaa18eb2ea2_Download.aspx.zst,ccaa18eb2ea2b34109e549e9c6dc1f553b03c2ba2961767e7430053b470bddc8,29425504,2026-10-05/nat,
 490019,UVA HEALTH CULPEPER MEDICAL CENTER,CULPEPER,VA,Acute Care Hospitals,uvahealth.com,,,,,,osm 2026-10-10
 490020,JOHN RANDOLPH MEDICAL CENTER,HOPEWELL,VA,Acute Care Hospitals,,,,,,,
@@ -5553,7 +5553,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 490090,"SOUTHSIDE COMMUNITY HOSPITAL, INC",FARMVILLE,VA,Acute Care Hospitals,,https://www.centrahealth.com/sites/default/files/2023-12/540555201_SouthsideCommunityHospital_standardcharges.csv,,,,,web 2026-10-14
 490092,BON SECOURS SOUTHAMPTON MEMORIAL HOSPITAL,FRANKLIN,VA,Acute Care Hospitals,,,,,,,
 490093,SENTARA CAREPLEX HOSPITAL,HAMPTON,VA,Acute Care Hospitals,sentara.com,https://www.sentara.com/Documents/s/sentaracareplexhospitalstandardchargesxlsx-1395308,,,,,
-490094,BON SECOURS RICHMOND COMMUNITY HOSPITAL,RICHMOND,VA,Acute Care Hospitals,bonsecours.com,https://www.bonsecours.com/-/media/bon-secours/patients-and-visitors/corporate/pricing/540793767_bon-secours-st-marys-hospital-of-richmond-llc_standardcharges.csv,,,,,web 2026-10-14
+490094,BON SECOURS RICHMOND COMMUNITY HOSPITAL,RICHMOND,VA,Acute Care Hospitals,bonsecours.com,,,,,,
 490097,BON SECOURS SOUTHERN VIRGINIA MEDICAL CENTER,EMPORIA,VA,Acute Care Hospitals,bonsecours.com,https://www.bonsecours.com/-/media/bon-secours/patients-and-visitors/corporate/pricing/843065045_bon-secours-mercy-health-emporia-llc_standardcharges.ashx,,,,,
 490098,COMMUNITY MEMORIAL HOSPITAL,SOUTH HILL,VA,Acute Care Hospitals,vcuhealth.org,,,,,,osm 2026-10-10
 490101,INOVA FAIR OAKS HOSPITAL,FAIRFAX,VA,Acute Care Hospitals,inova.org,https://www.inova.org/sites/default/files/patient_visitor/price_transparency/2026/540620889_inova-fair-oaks-hospital_standardcharges.csv,raw/hospitals/2026-10/VA/b1fa6d1e1a06_540620889_inova-fair-oaks-hospital_standardcharges.csv.zst,b1fa6d1e1a06e2e781e08bc08584a8301d71f7035734e35e2aaa74c9ddc9cb8a,20530943,2026-10-05/nat,
@@ -5900,7 +5900,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 510050,"WHEELING HOSPITAL, INC",WHEELING,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/550357057_Wheeling-Hospital-Inc._standardcharges.csv,,,,,
 510055,"CABELL HUNTINGTON HOSPITAL, INC",HUNTINGTON,WV,Acute Care Hospitals,cabellhuntington.org,https://cabellhuntington.org/static/550675666_Cabell-Huntington-Hospital-Inc_standardcharges.csv,,,,,
 510058,CAMDEN CLARK MEDICAL CENTER,PARKERSBURG,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/311524546_Camden-Clark-Memorial-Hospital-Corporation_standardcharges.csv,raw/hospitals/2026-10/WV/7d1ad6b65407_311524546_Camden-Clark-Memorial-Hospital-Corporation_standardcharges.csv.zst,7d1ad6b654072ea9119a9c386fcd62e0ea6eae7bbea3cfa0bb9503c2dedfe7ab,144505691,2026-10-05/nat,
-510062,BECKLEY ARH HOSPITAL,BECKLEY,WV,Acute Care Hospitals,,https://www.arh.org/wp-content/uploads/2026/06/520795508_Beckley-ARH-Hospital_standardcharges.csv,,,,,web 2026-10-14
+510062,BECKLEY ARH HOSPITAL,BECKLEY,WV,Acute Care Hospitals,,,,,,,
 510070,RALEIGH GENERAL HOSPITAL,BECKLEY,WV,Acute Care Hospitals,raleighgeneral.com,,,,,,osm 2026-10-10
 510072,WETZEL COUNTY HOSPITAL,NEW MARTINSVILLE,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/843480493_Wetzel-County-Hospital-Inc._standardcharges.csv,raw/hospitals/2026-10/WV/6dba5b27c865_843480493_Wetzel-County-Hospital-Inc._standardcharges.csv.zst,6dba5b27c865c0a73758e40da4b5ad5b36a0526f9a9150ace3869cac6a353e05,60105569,2026-10-05/nat,
 510086,WELCH COMMUNITY HOSPITAL,WELCH,WV,Acute Care Hospitals,,,,,,,
