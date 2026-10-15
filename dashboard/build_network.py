@@ -55,7 +55,7 @@ OLDKEY = {"austin": "AUS", "san-antonio": "SAT", "houston": "HOU", "el-paso": "E
 KIND = {"H": "hospitals", "A": "surgery_centers", "G": "clinics_groups", "P": "clinicians"}
 FEE = {0: "Facility fee", 1: "Doctor fee"}
 MIN_NET, MIN_MKT = 5, 20   # a network middle needs 5+ providers, a market middle 20+ (provider, network) rates
-PART_FILES, PART_MAX = {"net_overlap": 8, "net_proc": 16}, 7_000_000   # Oct 15: a state ~2.4 MB each, a Texas area ~1-2 MB
+PART_FILES, PART_MAX = {"net_overlap": 12, "net_proc": 16}, 7_000_000   # Oct 15: pairs ~42 MB for 30 areas (a big state 3-7 MB), procedures ~50 MB
 
 # ---------- markets (loaded one at a time in build(), so 30+ areas fit in memory) ----------
 MARKETS = {"DFW": {"name": "Dallas–Fort Worth", "page": "site/deploy/price-finder.html", "codes": f"site/every/{get_text('site/every/CURRENT')}/t/"}}
@@ -201,13 +201,15 @@ def build(key, m):
     return access, overlap, proc_rows
 
 def write_parts(out, name, by_market):
-    """whole markets packed into PART_FILES[name] files under PART_MAX bytes each: <name>.json, <name>_2.json, ..."""
-    n = PART_FILES[name]; parts = [[] for _ in range(n)]; size = [2] * n
+    """rows in market order packed into PART_FILES[name] files under PART_MAX bytes each: <name>.json, <name>_2.json, ...
+    A big market may span two files (Oct 15: Colorado's 88 networks made 7.1 MB of pairs on its own); the dashboard joins them."""
+    n = PART_FILES[name]; parts = [[] for _ in range(n)]; size = [2] * n; i = 0
     for mk, rows in by_market.items():
-        b = len(json.dumps(rows, separators=(",", ":")))
-        i = next((j for j in range(n) if size[j] + b <= PART_MAX), None)
-        if i is None: raise SystemExit(f"{name}: no room for {mk} ({b:,} bytes) in {n} files of {PART_MAX:,}; raise PART_FILES")
-        parts[i] += rows; size[i] += b
+        for r in rows:
+            b = len(json.dumps(r, separators=(",", ":"))) + 1
+            if size[i] + b > PART_MAX: i += 1
+            if i >= n: raise SystemExit(f"{name}: more than {n} files of {PART_MAX:,} bytes needed (at {mk}); raise PART_FILES and the dashboard's join")
+            parts[i].append(r); size[i] += b
     for j, rows in enumerate(parts):
         f = out / (f"{name}.json" if j == 0 else f"{name}_{j + 1}.json")
         f.write_text(json.dumps(rows, separators=(",", ":")))
