@@ -87,7 +87,7 @@ def rebalance(st, left, run, cap=10**9):
     free = min(free_slots(), cap - sum(st['machines'][x] for x in left))
     if free < 1 or not left: return
     # work left in units a machine takes one at a time: a split state's batches count as SPLIT pieces each
-    todo = {s: (NB - batches_done(s)) * int(WBIG.get(s, {}).get('SPLIT', '1')) for s in left}
+    todo = {s: units_left(s) for s in left}
     while free > 0:
         room = [x for x in left if st['machines'][x] < MAX_MACHINES]
         if not room: break
@@ -170,6 +170,38 @@ def make_room(st, left, cap):
                 except Exception as e: log('stop failed', name, repr(e)[:150])
 
 
+# Oct 15 7:30am CT: Georgia had 24 machines (32 GB each, paid by the hour) for its last 5 pieces, so 19 sat waiting. Once a
+# state has fewer units left than machines, its highest-numbered machines are shut down, but only one with no live claim
+# (a machine on a piece keeps going; the others would only wait). Units = whole batches, or pieces for a split state.
+def units_left(slug):
+    names = {k.rsplit('/', 1)[1][:-5] for k in ls(wk(slug) + 'B/') if k.endswith('.json')}
+    split = int(WBIG.get(slug, {}).get('SPLIT', '1'))
+    if split == 1: return NB - len({n for n in names if '_' not in n})
+    return sum(0 if str(k) in names else sum(f'{k}_{s}' not in names for s in range(split)) for k in range(NB))
+def live_claims(slug):
+    """machines holding a claim under 1.5 h old (BCLAIM_H) on a unit that isn't finished yet"""
+    names = {k.rsplit('/', 1)[1][:-5] for k in ls(wk(slug) + 'B/') if k.endswith('.json')}
+    fresh, hold = time.time() - 1.5 * 3600, set()
+    for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=wk(slug) + 'Bclaim/'):
+        for o in pg.get('Contents', []):
+            u = o['Key'].rsplit('/', 1)[1]
+            if o['LastModified'].timestamp() > fresh and u not in names and u.split('_')[0] not in names:
+                hold.add(s3.get_object(Bucket=B, Key=o['Key'])['Body'].read().decode())
+    return hold
+def fit_to_work(st, left):
+    for s in left:
+        need = max(1, units_left(s))
+        if st['machines'][s] <= need: continue
+        hold = live_claims(s)
+        while st['machines'][s] > need and f"{s}-c{st['machines'][s]}" not in hold:
+            name = f"upfront-site-{O.BID}-{s}-c{st['machines'][s]}"
+            st['machines'][s] -= 1
+            for d in O.droplets():
+                if d['name'] == name:
+                    try: O.do('DELETE', f"/droplets/{d['id']}"); log('stopped', name, f'({need} units left for {s})')
+                    except Exception as e: log('stop failed', name, repr(e)[:150])
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -223,6 +255,7 @@ def main():
         release_finished(left)
         cap, held = build_cap(left)
         make_room(st, left, cap)
+        fit_to_work(st, left)
         if held: log(held, 'slot(s) kept for finished states\' hospital pages')
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
