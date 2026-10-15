@@ -161,7 +161,7 @@ def ensure(st, role, size, script, env, done):
     """keep one machine per role running until its work is done; relaunch dead ones up to 3 times"""
     if done or alive(role): return
     n = st['launches'].get(role, 0)
-    if n >= 4: st['problems'].append(f'{role} failed 4 times'); return
+    if n >= 6: st['problems'].append(f'{role} failed 6 times'); return   # Oct 14: 4 -> 6 (hand relaunches during the Georgia fixes used up tries)
     if free_slots() < 1: log('no free machine for', role); return
     if launch(role, size, script, env): st['launches'][role] = n + 1
 
