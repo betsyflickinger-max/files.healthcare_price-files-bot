@@ -74,12 +74,19 @@ def lift_pause():
 # Oct 14: when a state finishes, its machines delete themselves and the free slots go to the states still building, so no
 # slot sits empty (this was done by hand before). Each free slot goes to the state with the most stage-B buckets left per
 # machine; a new machine spends ~30 min getting ready, so only where at least MIN_LEFT buckets per machine remain.
-NB, MIN_LEFT, MAX_MACHINES = 256, 10, 12
+NB, MIN_LEFT, MAX_MACHINES = 256, 10, 20   # Oct 14 11:35pm CT: 12 -> 20 so Tennessee's freed slots go to Georgia
 def wk(slug): return f"work/every-st/{slug}/v{MONTH.replace('-', '')}/"
+def batches_done(slug):
+    """Whole batches done, counting a split batch (pieces k_s.json, every_code.py SPLIT) as done only in proportion."""
+    names = [k.rsplit('/', 1)[1][:-5] for k in ls(wk(slug) + 'B/') if k.endswith('.json')]
+    whole = {n for n in names if '_' not in n}
+    split = int(WBIG.get(slug, {}).get('SPLIT', '1'))
+    pieces = [n for n in names if '_' in n and n.split('_')[0] not in whole]
+    return len(whole) + (len(pieces) // split if split > 1 else 0)
 def rebalance(st, left, run):
     free = free_slots()
     if free < 1 or not left: return
-    todo = {s: NB - sum(1 for k in ls(wk(s) + 'B/') if k.endswith('.json')) for s in left}
+    todo = {s: NB - batches_done(s) for s in left}
     while free > 0:
         room = [x for x in left if st['machines'][x] < MAX_MACHINES]
         if not room: break
@@ -111,7 +118,7 @@ def announce(st, left):
     if left and not all(x in seen for x in new):
         seen.extend(x for x in new if x not in seen); return
     moves = st.get('log', [])[st['announce_log_i']:]
-    still = [f"- {NAMES[x]}: {sum(1 for k in ls(wk(x) + 'B/') if k.endswith('.json'))} of {NB} batches done, {st['machines'][x]} machines"
+    still = [f"- {NAMES[x]}: {batches_done(x)} of {NB} batches done, {st['machines'][x]} machines"
              for x in left]
     title = ' + '.join(NAMES[x] for x in new) + (' done: all 7 states built' if not left else ' done; machines moved on')
     body = '\n'.join([' '.join(f"{NAMES[x]} finished its Price Finder data at {finished_at(x)}." for x in new), '',
