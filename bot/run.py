@@ -32,6 +32,7 @@ import zstandard
 sys.path.insert(0, str(Path(__file__).parent))
 import check  # noqa: E402
 import discover  # noqa: E402
+import identity  # noqa: E402
 import reader  # noqa: E402
 import store  # noqa: E402
 
@@ -42,7 +43,7 @@ FIRST_WEEK_ENDS = date(2026, 10, 19)
 
 FILE_FIELDS = ["url", "etag", "last_modified", "size", "sample_fp", "sha256", "bytes", "r2_key", "format",
                "records", "file_last_updated_on", "first_seen", "last_checked", "last_changed",
-               "last_full_download", "fails", "last_error"] + reader.ATTEST_FIELDS
+               "last_full_download", "fails", "last_error"] + reader.ATTEST_FIELDS + ["file_address", "file_names"]
 HOSP_FIELDS = ["ccn", "mrf_url", "index_url", "status", "alert", "last_checked", "last_ok"]
 STATUS_FIELDS = ["checked_at", "state", "ccn", "hospital", "city", "type", "status", "alert", "detail",
                  "mrf_url", "index_url", "index_found", "link_source", "link_changed", "check_method", "http",
@@ -53,7 +54,8 @@ STATUS_FIELDS = ["checked_at", "state", "ccn", "hospital", "city", "type", "stat
 QUEUED = "queued for a rented machine"
 RESULTS = f"{store.R2_PREFIX}fleet/results/hospital/"
 
-PROBLEM = {"link broken", "not a price file", "unreadable file", "no price file found", "too large for free runner"}
+PROBLEM = {"link broken", "not a price file", "unreadable file", "no price file found", "too large for free runner",
+           identity.WRONG_STATUS}
 
 
 def due(h, hosp_prev, today, force):
@@ -197,6 +199,9 @@ def process_file(url, prev, ctx):
                 e.update(format=fmt, records=str(n), file_last_updated_on=upd)
             if not e.get("file_version") and not e.get("attested"):  # older entries: read the header once
                 e.update(reader.header_info(raw))
+            if not e.get("file_address"):   # Oct 15, 2026: who the file says it is (identity.py), read once
+                a_, n_ = identity.from_file(raw)
+                e.update(file_address=a_[:400], file_names=" | ".join(n_)[:300])
             e.update(fails="0", last_error="")
             res.update(status="unchanged", check_method=method + ", same SHA-256", records=e.get("records", ""))
             return e, res
@@ -219,6 +224,8 @@ def process_file(url, prev, ctx):
         e.update(sha256=sha, bytes=str(nbytes), r2_key=key, last_changed=now, format=fmt,
                  records="" if n is None else str(n), file_last_updated_on=upd, fails="0", last_error="",
                  **reader.header_info(raw))
+        a_, n_ = identity.from_file(raw)
+        e.update(file_address=a_[:400], file_names=" | ".join(n_)[:300])
         res.update(status="changed - new version saved" if prev and prev.get("sha256") else "new - first version saved",
                    check_method=method, records=e["records"])
         if n is None:
@@ -315,6 +322,43 @@ def status_row(h, L, res, f, now, st):
                 **{k: f.get(k) or "" for k in ("file_version", "license_number", "license_state", "attested", "attester_name")})
 
 
+def judge(h, u, res, f, wrong, now, found):
+    """Oct 15, 2026: is the file this hospital is on really its own? (identity.py) A file whose own address is another
+    hospital's turns this hospital's result into "wrong hospital's file" (an alert; the link is never picked again for
+    it, and the web search looks for its real file). A hand verdict "ok" in data/wrong_files.csv overrules."""
+    if not u or not f or res.get("status") in PROBLEM:
+        return res
+    prior = wrong.get((h["ccn"], u)) or {}
+    if prior.get("verdict") == "ok":
+        return res
+    if not f.get("file_address"):   # not re-read since Oct 15: go by the audit's verdict (bot/audit_files.py)
+        if prior.get("verdict") == "wrong":
+            return dict(res, status=identity.WRONG_STATUS, alert="yes", detail=prior.get("reason", "")[:300])
+        return res
+    found.add((h["ccn"], u))
+    v, why = identity.check(h["ccn"], f.get("file_address", ""), [x for x in (f.get("file_names") or "").split(" | ") if x], [h["name"]])
+    if v == "wrong":
+        found.discard((h["ccn"], u))
+        found.add(("wrong", h["ccn"], u, why, f.get("file_address", "")))
+        return dict(res, status=identity.WRONG_STATUS, alert="yes", detail=why[:300])
+    if v == "check":
+        found.add(("check", h["ccn"], u, why, f.get("file_address", "")))
+        return dict(res, detail=((res.get("detail") or "") + "; " if res.get("detail") else "") + "check by hand: " + why[:200])
+    return res
+
+
+def save_judged(saver, found, now):
+    if saver.local:
+        return
+    rows = [dict(ccn=x[1], mrf_url=x[2], verdict=x[0], reason=x[3], file_address=x[4][:300], checked_at=now, by="daily run")
+            for x in found if len(x) == 5]
+    checked = {(x[0], x[1]) for x in found if len(x) == 2} | {(x[1], x[2]) for x in found if len(x) == 5}
+    if checked:
+        identity.save(saver.s3, saver.bucket, rows, checked=checked)
+        if rows:
+            print(f"{len([r for r in rows if r['verdict'] == 'wrong'])} hospital(s) on another hospital's file", flush=True)
+
+
 def machine_results(saver, st):
     """Results rented machines saved for this state's oversized files: [(key, result)]."""
     if saver.local:
@@ -358,6 +402,8 @@ def main():
             files[u] = dict(url=u, sha256=h["last_sha256"], r2_key=h["last_key"], bytes=h.get("last_bytes", ""),
                             first_seen=h.get("last_archived_run", ""))
 
+    wrong = identity.load(None if a.local else saver.s3, None if a.local else saver.bucket)
+    found = set()   # (ccn, url) judged this run, and ("wrong" | "check", ccn, url, why, address) verdicts
     # Results from rented machines (oversized files): fold them in before today's checks, so they count as done.
     by_ccn = {h["ccn"]: h for h in hospitals}
     merged_rows, merged_keys = [], []
@@ -372,11 +418,12 @@ def main():
             h = by_ccn.get(ccn)
             if not h:
                 continue
-            merged_rows.append(status_row(h, L, res, files.get(r["url"], {}), r.get("finished_at") or now, st))
+            res_h = judge(h, r["url"], res, files.get(r["url"], {}), wrong, now, found)
+            merged_rows.append(status_row(h, L, res_h, files.get(r["url"], {}), r.get("finished_at") or now, st))
             prev = hosp_prev.get(ccn, {})
-            hosp_prev[ccn] = dict(ccn=ccn, mrf_url=r["url"], index_url=L["index_url"], status=res["status"],
-                                  alert=res.get("alert", ""), last_checked=r.get("finished_at") or now,
-                                  last_ok=(r.get("finished_at") or now) if res["status"] not in PROBLEM else prev.get("last_ok", ""))
+            hosp_prev[ccn] = dict(ccn=ccn, mrf_url=r["url"], index_url=L["index_url"], status=res_h["status"],
+                                  alert=res_h.get("alert", ""), last_checked=r.get("finished_at") or now,
+                                  last_ok=(r.get("finished_at") or now) if res_h["status"] not in PROBLEM else prev.get("last_ok", ""))
         merged_keys.append(key)
     if merged_keys:
         print(f"{st}: {len(merged_keys)} oversized file(s) read on rented machines folded in", flush=True)
@@ -385,10 +432,10 @@ def main():
     todo = [h for h in hospitals if h["ccn"] not in merged_ccns and due(h, hosp_prev.get(h["ccn"]), today, a.all)]
     print(f"{st}: {len(hospitals)} hospitals, {len(todo)} due today", flush=True)
 
-    # 1. Current link for each hospital (from its own cms-hpt.txt)
+    # 1. Current link for each hospital (from its own cms-hpt.txt), never one ruled another hospital's file (identity.py)
     links = {}
     for h in todo:
-        links[h["ccn"]] = discover.current_link(h)
+        links[h["ccn"]] = discover.current_link(h, skip={u for (c, u), r in wrong.items() if c == h["ccn"] and r.get("verdict") == "wrong"})
     ccns_for = {}
     for h in todo:
         u = links[h["ccn"]]["mrf_url"]
@@ -433,6 +480,7 @@ def main():
                                      detail="no cms-hpt.txt entry or known link for this hospital")
         if res.get("status") == "skipped":
             continue
+        res = judge(h, u, res, files.get(u, {}), wrong, now, found)
         rows.append(status_row(h, L, res, files.get(u, {}), now, st))
         prev = hosp_prev.get(h["ccn"], {})
         hosp_prev[h["ccn"]] = dict(ccn=h["ccn"], mrf_url=u, index_url=L["index_url"], status=res["status"],
@@ -441,6 +489,7 @@ def main():
 
     saver.write("files", list(files.values()), FILE_FIELDS)
     saver.write("hosp", list(hosp_prev.values()), HOSP_FIELDS)
+    save_judged(saver, found, now)
     rows = merged_rows + rows
     saver.write("status", rows, STATUS_FIELDS)
     for key in merged_keys:  # folded in and saved: done with these results

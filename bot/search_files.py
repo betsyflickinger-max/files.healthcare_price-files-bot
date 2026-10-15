@@ -51,6 +51,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import deep_find as deep  # noqa: E402
 import fetch_plus  # noqa: E402
 import discover  # noqa: E402
+import identity  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
 from name_ok import distinct as name_distinct, name_ok  # noqa: E402
@@ -260,6 +261,12 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
                 return "held", f"file names the legal entity '{legal[:50]}', shared by sister hospitals; link doesn't name this one"
     # Oct 14 spot check: "Newport Hospital" (RI) was taken for Newport Community Hospital (WA), Mosaic Medical Center
     # Albany (MO) for The Medical Center at Albany (KY). A file whose address names a state must name this one.
+    # Oct 15, 2026: the address the file gives must be this hospital's (Medicare's address, same state, within 30 miles)
+    v, why = identity.check(h["ccn"], addr, names, ours)
+    if v == "wrong":
+        return None, "file is another hospital's: " + why[:150]
+    if v == "check" and not via:
+        return "held", "file names this hospital but gives an address elsewhere: " + why[:150]
     st_name = STATE_NAMES.get(h["state"], "")
     if addr and re.search(r"\b[A-Z]{2}\b\s*,?\s*\d{5}|" + "|".join(STATE_NAMES.values()), addr) and not (
             re.search(rf"\b{h['state']}\b", addr) or (st_name and st_name.lower() in addr.lower())):
@@ -502,7 +509,7 @@ def targets(rows, a, log=None):
     unreadable, never checked even with a website on record). A hospital we already found a link for is skipped
     until the daily run has checked that link."""
     want = {s.strip().upper() for s in (a.states or "").split(",") if s.strip()}
-    bad = {"no price file found"} | ({"link broken", "not a price file"} if a.also_broken else set())
+    bad = {"no price file found", identity.WRONG_STATUS} | ({"link broken", "not a price file"} if a.also_broken else set())
     log = log or {}
     s3, bucket = store.r2()
     status = {}
@@ -575,6 +582,9 @@ def main():
     rj = ROOT / "data" / "web_search_reject.csv"
     if rj.exists():
         REJECT.update({(r["ccn"], r["mrf_url"]): r["reason"] for r in csv.DictReader(open(rj, encoding="utf-8"))})
+    # files ruled another hospital's (identity.py: the file's own address is elsewhere), Oct 15, 2026
+    REJECT.update({k: "another hospital's file: " + r.get("reason", "")[:150]
+                   for k, r in identity.load(*store.r2()).items() if r.get("verdict") == "wrong"})
     NAMES = deep.enrollment_names()
     for n in NAMES.values():
         k = re.sub(r"[^a-z0-9]", "", (n.get("legal") or "").lower())
