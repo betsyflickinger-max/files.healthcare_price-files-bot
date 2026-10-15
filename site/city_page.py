@@ -306,7 +306,7 @@ def make_map(A, E, s3, B, written, prefix, page):
         fresh = False
         if written(gkey):
             s3.download_file(B, gkey, gpath); g = json.load(open(gpath))
-            fresh = g['stats'].get('hospital_files', 0) == nh and bool(g.get('zips'))
+            fresh = g['stats'].get('hospital_files', 0) == nh and bool(g.get('zips')) and 'unplaced' in g and not E.get('GEO_REBUILD')   # 'unplaced': Medicare-address placing (Oct 15); GEO_REBUILD=1 forces
             if not fresh: print(f"map locations are out of date (hospital files {g['stats'].get('hospital_files', 0)} vs {nh} on the page, {len(g.get('zips') or {})} ZIP codes); rebuilding")
         if not fresh:
             r = subprocess.run([sys.executable, f'{HERE}/geo_build.py', page, prefix], env=env, capture_output=True, text=True, timeout=5400)

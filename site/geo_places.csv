@@ -14,3 +14,6 @@ baylor scott & white medical center at waxahachie|waxahachie,32.42732,-96.85802,
 baylor scott & white medical center - frisco at pga parkway|frisco,33.21018,-96.81589,"CMS Hospital General Information, CCN 670346; 7600 Better Way, Frisco TX (placed with OpenStreetMap)"
 preferred imaging of frisco|frisco,33.11643,-96.80268,"NPI Registry, NPI 1881028397; 4525 Ohio Dr, Frisco TX (placed with OpenStreetMap)"
 preferred imaging of garland|richardson,32.97161,-96.69996,"NPI Registry, NPI 1235214164; 1778 N Plano Rd, Richardson TX (placed with OpenStreetMap)"
+ccn:450395,30.73044,-94.93962,"OpenStreetMap (CommonSpirit St. Luke's Hospital - Livingston, 1717 Ogletree Dr); Medicare address 1717 HWY 59 BYPASS, Livingston TX 77351 not found by the Census geocoder. Pinned Oct 15, 2026"
+ccn:374025,35.60231,-97.52776,"OpenStreetMap (Oakwood Springs, 13101 W John Kilpatrick Turnpike); Medicare address 13101 Memorial Springs Ct, Oklahoma City OK 73114 not found. Pinned Oct 15, 2026"
+ccn:260216,38.94120,-94.38102,"OpenStreetMap (Saint Luke's East Hospital, 100 NE Saint Luke's Blvd, Lee's Summit MO); Medicare spells the city Lees Summit. Pinned Oct 15, 2026"
