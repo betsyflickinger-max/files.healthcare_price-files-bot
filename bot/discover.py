@@ -112,13 +112,17 @@ def fetch_index(domain):
     return res
 
 
-def current_link(row):
-    """Pick this hospital's file from its index. Returns dict(index_url, index_found, mrf_url, how)."""
+def current_link(row, skip=()):
+    """Pick this hospital's file from its index. Returns dict(index_url, index_found, mrf_url, how).
+    skip: links ruled another hospital's file for this hospital (identity.py, Oct 15, 2026); never picked."""
     known = clean(row.get("mrf_url", "")) if row.get("mrf_url") else ""
+    if known in skip:
+        known = ""
     dom = index_domain(row)
     if not dom:
         return dict(index_url="", index_found=False, mrf_url=known, how="known link (no index domain)" if known else "")
     idx, ents = fetch_index(dom)
+    ents = [e for e in (ents or []) if e["mrf-url"] not in skip]
     if not ents:
         return dict(index_url=idx, index_found=False, mrf_url=known, how="known link (index missing)" if known else "")
     if known and any(e["mrf-url"] == known for e in ents):

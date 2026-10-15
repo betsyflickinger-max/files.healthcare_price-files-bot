@@ -62,7 +62,9 @@ def h2(areas):
         for j in a['jobs']:
             try: s3.download_file(B, 'data/hosp_every/rows/' + j['id'] + '.parquet', f"{d}/rows/{j['id']}.parquet"); have += 1
             except Exception: print(area, 'no parsed rows for', j['name'], flush=True)
-        if not have:
+        if not have:   # no hospital files left (Oct 15: e.g. its only file was another hospital's): drop the old index too
+            try: s3.delete_object(Bucket=B, Key=a['prefix'] + 'hosp/hosp_index.json')
+            except Exception: pass
             s3.put_object(Bucket=B, Key=SP + f'h2/{area}.done', Body=json.dumps({'files': 0}).encode()); continue
         s3.download_file(B, a['prefix'] + 'embed.json', f'{d}/embed.json')
         codes = json.load(open(f'{d}/embed.json'))['codes']
@@ -90,10 +92,30 @@ def plan_areas(O):
         for lo, hi, a in BIG:
             if lo <= z[:3] <= hi: return a
         return metro.get(z, 'small-towns')
+    # Oct 15, 2026: each hospital's file is the one the daily run has now (R2 bot/manifest/hospitals + files), else the
+    # October file in data/hospitals.csv; a file ruled another hospital's (bot/identity.py) is left off.
+    sys.path.insert(0, f'{HERE}/../bot')
+    import identity
+    wrong = identity.load(O.s3, O.B)
+    cur, nfix, nnew = {}, 0, 0
+    for st_ in (['TX'] if not S7 else list(STATES)):
+        def rd(k):
+            try: return list(csv.DictReader(io.StringIO(O.s3.get_object(Bucket=O.B, Key=k)['Body'].read().decode())))
+            except Exception: return []
+        files = {f['url']: f for f in rd(f'bot/manifest/files/{st_}.csv')}
+        for m in rd(f'bot/manifest/hospitals/{st_}.csv'):
+            f = files.get(m.get('mrf_url', ''))
+            if f and f.get('sha256') and f.get('r2_key') and m.get('status') != identity.WRONG_STATUS:
+                cur[m['ccn']] = (m['mrf_url'], f['r2_key'], f['sha256'])
     areas, nozip = {}, 0
     for r in csv.DictReader(open(f'{HERE}/../data/hospitals.csv')):
-        if r['state'] != 'TX' and not (S7 and r['state'] in STATES) or not r['last_key'] or not r['last_sha256']: continue
-        if (r['state'] == 'TX') == S7: continue
+        if (r['state'] == 'TX') == S7 or r['state'] != 'TX' and not (S7 and r['state'] in STATES): continue
+        if r['ccn'] in cur:
+            u_, k_, h_ = cur[r['ccn']]
+            if h_[:16] != (r.get('last_sha256') or '')[:16]: nnew += 1
+            r = dict(r, mrf_url=u_, last_key=k_, last_sha256=h_)
+        if not r['last_key'] or not r['last_sha256']: continue
+        if identity.is_wrong(wrong, r['ccn'], r['mrf_url']): nfix += 1; continue
         z = zips.get(r['ccn'], '')
         if not z and not S7: nozip += 1; continue
         a = STATES[r['state']] if S7 else area(z)
@@ -106,7 +128,8 @@ def plan_areas(O):
         if not p and S7: p = f"site/every-st/{a}/{O.BID.split('-', 2)[2]}/"   # the state's insurer build is still running; same folder
         if p: out[a] = dict(prefix=p, jobs=jobs)
         else: O.log('no insurer build for', a, '- skipped')
-    O.log(sum(len(v['jobs']) for v in out.values()), 'hospital files in', len(out), 'areas;', nozip, 'saved files with no Medicare ZIP')
+    O.log(sum(len(v['jobs']) for v in out.values()), 'hospital files in', len(out), 'areas;', nozip, 'saved files with no Medicare ZIP;',
+          nnew, 'newer than October;', nfix, "left off as another hospital's file")
     return out
 
 
@@ -210,6 +233,32 @@ def run():
     O.putj(SP + 'state.json', st)
 
 
+def redo(areas):
+    """Oct 15, 2026: take files ruled another hospital's (bot/identity.py) off some areas' pages now, without waiting for the
+    next monthly build. Drops those files from the build's areas.json and clears the areas' h2 and publish marks, so the
+    next runs of hosp-areas.yml (same BUILD / HOSP_SCOPE) rebuild and republish just them. New files come with the next build.
+    Usage: BUILD=hosp-tx-2026-10 python site/hosp_area.py redo houston odessa ...   (HOSP_SCOPE=s7 for state pages)"""
+    os.environ.setdefault('BUILD', ('hosp-st-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
+    sys.path.insert(0, HERE); sys.path.insert(0, f'{HERE}/../bot')
+    import orchestrate as O, identity
+    wrong = identity.load(O.s3, O.B)
+    plan, st = O.getj(O.SP + 'areas.json', {}), O.getj(O.SP + 'state.json', {})
+    for a in areas:
+        if a not in plan: O.log(a, 'is not in build', O.BID); continue
+        before = len(plan[a]['jobs'])
+        plan[a]['jobs'] = [j for j in plan[a]['jobs'] if not identity.is_wrong(wrong, j['ccn'], j['url'])]
+        O.log(a, before - len(plan[a]['jobs']), "file(s) taken off as another hospital's;", len(plan[a]['jobs']), 'left')
+        try: O.s3.delete_object(Bucket=O.B, Key=O.SP + f'h2/{a}.done')
+        except Exception: pass
+        st.get('published', {}).pop(a, None)
+        st.get('launches', {}).pop(f'h2-{a}', None)
+    if not S7:   # Texas areas share machines in groups: let every group whose areas are all still built count as finished
+        st['launches'] = {k: v for k, v in st.get('launches', {}).items() if not k.startswith('h2-')}
+    st['stage'] = 'h2'
+    O.putj(O.SP + 'areas.json', plan); O.putj(O.SP + 'state.json', st)
+    O.log('next hosp-areas.yml runs with BUILD', O.BID, 'rebuild and republish', ', '.join(areas))
+
+
 IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
 
 
@@ -254,5 +303,6 @@ def state_by_state(O, st):
 
 
 if __name__ == '__main__':
-    if sys.argv[1] == 'h2': h2(sys.argv[2:])
+    if sys.argv[1] == 'redo': redo(sys.argv[2:])
+    elif sys.argv[1] == 'h2': h2(sys.argv[2:])
     else: run()
