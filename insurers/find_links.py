@@ -94,6 +94,11 @@ def azure_list(arg):
 _TOC = {}
 
 
+def real(h):
+    """The link answered with the file itself (not a refusal that only might open in a browser)."""
+    return h["ok"] and not h.get("needs_browser")
+
+
 def _toc_url(loc, today):
     """A table of contents link: fixed, or a dated template ({date}/{ym}/{ymc}) tried newest first over 60 days.
     A directory file that lists TOC_Files (BCBS Tennessee) is followed to its first table of contents."""
@@ -102,7 +107,7 @@ def _toc_url(loc, today):
         url = loc
         if "{" in loc:
             url = next((fill(loc, today - timedelta(days=i)) for i in range(60)
-                        if check.headers(fill(loc, today - timedelta(days=i)))["ok"]), "")
+                        if real(check.headers(fill(loc, today - timedelta(days=i))))), "")
             if not url:
                 raise ValueError("no table of contents in the last 60 days")
         head = _get(url)[:3000]
@@ -155,7 +160,8 @@ def find(row, today, since):
         cands.setdefault(fill(t, d), d)
     with ThreadPoolExecutor(8) as ex:
         results = list(ex.map(lambda u: (u, check.headers(u)), cands))
-    for u, h in results:  # still newest first
-        if h["ok"] and not h.get("html"):
+    for u, h in results:  # still newest first. A guessed dated link must really answer: "403, may open in a browser"
+        # counts for hospital sites, but on insurer file storage a 403 means no such file (Oct 15, 2026: Curative 2026-10-15)
+        if h["ok"] and not h.get("html") and not h.get("needs_browser"):
             return dict(url=u, how=f"new file dated {cands[u].isoformat()}", http=h["http"], error="", found=True)
     return dict(url=row["current_url"], how="no new file yet", http="", error="", found=False)

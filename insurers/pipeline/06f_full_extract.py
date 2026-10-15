@@ -135,6 +135,11 @@ def stream_to_parquet(cmd, dest, consts):
     if state["writer"]:
         state["writer"].close()
         tmpdest.replace(dest)
+    else:  # Oct 15, 2026: a file with no prices for anyone in this area (e.g. a Houston-only network read for DFW) gets an
+        # empty table with the usual columns, so it is recorded as read with 0 rows instead of failing three times
+        names = ["reporting_entity_name", "file_label", "last_updated_on"] + [c for c in COLS if c != "description"] + \
+                ["source_file", "source_url", "checked_on"]
+        pq.write_table(pa.table({c: pa.array([], pa.string()) for c in names}), dest, compression="zstd")
     codes = CODES / Path(dest).name
     codes.parent.mkdir(parents=True, exist_ok=True)
     pq.write_table(pa.table({"billing_code_type": [k[0] for k in descs], "billing_code": [k[1] for k in descs],
