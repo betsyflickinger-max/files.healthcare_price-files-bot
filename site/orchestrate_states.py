@@ -22,6 +22,9 @@ SP = O.SP
 SIZE = 's-8vcpu-32gb-amd'
 STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
+# Oct 14 8:20pm CT: Georgia's batches (90-150M rows) don't fit in 6 GB, so its machines spent 60-85% of their time waiting on
+# disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
+WBIG = {'georgia': dict(WORKERS='2', WMEM='13GB', WTHREADS='4')}
 # Oct 14: STALL_MIN 180 (default 60): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.
 GB_PER_MACHINE, MAX_PER_STATE = 20, 3
@@ -173,7 +176,7 @@ def main():
                 env = dict(RATES=f'data/s7/state/{slug}/rates/', NPIS=f'data/s7/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
-                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='180', **W)
+                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='180', **{**W, **WBIG.get(slug, {})})
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         for slug in left:
             for i in range(st['machines'][slug]): run(slug, i)
