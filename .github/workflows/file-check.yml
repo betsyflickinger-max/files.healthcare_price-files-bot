@@ -1,0 +1,48 @@
+name: "Weekly check: is every price file its own hospital's?"
+
+# Oct 15, 2026. Every Monday:
+#   bot/audit_files.py        reads the top of every saved hospital price file and compares the address it gives with
+#                             Medicare's address for the hospital it is filed under (bot/identity.py). Verdicts go to R2
+#                             bot/manifest/wrong_files.csv, which the daily run, the web search and the city/state pages use.
+#   bot/wrong_files_sort.py   for each hospital on another hospital's file: the bot's own mismatch, or a hospital listing
+#                             that names it (check by hand), and whether its own file is in its listing.
+#   site/unplaced_report.py   hospital price files that aren't on any Price Finder map, with the reason and a Maps link.
+# Reports are saved to reports/ in this repository. Hand verdicts: data/wrong_files.csv; hand map pins: site/geo_places.csv.
+on:
+  schedule:
+    - cron: "41 10 * * 1"   # Mondays 5:41am Central
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Check every saved file
+        run: python bot/audit_files.py --workers 24 | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Sort the wrong ones
+        run: python bot/wrong_files_sort.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Hospitals not on a map
+        run: python site/unplaced_report.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save reports to main
+        if: always()
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "price-files-bot@users.noreply.github.com"
+          git add reports/file_identity.csv reports/wrong_files_sorted.csv reports/unplaced_hospitals.csv
+          git commit -m "Weekly file check $(date -u +%F)" || exit 0
+          git pull --rebase -q origin main && git push origin HEAD:main

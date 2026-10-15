@@ -66,14 +66,37 @@ def address_text(text):
     return " | ".join(rows[1][i] for i, c in enumerate(rows[0]) if c.strip().lower().startswith("hospital_address") and i < len(rows[1]))
 
 
+STATE_NAMES = {"ALABAMA": "AL", "ALASKA": "AK", "ARIZONA": "AZ", "ARKANSAS": "AR", "CALIFORNIA": "CA", "COLORADO": "CO",
+               "CONNECTICUT": "CT", "DELAWARE": "DE", "DISTRICT OF COLUMBIA": "DC", "FLORIDA": "FL", "GEORGIA": "GA", "HAWAII": "HI",
+               "IDAHO": "ID", "ILLINOIS": "IL", "INDIANA": "IN", "IOWA": "IA", "KANSAS": "KS", "KENTUCKY": "KY", "LOUISIANA": "LA",
+               "MAINE": "ME", "MARYLAND": "MD", "MASSACHUSETTS": "MA", "MICHIGAN": "MI", "MINNESOTA": "MN", "MISSISSIPPI": "MS",
+               "MISSOURI": "MO", "MONTANA": "MT", "NEBRASKA": "NE", "NEVADA": "NV", "NEW HAMPSHIRE": "NH", "NEW JERSEY": "NJ",
+               "NEW MEXICO": "NM", "NEW YORK": "NY", "NORTH CAROLINA": "NC", "NORTH DAKOTA": "ND", "OHIO": "OH", "OKLAHOMA": "OK",
+               "OREGON": "OR", "PENNSYLVANIA": "PA", "PUERTO RICO": "PR", "RHODE ISLAND": "RI", "SOUTH CAROLINA": "SC",
+               "SOUTH DAKOTA": "SD", "TENNESSEE": "TN", "TEXAS": "TX", "UTAH": "UT", "VERMONT": "VT", "VIRGINIA": "VA",
+               "WASHINGTON": "WA", "WEST VIRGINIA": "WV", "WISCONSIN": "WI", "WYOMING": "WY"}
+_ST = "|".join(sorted(STATE_NAMES, key=len, reverse=True))
+
+
 def places(addr):
-    """[(state, zip5)] for each street address in a hospital_address value; P.O. boxes (billing addresses) skipped."""
+    """[(state or None, zip5 or None)] for each street address in a hospital_address value. Oct 15, 2026: also full state
+    names ("Austin, Texas 78754"), a ZIP with no state ("Eau Claire 54703"), a state with no ZIP ("Lakeland, FL"), odd
+    characters between them. A part that is only a P.O. box (a billing address) is skipped; a street address that also
+    gives a P.O. box is kept."""
     out = []
     for part in re.split(r"\s*[|;]\s*|\n", addr or ""):
-        if re.search(r"\bP\.?\s*O\.?\s*BOX\b|\bPOB\b|\bPO DRAWER\b", part, re.I):
-            continue
-        out += [(m.group(1).upper(), m.group(2)) for m in re.finditer(r"\b([A-Za-z]{2})\b\.?\s*,?\s*(\d{5})(?:-\d{4})?\b", part)
-                if m.group(1).upper() in STATES]
+        rest = re.sub(r"\b(P\.?\s*O\.?\s*BOX|POB|PO DRAWER|BOX)\s*#?\s*\d+\b,?", " ", part, flags=re.I)
+        if rest != part and not re.search(r"^\W*\d+\s+\w", rest):
+            continue   # only a P.O. box
+        up = re.sub(rf"\b({_ST})\b", lambda m: STATE_NAMES[m.group(1)], rest.upper())
+        found = [(m.group(1), m.group(2)) for m in re.finditer(r"\b([A-Z]{2})\b[^A-Z0-9]{0,4}(\d{5})(?:-\d{4})?\b", up)
+                 if m.group(1) in STATES]
+        if not found:
+            z = re.findall(r"(?:,|\s)(\d{5})(?:-\d{4})?\s*$", up.strip())
+            st = [m.group(1) for m in re.finditer(r"(?:,|\s)([A-Z]{2})\s*$", up.strip()) if m.group(1) in STATES]
+            if z: found = [(None, z[-1])]
+            elif st: found = [(st[-1], None)]
+        out += found
     return out
 
 
@@ -115,19 +138,25 @@ def check(ccn, addr, names=(), other_names=()):
         return "", ""
     Z = zips()
     hz = Z.get(h["zip"])
-    for st, z in ps:
-        if st == h["state"] and (not hz or not Z.get(z) or miles(hz, Z[z]) <= MILES):
-            return "", ""
     city = _city(h["city"])
-    if city and any(st == h["state"] for st, _ in ps) and re.search(rf"\b{re.escape(city)}\b", _city(addr)):
-        return "", ""
-    far = [f"{st} {z}" + (f" ({round(miles(hz, Z[z]))} mi away)" if hz and Z.get(z) else "") for st, z in ps[:3]]
-    why = (f"file gives its address as {', '.join(far)}; Medicare's address for {h['name'].title()} (CCN {ccn}) is "
-           f"{h['address'].title()}, {h['city'].title()} {h['state']} {h['zip']}")
+    named_city = bool(city) and re.search(rf"\b{re.escape(city)}\b", _city(addr))
+    for st, z in ps:
+        near = None if not (hz and z and Z.get(z)) else miles(hz, Z[z]) <= MILES
+        if st in (h["state"], None) and near:                     # within MILES of the hospital (any form of address)
+            return "", ""
+        if st == h["state"] and (near is None or named_city):     # right state; no ZIP to measure, or names its city
+            return "", ""
+        if st is None and near is None:                           # a ZIP we have no point for, no state: can't judge
+            return "", ""
+    def show(st, z):
+        d = f" ({round(miles(hz, Z[z]))} mi away)" if hz and z and Z.get(z) else ""
+        return " ".join(x for x in (st, z) if x) + d
+    why = (f"file gives its address as {', '.join(show(st, z) for st, z in ps[:3])}; Medicare's address for {h['name'].title()} "
+           f"(CCN {ccn}) is {h['address'].title()}, {h['city'].title()} {h['state']} {h['zip']}")
     from name_ok import name_ok
     ours = [h["name"], *other_names]
     named = [n for n in names if any(name_ok(o, n) and name_ok(n, o) for o in ours)]
-    if named and any(st == h["state"] for st, _ in ps):
+    if named and any(st in (h["state"], None) for st, _ in ps):
         return "check", why + f"; but the file names '{named[0][:60]}'"
     return "wrong", why
 
