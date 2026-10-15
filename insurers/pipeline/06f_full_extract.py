@@ -40,6 +40,22 @@ s6 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s6)
 BIN = HERE / "mrfrows" / "mrfrows"
 RATES, MEMB, CODES = DATA / "rates", DATA / "membership", DATA / "codes"
+# Oct 15, 2026: RATES_LAYOUT=lines stores each price once per provider group (TIN) with an npiset id and n_npi;
+# data/npisets/<source>.parquet holds each distinct NPI list once (npiset, npis). flat_sql() joins them back into
+# exactly the one-row-per-NPI rows of the flat layout, so counts and inventories below are unchanged.
+LAYOUT = os.environ.get("RATES_LAYOUT", "flat")
+NPISETS = DATA / "npisets"
+
+
+def flat_sql(rates, sets=None):
+    """FROM-able SQL giving flat rows (one per NPI x price, same columns in the same order) for either layout."""
+    sets = sets or NPISETS / Path(rates).name
+    if not Path(sets).exists():
+        return f"read_parquet('{rates}')"
+    cols = [r[0] for r in duckdb.connect().execute(f"describe select * from read_parquet('{rates}')").fetchall()]
+    sel = ", ".join("s.npi" if c == "npiset" else f"l.{c}" for c in cols if c != "n_npi")
+    return (f"(select {sel} from read_parquet('{rates}') l join "
+            f"(select npiset, unnest(npis) npi from read_parquet('{sets}')) s using (npiset))")
 
 
 def duck():
@@ -74,7 +90,7 @@ COLS = ["billing_code_type", "billing_code", "name", "negotiation_arrangement", 
         "billing_code_type_version", "description", "additional_information", "bundled_codes", "covered_services"]
 
 
-def stream_to_parquet(cmd, dest, consts):
+def stream_to_parquet(cmd, dest, consts, cols=COLS):
     """Run mrfrows with CSV on stdout and write Parquet batch by batch: no big temporary file."""
     import pyarrow as pa
     import pyarrow.csv as pcsv
@@ -85,7 +101,7 @@ def stream_to_parquet(cmd, dest, consts):
     reader = pcsv.open_csv(p.stdout, read_options=pcsv.ReadOptions(block_size=16 << 20),
                            # names like BCBSTX's sometimes contain a line break (quoted by mrfrows)
                            parse_options=pcsv.ParseOptions(newlines_in_values=True),
-                           convert_options=pcsv.ConvertOptions(column_types={c: pa.string() for c in COLS},
+                           convert_options=pcsv.ConvertOptions(column_types={c: pa.string() for c in cols},
                                                                strings_can_be_null=False))
     tmpdest = Path(str(dest) + ".part")
     # Parquet compression runs on its own thread so it overlaps with CSV parsing (pyarrow releases the GIL).
@@ -186,17 +202,34 @@ def extract(path, ctx):
     cmd = [str(BIN), "-in", str(path), "-refmap", str(tmp / "refmap.tsv"), "-npis", str(tmp / "npis.txt"), "-out", "-"]
     if ctx.get("codes"):
         cmd += ["-codes", ctx["codes"]]
-    stream_to_parquet(cmd, RATES / (st + ".parquet"), {
+    lines = LAYOUT == "lines"
+    rates_p, sets_p = RATES / (st + ".parquet"), NPISETS / (st + ".parquet")
+    sets_p.unlink(missing_ok=True)   # a flat table must never sit next to an older table's NPI lists
+    if lines:
+        cmd += ["-layout", "lines", "-sets", str(tmp / "sets.csv.gz")]
+    cols = [("npiset" if c == "npi" else c) for c in COLS] + (["n_npi"] if lines else []) if lines else COLS
+    stream_to_parquet(cmd, rates_p, {
         "reporting_entity_name": meta.get("reporting_entity_name", ""), "file_label": label,
         "last_updated_on": meta.get("last_updated_on", ""), "source_file": source_file,
-        "source_url": ctx.get("source_url", ""), "checked_on": today})
+        "source_url": ctx.get("source_url", ""), "checked_on": today}, cols)
     con = duck()
     lit = lambda s: "'" + str(s or "").replace("'", "''") + "'"
-    n_rows = con.execute(f"select count(*) from '{RATES / (st + '.parquet')}'").fetchone()[0]
-
-    # Membership with priced-row counts
-    counts = dict(((r[0], r[1]), r[2]) for r in con.execute(
-        f"select npi, tin, count(*) from '{RATES / (st + '.parquet')}' group by 1,2").fetchall())
+    if lines:
+        NPISETS.mkdir(parents=True, exist_ok=True)
+        con.execute(f"""copy (select npiset, list(npi order by npi) npis from read_csv('{tmp / 'sets.csv.gz'}', header=true,
+                        all_varchar=true) group by npiset) to '{sets_p}' (format parquet, compression zstd)""")
+        n_rows = con.execute(f"select coalesce(sum(n_npi::bigint), 0) from '{rates_p}'").fetchone()[0]   # flat rows, as before
+        stored = con.execute(f"select count(*) from '{rates_p}'").fetchone()[0]
+        print(f"  lines layout: {stored:,} stored rows stand for {n_rows:,} flat rows", flush=True)
+        # Membership counts per NPI+TIN without expanding every row: count per (NPI list, TIN) first
+        counts = dict(((r[0], r[1]), r[2]) for r in con.execute(f"""select s.npi, c.tin, sum(c.k) from
+            (select npiset, tin, count(*) k from '{rates_p}' group by 1, 2) c
+            join (select npiset, unnest(npis) npi from '{sets_p}') s using (npiset) group by 1, 2""").fetchall())
+    else:
+        n_rows = con.execute(f"select count(*) from '{rates_p}'").fetchone()[0]
+        # Membership with priced-row counts
+        counts = dict(((r[0], r[1]), r[2]) for r in con.execute(
+            f"select npi, tin, count(*) from '{rates_p}' group by 1,2").fetchall())
     with open(tmp / "memb.csv", "w", newline="") as f:
         w = csv.writer(f)
         w.writerow(["npi", "tin", "tin_type", "tin_business_name", "network_name", "priced_rows"])
@@ -228,7 +261,7 @@ def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_gro
     """'What's in the file' inventory + per-provider contract end dates (pipeline/inventory.py).
     Real counts, no sampling; research only, never shown as a price."""
     import inventory
-    t = f"read_parquet('{rates}')"
+    t = flat_sql(rates)
     base = {"source_file": source_file, "source_url": source_url, "network": label, "checked_on": date.today().isoformat(),
             "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
             "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
