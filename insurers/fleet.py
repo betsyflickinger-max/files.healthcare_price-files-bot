@@ -163,7 +163,10 @@ def held_scopes(s3, b, all_jobs, names):
             continue
         if j.get("kind", "insurer") != "insurer":  # website builds read insurer tables only
             continue
-        builds = [n for n in names if n.startswith("upfront-site-") and (sc == "s7" or not n.startswith("upfront-site-st-"))]
+        # Oct 15, 2026: hospital-page machines (upfront-site-hosp-*) read hospital files and finished page data, never
+        # insurer tables, so they don't hold the queue (four of them held 55 seven-state re-reads for no reason).
+        builds = [n for n in names if n.startswith("upfront-site-") and not n.startswith("upfront-site-hosp-")
+                  and (sc == "s7" or not n.startswith("upfront-site-st-"))]
         if builds:
             held[sc] = f"waiting: a website build is running ({len(builds)} machines)"
     return held
