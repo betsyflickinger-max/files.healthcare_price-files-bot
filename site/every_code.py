@@ -27,7 +27,14 @@ def ls(pfx):
 # a crashed earlier attempt on this machine leaves DuckDB spill files (and, with NOXPART, downloaded buckets) behind; clear them
 shutil.rmtree(D / 'tmp', ignore_errors=True)
 if E.get('NOXPART'): shutil.rmtree(D / 'xpart', ignore_errors=True)
-for sub in ('xpart', 'stage', 'aux', 'flat', 'names', 'tmp', 'in'): (D / sub).mkdir(parents=True, exist_ok=True)
+if E.get('NOXPART'): shutil.rmtree(D / 'nsets', ignore_errors=True)
+for sub in ('xpart', 'nsets', 'stage', 'aux', 'flat', 'names', 'tmp', 'in'): (D / sub).mkdir(parents=True, exist_ok=True)
+# Oct 15, 2026 (LINES=1): Aetna lists a price once per tax-ID (TIN) group, but our tables repeat it for every doctor (NPI) in
+# the group (82% of a Mississippi batch's rows). With LINES=1, stage A saves each distinct price row once, with an id `ns`
+# for its sorted list of doctors (nsets/ holds ns -> npi) and `n` = how many doctors; stage B sorts those lines (about 2.6x
+# fewer rows) and hands each result to every doctor in the group, merging groups for doctors billed under several TINs.
+# The page files come out the same as before (checked against the live Mississippi build).
+LINES = E.get('LINES') == '1'
 con = duckdb.connect()
 con.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('MEM','12GB')}'; set threads={E.get('THREADS','8')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp'; set partitioned_write_max_open_files=8")
 SHORT = """case when reporting_entity_name ilike '%blue cross%' then 'BCBSTX'
@@ -55,7 +62,7 @@ if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
-TAG = {key: 't' + hashlib.sha1(f'{key}|{size}'.encode()).hexdigest()[:12] for key, size in files}   # same table + size -> same results
+TAG = {key: ('l' if LINES else 't') + hashlib.sha1(f'{key}|{size}'.encode()).hexdigest()[:12] for key, size in files}   # same table + size -> same results
 TAGS = set(TAG.values())
 doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
 def isdone(tag): 
@@ -65,7 +72,7 @@ def mine(fn):  # a cached A file ('<tag>.parquet' or '<tag>_<piece>.parquet') be
     return fn.rsplit('.', 1)[0].split('_')[0] in TAGS   # Oct 12, 2026 fix: '.parquet' was left on unsplit tables, so they were never downloaded
 import math
 def save_a(i):
-    outs = glob.glob(f'{D}/xpart/bucket=*/{i}.parquet') + [p for p in (f'{D}/flat/{i}.parquet', f'{D}/names/{i}.parquet', f'{D}/aux/{i}.parquet') if os.path.exists(p)]
+    outs = glob.glob(f'{D}/xpart/bucket=*/{i}.parquet') + glob.glob(f'{D}/nsets/bucket=*/{i}.parquet') + [p for p in (f'{D}/flat/{i}.parquet', f'{D}/names/{i}.parquet', f'{D}/aux/{i}.parquet') if os.path.exists(p)]
     with ThreadPoolExecutor(16) as P_: list(P_.map(lambda p: s3.upload_file(p, B, AC + os.path.relpath(p, D)), outs))   # ~260 files per table
     s3.put_object(Bucket=B, Key=AC + f'{i}.done', Body=b'1')
 _LA = None
@@ -75,7 +82,7 @@ def restore_a(i):
     for k, _ in _LA:
         rel = k[len(AC):]
         fn = rel.rsplit('/', 1)[-1][:-8] if rel.endswith('.parquet') else None
-        if E.get('NOXPART') and rel.startswith('xpart/'): continue
+        if E.get('NOXPART') and rel.startswith(('xpart/', 'nsets/')): continue
         if fn is not None and (fn == str(i) or ('_' not in str(i) and fn.startswith(f'{i}_'))):
             dest = D / rel; dest.parent.mkdir(parents=True, exist_ok=True); s3.download_file(B, k, str(dest))
 NEWP = [0]
@@ -139,7 +146,17 @@ for ii, (key, size) in enumerate(files):
         con.execute(f"copy (select distinct 'n' k, ins||'|'||net val from {src} union select distinct 'd', dt from {src} union select distinct 'u', url from {src} union select distinct 'p', npi from {src} union select distinct 'm', modi||'~'||st||'~'||nt from {src}) to '{D}/aux/{tag}.parquet' (format parquet)")
         for bdir in glob.glob(f'{sd}/bucket=*'):
             b = bdir.rsplit('=', 1)[1]; (D / f'xpart/bucket={b}').mkdir(parents=True, exist_ok=True)
-            con.execute(f"copy (select ins, net, code, npi, tin, fee, t, v, modi, st, nt, dt, url from read_parquet('{bdir}/*.parquet')) to '{D}/xpart/bucket={b}/{tag}.parquet' (format parquet, compression zstd)")
+            if LINES:   # one row per distinct price row; exact duplicate rows dropped (stage B skipped them too)
+                (D / f'nsets/bucket={b}').mkdir(parents=True, exist_ok=True)
+                con.execute(f"""create or replace temp table lb as select ins, net, code, tin, fee, t, v, modi, st, nt, dt, url,
+                  list(npi order by npi) npl from (select distinct ins, net, code, npi, tin, fee, t, v, modi, st, nt, dt, url
+                  from read_parquet('{bdir}/*.parquet')) group by all""")
+                con.execute("create or replace temp table lb2 as select *, md5_number(array_to_string(npl, ',')) ns from lb")
+                con.execute(f"copy (select ins, net, code, tin, fee, t, v, modi, st, nt, dt, url, ns, len(npl)::int n from lb2) to '{D}/xpart/bucket={b}/{tag}.parquet' (format parquet, compression zstd)")
+                con.execute(f"copy (select ns, unnest(npl) npi from (select distinct on (ns) ns, npl from lb2)) to '{D}/nsets/bucket={b}/{tag}.parquet' (format parquet, compression zstd)")
+                con.execute("drop table lb; drop table lb2")
+            else:
+                con.execute(f"copy (select ins, net, code, npi, tin, fee, t, v, modi, st, nt, dt, url from read_parquet('{bdir}/*.parquet')) to '{D}/xpart/bucket={b}/{tag}.parquet' (format parquet, compression zstd)")
         shutil.rmtree(sd)
         if K > 1:
             save_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} done')
@@ -282,6 +299,10 @@ def work(u):
             raise RuntimeError(f'bucket {k}: {len(listed)} stage-A files but none match this build (insurer tables changed since stage A?)')
         todo_ = [kk_ for kk_, _ in listed if mine(kk_.rsplit('/', 1)[1]) and not (xd / kk_.rsplit('/', 1)[1]).exists()]
         with ThreadPoolExecutor(8) as P_: list(P_.map(lambda kk_: s3.download_file(B, kk_, str(xd / kk_.rsplit('/', 1)[1])), todo_))
+        if LINES:
+            sd_ = D / f'nsets/bucket={k}'; sd_.mkdir(parents=True, exist_ok=True)
+            todo_ = [kk_ for kk_, _ in ls(f'{AC}nsets/bucket={k}/') if mine(kk_.rsplit('/', 1)[1]) and not (sd_ / kk_.rsplit('/', 1)[1]).exists()]
+            with ThreadPoolExecutor(8) as P_: list(P_.map(lambda kk_: s3.download_file(B, kk_, str(sd_ / kk_.rsplit('/', 1)[1])), todo_))
     if not glob.glob(f'{D}/xpart/bucket={k}/*.parquet'):   # small areas (El Paso) can have empty buckets
         res = (u, 0, {}, {})
         s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
@@ -298,6 +319,10 @@ def work(u):
         c.execute("create temp table un as select unnest(?::varchar[]) url, unnest(range(?::bigint))::int ui", [urls, len(urls)])
         c.execute("create temp table nn as select unnest(?::varchar[]) ins, unnest(?::varchar[]) net, unnest(range(?::bigint))::int ni",
                   [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
+    if LINES:   # market middle over every (doctor, rate) as before: each line counts once per doctor in its group
+        MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"""select code, fee, approx_quantile(v, 0.5), count(*) from
+               (select code, fee, v, unnest(range(n)) from {src} where t=0 and v>0 and modi='') group by all""").fetchall()}
+        return work_lines(u, c, src, MD)
     MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
     if SORTV == '3':
         return work3(u, c, src, MD)
@@ -368,7 +393,94 @@ def work(u):
     return res
 def finish_dirs(u):
     k, sp = unit_parts(u)
-    if sp is None: shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True)   # pieces share bucket k's files: keep them
+    if sp is None:   # pieces share bucket k's files: keep them
+        shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True); shutil.rmtree(D / f'nsets/bucket={k}', ignore_errors=True)
+def _nl(x): return (1, '') if x is None else (0, x)   # sort key for one column, NULLs last (DuckDB's default order)
+def work_lines(u, c, src, MD):
+    """Stage B with LINES=1. Gives every doctor exactly the rows the flat build would have walked: for each code / network /
+    fee / type, a doctor's rows are the lines of every group (ns) the doctor is in, in the same order, exact duplicates
+    dropped. Doctors with the same set of groups share one computed result (only the flat-case-rate flag is per doctor)."""
+    import heapq
+    k, sp = unit_parts(u)
+    nsrc = f"read_parquet('{D}/nsets/bucket={k}/*.parquet')"
+    c.execute(f"create temp table ln as select distinct ns from {src}")
+    PS = {ns: tuple(pis) for ns, pis in c.execute(f"""select s.ns, list(distinct pn.pi order by pn.pi) from {nsrc} s
+            join ln using (ns) join pn on pn.npi = s.npi group by s.ns""").fetchall()}
+    nx = c.execute(f"select count(*) from {src}").fetchone()[0]
+    cur = c.execute(f"""select x.code, nn.ni, x.fee, x.t, x.v, x.tin, x.modi, x.st, x.nt, dn.di, un.ui, x.ns from {src} x
+                       left join nn on nn.ins = x.ins and nn.net = x.net
+                       left join dn on dn.dt = x.dt left join un on un.url = x.url
+                       order by x.code, nn.ni, x.fee, x.t, x.v, x.modi, x.tin, x.st, x.nt, dn.di, un.ui, x.ns""")
+    summ, scp = {}, {}
+    pool = ThreadPoolExecutor(8); futs = []
+    D0 = didx.get('', 0); U0 = uidx.get('', 0)
+    def put(code, res):
+        f = {}
+        for pi in sorted(res):
+            rows = res[pi]; cap = 0 if KIND[pi] == 'P' else 4
+            for r in rows: r[8] = r[8][:cap]
+            f[str(pi)] = rows
+        summ[code] = sum(len(v) for v in f.values())
+        body = base64.b64encode(gzip.compress(json.dumps({'f': f}, separators=(',', ':')).encode(), 6))
+        futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{TOUT}t/{code}.txt', Body=body, ContentType='text/plain'))
+    def okey(r):   # flat sort order within a group: v, modi, tin, st, nt, date, url
+        return (_nl(r[0]), _nl(r[2]), _nl(r[1]), _nl(r[3]), _nl(r[4]), _nl(r[5]), _nl(r[6]))
+    def base(code, fee, t, n, rows):
+        """the same row emit() builds, before the per-doctor flat flag; returns (row, headline v, headline modi)"""
+        zeros = sum(1 for r in rows if r[0] == 0); pos = [r for r in rows if r[0] > 0]
+        if pos:
+            h = next((r for r in pos if not r[2]), pos[0])
+            v, tin, modi, st, nt, dt, url = h
+            m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
+            rest = [r for r in pos[:9] if r is not h]
+            others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
+            di_, ui_ = (D0 if dt is None else dt), (U0 if url is None else url)
+            return [n, fee, t, float(v), 2 if islow else 0, di_, ui_, len(pos) - 1, others, zeros, lab(modi, st, nt, tin, tin)], v, modi
+        r0 = rows[0]
+        di_, ui_ = (D0 if r0[5] is None else r0[5]), (U0 if r0[6] is None else r0[6])
+        return [n, fee, t, 0, 4, di_, ui_, 0, [], zeros, -1], None, None
+    def group(code, ni, fee, t, byns, res):
+        ins, net = NETS2[ni]; nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
+        mem = {}
+        for ns in byns:
+            for pi in PS[ns]: mem.setdefault(pi, []).append(ns)
+        cache = {}
+        for pi, nss in mem.items():
+            key = tuple(nss)
+            if key not in cache:
+                if len(nss) == 1: rows = byns[nss[0]]
+                else:   # doctor billed under several groups: merge their rows in flat order, drop exact duplicates
+                    rows = []
+                    for r in heapq.merge(*(byns[x] for x in nss), key=okey):
+                        if not rows or rows[-1] != r: rows.append(r)
+                cache[key] = base(code, fee, t, n, rows)
+            row, hv, hmodi = cache[key]
+            row = list(row)
+            if hv is not None and fee == 0 and t == 0 and not hmodi and (npis[pi], ins, net, hv) in FLAT: row[4] |= 1
+            res.setdefault(pi, []).append(row)
+    curcode, res, g0, byns = None, {}, None, {}
+    while True:
+        batch = cur.fetchmany(200000)
+        if not batch: break
+        for code, ni, fee, t, v, tin, modi, st, nt, di, ui, ns in batch:
+            g = (code, ni, fee, t)
+            if g != g0:
+                if g0: group(*g0, byns, res)
+                if code != curcode:
+                    if curcode: put(curcode, res)
+                    curcode, res = code, {}
+                g0, byns = g, {}
+            r = (v, tin, modi or '', st or '', nt or '', di, ui)
+            lst = byns.get(ns)
+            if lst is None: byns[ns] = [r]
+            elif lst[-1] != r: lst.append(r)
+    if g0: group(*g0, byns, res)
+    if curcode: put(curcode, res)
+    for fu in futs: fu.result()
+    c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+    res_ = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+    s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res_).encode())
+    return res_
 def work3(u, c, src, MD):
     """Stage B, SORTV=3: DuckDB does the per-row work (dedupe, order, $0 count, headline = lowest positive rate with no
     modifier else lowest positive, up to 8 other rates) and returns one row per provider/network/fee/type group; Python
