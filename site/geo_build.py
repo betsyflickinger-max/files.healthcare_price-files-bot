@@ -67,16 +67,27 @@ if not raw:
     except Exception as e: log('Medicare hospital list unavailable:', e); raw = b''
 HGI = {r['Facility ID']: r for r in csv.DictReader(io.StringIO(raw.decode('utf-8-sig')))} if raw else {}
 HROWS = list(csv.DictReader(open(os.path.join(HERE, '..', 'data', 'hospitals.csv')))) if os.path.exists(os.path.join(HERE, '..', 'data', 'hospitals.csv')) else []
-BY_SHA = {r['last_sha256'][:16]: r['ccn'] for r in HROWS if r.get('last_sha256')}
-BY_URL = {r['mrf_url']: r['ccn'] for r in HROWS if r.get('mrf_url')}
+# several hospitals' records can point at one file (a system file, or an old wrong match): keep them all, and pick the one
+# the file is not ruled another hospital's for (bot/identity.py), closest in name to the file (Oct 15, 2026)
+sys.path.insert(0, os.path.join(HERE, '..', 'bot'))
+import identity
+WRONGT = identity.load(s3, B)
+BY_SHA, BY_URL = {}, {}
+for r in HROWS:
+    if r.get('last_sha256'): BY_SHA.setdefault(r['last_sha256'][:16], []).append(r)
+    if r.get('mrf_url'): BY_URL.setdefault(r['mrf_url'], []).append(r)
 ZC = json.loads(get('reference/geo/zcta_us.json') or b'{}')   # ZIP code center points, to check every hospital location found
 STOPH = set('the of at and llc lp inc ltd co dba a an health hospital hospitals medical center system systems regional campus'.split())
 htoks = lambda s: {t for t in re.sub(r'[^a-z0-9 ]', ' ', (s or '').lower()).split() if t not in STOPH and len(t) > 1}
 HGI_CITY = {}
 for c_, r in HGI.items(): HGI_CITY.setdefault((r['City/Town'].upper(), r['State']), []).append((htoks(r['Facility Name']), c_))
 def ccn_of(src):
-    c = BY_SHA.get(src[5]) if len(src) > 5 else None
-    c = c or BY_URL.get(src[4] if len(src) > 4 else '')
+    cands = (BY_SHA.get(src[5], []) if len(src) > 5 else []) + BY_URL.get(src[4] if len(src) > 4 else '', [])
+    ok = [r for r in cands if r['ccn'] in HGI and not identity.is_wrong(WRONGT, r['ccn'], r['mrf_url'])]
+    if ok:
+        a = htoks(src[0])
+        return max(ok, key=lambda r: len(a & htoks(r['name'])))['ccn'], True
+    c = cands[0]['ccn'] if cands else None
     if c in HGI: return c, True
     best, bc = 0, None   # no known CCN: the Medicare hospital in the same city whose name shares the most words
     for nm in (src[0], *(src[2] or '').split(' · ')):
@@ -236,8 +247,7 @@ def place_hosp(src):
     # hospital (Oct 15, 2026: e.g. "Baytown Medical Center" filed with Boston Medical Center's file). Not placed; flagged.
     if c and exact and sid in FALL:
         h = HGI[c]
-        same = lambda st, z: st == h['State'] and (not ZC.get(z) or not ZC.get(h['ZIP Code'][:5]) or near_zip(ZC[z], h['ZIP Code'], 30))
-        if not any(same(st, z) for st, z in FALL[sid]):
+        if identity.check(c, FRAW.get(sid, ''), [name, *(src[2] or '').split(' · ')])[0] == 'wrong':
             WHY[name] = (f"WRONG FILE? this price file gives its address as {FRAW[sid]}, but Medicare's address "
                          f"for CCN {c} is {h['Address']}, {h['City/Town']} {h['State']}; fix data/hospitals.csv")
             return None
