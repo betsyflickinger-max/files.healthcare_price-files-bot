@@ -12,8 +12,8 @@ Where locations come from (all public):
 - Hospitals and surgery centers the Census can't match: OpenStreetMap Nominatim structured search (1 request/second).
 - Hospital price files and posted cash prices (no NPI on the page): matched by name and city to a placed facility; if no
   confident match, Nominatim search by name + city. Results kept only inside the DFW map area.
-- ZIP codes for "near me": Census 2024 Gazetteer ZCTA internal points for all of Texas (R2 reference/geo/zcta_tx.json),
-  kept to the map's area.
+- ZIP codes for "near me": Census 2024 Gazetteer ZCTA internal points for all of Texas (R2 reference/geo/zcta_tx.json), or for
+  the whole U.S. (reference/geo/zcta_us.json) on pages outside Texas, kept to the map's area.
 Cache: R2 reference/geo/cache.csv (address lookups) and reference/geo/names.json (name lookups), so each month only new
 addresses are sent. Nothing about site visitors is involved.
 """
@@ -81,7 +81,9 @@ def nomi(params):
     time.sleep(1.1)
     try: res = requests.get('https://nominatim.openstreetmap.org/search', headers=UA, timeout=30, params=dict(params, format='json', limit=1, countrycodes='us')).json()
     except Exception: return None
-    if res and inside(float(res[0]['lat']), float(res[0]['lon'])): return round(float(res[0]['lat']), 5), round(float(res[0]['lon']), 5)
+    # an error reply comes back as a dict, not a list (Oct 15, 2026: that crashed Mississippi's map); treat it as no match
+    if isinstance(res, list) and res and inside(float(res[0]['lat']), float(res[0]['lon'])): return round(float(res[0]['lat']), 5), round(float(res[0]['lon']), 5)
+    if not isinstance(res, list): log('OpenStreetMap lookup error:', str(res)[:120])
     return None
 def street(a):
     a = re.sub(r'\bI\s*-?\s*(\d+)\b', r'Interstate \1', a.title(), flags=re.I)
@@ -133,7 +135,8 @@ def place(name, city, also=''):
             if sc > best: best, bl = sc, locs[li]
     hit = bl if best >= 0.8 else None
     if not hit and city and 'multiple' not in city.lower():
-        hit = nomi(dict(q=f'{also or name}, {city}, {GSTN}')) or (nomi(dict(q=f'{name}, {city}, {GSTN}')) if also else None)
+        alt = (also or '').split(' · ')[0]   # several other names come joined by " · "; the search takes one (a long one is refused)
+        hit = nomi(dict(q=f'{alt or name}, {city}, {GSTN}')) or (nomi(dict(q=f'{name}, {city}, {GSTN}')) if alt else None)
     names[k] = list(hit) if hit else None
     if len(names) % 10 == 0: s3.put_object(Bucket=B, Key='reference/geo/names.json', Body=json.dumps(names, indent=0).encode())   # survive a timeout
     return names[k]
@@ -147,7 +150,9 @@ for c in {(c['name'], c['city']) for c in D['cash']}:
     if g: cash[f'{c[0]}|{c[1]}'.lower()] = loc(*g); nc += 1
 s3.put_object(Bucket=B, Key='reference/geo/names.json', Body=json.dumps(names, indent=0).encode())
 
-zips = json.loads(get(f'reference/geo/zcta_{GST.lower()}.json') or b'{}')   # every Texas ZIP (Census 2024 Gazetteer), kept to this map's area
+# ZIP codes for "near me": the state's own file when there is one (zcta_tx.json), otherwise every U.S. ZIP code (zcta_us.json,
+# Census 2024 Gazetteer, Oct 15, 2026; state pages had no ZIP list before this). Either way kept to this map's area.
+zips = json.loads(get(f'reference/geo/zcta_{GST.lower()}.json') or get('reference/geo/zcta_us.json') or b'{}')
 zips = {z: v for z, v in zips.items() if BBOX[1] - .3 <= v[0] <= BBOX[3] + .3 and BBOX[0] - .3 <= v[1] <= BBOX[2] + .3}
 geo = dict(build=BID, made=time.strftime('%Y-%m-%d'), locs=locs, p=p, hn=hn, cash=cash, zips=zips,
            stats=dict(providers=len(npis), placed=placed, hospital_files=len(D['hosp']['src']), hospital_files_placed=nh,

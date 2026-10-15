@@ -289,9 +289,55 @@ def live_list(d, slug, name):
     json.dump(L, open(f, 'w', encoding='utf-8'), ensure_ascii=False)
 
 
+BASEMAP_V = 2   # basemap_build.py output version: a cached background older than this is rebuilt (v2: city names fixed, Oct 15, 2026)
+
+
+def make_map(A, E, s3, B, written, prefix, page):
+    """Map files for one page: provider locations (cached per build) and the background (cached per area). Rebuilt when the
+    cached copy is out of date: locations made before the page had its hospital price files or a ZIP list (Oct 15, 2026: every
+    Texas city map showed every hospital price as "not on map" because its locations were cached before Oct 13), or a background
+    older than BASEMAP_V. If either fails, the page goes out without its Map button, exactly as before maps existed for cities."""
+    gkey, bkey, gpath, bpath = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', f'{A.out}/geo.json', f'{A.out}/basemap.json'
+    env = dict(E, NPIS=npis_key(A.city), GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city],
+               GEO_STATE=STATE_OF.get(A.city, 'TX'), GEO_STATE_NAME=CITIES[A.city][0] if A.city in STATE_OF else 'Texas')
+    try:
+        s = open(page, encoding='utf-8').read()
+        nh = len(json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', s, re.S).group(1))['hosp']['src'])
+        fresh = False
+        if written(gkey):
+            s3.download_file(B, gkey, gpath); g = json.load(open(gpath))
+            fresh = g['stats'].get('hospital_files', 0) == nh and bool(g.get('zips'))
+            if not fresh: print(f"map locations are out of date (hospital files {g['stats'].get('hospital_files', 0)} vs {nh} on the page, {len(g.get('zips') or {})} ZIP codes); rebuilding")
+        if not fresh:
+            r = subprocess.run([sys.executable, f'{HERE}/geo_build.py', page, prefix], env=env, capture_output=True, text=True, timeout=5400)
+            print(r.stdout[-2000:], r.stderr[-2000:])
+            if r.returncode: raise RuntimeError('geo_build.py failed')
+            s3.download_file(B, gkey, gpath)
+        ok = False
+        if written(bkey):
+            s3.download_file(B, bkey, bpath)
+            try: ok = json.load(open(bpath)).get('v', 1) >= BASEMAP_V
+            except Exception: ok = False
+        if not ok:
+            r = subprocess.run([sys.executable, f'{HERE}/basemap_build.py', gpath, page, bpath], env=env, capture_output=True, text=True, timeout=1800)
+            print(r.stdout[-1500:], r.stderr[-1500:])
+            if r.returncode: raise RuntimeError('basemap_build.py failed')
+            s3.upload_file(bpath, B, bkey)
+        g = json.load(open(gpath))
+        print(f"map: {g['stats']['placed']:,} of {g['stats']['providers']:,} providers placed, {g['stats']['hospital_files_placed']} of {nh} hospital files, {len(g['zips'])} ZIP codes")
+        on = '<button type="button" id="vMap" aria-pressed="false" hidden>Map</button>'
+        if s.count(on.replace(' hidden>', '>')) == 1 and MAP_NOTE[:60] in s: return True   # already has its map (--map-only)
+        if s.count(on) != 1 or s.count('<p>Published prices are not quotes.') != 1: raise RuntimeError('page wording for the map changed')
+        s = s.replace(on, on.replace(' hidden>', '>')).replace('<p>Published prices are not quotes.', MAP_NOTE + '<p>Published prices are not quotes.')
+        open(page, 'w', encoding='utf-8').write(s)
+        return True
+    except Exception as e: print('map left off this page:', e); return None
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('city'); ap.add_argument('--deploy', action='store_true'); ap.add_argument('--out', default='/tmp/city')
+    ap.add_argument('--map-only', action='store_true', help='rebuild only the map files for the published page (no deploy)')
     for a in ('template', 'embed', 'rvu', 'med-all', 't5', 'quality'): ap.add_argument('--' + a)
     A = ap.parse_args()
     if A.city not in CITIES: sys.exit(f'unknown city {A.city!r}; choose one of {", ".join(CITIES)}')
@@ -319,7 +365,7 @@ def main():
     f = {k: f'{A.out}/{n}' for k, n in [('template', 'dfw.html'), ('embed', 'embed.json'), ('rvu', 'rvu.zip'), ('med', 'med.json'), ('t5', 't5.txt')]}
     for k, key in [('template', 'site/deploy/price-finder.html'), ('embed', prefix + 'embed.json'), ('rvu', 'reference/2026-09-29/cms/rvu26d-updated-08-26-2026.zip'),
                    ('med', 'reference/site/med_all.json'), ('t5', 'reference/site/msdrg_table5.txt')]:
-        s3.download_file(B, key, f[k])
+        if not A.map_only: s3.download_file(B, key, f[k])
     hidx, hpre = None, None
     for _, d_ in reversed(done):   # the area's hospital price files (site/hosp_area.py): newest insurer build that has them
         if written(d_ + 'hosp/hosp_index.json'):
@@ -328,33 +374,12 @@ def main():
     for k, dst in [(prefix + 'npis.json', f'{A.out}/npis.json'), ('data/idr/site/arb_tx.json', f'{A.out}/arb_tx.json')]:
         try: s3.download_file(B, k, dst)
         except Exception as e: print('not found:', k, e)
-    page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json')
-    # map: provider locations (cached per build) and the background (cached per city). If either fails, the page goes
-    # out without its Map button, exactly as before maps existed for cities.
-    gkey, bkey, maps = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', None
-    try:
-        if not written(gkey):
-            env = dict(E, NPIS=npis_key(A.city), GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city],
-                       GEO_STATE=STATE_OF.get(A.city, 'TX'), GEO_STATE_NAME=CITIES[A.city][0] if A.city in STATE_OF else 'Texas')
-            r = subprocess.run([sys.executable, f'{HERE}/geo_build.py', page, prefix], env=env, capture_output=True, text=True, timeout=5400)
-            print(r.stdout[-2000:], r.stderr[-2000:])
-            if r.returncode: raise RuntimeError('geo_build.py failed')
-        s3.download_file(B, gkey, f'{A.out}/geo.json')
-        if not written(bkey):
-            r = subprocess.run([sys.executable, f'{HERE}/basemap_build.py', f'{A.out}/geo.json', page, f'{A.out}/basemap.json'], capture_output=True, text=True, timeout=1800)
-            print(r.stdout[-1500:], r.stderr[-1500:])
-            if r.returncode: raise RuntimeError('basemap_build.py failed')
-            s3.upload_file(f'{A.out}/basemap.json', B, bkey)
-        else: s3.download_file(B, bkey, f'{A.out}/basemap.json')
-        g = json.load(open(f'{A.out}/geo.json'))
-        print(f"map: {g['stats']['placed']:,} of {g['stats']['providers']:,} providers placed")
-        s = open(page, encoding='utf-8').read()
-        on = '<button type="button" id="vMap" aria-pressed="false" hidden>Map</button>'
-        if s.count(on) != 1 or s.count('<p>Published prices are not quotes.') != 1: raise RuntimeError('page wording for the map changed')
-        s = s.replace(on, on.replace(' hidden>', '>')).replace('<p>Published prices are not quotes.', MAP_NOTE + '<p>Published prices are not quotes.')
-        open(page, 'w', encoding='utf-8').write(s); maps = True
-    except Exception as e: print('map left off this page:', e)
+    if A.map_only:   # Oct 15, 2026: refresh only the map files for the page already published (saved in R2), no new page
+        page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
+    else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json')
+    maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
+    if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return
     if not A.deploy: print('built, not deployed (run with deploy on to publish)'); return
     if not E.get('CLOUDFLARE_API_TOKEN'): sys.exit('CLOUDFLARE_API_TOKEN is not set; built but not deployed')
     # deploy: same steps as orchestrate.publish

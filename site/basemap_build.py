@@ -6,7 +6,7 @@ Usage: python site/basemap_build.py <geo.json> <page.html> <out basemap.json>
 Same layers as the DFW map: county lines; primary roads (interstates, toll roads) and U.S./state highways; named lakes and
 reservoirs over 1 km2; incorporated places with providers. Road markers (I-35, US 75, SH 121, tollways) are placed along
 long stretches, one per ~0.14 degrees. Read by /price-finder/map.js."""
-import json, math, re, sys, time
+import json, math, os, re, sys, time
 from collections import Counter
 import requests
 
@@ -76,11 +76,29 @@ for p, L, n, m in sorted(cands, key=lambda x: (-x[0], -x[1])):
     if cell in seen or any(abs(m[0] - l['lon']) < .07 and abs(m[1] - l['lat']) < .07 for l in lab): continue
     seen.add(cell); lab.append(dict(name=n, lon=m[0], lat=m[1], p=int(p)))
 cnt = Counter(f[1].upper() for f in D['fac'])
-pl = [dict(name=a['BASENAME'], lat=float(a['INTPTLAT']), lon=float(a['INTPTLON']), n=cnt.get(a['BASENAME'].upper(), 0))
-      for a in (f['attributes'] for f in query('Places_CouSub_ConCity_SubMCD', 4, 'BASENAME,INTPTLAT,INTPTLON', geom=False))]
-pl = sorted(pl, key=lambda p: -p['n'])
-pl = [p for p in pl if p['n'] >= (10 if sum(1 for x in pl if x['n'] >= 10) >= 25 else 2)]
-json.dump(dict(bbox=bb, counties=counties, water=water, wlabels=wlabels, roads=roads, rlabels=lab, places=pl,
+# city names (Oct 15, 2026 fixes): only places in the page's own state (GEO_STATE, default TX), so a state map no longer labels
+# the Kansas City across the line or three Franklins; consolidated cities by their everyday name (the Census calls Nashville
+# "Nashville-Davidson metropolitan government (balance)", so it got no label); one label per name.
+FIPS = {'AL': '01', 'AK': '02', 'AZ': '04', 'AR': '05', 'CA': '06', 'CO': '08', 'CT': '09', 'DE': '10', 'DC': '11', 'FL': '12', 'GA': '13', 'HI': '15',
+        'ID': '16', 'IL': '17', 'IN': '18', 'IA': '19', 'KS': '20', 'KY': '21', 'LA': '22', 'ME': '23', 'MD': '24', 'MA': '25', 'MI': '26', 'MN': '27',
+        'MS': '28', 'MO': '29', 'MT': '30', 'NE': '31', 'NV': '32', 'NH': '33', 'NJ': '34', 'NM': '35', 'NY': '36', 'NC': '37', 'ND': '38', 'OH': '39',
+        'OK': '40', 'OR': '41', 'PA': '42', 'RI': '44', 'SC': '45', 'SD': '46', 'TN': '47', 'TX': '48', 'UT': '49', 'VT': '50', 'VA': '51', 'WA': '53',
+        'WV': '54', 'WI': '55', 'WY': '56'}
+st = FIPS.get(os.environ.get('GEO_STATE', 'TX'), '48')
+def everyday(n):
+    if re.search(r'government|\(balance\)|-\w+ County$', n):
+        n = re.sub(r'\s*\(balance\)$', '', n); n = re.sub(r'\s+(metropolitan|metro|consolidated|unified|urban county)\s+government$', '', n)
+        n = re.sub(r'\s+city$', '', n); n = re.split(r'[-/]', n)[0].strip()
+    return n
+pl, seen = [], set()
+for a in sorted((f['attributes'] for f in query('Places_CouSub_ConCity_SubMCD', 4, 'BASENAME,INTPTLAT,INTPTLON', where=f"STATE='{st}'", geom=False)),
+                key=lambda a: -cnt.get(everyday(a['BASENAME']).upper(), 0)):
+    n = everyday(a['BASENAME'])
+    if n.upper() in seen: continue
+    seen.add(n.upper()); pl.append(dict(name=n, lat=float(a['INTPTLAT']), lon=float(a['INTPTLON']), n=cnt.get(n.upper(), 0)))
+floor = 10 if sum(1 for x in pl if x['n'] >= 10) >= 25 else 2 if sum(1 for x in pl if x['n'] >= 2) >= 8 else 1
+pl = [p for p in pl if p['n'] >= floor]
+json.dump(dict(v=2, bbox=bb, counties=counties, water=water, wlabels=wlabels, roads=roads, rlabels=lab, places=pl,
                source='U.S. Census Bureau TIGERweb (counties, primary and secondary roads, lakes, incorporated places), retrieved ' + time.strftime('%Y-%m-%d')),
           open(out, 'w'), separators=(',', ':'))
 print('basemap', len(counties), 'counties', len(roads), 'road pieces', len(water), 'lakes', len(lab), 'road markers', len(pl), 'city names', flush=True)
