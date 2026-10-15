@@ -47,6 +47,10 @@ FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date"
 # covered services, code version). When a machine slot is free, the bot re-reads those files, new files always first.
 READER = "2"
 REREAD_OLD_TABLES = True
+# Oct 15, 2026: such a re-read (an unchanged file, tables from an older reader) only collects the fields kept since Oct 13,
+# so it streams the file once and writes just those to <scope>/fields/ (worker.py fields_only) instead of re-writing
+# every price row. Aetna national files took 3+ hours per scope the full way. False = re-read in full as before.
+REREAD_FIELDS_ONLY = True
 SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
 # Oct 12, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and sfo3, so the
 # last Texas Cigna file (Pathwell OAP) could not start; s-8vcpu-32gb-amd was renting fine in nyc3 (and Cigna ran out of memory before).
@@ -153,6 +157,10 @@ def collect(s3, b, man, now, dry):
             if age > STUCK_HOURS:
                 m.update(status="failed", detail=f"machine gave no result in {STUCK_HOURS} hours", fails=str(int(m.get("fails") or 0) + 1))
                 notes.append(("failed", m))
+            continue
+        if res.get("ok") and res.get("fields_only"):   # prices unchanged: keep the table, its rows and dates
+            m.update(status="processed", reader=READER, backfill="", fails="0", processed_on=res.get("finished_at", "")[:10],
+                     detail=f"new fields collected in {res.get('secs', '?')}s (prices unchanged, price tables kept)")
             continue
         if res.get("ok"):
             old_rows = m.get("rows", "")
@@ -270,6 +278,7 @@ def launch(s3, b, man, now, dry):
         job = dict(id=fleet.job_id(SCOPE, m["slot"]), kind="insurer", scope=SCOPE, slot=m["slot"], url=m["next_url"],
                    network_label=m["network_label"], prev_table=m.get("table", ""), group=m["machine_group"],
                    size=size, mem=fleet.mem_gb(size), backfill="1" if m.get("backfill") == "1" else "",
+                   fields_only="1" if m.get("backfill") == "1" and REREAD_FIELDS_ONLY else "",
                    run_id=run_id, done_key=f"{P}runs/{run_id}/done/{m['slot']}.json", out_prefix=SCOPES[SCOPE][2],
                    scope_key=SCOPES[SCOPE][1], hold_key=P + "hold.txt")
         if dry:

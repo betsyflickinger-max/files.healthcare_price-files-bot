@@ -83,6 +83,8 @@ def one(job):
         src, extra = unpack_7z(url), ["--source-url", url.split("?")[0]]
     new = stem(Path(src.split("?")[0]).name)
     res = dict(slot=job["slot"], url=url, table=new, prev_table=job.get("prev_table", ""), ok=False)
+    if job.get("fields_only") == "1":
+        return fields_only(job, src, label, extra, new, res, t0)
     for sub in ("rates", "membership", "codes", "ends"):
         (DATA / sub / f"{new}.parquet").unlink(missing_ok=True)
     p = subprocess.run([sys.executable, str(PIPE / "06f_full_extract.py"), src, "--network", label,
@@ -129,6 +131,31 @@ def one(job):
                 move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")
         res["retired"] = old
     res.update(ok=True, secs=round(time.time() - t0))
+    return res
+
+
+def fields_only(job, src, label, extra, new, res, t0):
+    """Oct 15, 2026: an unchanged file whose tables came from an older reader. Instead of re-writing every price row
+    (billions for Aetna, 3+ hours), stream the file once and keep only the fields the reader has kept since Oct 13
+    (06f --fields-only -> data/fields/). Saved next to the existing tables under the existing table's name; the rates
+    and membership tables are not touched."""
+    name = job.get("prev_table") or new
+    f = DATA / "fields" / f"{new}.parquet"
+    f.unlink(missing_ok=True)
+    p = subprocess.run([sys.executable, str(PIPE / "06f_full_extract.py"), src, "--network", label, "--scope", str(SCOPE_FILE),
+                        "--fields-only"] + extra, cwd=PIPE, capture_output=True, text=True)
+    if src != job["url"]:
+        Path(src).unlink(missing_ok=True)
+    tail = (p.stdout + p.stderr).strip().splitlines()[-6:]
+    if p.returncode != 0:
+        tail += [f"exit code {p.returncode}"] + p.stderr.strip().splitlines()[-12:]
+    log(f"[{job['slot']}] (new fields only)", *tail)
+    if p.returncode != 0 or not f.exists():
+        res["error"] = " | ".join(tail)[-1500:] or f"06f exit {p.returncode}"
+        return res
+    s3.upload_file(str(f), B, f"{OUT}fields/{name}.parquet")
+    f.unlink()
+    res.update(ok=True, fields_only=True, table=name, secs=round(time.time() - t0))
     return res
 
 

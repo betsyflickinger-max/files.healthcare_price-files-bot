@@ -112,6 +112,10 @@ func main() {
 	npiF := flag.String("npis", "", "NPIs to keep when listed inline")
 	codeF := flag.String("codes", "", "billing codes to keep (omit = all)")
 	outF := flag.String("out", "", "output .csv.gz")
+	// Oct 15, 2026: -fields writes only the fields kept since Oct 13 (code version, description, bundled/covered
+	// services: once per item; additional_information: once per price x provider group, only when present) for items
+	// that price an in-scope provider. Used to fill in those fields for an unchanged file without re-writing its prices.
+	fieldsOnly := flag.Bool("fields", false, "write only the Oct 13 fields, not the price rows")
 	flag.Parse()
 
 	// Provider references: each distinct (npi, tin, tin_type) is stored once and referenced by index,
@@ -182,9 +186,13 @@ func main() {
 	}
 	bw := bufio.NewWriterSize(w, 8<<20)
 	cw := csv.NewWriter(bw)
-	cw.Write([]string{"billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
-		"negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier", "expiration_date",
-		"billing_code_type_version", "description", "additional_information", "bundled_codes", "covered_services"})
+	if *fieldsOnly {
+		cw.Write(fieldsHeader)
+	} else {
+		cw.Write([]string{"billing_code_type", "billing_code", "name", "negotiation_arrangement", "npi", "tin", "tin_type",
+			"negotiated_type", "negotiated_rate", "billing_class", "setting", "service_code", "billing_code_modifier", "expiration_date",
+			"billing_code_type_version", "description", "additional_information", "bundled_codes", "covered_services"})
+	}
 
 	work := make(chan []byte, 4)
 	rowsCh := make(chan [][]string, 4)
@@ -195,7 +203,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			for b := range work {
-				process(b, refs, whos, npis, func(o [][]string) { rowsCh <- o })
+				process(b, refs, whos, npis, *fieldsOnly, func(o [][]string) { rowsCh <- o })
 			}
 		}()
 	}
@@ -312,13 +320,18 @@ func main() {
 		items, float64(total)/1e9, nrows, time.Since(t0).Minutes())
 }
 
-func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]bool, emit func([][]string)) {
+var fieldsHeader = []string{"rec", "billing_code_type", "billing_code", "negotiation_arrangement", "name", "billing_code_type_version",
+	"description", "bundled_codes", "covered_services", "negotiated_type", "negotiated_rate", "billing_class", "setting",
+	"service_code", "billing_code_modifier", "expiration_date", "tin", "tin_type", "additional_information"}
+
+func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]bool, fieldsOnly bool, emit func([][]string)) {
 	var it item
 	if err := json.Unmarshal(b, &it); err != nil {
 		fmt.Fprintln(os.Stderr, "    ! decode error:", err)
 		return
 	}
 	var out [][]string
+	hit := false
 	bundled, covered := compactJSON(it.Bundled), compactJSON(it.Covered)
 	for _, nr := range it.Rates {
 		seen := map[who]bool{}
@@ -346,6 +359,37 @@ func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]boo
 		if len(ws) == 0 {
 			continue
 		}
+		if fieldsOnly {
+			hit = true
+			type tk struct{ tin, ttype string }
+			var tins []tk
+			seenT := map[tk]bool{}
+			for _, w := range ws {
+				if k := (tk{w.tin, w.ttype}); !seenT[k] {
+					seenT[k] = true
+					tins = append(tins, k)
+				}
+			}
+			for _, p := range nr.Prices {
+				if strings.TrimSpace(p.Additional) == "" {
+					continue
+				}
+				mods := make([]string, len(p.Modifier))
+				for i, m := range p.Modifier {
+					mods[i] = string(m)
+				}
+				rate := string(p.Rate)
+				if v, err := strconv.ParseFloat(rate, 64); err == nil {
+					rate = strconv.FormatFloat(v, 'f', -1, 64)
+				}
+				for _, k := range tins {
+					out = append(out, []string{"note", it.CodeType, string(it.Code), it.Arrangement, it.Name, "", "", "", "",
+						p.Type, rate, p.Class, p.Setting, strings.Join(p.ServiceCode, ","), strings.Join(mods, ","), p.Expiration,
+						k.tin, k.ttype, p.Additional})
+				}
+			}
+			continue
+		}
 		for _, p := range nr.Prices {
 			mods := make([]string, len(p.Modifier))
 			for i, m := range p.Modifier {
@@ -365,6 +409,10 @@ func process(b []byte, refs map[string][]uint32, whos []who, npis map[string]boo
 				}
 			}
 		}
+	}
+	if fieldsOnly && hit { // the item's own fields, once, when it prices at least one in-scope provider
+		out = append(out, []string{"item", it.CodeType, string(it.Code), it.Arrangement, it.Name, it.Version, it.Description,
+			bundled, covered, "", "", "", "", "", "", "", "", "", ""})
 	}
 	if len(out) > 0 {
 		emit(out)

@@ -40,6 +40,7 @@ s6 = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(s6)
 BIN = HERE / "mrfrows" / "mrfrows"
 RATES, MEMB, CODES = DATA / "rates", DATA / "membership", DATA / "codes"
+FIELDS = DATA / "fields"   # Oct 15, 2026: --fields-only output (see fields_only())
 
 
 def duck():
@@ -178,6 +179,8 @@ def extract(path, ctx):
             n_refs += hit
     print(f"  roster: {n_refs:,} provider groups include in-scope providers; {len({k[0] for k in members}):,} NPIs", flush=True)
     (tmp / "npis.txt").write_text("\n".join(npis))
+    if ctx.get("fields_only"):
+        return fields_only(path, ctx, meta, label, source_file, tmp)
 
     RATES.mkdir(parents=True, exist_ok=True)
     MEMB.mkdir(parents=True, exist_ok=True)
@@ -222,6 +225,34 @@ def extract(path, ctx):
 
 
 CENSUS, ENDS = DATA / "census", DATA / "ends"
+
+
+def fields_only(path, ctx, meta, label, source_file, tmp):
+    """Oct 15, 2026: for an unchanged file whose tables came from an older reader, write only the fields the reader has
+    kept since Oct 13 to data/fields/<source>.parquet, without re-writing billions of price rows:
+      rec='item'  billing code version, description, bundled_codes, covered_services, once per in-network item
+      rec='note'  additional_information, once per price x provider group (TIN), only where the file has one
+    Same items and providers in scope as a full read; the rates/membership tables are left as they are."""
+    st = stem(source_file)
+    cmd = [str(BIN), "-in", str(path), "-refmap", str(tmp / "refmap.tsv"), "-npis", str(tmp / "npis.txt"),
+           "-out", str(tmp / "fields.csv.gz"), "-fields"]
+    if ctx.get("codes"):
+        cmd += ["-codes", ctx["codes"]]
+    subprocess.run(cmd, check=True)
+    FIELDS.mkdir(parents=True, exist_ok=True)
+    con = duck()
+    lit = lambda s: "'" + str(s or "").replace("'", "''") + "'"
+    dest = FIELDS / (st + ".parquet")
+    con.execute(f"""copy (select distinct {lit(meta.get('reporting_entity_name'))} as reporting_entity_name, {lit(label)} as file_label,
+          {lit(meta.get('last_updated_on'))} as last_updated_on, coalesce(columns(*), ''), {lit(source_file)} as source_file,
+          {lit(ctx.get('source_url'))} as source_url, {lit(date.today().isoformat())} as checked_on
+        from read_csv('{tmp / 'fields.csv.gz'}', header=true, all_varchar=true, quote='"', escape='"', delim=',')
+    ) to '{dest}' (format parquet, compression zstd)""")
+    n = dict(con.execute(f"select rec, count(*) from '{dest}' group by 1").fetchall())
+    for p in tmp.iterdir():
+        p.unlink()
+    tmp.rmdir()
+    print(f"  fields only: {n.get('item', 0):,} items, {n.get('note', 0):,} price notes -> fields/{st}.parquet", flush=True)
 
 
 def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_groups, n_npis):
@@ -317,10 +348,12 @@ if __name__ == "__main__":
     ap.add_argument("--codes", default="", help="file of billing codes (default: all)")
     ap.add_argument("--network", default="")
     ap.add_argument("--source-url", default="")
+    ap.add_argument("--fields-only", action="store_true", help="write only data/fields/<source>.parquet (see fields_only())")
     a = ap.parse_args()
     codes = ""
     if a.codes:
         cs = [r["code"] for r in csv.DictReader(open(a.codes))] if a.codes.endswith(".csv") else open(a.codes).read().split()
         codes = str(Path(tempfile.mkdtemp()) / "codes.txt")
         Path(codes).write_text("\n".join(cs))
-    run(a.source, {"npis": load_scope(a.scope), "codes": codes, "network": a.network, "source_url": a.source_url})
+    run(a.source, {"npis": load_scope(a.scope), "codes": codes, "network": a.network, "source_url": a.source_url,
+                   "fields_only": a.fields_only})
