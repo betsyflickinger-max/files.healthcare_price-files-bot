@@ -217,7 +217,8 @@ def main():
                 env = dict(RATES=f'data/s7/state/{slug}/rates/', NPIS=f'data/s7/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
-                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='360', BCLAIM='1', **{**W, **WBIG.get(slug, {})})
+                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
+                            **{**W, **WBIG.get(slug, {})})
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         release_finished(left)
         cap, held = build_cap(left)
