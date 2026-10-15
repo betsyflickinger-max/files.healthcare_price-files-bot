@@ -60,6 +60,57 @@ jobs:
           for f in sorted(glob.glob("out/dashboard/*.json")): assert os.path.getsize(f) < 8_000_000, f"{f} is over 8 MB"
           print("price side ok:", len(m), "areas")
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dashboard
+          path: out/dashboard
+          retention-days: 2
+
+  network:   # Oct 15, 2026: the "Network access" tab for every live area (was run by hand for DFW + 5 Texas markets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install boto3==1.35.36 numpy==2.1.2
+      - name: Network access (every live Price Finder area)
+        run: |
+          set -o pipefail
+          python dashboard/build_network.py --out out/network | grep -vE '_[0-9]+\.json 0 rows' | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import json, glob, os
+          a = json.load(open("out/network/net_access.json")); assert any(x["market"] == "DFW" for x in a), "no DFW"
+          for f in sorted(glob.glob("out/network/*.json")): assert os.path.getsize(f) < 8_000_000, f"{f} is over 8 MB"
+          print("network side ok:", len({x["market"] for x in a}), "areas")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: network
+          path: out/network
+          retention-days: 2
+
+  publish:   # runs once both are done; if the network job failed, the day's data goes out without its files (yesterday's stay)
+    needs: [build, network]
+    if: always() && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dashboard
+          path: out/dashboard
+      - uses: actions/download-artifact@v4
+        if: needs.network.result == 'success'
+        with:
+          name: network
+          path: out/dashboard
       - name: Publish (private repo when its token is set, else the public dashboard-data branch)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
