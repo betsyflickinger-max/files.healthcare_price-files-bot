@@ -6,7 +6,7 @@
 2. All seven states' providers, lines layout only: time and size, to set against the fleet's flat read of the same file.
 Results: R2 work/test-reader/<file stem>/report.json (+ the lines tables, for later tests).
 Env: R2_*, TEST_URL, TEST_LABEL."""
-import json, os, shutil, subprocess, sys, time
+import json, os, resource, shutil, subprocess, sys, time
 from pathlib import Path
 import boto3, duckdb
 
@@ -44,45 +44,51 @@ def run(name, scope, layout):
         if (DATA / sub).exists(): shutil.copytree(DATA / sub, dest / sub)
     size = lambda sub: sum(f.stat().st_size for f in (dest / sub).glob("*.parquet")) if (dest / sub).exists() else 0
     rep["runs"][name] = {"layout": layout, "scope": scope, "exit": p.returncode, "total_min": mins,
+                         "peak_mem_gb": round(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss / 1e6, 1),
                          "read_line": [l for l in log if "done:" in l or "lines layout" in l or "wrote" in l][-4:],
                          "rates_bytes": size("rates"), "npisets_bytes": size("npisets"), "log_tail": log[-6:]}
     save()
     return dest
 
-a = run("ms-flat", "ms.parquet", "flat")
-b = run("ms-lines", "ms.parquet", "lines")
+ONLY_S7 = E.get("ONLY_S7") == "1"   # Oct 15 rerun: the Mississippi part already passed; the seven-state part ran out of memory on 16 GB
+if ONLY_S7:
+    rep = json.loads(s3.get_object(Bucket=B, Key=OUT + "report.json")["Body"].read()); rep["s7_rerun"] = "32 GB machine"; save()
+a = None if ONLY_S7 else run("ms-flat", "ms.parquet", "flat")
+b = None if ONLY_S7 else run("ms-lines", "ms.parquet", "lines")
 
 # ---------- compare ----------
-sys.path.insert(0, str(HERE)); sys.argv = ["x"]
-import importlib.util
-spec = importlib.util.spec_from_file_location("f6", HERE / "06f_full_extract.py"); f6 = importlib.util.module_from_spec(spec); spec.loader.exec_module(f6)
-c = duckdb.connect(); c.execute("set memory_limit='8GB'; set threads=6; set preserve_insertion_order=false; set temp_directory='/d/spill'")
-fa = next((a / "rates").glob("*.parquet")); fb = next((b / "rates").glob("*.parquet"))
-FA, FB = f"read_parquet('{fa}')", f6.flat_sql(fb, b / "npisets" / fb.name)
-ca = [r[0] for r in c.execute(f"describe select * from {FA}").fetchall()]; cb = [r[0] for r in c.execute(f"describe select * from {FB}").fetchall()]
-cmp = {"columns_same": ca == cb}
-hs = "hash(" + ", ".join(f'"{x}"' for x in ca) + ")"
-q = lambda T: {r[0]: (r[1], int(r[2])) for r in c.execute(f"select billing_code, count(*), sum({hs}::hugeint) from {T} group by 1").fetchall()}
-ka, kb = q(FA), q(FB)
-cmp.update(codes_flat=len(ka), codes_lines=len(kb), rows_flat=sum(v[0] for v in ka.values()), rows_lines=sum(v[0] for v in kb.values()),
-           codes_differ=sorted(k for k in set(ka) | set(kb) if ka.get(k) != kb.get(k))[:50])
-for sub in ("membership", "ends"):
-    pa_, pb_ = list((a / sub).glob("*.parquet")), list((b / sub).glob("*.parquet"))
-    if pa_ and pb_:
-        A_, B_ = f"read_parquet('{pa_[0]}')", f"read_parquet('{pb_[0]}')"
-        cmp[sub] = c.execute(f"select (select count(*) from {A_}), (select count(*) from (select * from {A_} except all select * from {B_})), "
-                             f"(select count(*) from (select * from {B_} except all select * from {A_}))").fetchone()
-ja, jb = list((a / "census").glob("*.json")), list((b / "census").glob("*.json"))
-if ja and jb:
-    x, y = json.loads(ja[0].read_text()), json.loads(jb[0].read_text())
-    cmp["census_keys_differ"] = sorted(k for k in set(x) | set(y) if k != "checked_on" and x.get(k) != y.get(k))
-cmp["result"] = "PASS" if (cmp["columns_same"] and not cmp["codes_differ"] and cmp["rows_flat"] == cmp["rows_lines"]
-                           and all(cmp.get(s_, (0, 0, 0))[1:] == (0, 0) for s_ in ("membership", "ends")) and not cmp.get("census_keys_differ")) else "FAIL"
-rep["ms_compare"] = cmp; save()
-for sub in ("rates", "npisets"):
-    for f in (b / sub).glob("*.parquet"): s3.upload_file(str(f), B, f"{OUT}ms-lines/{sub}/{f.name}")
-shutil.rmtree(W / "out" / "ms-flat", ignore_errors=True)
+def compare_ms():
+    sys.path.insert(0, str(HERE)); sys.argv = ["x"]
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("f6", HERE / "06f_full_extract.py"); f6 = importlib.util.module_from_spec(spec); spec.loader.exec_module(f6)
+    c = duckdb.connect(); c.execute("set memory_limit='8GB'; set threads=6; set preserve_insertion_order=false; set temp_directory='/d/spill'")
+    fa = next((a / "rates").glob("*.parquet")); fb = next((b / "rates").glob("*.parquet"))
+    FA, FB = f"read_parquet('{fa}')", f6.flat_sql(fb, b / "npisets" / fb.name)
+    ca = [r[0] for r in c.execute(f"describe select * from {FA}").fetchall()]; cb = [r[0] for r in c.execute(f"describe select * from {FB}").fetchall()]
+    cmp = {"columns_same": ca == cb}
+    hs = "hash(" + ", ".join(f'"{x}"' for x in ca) + ")"
+    q = lambda T: {r[0]: (r[1], int(r[2])) for r in c.execute(f"select billing_code, count(*), sum({hs}::hugeint) from {T} group by 1").fetchall()}
+    ka, kb = q(FA), q(FB)
+    cmp.update(codes_flat=len(ka), codes_lines=len(kb), rows_flat=sum(v[0] for v in ka.values()), rows_lines=sum(v[0] for v in kb.values()),
+               codes_differ=sorted(k for k in set(ka) | set(kb) if ka.get(k) != kb.get(k))[:50])
+    for sub in ("membership", "ends"):
+        pa_, pb_ = list((a / sub).glob("*.parquet")), list((b / sub).glob("*.parquet"))
+        if pa_ and pb_:
+            A_, B_ = f"read_parquet('{pa_[0]}')", f"read_parquet('{pb_[0]}')"
+            cmp[sub] = c.execute(f"select (select count(*) from {A_}), (select count(*) from (select * from {A_} except all select * from {B_})), "
+                                 f"(select count(*) from (select * from {B_} except all select * from {A_}))").fetchone()
+    ja, jb = list((a / "census").glob("*.json")), list((b / "census").glob("*.json"))
+    if ja and jb:
+        x, y = json.loads(ja[0].read_text()), json.loads(jb[0].read_text())
+        cmp["census_keys_differ"] = sorted(k for k in set(x) | set(y) if k != "checked_on" and x.get(k) != y.get(k))
+    cmp["result"] = "PASS" if (cmp["columns_same"] and not cmp["codes_differ"] and cmp["rows_flat"] == cmp["rows_lines"]
+                               and all(cmp.get(s_, (0, 0, 0))[1:] == (0, 0) for s_ in ("membership", "ends")) and not cmp.get("census_keys_differ")) else "FAIL"
+    rep["ms_compare"] = cmp; save()
+    for sub in ("rates", "npisets"):
+        for f in (b / sub).glob("*.parquet"): s3.upload_file(str(f), B, f"{OUT}ms-lines/{sub}/{f.name}")
+    shutil.rmtree(W / "out" / "ms-flat", ignore_errors=True)
 
+if not ONLY_S7: compare_ms()
 d = run("s7-lines", "s7.parquet", "lines")
 for sub in ("rates", "npisets", "membership"):
     for f in (d / sub).glob("*.parquet"): s3.upload_file(str(f), B, f"{OUT}s7-lines/{sub}/{f.name}")
