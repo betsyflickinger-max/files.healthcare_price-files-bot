@@ -140,7 +140,17 @@ def fix_names(O, prefix):
     key = prefix + 'hosp/hosp_index.json'
     try: H = json.loads(O.s3.get_object(Bucket=O.B, Key=key)['Body'].read())
     except Exception: return
-    cms = {r['last_sha256'][:16]: (r['name'], r['city']) for r in csv.DictReader(open(f'{HERE}/../data/hospitals.csv')) if r['last_sha256']}
+    # Oct 15, 2026: never name a file after a hospital it was ruled not to belong to (bot/identity.py); when several hospitals
+    # share a file, the one the build planned it for (its job's CCN) wins
+    sys.path.insert(0, f'{HERE}/../bot')
+    import identity
+    wrong = identity.load(O.s3, O.B)
+    plan = {j['id']: j['ccn'] for a in O.getj(O.SP + 'areas.json', {}).values() for j in a['jobs']}
+    cms = {}
+    for r in csv.DictReader(open(f'{HERE}/../data/hospitals.csv')):
+        k = r['last_sha256'][:16]
+        if not k or identity.is_wrong(wrong, r['ccn'], r['mrf_url']): continue
+        if k not in cms or plan.get(k) == r['ccn']: cms[k] = (r['name'], r['city'])
     from collections import Counter
     n = Counter((x[0] or '').strip().lower() for x in H['src'])
     fixed = 0

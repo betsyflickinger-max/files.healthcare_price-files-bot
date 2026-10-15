@@ -72,7 +72,7 @@ def places(addr):
     for part in re.split(r"\s*[|;]\s*|\n", addr or ""):
         if re.search(r"\bP\.?\s*O\.?\s*BOX\b|\bPOB\b|\bPO DRAWER\b", part, re.I):
             continue
-        out += [(m.group(1).upper(), m.group(2)) for m in re.finditer(r"\b([A-Za-z]{2})\b\.?,?\s+(\d{5})(?:-\d{4})?\b", part)
+        out += [(m.group(1).upper(), m.group(2)) for m in re.finditer(r"\b([A-Za-z]{2})\b\.?\s*,?\s*(\d{5})(?:-\d{4})?\b", part)
                 if m.group(1).upper() in STATES]
     return out
 
