@@ -74,7 +74,7 @@ def lift_pause():
 # Oct 14: when a state finishes, its machines delete themselves and the free slots go to the states still building, so no
 # slot sits empty (this was done by hand before). Each free slot goes to the state with the most stage-B buckets left per
 # machine; a new machine spends ~30 min getting ready, so only where at least MIN_LEFT buckets per machine remain.
-NB, MIN_LEFT, MAX_MACHINES = 256, 10, 20   # Oct 14 11:35pm CT: 12 -> 20 so Tennessee's freed slots go to Georgia
+NB, MIN_LEFT, MAX_MACHINES = 256, 10, 24   # Oct 14 11:35pm CT: 12 -> 20 so Tennessee's freed slots go to Georgia
 def wk(slug): return f"work/every-st/{slug}/v{MONTH.replace('-', '')}/"
 def batches_done(slug):
     """Whole batches done, counting a split batch (pieces k_s.json, every_code.py SPLIT) as done only in proportion."""
@@ -86,7 +86,8 @@ def batches_done(slug):
 def rebalance(st, left, run):
     free = free_slots()
     if free < 1 or not left: return
-    todo = {s: NB - batches_done(s) for s in left}
+    # work left in units a machine takes one at a time: a split state's batches count as SPLIT pieces each
+    todo = {s: (NB - batches_done(s)) * int(WBIG.get(s, {}).get('SPLIT', '1')) for s in left}
     while free > 0:
         room = [x for x in left if st['machines'][x] < MAX_MACHINES]
         if not room: break
