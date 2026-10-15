@@ -171,6 +171,8 @@ def run():
         O.log('parse:', len(todo) - len(failed), 'of', len(todo), 'files parsed;', busy, 'machines working')
         if not busy:
             st['parse_failed'] = failed; st['stage'] = 'h2'
+    if S7 and st['stage'] in ('h2', 'publish'):
+        return state_by_state(O, st)
     if st['stage'] == 'h2' and not ready:
         O.log('hospital files parsed; waiting for the state insurer builds before building each state\'s hospital pages')
     if st['stage'] == 'h2' and ready:
@@ -205,6 +207,49 @@ def run():
         if all(a in st['published'] for a in st['areas'] if a in done):
             st['stage'] = 'done'
             O.log('published:', st['published'])
+    O.putj(SP + 'state.json', st)
+
+
+IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
+
+
+def publish_one(O, st, a, how):
+    fix_names(O, O.getj(O.SP + 'areas.json', {})[a]['prefix'])
+    r = subprocess.run([sys.executable, f'{HERE}/city_page.py', a, '--deploy', '--out', f'/tmp/city-{a}'],
+                       capture_output=True, text=True, timeout=3600)
+    print(r.stdout[-1200:], r.stderr[-1200:], flush=True)
+    st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
+    O.log('published', a, '->', st['published'][a])
+    O.putj(O.SP + 'state.json', st)
+
+
+def state_by_state(O, st):
+    """Oct 15, 2026 (Betsy): each state's page goes live as soon as that state's insurer build is done, instead of all seven
+    waiting for the slowest (Georgia). A state is ready when site/every-st/<state>/<YYYY-MM>/embed.json exists. Each ready
+    state gets its own hospital machine (h2-<state>, 2 tries); when its hospital files are built it is published at once. If
+    its hospital machine fails twice, the page still goes live with insurer rates only and the run says so."""
+    SP, month = O.SP, O.BID.split('-', 2)[2]
+    st['names_fixed'] = True   # state pages were never published before the name fix; fix_names runs before each publish
+    areas = st['areas']
+    ready = [a for a in areas if O.exists(f'site/every-st/{a}/{month}/embed.json')]
+    done = {k.rsplit('/', 1)[1][:-5] for k in O.ls(SP + 'h2/')}
+    busy = 0
+    for a in ready:
+        if a in st['published']: continue
+        role = f'h2-{a}'
+        gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
+        O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {a} >> /root/run.log 2>&1",
+                 dict(SP=SP, NP='8', MEM='11GB'), a in done or gave_up)
+        if a in done: publish_one(O, st, a, 'live with hospitals')
+        elif gave_up: publish_one(O, st, a, 'live, insurer rates only: its hospital machine failed twice')
+        else: busy += 1
+    waiting = [a for a in areas if a not in ready]
+    O.log('state pages:', len(st['published']), 'of', len(areas), 'published;', busy, 'hospital machines working;',
+          'insurer build still running for ' + ', '.join(waiting) if waiting else 'every state built')
+    if all(a in st['published'] for a in areas):
+        st['stage'] = 'done'; O.log('published:', st['published'])
+    elif not busy:
+        open(IDLE, 'w').write('waiting for ' + ', '.join(waiting))   # nothing to do until another state's build finishes
     O.putj(SP + 'state.json', st)
 
 
