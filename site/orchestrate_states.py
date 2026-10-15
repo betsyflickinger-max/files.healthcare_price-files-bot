@@ -26,7 +26,8 @@ W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
 # 10:05pm CT result: worse. The 2 x 13 GB machines were 5-9% busy with 42-67% iowait and landed no batch in 1.5 h, while 4 x 6 GB
 # machines were 34-49% busy and landed 7. Back to 4 x 6 GB everywhere (kept as a per-state hook).
-WBIG = {}
+WBIG = {'georgia': dict(SPLIT='4')}   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
+# so each piece (~25-40M rows) fits in a worker's 6 GB like other states' batches. Finished whole batches are kept.
 # Oct 14: STALL_MIN 360 (default 60; 180 was still too short: georgia-c5 went 3h12m without its first batch): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.
 GB_PER_MACHINE, MAX_PER_STATE = 20, 3
