@@ -45,7 +45,11 @@ def one(args):
     idx, ents = discover.fetch_index(dom) if dom else ("", None)
     ents = ents or []
     hit = [e for e in ents if discover.clean(e["mrf-url"]) == discover.clean(url)]
-    mine = [e for e in ents if ours(h, e.get("location-name", "")) and discover.clean(e["mrf-url"]) != discover.clean(url)]
+    # only when the listing names exactly this hospital (Oct 15: Baptist Hospital Pensacola was offered South Miami Hospital's
+    # file from Baptist Health South Florida's listing); the daily run's check still has the last word
+    med0 = identity.medicare().get(h["ccn"], {})
+    mine = [e for e in ents if exactly([h["name"], med0.get("name", "")], e.get("location-name", ""))
+            and discover.clean(e["mrf-url"]) != discover.clean(url)]
     med = identity.medicare().get(h["ccn"], {})
     same_state = any(st == h["state"] for st, _ in identity.places(r.get("file_address", "")))
     if hit and same_state and any(exactly([h["name"], med.get("name", "")], e.get("location-name", "")) for e in hit):
