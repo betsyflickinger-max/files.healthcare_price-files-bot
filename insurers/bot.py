@@ -97,6 +97,28 @@ def peek(url):
     return dict(etag=etag, size=size, file_last_updated_on=m.group(1).decode() if m else "")
 
 
+def stem_of(url):
+    """Table name a link produces (same naming as worker.stem / 06f)."""
+    name = url.split("?")[0].rsplit("/", 1)[-1]
+    for ext in (".gz", ".json", ".zip", ".7z"):
+        if name.endswith(ext):
+            name = name[: -len(ext)]
+    return name[:180]
+
+
+def gone_back(n, m, url, err, today):
+    """Oct 15, 2026: the bot took a 403 on a guessed 2026-10-15 Curative link as "file exists" (fixed in find_links),
+    queued it, and the network sat at "failed" on a link that leads to no file. When the current link is refused or missing (403/404/410) and it is newer
+    than the file our table came from, look again from the table's date and return the newest link that answers."""
+    code = getattr(getattr(err, "response", None), "status_code", None)
+    t = re.search(r"\d{4}-\d{2}-\d{2}", m.get("table", ""))
+    if code not in (403, 404, 410) or url != m.get("url") or not t or stem_of(url) == m.get("table"):
+        return ""
+    since = date.fromisoformat(t.group(0)) - timedelta(days=1)
+    f = find_links.find(dict(n, current_url=""), today, since)
+    return f["url"] if f.get("found") and f["url"] != url else ""
+
+
 def load(s3, b, scope):
     man = {r["slot"]: r for r in store.read_csv(s3, b, P + "manifest.csv")}
     for n in csv.DictReader(open(HERE / NETWORKS.get(scope, "networks.csv"))):
@@ -211,7 +233,22 @@ def check_all(man, today, only, force=False):
             info = peek(url)
         except Exception as e:
             m["last_checked"] = today.isoformat()
-            if url == m["url"]:
+            back = gone_back(n, m, url, e, today)
+            if back:  # the newer link leads nowhere: go back to the newest file that still answers
+                url = back
+                try:
+                    info = peek(url)
+                except Exception:
+                    info = None
+                if info is not None and stem_of(url) == m.get("table"):
+                    m.update(status="processed", url=url, url_date=url_date(url) or m.get("url_date", ""), fails="0",
+                             etag=info["etag"] or m.get("etag", ""), size=info["size"] or m.get("size", ""),
+                             detail="newer link led to no file; back on the newest file that is up (tables unchanged)")
+                    notes.append(("dead link replaced", m))
+                    continue
+                if info is None:
+                    info = dict(etag="", size="", file_last_updated_on="")
+            elif url == m["url"]:
                 m["detail"] = f"could not check the file: {type(e).__name__}: {str(e)[:150]}"
                 notes.append(("check failed", m))
                 continue
@@ -236,7 +273,7 @@ def check_all(man, today, only, force=False):
             if m.get("last_changed") and (today - date.fromisoformat(m["last_changed"])).days > STALE_DAYS:
                 notes.append(("stale", m))
             continue
-        if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"]:
+        if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
         if m.get("status") == "failed" and url == m["url"]:
             m.update(status="queued", next_url=url, detail=f"retry {m.get('fails')} of 3: {(m.get('detail') or '')[:150]}")

@@ -33,10 +33,32 @@ PIPE, DATA = HERE / "pipeline", HERE / "data"
 E = {k: "".join(os.environ.get(k, "").split()) for k in
      ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "DIGITALOCEAN_TOKEN", "RUN_ID", "GROUP",
       "BOT_GITHUB_TOKEN")}
+# Oct 15, 2026: BCBSTX tables are several GB. With boto3's defaults (60 s read timeout, 8 MB parts, 10 at a time) their
+# uploads failed (InvalidPart / upload failed), and moving an old table hit "EntityTooLarge" (a one-step copy is capped
+# at 5 GB) or timed out. Now: long timeouts with retries, bigger parts a few at a time, a multipart copy, and a whole
+# upload is retried before the file is called failed.
+from boto3.s3.transfer import TransferConfig  # noqa: E402
+from botocore.config import Config  # noqa: E402
+
 s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
-                  region_name="auto")
+                  region_name="auto",
+                  config=Config(connect_timeout=60, read_timeout=900, retries={"max_attempts": 10, "mode": "adaptive"}))
+BIG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=256 << 20, max_concurrency=4)
 B = E["R2_BUCKET"]
+
+
+def put(path, key, tries=3):
+    """Upload a local file; on failure wait and start the whole upload again (a failed multipart upload can't resume)."""
+    for i in range(tries):
+        try:
+            s3.upload_file(str(path), B, key, Config=BIG)
+            return
+        except Exception as e:
+            if i == tries - 1:
+                raise
+            print(f"upload of {key} failed ({type(e).__name__}); retrying in {60 * (i + 1)} s", flush=True)
+            time.sleep(60 * (i + 1))
 RUN = os.environ.get("RUN_PREFIX", "bot/insurers/") + f"runs/{E['RUN_ID']}/"
 OUT = os.environ.get("OUT_PREFIX", "data/full/")  # data/full/ = DFW tables, data/tx/ = all of Texas (set per job in queue mode)
 SCOPE_KEY = os.environ.get("SCOPE_KEY", "data/2026-09-29/dfw_npis_all.parquet")
@@ -71,7 +93,11 @@ def exists(key):
 
 
 def move(src, dst):
-    s3.copy_object(Bucket=B, Key=dst, CopySource={"Bucket": B, "Key": src})
+    """Copy then delete. s3.copy does a multipart copy for big tables (copy_object stops at 5 GB); the old table is
+    deleted only once the copy exists at the full size."""
+    s3.copy({"Bucket": B, "Key": src}, B, dst, Config=BIG)
+    if s3.head_object(Bucket=B, Key=dst)["ContentLength"] != s3.head_object(Bucket=B, Key=src)["ContentLength"]:
+        raise RuntimeError(f"copy of {src} came out a different size; old table left in place")
     s3.delete_object(Bucket=B, Key=src)
 
 
@@ -101,24 +127,27 @@ def one(job):
     rates, memb = DATA / "rates" / f"{new}.parquet", DATA / "membership" / f"{new}.parquet"
     if p.returncode != 0 or not rates.exists() or not memb.exists():
         res["error"] = " | ".join(tail)[-1500:] or f"06f exit {p.returncode}"
+        if "premature EOF" in res["error"]:  # Oct 15, 2026: Community Health Choice's server stops every file at 128,000 bytes
+            res["error"] = ("insurer's file is cut off: it ends partway through the price list (a problem with the "
+                            "insurer's file, not the reader) | " + res["error"])[:1500]
         return res
     con = duckdb.connect()
     res["rows"] = con.execute(f"select count(*) from '{rates}'").fetchone()[0]
     res["roster_rows"] = con.execute(f"select count(*) from '{memb}'").fetchone()[0]
     meta = con.execute(f"select any_value(reporting_entity_name), any_value(last_updated_on) from '{memb}'").fetchone()
     res["reporting_entity_name"], res["file_last_updated_on"] = meta[0] or "", meta[1] or ""
-    s3.upload_file(str(rates), B, f"{OUT}rates/{new}.parquet")
-    s3.upload_file(str(memb), B, f"{OUT}membership/{new}.parquet")
+    put(rates, f"{OUT}rates/{new}.parquet")
+    put(memb, f"{OUT}membership/{new}.parquet")
     rates.unlink(); memb.unlink()
     for sub in ("codes", "ends"):   # code descriptions once per code; per-provider contract end dates
         f = DATA / sub / f"{new}.parquet"
         if f.exists():
-            s3.upload_file(str(f), B, f"{OUT}{sub}/{new}.parquet")
+            put(f, f"{OUT}{sub}/{new}.parquet")
             f.unlink()
     cen = DATA / "census" / f"{new}.json"   # "what's in the file" inventory; kept per month so history builds up
     if cen.exists():
         try:
-            s3.upload_file(str(cen), B, f"bot/insurers/census/{date.today().strftime('%Y-%m')}/{OUT.strip('/').replace('/', '_')}/{new}.json")
+            put(cen, f"bot/insurers/census/{date.today().strftime('%Y-%m')}/{OUT.strip('/').replace('/', '_')}/{new}.json")
         except Exception as e:
             log(f"[{job['slot']}] census upload failed: {e}")
         cen.unlink()
@@ -128,7 +157,12 @@ def one(job):
         for sub in ("rates", "membership", "codes", "ends"):
             k = f"{OUT}{sub}/{old}.parquet"
             if exists(k):
-                move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")
+                try:
+                    move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")
+                except Exception as e:  # never leave the old table next to the new one (builds would count it twice)
+                    log(f"[{job['slot']}] could not archive old table {k} ({type(e).__name__}); deleting it instead "
+                        "(the new table replaces it; the insurer's original file is the source)")
+                    s3.delete_object(Bucket=B, Key=k)
         res["retired"] = old
     res.update(ok=True, secs=round(time.time() - t0))
     return res
@@ -153,7 +187,7 @@ def fields_only(job, src, label, extra, new, res, t0):
     if p.returncode != 0 or not f.exists():
         res["error"] = " | ".join(tail)[-1500:] or f"06f exit {p.returncode}"
         return res
-    s3.upload_file(str(f), B, f"{OUT}fields/{name}.parquet")
+    put(f, f"{OUT}fields/{name}.parquet")
     f.unlink()
     res.update(ok=True, fields_only=True, table=name, secs=round(time.time() - t0))
     return res
