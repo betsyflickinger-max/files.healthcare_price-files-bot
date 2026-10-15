@@ -15,7 +15,7 @@ from pathlib import Path
 E = os.environ
 s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
-B = E['R2_BUCKET']; OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
+B = E['R2_BUCKET']; OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); SPLIT = int(E.get('SPLIT', '1')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
 LOG = []
 def log(*a):
     m = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a); print(m, flush=True); LOG.append(m)
@@ -242,13 +242,24 @@ NETS2 = sorted(tuple((k_.split('|', 1) + [''])[:2]) for k_ in nets)
 SORTV = E.get('SORTV', '2')   # 2 = integer sort + Python walk (default); 3 = per-group SQL, opt-in only: on Oct 12, 2026 it ran
 # fine on El Paso/San Antonio-size batches but Houston and Austin machines restarted for hours without finishing a batch
 # (most likely memory: the window step can't stream like the plain sort). 1 = original text sort (out-of-order bug).
-def work(k):
-    """One bucket. DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
+def unit_parts(u):
+    """Oct 14: a unit of stage-B work is a whole bucket k (int) or, with SPLIT>1, piece s of bucket k ('k_s'): the rows of
+    bucket k whose hash(code) % (NB*SPLIT) == k + NB*s. Every code of bucket k is in exactly one piece (hash % NB == k)."""
+    if isinstance(u, str) and '_' in u: k_, s_ = u.split('_'); return int(k_), int(s_)
+    return int(u), None
+def bucket_done(k): return exists_key(f'{WK}B/{k}.json')
+def exists_key(key):
+    try: s3.head_object(Bucket=B, Key=key); return True
+    except Exception: return False
+def work(u):
+    """One bucket (or one piece of one). DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
     other rates, $0 count, flat-case-rate and unusually-low flags (median via approx_quantile)."""
+    k, sp = unit_parts(u)
     try:
-        return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{k}.json')['Body'].read()))
+        return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{u}.json')['Body'].read()))
     except Exception: pass
+    if sp is not None and bucket_done(k): return (u, 0, {}, {})   # an older machine finished the whole bucket meanwhile
     global FLAT
     if E.get('NOXPART'):
         xd = D / f'xpart/bucket={k}'; xd.mkdir(parents=True, exist_ok=True)
@@ -258,14 +269,15 @@ def work(k):
         todo_ = [kk_ for kk_, _ in listed if mine(kk_.rsplit('/', 1)[1]) and not (xd / kk_.rsplit('/', 1)[1]).exists()]
         with ThreadPoolExecutor(8) as P_: list(P_.map(lambda kk_: s3.download_file(B, kk_, str(xd / kk_.rsplit('/', 1)[1])), todo_))
     if not glob.glob(f'{D}/xpart/bucket={k}/*.parquet'):   # small areas (El Paso) can have empty buckets
-        res = (k, 0, {}, {})
-        s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
+        res = (u, 0, {}, {})
+        s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
         return res
     c = duckdb.connect()
-    c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{k}'")
+    c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{u}'")
     if FLAT is None:
         FLAT = set(c.execute(f"select distinct npi, ins, net, v from read_parquet('{D}/flat/*.parquet')").fetchall())
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
+    if sp is not None: src = f"(select * from {src} where hash(code) % {NB * SPLIT} = {k + NB * sp})"
     if SORTV in ('2', '3'):
         c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
         c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])
@@ -274,7 +286,7 @@ def work(k):
                   [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
     MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
     if SORTV == '3':
-        return work3(k, c, src, MD)
+        return work3(u, c, src, MD)
     if SORTV == '2':
         cur = c.execute(f"""select x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, x.modi, x.st, x.nt, dn.di, un.ui from {src} x
                        left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
@@ -336,11 +348,14 @@ def work(k):
     if g0: emit(f, g0, grp)
     if curcode: put(curcode, f)
     for fu in futs: fu.result()
-    c.close(); shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True); shutil.rmtree(D / f'tmp/w{k}', ignore_errors=True)
-    res = (k, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
-    s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
+    c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+    res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+    s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
     return res
-def work3(k, c, src, MD):
+def finish_dirs(u):
+    k, sp = unit_parts(u)
+    if sp is None: shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True)   # pieces share bucket k's files: keep them
+def work3(u, c, src, MD):
     """Stage B, SORTV=3: DuckDB does the per-row work (dedupe, order, $0 count, headline = lowest positive rate with no
     modifier else lowest positive, up to 8 other rates) and returns one row per provider/network/fee/type group; Python
     only formats them. Same output as SORTV=2 (tested Oct 12, 2026), about 5x fewer rows cross into Python."""
@@ -394,26 +409,39 @@ def work3(k, c, src, MD):
             f.setdefault(str(pi), []).append(row)
     if curcode: put(curcode, f)
     for fu in futs: fu.result()
-    c.close(); shutil.rmtree(D / f'xpart/bucket={k}', ignore_errors=True); shutil.rmtree(D / f'tmp/w{k}', ignore_errors=True)
-    res = (k, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
-    s3.put_object(Bucket=B, Key=f'{WK}B/{k}.json', Body=json.dumps(res).encode())
+    c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+    res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+    s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
     return res
 # ---------- Stage B: buckets in parallel worker processes ----------
 import multiprocessing as mp
 summary, scope = {}, {}
 buckets = sorted(int(p_.rsplit('=', 1)[1]) for p_ in glob.glob(f'{D}/xpart/bucket=*'))
 if E.get('NOXPART'): buckets = list(range(NB))
+done_units = set()
 for k_, _ in ls(WK + 'B/'):
     kb, nx_, summ_, scp_ = json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
-    if kb in buckets: buckets.remove(kb)
+    done_units.add(str(kb))
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
+def plan_units(buckets, done_units, split):
+    """Whole buckets not yet done; with split>1, the pieces of each not-done bucket that aren't done yet."""
+    out = []
+    for b in buckets:
+        if str(b) in done_units: continue
+        if split > 1: out += [f'{b}_{s_}' for s_ in range(split) if f'{b}_{s_}' not in done_units]
+        else: out.append(b)
+    return out
+def covered(done_units, nb, split):
+    """Buckets fully done: whole, or all `split` pieces present."""
+    return sum(1 for b in range(nb) if str(b) in done_units or (split > 1 and all(f'{b}_{s_}' in done_units for s_ in range(split))))
+buckets = plan_units(buckets, done_units, SPLIT)
 if E.get('BONLY'): buckets = [b for b in buckets if str(b) in E['BONLY'].split(',')]   # testing: just these buckets
 if E.get('BORDER') == 'desc': buckets = buckets[::-1]
 h_ = len(buckets) // 2   # 3rd/4th machines start in the middle and work outward; done buckets are skipped in work()
 if E.get('BORDER') == 'mid': buckets = buckets[h_:] + buckets[:h_]
 if E.get('BORDER') == 'middesc': buckets = buckets[:h_][::-1] + buckets[h_:][::-1]
-if E.get('BSTART'): s_ = int(E['BSTART']); buckets = [b for b in buckets if b >= s_] + [b for b in buckets if b < s_]   # extra machines: start at a chosen bucket
+if E.get('BSTART'): s_ = int(E['BSTART']); buckets = [b for b in buckets if unit_parts(b)[0] >= s_] + [b for b in buckets if unit_parts(b)[0] < s_]   # extra machines: start at a chosen bucket
 if not buckets: log('all buckets already done')
 log('stage B', len(buckets), 'buckets to do', len(summary), 'codes already done')
 con.close()
@@ -436,11 +464,12 @@ with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=in
         for kk, v in scp.items(): scope.setdefault(kk, set()).update(v)
         log(f'B {done}/{len(buckets)}', f'bucket {k}', f'{nx:,} rows', len(summary), 'codes so far')
 # another machine may have finished buckets meanwhile: reload them all, and write embed only when every bucket is in
-summary, scope, nb = {}, {}, 0
+summary, scope, done_units = {}, {}, set()
 for k_, _ in ls(WK + 'B/'):
-    kb, nx_, summ_, scp_ = json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read()); nb += 1
+    kb, nx_, summ_, scp_ = json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read()); done_units.add(str(kb))
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
+nb = covered(done_units, NB, SPLIT)
 if nb < NB: log(f'{nb}/{NB} buckets in; another machine will write embed.json'); LOGFLUSH(); sys.exit(0)
 if not summary: log('ERROR 0 codes across all buckets; not writing embed.json'); LOGFLUSH(); sys.exit(0)
 codes = {}
