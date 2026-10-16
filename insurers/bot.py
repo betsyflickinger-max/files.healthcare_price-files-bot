@@ -37,8 +37,10 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "tx": ("bot/insurers/tx/", "data/scope/tx_npis_all.parquet", "data/tx/"),
     # first national batch: TN, CO, OK, AL, MS, MO, GA in one provider list ("Build provider list" with TN,CO,OK,AL,MS,MO,GA and s7)
     "s7": ("bot/insurers/s7/", "data/scope/s7_npis_all.parquet", "data/s7/"),
+    # North Carolina (Oct 16, 2026): its own provider list ("Build provider list" with NC and nc) and network list
+    "nc": ("bot/insurers/nc/", "data/scope/nc_npis_all.parquet", "data/nc/"),
 }
-NETWORKS = {"s7": "networks_s7.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
@@ -370,7 +372,7 @@ def main():
     ap.add_argument("--only", default="", help="comma-separated slots")
     ap.add_argument("--force", action="store_true", help="with --only: re-read those files even if unchanged")
     ap.add_argument("--fill", action="store_true", help="quick pass: collect results and fill free machines, no file check")
-    ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default), tx (all of Texas) or s7 (first national batch)")
+    ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default), tx (all of Texas), s7 (first national batch) or nc (North Carolina)")
     a = ap.parse_args()
     global P, SCOPE
     SCOPE, P = a.scope, SCOPES[a.scope][0]

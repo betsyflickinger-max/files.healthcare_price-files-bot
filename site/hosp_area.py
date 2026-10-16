@@ -23,9 +23,14 @@ HGI = ('https://data.cms.gov/provider-data/sites/default/files/resources/893c372
        'Hospital_General_Information.csv')   # Medicare Hospital General Information, July 22, 2026 (Facility ID, ZIP Code)
 BIG = [('750', '753', 'dfw'), ('760', '762', 'dfw'), ('770', '775', 'houston'), ('780', '782', 'san-antonio'),
        ('786', '787', 'austin'), ('798', '799', 'el-paso')]
-SOLO = {'houston', 'san-antonio', 'austin', 'georgia', 'missouri', 'tennessee'}   # big areas get a machine each; the rest share
-STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
-S7 = os.environ.get('HOSP_SCOPE') == 's7'
+SOLO = {'houston', 'san-antonio', 'austin', 'georgia', 'missouri', 'tennessee', 'north-carolina'}   # big areas get a machine each; the rest share
+SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
+                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+HSCOPE = os.environ.get('HOSP_SCOPE', '')
+S7 = HSCOPE in SCOPE_STATES   # a state scope (s7 or nc), not the Texas areas
+STATES = SCOPE_STATES.get(HSCOPE, SCOPE_STATES['s7'])
+STATE_SLUGS = {v for d in SCOPE_STATES.values() for v in d.values()}
+STB = 'st' if HSCOPE in ('', 's7') else 'st' + HSCOPE   # build ids: st-YYYY-MM / hosp-st-YYYY-MM, stnc-YYYY-MM / hosp-stnc-YYYY-MM
 
 
 def s3c():
@@ -38,7 +43,7 @@ def s3c():
 
 def newest_build(s3, B, area):
     """same rule as city_page.py: the newest site/every-tx/<area>/<build>/ whose embed.json exists"""
-    root = 'site/every-st/' if area in STATES.values() else 'site/every-tx/'
+    root = 'site/every-st/' if area in STATE_SLUGS else 'site/every-tx/'
     dirs = [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'{root}{area}/', Delimiter='/')
             for c in pg.get('CommonPrefixes', [])]
     best = None
@@ -167,13 +172,13 @@ def fix_names(O, prefix):
 
 
 def run():
-    os.environ.setdefault('BUILD', ('hosp-st-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
+    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
     sys.path.insert(0, HERE)
     import orchestrate as O
     SP = O.SP
     # Oct 13: the state pages' hospital files are parsed while the insurer builds still run (plan + parse need no insurer
     # build); h2 and publish wait for orchestrate_states.py to reach its 'hosp' stage
-    ready = not S7 or O.getj(f"site/builds/st-{O.BID.split('-', 2)[2]}/state.json", {}).get('stage') == 'hosp'
+    ready = not S7 or O.getj(f"site/builds/{STB}-{O.BID.split('-', 2)[2]}/state.json", {}).get('stage') == 'hosp'
     st = O.getj(SP + 'state.json', {'stage': 'plan', 'launches': {}, 'problems': [], 'published': {}})
     O.log('hospital build', O.BID, 'stage', st['stage'], '' if ready else '(insurer builds still running: parse only)')
     if st['stage'] == 'plan':
@@ -248,7 +253,7 @@ def redo(areas):
     next monthly build. Drops those files from the build's areas.json and clears the areas' h2 and publish marks, so the
     next runs of hosp-areas.yml (same BUILD / HOSP_SCOPE) rebuild and republish just them. New files come with the next build.
     Usage: BUILD=hosp-tx-2026-10 python site/hosp_area.py redo houston odessa ...   (HOSP_SCOPE=s7 for state pages)"""
-    os.environ.setdefault('BUILD', ('hosp-st-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
+    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
     sys.path.insert(0, HERE); sys.path.insert(0, f'{HERE}/../bot')
     import orchestrate as O, identity
     wrong = identity.load(O.s3, O.B)
