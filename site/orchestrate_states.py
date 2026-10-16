@@ -266,12 +266,14 @@ def main():
             log('providers per state', st['providers'], 'machines', st['machines'])
     if st['stage'] == 'build':
         left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
+        # Oct 16: AORDER=desc: biggest tables first, so the machines share them early. North Carolina's build read them
+        # last (smallest first), and its last ~2 hours went to the two Blue Cross NC tables (75 and 95 pieces).
         def run(slug, i):
                 n = st['machines'][slug]
                 env = dict(RATES=f'data/{SCOPE}/state/{slug}/rates/', NPIS=f'data/{SCOPE}/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
-                           MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
+                           MEM='18GB', WORK='/d', AORDER='desc', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
                             **{**W, **WBIG.get(slug, {})})
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         release_finished(left)
