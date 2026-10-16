@@ -35,6 +35,14 @@ INSURERS = {
         index="https://antm-pt-prod-dataz-nogbd-nophi-us-east1.s3.amazonaws.com/anthem/{date}_anthem_index.json.gz",
         dates="first_of_month",
     ),
+    # Oct 16, 2026: Cigna's one national table of contents (~57 MB, plain JSON, signed link) is named in its public
+    # latest.json. File names carry the date (2026-10-01_cigna-health-life-insurance-company_national-oap_in-network-rates),
+    # so keys drop the date to stay the same from month to month.
+    "cigna": dict(
+        name="Cigna",
+        latest="https://www.cigna.com/static/mrf/latest.json",
+        strip_date=True,
+    ),
 }
 
 # BlueCard-style names: 2026-10_051_06B0_in-network-rates_1_of_5.json.gz  -> network 051_06B0, part 1 of 5
@@ -106,8 +114,15 @@ class Store:
 # ---------------- index ----------------
 
 def find_index(ins, month=None):
-    """Newest index that answers: the 1st of this month, then the previous two months."""
+    """Newest index that answers: the 1st of this month, then the previous two months (or, for an insurer with a
+    'latest' pointer, the table of contents that pointer names)."""
     cfg = INSURERS[ins]
+    if cfg.get("latest"):
+        d = requests.get(cfg["latest"], headers={"User-Agent": UA}, timeout=60).json()
+        url = next(f["url"] for m in d["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
+        r = requests.get(url, headers={"User-Agent": UA, "Range": "bytes=0-0"}, timeout=60)
+        size = int((r.headers.get("Content-Range") or "/0").rsplit("/", 1)[-1] or 0) if r.status_code == 206 else int(r.headers.get("Content-Length", 0))
+        return url, size, r.headers.get("Last-Modified", "")
     today = date.today()
     y, m = (int(month[:4]), int(month[5:7])) if month else (today.year, today.month)
     for back in range(3):
@@ -142,7 +157,19 @@ class Counted(io.RawIOBase):
         return len(chunk)
 
 
+DATE_PREFIX = re.compile(r"^\d{4}[-_]\d{2}[-_]\d{2}_")
+STRIP_DATE = False   # set from the insurer's settings (Cigna): drop the leading date and "_in-network-rates" from keys
+
+
 def network_of(url):
+    info = _network_of(url)
+    if STRIP_DATE and info["kind"] != "bluecard":
+        k = DATE_PREFIX.sub("", info["key"])
+        info["key"] = re.sub(r"[_-]in-network-rates$", "", k, flags=re.I)
+    return info
+
+
+def _network_of(url):
     path = url.split("?", 1)[0]
     host = path.split("/")[2] if "://" in path else ""
     fname = path.rsplit("/", 1)[-1]
@@ -158,7 +185,7 @@ def network_of(url):
     if m and 1 <= int(m["part"]) <= int(m["parts"]):
         return dict(key=m["base"], part=int(m["part"]), parts=int(m["parts"]), ym="", plan_code="", net_code="",
                     fname=fname, host=host, kind="parts")
-    base = re.sub(r"\.json(\.gz)?$", "", fname, flags=re.I)
+    base = re.sub(r"\.(json(\.gz)?|zip)$", "", fname, flags=re.I)
     return dict(key=base, part=1, parts=1, ym="", plan_code="", net_code="", fname=fname, host=host, kind="single")
 
 
@@ -339,7 +366,38 @@ def enrich(nets, threads=24):
 
 # ---------------- summarize, compare, write ----------------
 
+# Cigna-style names describe the network: a region in the name settles the state; national products are "national"
+REGIONS = {"southern ca": "CA", "san francisco": "CA", "sacramento": "CA", "los angeles": "CA", "chicago": "IL", "metro new york": "NY",
+           "new york": "NY", "houston": "TX", "dallas": "TX", "austin": "TX", "san antonio": "TX", "phoenix": "AZ", "denver": "CO",
+           "atlanta": "GA", "miami": "FL", "south florida": "FL", "tampa": "FL", "orlando": "FL", "nashville": "TN", "memphis": "TN",
+           "chattanooga": "TN", "knoxville": "TN", "charlotte": "NC", "raleigh": "NC", "st louis": "MO", "kansas city": "MO",
+           "philadelphia": "PA", "pittsburgh": "PA", "boston": "MA", "seattle": "WA", "las vegas": "NV", "salt lake": "UT",
+           "mid atlantic": "multi", "new england": "multi", "louisville": "KY", "tennesse": "TN", "kelseycare": "TX",
+           "indianapolis": "IN", "cincinnati": "OH", "cleveland": "OH", "milwaukee": "WI", "wichita": "KS", "pensacola": "FL",
+           "shreveport": "LA", "tulsa": "OK", "panama city": "FL", "savannah": "GA", "waco": "TX", "corpus christi": "TX",
+           "golden triangle": "TX", "front range": "CO", "tristate": "multi", "tri state": "multi", "northern nj": "NJ", "new jersey": "NJ"}
+NATIONAL_RE = re.compile(r"\b(national|pathwell|oap|open access|ppo|localplus|local plus|shared admin|surefit|priority health|"
+                         r"healthpartners|mvp|sagamore|upper midwest)\b")
+
+
 def state_of(e):
+    if STRIP_DATE:
+        name = re.sub(r"[-_]+", " ", e["key"].lower())
+        name = re.sub(r"^cigna health life insurance company ", "", name)
+        for k, v in REGIONS.items():
+            if re.search(r"\b" + k + r"\b", name):
+                return v, "network name"
+        st = state_from_name(name)
+        if st:
+            return st, "network name"
+        if NATIONAL_RE.search(name):
+            return "national", "national product (network name)"
+        if e.get("npi_states"):
+            st, n = Counter(e["npi_states"]).most_common(1)[0]
+            tot = sum(e["npi_states"].values())
+            if tot >= 8 and n / tot >= 0.75:
+                return st, f"provider sample ({n} of {tot} in {st})"
+            return "", f"unclear (provider sample {n} of {tot} in {st})"
     s = state_from_name(e.get("reporting_entity", ""))
     if s:
         return s, "Blue plan named in the file"
@@ -488,7 +546,7 @@ def rows_cmd(a):
         for f in r["files"]:
             grp = "bcbstx" if (f.get("bytes") or 0) > 5e9 else "bcbs" if (f.get("bytes") or 0) > 1e9 else "small"
             slot = re.sub(r"[^a-z0-9]+", "-", f"{a.insurer}-{r['state']}-{r['network']}-part-{f['part']}".lower()).strip("-")
-            w.writerow(dict(slot=slot, insurer=f"{a.label_prefix} {r['state']}".strip(), network_label=f"{label} ({r['network']})",
+            w.writerow(dict(slot=slot, insurer=f"{a.label_prefix or INSURERS[a.insurer]['name'].split(' (')[0]} {r['state']}".strip(), network_label=f"{label} ({r['network']})",
                             url_template="", current_url=f["url"], current_table=re.sub(r"\.json(\.gz)?$", "", f["fname"]),
                             last_updated_on=r["file_date"], machine_group=grp, enabled="yes", finder="catalog",
                             finder_arg=f"{a.insurer}|{r['network']}|{f['part']}"))
@@ -543,6 +601,7 @@ if __name__ == "__main__":
     ap.add_argument("--out", default=None, help="also write files here (always, when R2 isn't set)")
     ap.add_argument("--no-enrich", action="store_true", help="skip file checks and provider samples")
     ap.add_argument("--states", default="")
-    ap.add_argument("--label-prefix", default="Anthem")
+    ap.add_argument("--label-prefix", default="")
     a = ap.parse_args()
+    STRIP_DATE = bool(INSURERS[a.insurer].get("strip_date"))
     {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)
