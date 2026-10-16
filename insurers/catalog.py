@@ -683,7 +683,7 @@ def rows_cmd(a):
             "machine_group", "enabled", "finder", "finder_arg"]
     w = csv.DictWriter(sys.stdout, fieldnames=cols); w.writeheader()
     for r in cat["networks"]:
-        if r["state"] not in want or r.get("coverage", "medical") != "medical" or r["network"] in skip:
+        if (r["state"] or "").upper() not in want or r.get("coverage", "medical") != "medical" or r["network"] in skip:
             continue
         if any("don't answer" in p or "empty" in p for p in r["problems"]):
             continue
@@ -705,7 +705,7 @@ def report_cmd(a):
     if not cat:
         raise SystemExit("no catalog yet: run build first")
     want = {s.strip().upper() for s in a.states.split(",") if s.strip()}
-    nets = [r for r in cat["networks"] if not want or r["state"] in want]
+    nets = [r for r in cat["networks"] if not want or (r["state"] or "").upper() in want]
     out = [f"## {a.insurer} catalog {m}: {len(nets)} networks" + (f" in {', '.join(sorted(want))}" if want else "")]
     for s_ in sorted({r["state"] for r in nets}):
         rs = sorted([r for r in nets if r["state"] == s_], key=lambda r: (-(r.get("employers") or 0), -(r.get("plans") or 0)))
