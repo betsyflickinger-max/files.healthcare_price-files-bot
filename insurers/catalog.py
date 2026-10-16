@@ -494,6 +494,31 @@ def rows_cmd(a):
                             finder_arg=f"{a.insurer}|{r['network']}|{f['part']}"))
 
 
+def report_cmd(a):
+    """Markdown summary of the newest catalog for some states (or all), for the step summary: networks by employer count."""
+    st = Store(a.out)
+    m = st.get(f"bot/catalog/{a.insurer}/latest.json", {}).get("month") or a.month
+    cat = st.get(f"bot/catalog/{a.insurer}/{m}/catalog.json")
+    if not cat:
+        raise SystemExit("no catalog yet: run build first")
+    want = {s.strip().upper() for s in a.states.split(",") if s.strip()}
+    nets = [r for r in cat["networks"] if not want or r["state"] in want]
+    out = [f"## {a.insurer} catalog {m}: {len(nets)} networks" + (f" in {', '.join(sorted(want))}" if want else "")]
+    for s_ in sorted({r["state"] for r in nets}):
+        rs = sorted([r for r in nets if r["state"] == s_], key=lambda r: (-(r.get("employers") or 0), -(r.get("plans") or 0)))
+        out += ["", f"### {s_} ({len(rs)})", "",
+                "| network | name | coverage | employers | plans | parts | GB | file date | state from | sample employers | problems |",
+                "|---|---|---|---:|---:|---:|---:|---|---|---|---|"]
+        for r in rs:
+            name = (r["description"] or r["reporting_entity"] or "").replace("|", "/")[:70]
+            out.append(f"| {r['network']} | {name} | {r.get('coverage','')} | {r.get('employers', 0):,} | {r.get('plans', 0):,} | "
+                       f"{r['parts']}/{r['parts_declared']} | {r['gb']} | {r['file_date']} | {r.get('state_how','')} | {'; '.join(str(x) for x in (r.get('employer_sample') or [])[:3]).replace('|', '/')[:90]} | {'; '.join(r['problems'])} |")
+    probs = [r for r in cat["networks"] if r["problems"]]
+    out += ["", f"### Problems for the Price File Watch ({len(probs)}, all states)", ""]
+    out += [f"- {r['state']} {r['network']} ({(r['description'] or '')[:60]}): {'; '.join(r['problems'])}" for r in probs]
+    print("\n".join(out))
+
+
 def current_link(insurer, network, part, store=None):
     """Used by find_links.py (finder 'catalog'): the newest catalog's link for one file part."""
     st = store or Store()
@@ -511,7 +536,7 @@ def current_link(insurer, network, part, store=None):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build", "rows"])
+    ap.add_argument("cmd", choices=["build", "rows", "report"])
     ap.add_argument("--insurer", default="anthem", choices=sorted(INSURERS))
     ap.add_argument("--month", default=None)
     ap.add_argument("--max-mb", type=float, default=0, help="test: stop after this many MB of the index")
@@ -520,4 +545,4 @@ if __name__ == "__main__":
     ap.add_argument("--states", default="")
     ap.add_argument("--label-prefix", default="Anthem")
     a = ap.parse_args()
-    build(a) if a.cmd == "build" else rows_cmd(a)
+    {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)
