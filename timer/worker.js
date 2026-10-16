@@ -11,6 +11,8 @@ const JOBS = [
   ['19 */6 * * *', 'inventory-backfill.yml'],
   ['29 */6 * * *', 'site-build.yml'],
   ['41 * * * *', 'state-pages.yml'],
+  ['11 * * * *', 'nc-pages.yml'],
+  ['17 9 2 * *', 'catalog.yml', { insurer: 'anthem', cmd: 'build' }],
   ['17 * 20-28 * *', 'hosp-areas.yml'],
   ['17 9 * * *', 'hospitals.yml'],
   ['37 9 * * *', 'names.yml', { max_codes: '20000' }],
