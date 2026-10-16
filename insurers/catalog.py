@@ -62,6 +62,16 @@ INSURERS = {
         strip_date=True,
         peek_top=400,
     ),
+    # Oct 16, 2026: HCSC (Blue Cross and Blue Shield of Texas, Illinois, Oklahoma, New Mexico, Montana). Its self-funded
+    # employers each have a small index named by EIN; the page bcbstx.com/asomrf reads them from one public list,
+    # si-filelist.json (6,182 indexes on Oct 16, all five states, same file on every HCSC site). Most files are other
+    # Blue plans' BlueCard files (2026-10_510_01B0_...), which keep their plan + network code as the key.
+    "hcsc": dict(
+        name="HCSC (BCBS of Texas, Illinois, Oklahoma, New Mexico, Montana)",
+        filelist="https://www.bcbstx.com/content/dam/bcbs/mrf/si-filelist.json",
+        strip_date=True,
+        peek_top=400,
+    ),
 }
 
 # BlueCard-style names: 2026-10_051_06B0_in-network-rates_1_of_5.json.gz  -> network 051_06B0, part 1 of 5
@@ -140,6 +150,8 @@ def find_index(ins, month=None):
         return cfg["blobs"], 0, ""
     if cfg.get("metas"):
         return cfg["metas"][0], 0, ""
+    if cfg.get("filelist"):
+        return cfg["filelist"], 0, ""
     if cfg.get("latest"):
         d = requests.get(cfg["latest"], headers={"User-Agent": UA}, timeout=60).json()
         url = next(f["url"] for m in d["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
@@ -183,6 +195,7 @@ class Counted(io.RawIOBase):
 DATE_PREFIX = re.compile(r"^\d{4}[-_]\d{2}[-_]\d{2}_")
 METAS = []           # set from the insurer's settings (Aetna): file lists that name the plans using each file
 BLOBS = False        # set from the insurer's settings (UnitedHealthcare): many small indexes from a file listing
+FILELIST = False     # set from the insurer's settings (HCSC): many small indexes from a plain list of {url, ein, state}
 PEEK_TOP = 0         # set from the insurer's settings: provider samples only for the N networks most employers use
 STRIP_DATE = False   # set from the insurer's settings (Cigna): drop the leading date and "_in-network-rates" from keys
 
@@ -227,7 +240,11 @@ def _network_of(url):
 def blob_structures(list_url, stats, limit=0):
     """UnitedHealthcare: every employer's own small index from the public listing, newest month only, read 32 at a
     time; yields their reporting_structure items in listing order. stats gets files, failed and bytes."""
-    blobs = requests.get(list_url, headers={"User-Agent": UA}, timeout=600).json()["blobs"]
+    listing = requests.get(list_url, headers={"User-Agent": UA}, timeout=600).json()
+    if isinstance(listing, list):   # HCSC si-filelist.json: [{url, name, ein, state, last_update_date}]
+        blobs = [dict(name=x["url"].rsplit("/", 1)[-1], downloadUrl=x["url"]) for x in listing if x.get("url")]
+    else:
+        blobs = listing["blobs"]
     idx = [b for b in blobs if b["name"].endswith("_index.json")]
     month = max(b["name"][:10] for b in idx)
     idx = [b for b in idx if b["name"].startswith(month)]
@@ -297,7 +314,7 @@ def read_index(url, limit_bytes=0, employers_path=None):
     if METAS:   # file lists with their plans (Aetna)
         raw = type("R", (), {"n": 0})()
         structures = meta_structures(METAS, bstats)
-    elif BLOBS:   # many small indexes (UnitedHealthcare)
+    elif BLOBS or FILELIST:   # many small indexes (UnitedHealthcare, HCSC)
         raw = type("R", (), {"n": 0})()
         structures = blob_structures(url, bstats, limit=int(limit_bytes / 3000) if limit_bytes else 0)
     else:
@@ -319,7 +336,7 @@ def read_index(url, limit_bytes=0, employers_path=None):
     try:
         # the header (insurer name, date) sits in the first few KB: read it from a small separate request
         try:
-            if BLOBS or METAS:
+            if BLOBS or METAS or FILELIST:
                 raise ValueError("header comes from the file lists")
             hb = requests.get(url, headers={"User-Agent": UA, "Range": "bytes=0-65535"}, timeout=60).content
             ht = __import__("zlib").decompressobj(16 + 15).decompress(hb)[:20000].decode("utf-8", "replace") if url.endswith(".gz") else hb.decode("utf-8", "replace")
@@ -400,12 +417,12 @@ def read_index(url, limit_bytes=0, employers_path=None):
             u = set()
             for i in ids: u |= set_sponsors.get(i, set())
             nets[net]["employers"] = len(u)
-    if BLOBS or METAS:
+    if BLOBS or METAS or FILELIST:
         head.update(bstats.get("head") or {})
         head["last_updated_on"] = bstats.get("month") or head.get("last_updated_on", "")   # the listing's file date
         raw.n = bstats.get("bytes", 0)
     return head, nets, dict(structures=n_struct, plans=n_plans, links=n_links, bytes_read=raw.n, network_sets=len(sets),
-                            **({"index_files": bstats.get("files"), "index_files_failed": bstats.get("failed")} if (BLOBS or METAS) else {}))
+                            **({"index_files": bstats.get("files"), "index_files_failed": bstats.get("failed")} if (BLOBS or METAS or FILELIST) else {}))
 
 
 # ---------------- enrich: sizes, dates, states ----------------
@@ -751,5 +768,6 @@ if __name__ == "__main__":
     STRIP_DATE = bool(INSURERS[a.insurer].get("strip_date"))
     BLOBS = bool(INSURERS[a.insurer].get("blobs"))
     METAS = INSURERS[a.insurer].get("metas") or []
+    FILELIST = bool(INSURERS[a.insurer].get("filelist"))
     PEEK_TOP = int(INSURERS[a.insurer].get("peek_top") or 0)
     {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)
