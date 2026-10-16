@@ -55,7 +55,8 @@ def bot_of(name):
     if n.startswith(("upfront-fleet-", "upfront-bot-")): return "insurers", ""
     if n.startswith("upfront-site-st-"): return "state_pages", re.sub(r"^upfront-site-st-\d{4}-\d{2}-", "", n).rsplit("-c", 1)[0]
     if n.startswith("upfront-site-stnc-"): return "nc_pages", re.sub(r"^upfront-site-stnc-\d{4}-\d{2}-", "", n).rsplit("-c", 1)[0]
-    if n.startswith("upfront-site-hosp-"): return "hospital_pages", ("North Carolina" if "-hosp-stnc-" in n else "states" if "-hosp-st-" in n else "Texas")
+    if n.startswith("upfront-site-stct-"): return "ct_pages", re.sub(r"^upfront-site-stct-\d{4}-\d{2}-", "", n).rsplit("-c", 1)[0]
+    if n.startswith("upfront-site-hosp-"): return "hospital_pages", ("North Carolina" if "-hosp-stnc-" in n else "Connecticut" if "-hosp-stct-" in n else "states" if "-hosp-st-" in n else "Texas")
     if n.startswith("upfront-site-tx-"): return "texas_pages", re.sub(r"^upfront-site-tx-\d{4}-\d{2}-(metros-)?", "", n)
     if n.startswith("upfront-site-"): return "refresh", "Dallas-Fort Worth"
     if n.startswith("upfront-test-"): return "tests", n[len("upfront-test-"):]
@@ -201,6 +202,12 @@ nc_note = f"{bm} build, stage: {stnc.get('stage', 'not started')}"
 if stnc.get("split_failed"): nc_note += f"; {len(stnc['split_failed'])} tables not split"
 if stnc.get("problems"): nc_note += f"; problems: {'; '.join(stnc['problems'][-3:])}"
 if (hnc.get("published") or {}): nc_note += "; page published"
+stct = getj(f"site/builds/stct-{bm}/state.json", {}) or {}        # Connecticut (Oct 16, 2026)
+hct = getj(f"site/builds/hosp-stct-{bm}/state.json", {}) or {}
+ct_note = f"{bm} build, stage: {stct.get('stage', 'not started')}"
+if stct.get("split_failed"): ct_note += f"; {len(stct['split_failed'])} tables not split"
+if stct.get("problems"): ct_note += f"; problems: {'; '.join(stct['problems'][-3:])}"
+if (hct.get("published") or {}): ct_note += "; page published"
 s7_note = f"{bm} build, stage: {st7.get('stage', '?')}"
 try: rb = json.load(open(HERE.parent / "site" / "state_rebuild.json")).get("st") or {}
 except Exception: rb = {}   # Oct 16, 2026: a rebuild of some states (new Anthem tables for CO, GA, MO)
@@ -234,6 +241,9 @@ BOTS = [
     ("nc_pages", "North Carolina page builder", "Builds the North Carolina Price Finder page", "nc-pages.yml",
      "Hourly at :11 while a build runs", "states", 1, 1 if ls(f"site/every-st/north-carolina/{bm}/embed.json") else 0, None,
      None, None, nc_note),
+    ("ct_pages", "Connecticut page builder", "Builds the Connecticut Price Finder page", "ct-pages.yml",
+     "Hourly at :26 while a build runs", "states", 1, 1 if ls(f"site/every-st/connecticut/{bm}/embed.json") else 0, None,
+     None, None, ct_note),
     ("hospital_pages", "Hospital prices for the state and city pages", "Adds each area's hospital prices to its Price Finder page",
      "hosp-areas.yml", "Runs with the page builders", "states", len(hst.get("areas") or []) or None, len(hst.get("published") or {}) or None,
      None, None, None, ""),

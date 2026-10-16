@@ -23,9 +23,10 @@ HGI = ('https://data.cms.gov/provider-data/sites/default/files/resources/893c372
        'Hospital_General_Information.csv')   # Medicare Hospital General Information, July 22, 2026 (Facility ID, ZIP Code)
 BIG = [('750', '753', 'dfw'), ('760', '762', 'dfw'), ('770', '775', 'houston'), ('780', '782', 'san-antonio'),
        ('786', '787', 'austin'), ('798', '799', 'el-paso')]
-SOLO = {'houston', 'san-antonio', 'austin', 'georgia', 'missouri', 'tennessee', 'north-carolina'}   # big areas get a machine each; the rest share
+SOLO = {'houston', 'san-antonio', 'austin', 'georgia', 'missouri', 'tennessee', 'north-carolina', 'connecticut'}   # big areas get a machine each; the rest share
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
-                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+                'nc': {'NC': 'north-carolina'},   # Oct 16, 2026: North Carolina has its own scope
+                'ct': {'CT': 'connecticut'}}   # Oct 16, 2026: Connecticut has its own scope (data/ct/)
 HSCOPE = os.environ.get('HOSP_SCOPE', '')
 S7 = HSCOPE in SCOPE_STATES   # a state scope (s7 or nc), not the Texas areas
 STATES = SCOPE_STATES.get(HSCOPE, SCOPE_STATES['s7'])
