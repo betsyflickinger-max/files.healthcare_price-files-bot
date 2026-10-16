@@ -33,6 +33,11 @@ print('state log (last 10):', *st.get('log', [])[-10:], sep='\n  ')
 rates = [o for o in ls(f'data/{scope}/state/{slug}/rates/') if o['Key'].endswith('.parquet')]
 print(f'\nrates: {len(rates)} tables, {sum(o["Size"] for o in rates) / 1e9:.1f} GB; biggest:',
       ', '.join(f"{o['Key'].rsplit('/', 1)[1]} {o['Size'] / 1e9:.1f} GB" for o in sorted(rates, key=lambda o: -o['Size'])[:6]))
+allr = {o['Key'].rsplit('/', 1)[1]: o['Size'] for o in ls(f'data/{scope}/rates/') if o['Key'].endswith('.parquet')}
+mine = {o['Key'].rsplit('/', 1)[1] for o in rates}
+none = sorted((t for t in allr if t not in mine), key=lambda t: -allr[t])
+print(f'{len(allr)} {scope} insurer tables; {len(none)} have no rows for {slug}:',
+      ', '.join(f'{t} {allr[t] / 1e9:.2f} GB' for t in none[:30]))
 ac = f'work/every-st/{slug}/Acache/'
 A = [o for o in ls(ac) if o['Key'].endswith(('.done', '.claim'))]
 done = [o for o in A if o['Key'].endswith('.done')]
