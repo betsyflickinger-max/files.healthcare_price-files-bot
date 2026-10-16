@@ -75,14 +75,14 @@ def s3():
     if not os.environ.get("R2_ACCOUNT_ID"):
         return None
     import boto3
-    return boto3.client("s3", endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                        aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"], aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
-                        region_name="auto")
+    E = {k: os.environ[k].strip() for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY")}   # secrets may end in a newline
+    return boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+                        aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
 
 
 class Store:
     def __init__(self, out=None):
-        self.c, self.b, self.out = s3(), os.environ.get("R2_BUCKET"), out
+        self.c, self.b, self.out = s3(), (os.environ.get("R2_BUCKET") or "").strip(), out
 
     def get(self, key, default=None):
         try:
