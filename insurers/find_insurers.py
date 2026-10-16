@@ -188,7 +188,7 @@ def sbe_issuers(states):
 # reading-list name -> pattern for CMS / state marketplace names. Molina is left out on purpose: it is on the list but its
 # files are not posted (Price File Watch), so it gets searched like any other missing insurer.
 ALIASES = {"Aetna": r"aetna", "Alliant": r"alliant", "Ambetter": r"ambetter", "Anthem Colorado": r"anthem",
-           "Anthem Georgia": r"anthem", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
+           "Anthem Georgia": r"anthem", "Anthem Missouri": r"anthem", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
            "BCBSOK": r"blue ?cross.*oklahoma", "BCBST": r"blue ?cross.*tennessee", "BCBSTX": r"blue ?cross.*texas",
            "BSW Health Plan": r"baylor scott", "Blue KC": r"blue ?cross.*kansas city|blue ?kc", "Cigna": r"cigna",
            "Curative": r"curative", "CHRISTUS Health Plan": r"christus", "Community Health Choice": r"community health choice",
