@@ -165,8 +165,14 @@ def held_scopes(s3, b, all_jobs, names):
             continue
         # Oct 15, 2026: hospital-page machines (upfront-site-hosp-*) read hospital files and finished page data, never
         # insurer tables, so they don't hold the queue (four of them held 55 seven-state re-reads for no reason).
-        builds = [n for n in names if n.startswith("upfront-site-") and not n.startswith("upfront-site-hosp-")
-                  and (sc in ("s7", "nc") or not n.startswith("upfront-site-st"))]   # st-* = seven states, stnc-* = North Carolina
+        # Oct 16, 2026: each state build reads only its own area's tables: st-* = seven states (s7), stnc-* = North
+        # Carolina (nc). The North Carolina build was holding 78 seven-state Anthem files for no reason.
+        site = [n for n in names if n.startswith("upfront-site-") and not n.startswith("upfront-site-hosp-")]
+        if sc in ("s7", "nc"):
+            pre = "upfront-site-st-" if sc == "s7" else f"upfront-site-st{sc}-"
+            builds = [n for n in site if n.startswith(pre)]
+        else:
+            builds = [n for n in site if not n.startswith("upfront-site-st")]
         if builds:
             held[sc] = f"waiting: a website build is running ({len(builds)} machines)"
     return held
