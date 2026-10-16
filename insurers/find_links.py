@@ -145,6 +145,13 @@ def find(row, today, since):
             return azure_list(row["finder_arg"])
         if finder == "toc_match":
             return toc_match(row["finder_arg"], today)
+        if finder == "catalog":   # Oct 16, 2026: link from the newest insurer catalog (insurers/catalog.py), arg insurer|network|part
+            import catalog
+            ins, net, part = row["finder_arg"].split("|")
+            c = catalog.current_link(ins, net, part)
+            if not c:
+                return dict(url=row["current_url"], how="not in the newest catalog", http="", error="not in catalog", found=False)
+            return dict(url=c["url"], how=f"from the {c['month']} {ins} catalog", http=str(c.get("http") or ""), error="", found=True)
     except Exception as e:
         return dict(url=row["current_url"], how=f"could not read the file list: {_why(e)}", http="",
                     error=str(e)[:200], found=False)
