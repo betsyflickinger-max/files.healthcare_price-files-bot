@@ -54,7 +54,8 @@ def bot_of(name):
     n = name.split(" (")[0]
     if n.startswith(("upfront-fleet-", "upfront-bot-")): return "insurers", ""
     if n.startswith("upfront-site-st-"): return "state_pages", re.sub(r"^upfront-site-st-\d{4}-\d{2}-", "", n).rsplit("-c", 1)[0]
-    if n.startswith("upfront-site-hosp-"): return "hospital_pages", "states" if "-hosp-st-" in n else "Texas"
+    if n.startswith("upfront-site-stnc-"): return "nc_pages", re.sub(r"^upfront-site-stnc-\d{4}-\d{2}-", "", n).rsplit("-c", 1)[0]
+    if n.startswith("upfront-site-hosp-"): return "hospital_pages", ("North Carolina" if "-hosp-stnc-" in n else "states" if "-hosp-st-" in n else "Texas")
     if n.startswith("upfront-site-tx-"): return "texas_pages", re.sub(r"^upfront-site-tx-\d{4}-\d{2}-(metros-)?", "", n)
     if n.startswith("upfront-site-"): return "refresh", "Dallas-Fort Worth"
     if n.startswith("upfront-test-"): return "tests", n[len("upfront-test-"):]
@@ -193,6 +194,12 @@ bm = MONTH if any(o for o in ls(f"site/builds/st-{MONTH}/state.json")) else "202
 st7 = getj(f"site/builds/st-{bm}/state.json", {}) or {}
 built7 = sum(1 for s in SEVEN if ls(f"site/every-st/{s}/{bm}/embed.json"))
 hst = getj(f"site/builds/hosp-st-{bm}/state.json", {}) or {}
+stnc = getj(f"site/builds/stnc-{bm}/state.json", {}) or {}        # North Carolina (Oct 16, 2026)
+hnc = getj(f"site/builds/hosp-stnc-{bm}/state.json", {}) or {}
+nc_note = f"{bm} build, stage: {stnc.get('stage', 'not started')}"
+if stnc.get("split_failed"): nc_note += f"; {len(stnc['split_failed'])} tables not split"
+if stnc.get("problems"): nc_note += f"; problems: {'; '.join(stnc['problems'][-3:])}"
+if (hnc.get("published") or {}): nc_note += "; page published"
 hosp = ST.get("hospitals", {}); names_ = ST.get("code_names", {})
 def tot(*scs, f): return sum(counts.get(s, {}).get(f, 0) for s in scs)
 BOTS = [
@@ -214,6 +221,9 @@ BOTS = [
      "Monthly, after the Dallas refresh", "", None, None, None, None, None, ""),
     ("state_pages", "Seven-state page builder", "Builds the Price Finder pages for TN, CO, OK, AL, MS, MO, GA", "state-pages.yml",
      "Hourly while a build runs", "states", 7, built7, None, None, None, f"{bm} build, stage: {st7.get('stage', '?')}"),
+    ("nc_pages", "North Carolina page builder", "Builds the North Carolina Price Finder page", "nc-pages.yml",
+     "Hourly at :11 while a build runs", "states", 1, 1 if ls(f"site/every-st/north-carolina/{bm}/embed.json") else 0, None,
+     None, None, nc_note),
     ("hospital_pages", "Hospital prices for the state and city pages", "Adds each area's hospital prices to its Price Finder page",
      "hosp-areas.yml", "Runs with the page builders", "states", len(hst.get("areas") or []) or None, len(hst.get("published") or {}) or None,
      None, None, None, ""),
