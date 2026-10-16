@@ -13,6 +13,12 @@ on:
       insurer:
         description: "Insurer (anthem)"
         default: "anthem"
+      cmd:
+        description: "build (read the index), report (summary of the newest catalog) or rows (network-list rows)"
+        default: "build"
+      states:
+        description: "For report/rows: states, comma separated (blank = all)"
+        default: ""
 
 jobs:
   catalog:
@@ -31,4 +37,16 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - run: python -c "import ijson; print('ijson backend:', ijson.backend)"
-      - run: python insurers/catalog.py build --insurer "${{ inputs.insurer || 'anthem' }}"
+      - if: ${{ (inputs.cmd || 'build') == 'build' }}
+        run: python insurers/catalog.py build --insurer "${{ inputs.insurer || 'anthem' }}"
+      - if: ${{ inputs.cmd == 'report' || inputs.cmd == 'rows' }}
+        run: |
+          mkdir -p out
+          python insurers/catalog.py report --insurer "${{ inputs.insurer }}" --states "${{ inputs.states }}" | tee out/report.md >> "$GITHUB_STEP_SUMMARY"
+          python insurers/catalog.py rows --insurer "${{ inputs.insurer }}" --states "${{ inputs.states }}" > out/rows.csv
+          wc -l out/rows.csv
+      - if: ${{ inputs.cmd == 'report' || inputs.cmd == 'rows' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: catalog-${{ inputs.insurer }}-${{ inputs.cmd }}
+          path: out/
