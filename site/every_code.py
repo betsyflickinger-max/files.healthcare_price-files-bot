@@ -30,7 +30,9 @@ if E.get('NOXPART'): shutil.rmtree(D / 'xpart', ignore_errors=True)
 for sub in ('xpart', 'stage', 'aux', 'flat', 'names', 'tmp', 'in'): (D / sub).mkdir(parents=True, exist_ok=True)
 con = duckdb.connect()
 con.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('MEM','12GB')}'; set threads={E.get('THREADS','8')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp'; set partitioned_write_max_open_files=8")
-SHORT = """case when reporting_entity_name ilike '%blue cross%' then 'BCBSTX'
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import blues  # noqa: E402  (Oct 15, 2026: each Blue plan by name, not every Blue Cross price as BCBSTX)
+SHORT = """case """ + blues.SQL_SHORT + """
  when reporting_entity_name ilike '%uhic%' or reporting_entity_name ilike '%united%' then 'UnitedHealthcare'
  when reporting_entity_name ilike '%aetna%' then 'Aetna' when reporting_entity_name ilike '%cigna%' then 'Cigna'
  when reporting_entity_name ilike '%curative%' then 'Curative' when reporting_entity_name ilike '%baylor%' then 'BSW Health Plan'
@@ -38,7 +40,7 @@ SHORT = """case when reporting_entity_name ilike '%blue cross%' then 'BCBSTX'
  when reporting_entity_name ilike '%molina%' then 'Molina' when reporting_entity_name ilike '%wellpoint%' or reporting_entity_name ilike '%elevance%' or reporting_entity_name ilike '%anthem%' or source_file ilike 'TX_JBLX%' then 'Wellpoint'
  else reporting_entity_name end"""
 NET = """case when reporting_entity_name ilike '%aetna%' then replace(replace(file_label, 'Aetna ', ''), 'Health Inc. - Texas ', '')
- when reporting_entity_name ilike '%centene%' then 'Texas exchange plans' when reporting_entity_name ilike '%molina%' then 'Marketplace (Texas)'
+ when reporting_entity_name ilike '%centene%' then replace(file_label, 'Ambetter ', '') when reporting_entity_name ilike '%molina%' then 'Marketplace (Texas)'
  when reporting_entity_name ilike '%oscar%' then replace(network_name, 'Individual Texas ', 'Individual ')
  when network_name = 'IFP TEXAS CONNECT' then 'IFP Texas Connect (marketplace)'
  when network_name = 'NATIONAL OAP' then 'Open Access Plus' when network_name = 'PATHWELL OAP' then 'Pathwell OAP'

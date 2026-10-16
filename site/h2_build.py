@@ -67,11 +67,24 @@ for m in csv.DictReader(open(map_path, encoding='utf-8-sig')):
         by_payer[m["payer_name"]][ins] += 1
 NAME_RULES = [(("aetna",), "Aetna"), (("humana",), "Humana"), (("cigna",), "Cigna"),
               (("unitedhealth", "united health", "uhc", "optum"), "UnitedHealthcare"),
-              (("blue cross", "bcbs", "blue shield"), "BCBSTX"), (("molina",), "Molina"),
+              (("blue cross", "bluecross", "bcbs", "blue shield"), "BCBSTX"), (("molina",), "Molina"),
               (("ambetter", "superior health", "wellcare", "centene"), "Superior/Ambetter/Wellcare (Centene)"),
               (("oscar",), "Oscar"), (("wellpoint", "amerigroup"), "Wellpoint/Amerigroup"),
-              (("baylor scott", "bsw"), "BSW Health Plan"), (("curative",), "Curative")]
+              (("baylor scott", "bsw"), "BSW Health Plan"), (("curative",), "Curative"),
+              (("anthem",), "BCBSTX")]   # Anthem: blues.hospital_label names the area's Anthem plan
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import blues  # noqa: E402
+AREA = os.environ.get('AREA', 'dfw')   # Oct 15, 2026: the page's state or Texas metro, so a "BCBS" payer gets that state's Blue plan
+
+
 def classify(payer, plan):
+    ins, prod = _classify(payer, plan)
+    if ins == "BCBSTX" and blues.home(AREA) != "BCBSTX":   # outside Texas, Blue Cross is that state's own Blue plan
+        ins = blues.hospital_label(payer, AREA) or ins
+    return ins, prod
+
+
+def _classify(payer, plan):
     if (payer, plan) in mapping:
         return mapping[(payer, plan)]
     if payer in by_payer:
@@ -79,7 +92,7 @@ def classify(payer, plan):
     p = payer.lower()
     for words, ins in NAME_RULES:
         if any(w in p for w in words):
-            return ins, 4
+            return (blues.hospital_label(payer, AREA) or ins) if ins == "BCBSTX" else ins, 4
     return "", 4
 
 NUM = lambda c: f"try_cast(replace(replace(trim({c}),'$',''),',','') AS DOUBLE)"
