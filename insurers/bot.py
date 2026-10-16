@@ -203,13 +203,35 @@ def collect(s3, b, man, now, dry):
     # cost safety net. Old fixed-list machines: any older than STUCK_HOURS is deleted. Queue machines may run as long
     # as there is work, so one is deleted only if it has held no job for an hour (stuck starting up or failed to exit).
     try:
+        # Oct 16, 2026: one look at the claims caught a busy machine between two files and deleted it mid-read
+        # (Anthem Georgia 102_11D0 part 7). Now a machine must be seen idle on two passes at least 20 minutes apart
+        # (first sighting saved in R2) and still hold no claim on a fresh read just before deleting.
         busy = {str(c.get("droplet_id")) for c in qclaims.values()}
+        idle_key = "bot/fleet/idle_seen/"
         for did, name, created in droplets.mine():
             age = (now - datetime.fromisoformat(created.replace("Z", "+00:00"))).total_seconds() / 3600
             if name.startswith(fleet.NAME):
-                if str(did) not in busy and age > 1 and not dry:
-                    droplets.delete(did)
-                    print(f"deleted idle queue machine {name} ({age:.1f} h old, holding no job)")
+                if dry or age <= 1:
+                    continue
+                k = f"{idle_key}{did}.json"
+                if str(did) in busy:
+                    try:
+                        s3.delete_object(Bucket=b, Key=k)
+                    except Exception:
+                        pass
+                    continue
+                seen = fleet._get(s3, b, k)
+                if not seen:
+                    s3.put_object(Bucket=b, Key=k, Body=json.dumps(dict(name=name, first_idle=fleet.iso())).encode())
+                    continue
+                if fleet.age_mins(seen.get("first_idle", "")) < 20:
+                    continue
+                if str(did) in {str(c.get("droplet_id")) for c in fleet.claims(s3, b).values()}:
+                    s3.delete_object(Bucket=b, Key=k)
+                    continue
+                droplets.delete(did)
+                s3.delete_object(Bucket=b, Key=k)
+                print(f"deleted idle queue machine {name} ({age:.1f} h old, no job for 20+ minutes)")
             elif age > STUCK_HOURS and not dry:
                 droplets.delete(did)
                 print(f"deleted leftover machine {name} ({age:.0f} h old)")
