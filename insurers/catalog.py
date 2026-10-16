@@ -52,6 +52,16 @@ INSURERS = {
         strip_date=True,
         peek_top=400,
     ),
+    # Oct 16, 2026: Aetna (HealthSparq) lists every file with the plans that use it in one latest_metadata.json per
+    # brand: ALICSI = self-funded employers (Aetna as administrator), ALICFI = insured plans. Plan names run the
+    # employer and product together, so employers are counted by their EIN (plan id).
+    "aetna": dict(
+        name="Aetna",
+        metas=["https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICSI/latest_metadata.json",
+               "https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICFI/latest_metadata.json"],
+        strip_date=True,
+        peek_top=400,
+    ),
 }
 
 # BlueCard-style names: 2026-10_051_06B0_in-network-rates_1_of_5.json.gz  -> network 051_06B0, part 1 of 5
@@ -128,6 +138,8 @@ def find_index(ins, month=None):
     cfg = INSURERS[ins]
     if cfg.get("blobs"):
         return cfg["blobs"], 0, ""
+    if cfg.get("metas"):
+        return cfg["metas"][0], 0, ""
     if cfg.get("latest"):
         d = requests.get(cfg["latest"], headers={"User-Agent": UA}, timeout=60).json()
         url = next(f["url"] for m in d["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
@@ -169,6 +181,7 @@ class Counted(io.RawIOBase):
 
 
 DATE_PREFIX = re.compile(r"^\d{4}[-_]\d{2}[-_]\d{2}_")
+METAS = []           # set from the insurer's settings (Aetna): file lists that name the plans using each file
 BLOBS = False        # set from the insurer's settings (UnitedHealthcare): many small indexes from a file listing
 PEEK_TOP = 0         # set from the insurer's settings: provider samples only for the N networks most employers use
 STRIP_DATE = False   # set from the insurer's settings (Cigna): drop the leading date and "_in-network-rates" from keys
@@ -253,12 +266,38 @@ def blob_structures(list_url, stats, limit=0):
                 print(f"  {i:,} of {len(idx):,} indexes read ({stats['failed']} failed)", flush=True)
 
 
+def meta_structures(urls, stats):
+    """Aetna: each in-network file in the brands' latest_metadata.json, as a reporting_structure item."""
+    stats.update(files=0, failed=0, bytes=0, month="")
+    for u in urls:
+        r = requests.get(u, headers={"User-Agent": UA}, timeout=600)
+        r.raise_for_status()
+        stats["bytes"] += len(r.content)
+        base = u.rsplit("/", 1)[0] + "/"
+        for f in r.json().get("files") or []:
+            if f.get("fileSchema") != "IN_NETWORK_RATES":
+                continue
+            stats["files"] += 1
+            stats["month"] = max(stats["month"], (f.get("lastUpdatedOn") or "")[:10])
+            stats.setdefault("head", dict(reporting_entity_name="Aetna", last_updated_on=f.get("lastUpdatedOn", ""), version=""))
+            plans = [dict(plan_name=p.get("planName", ""), plan_id=p.get("planId", ""), plan_id_type=p.get("planIdType", ""),
+                          plan_market_type=p.get("planMarketType", ""), issuer_name=f.get("reportingEntityName", ""),
+                          # one employer = one EIN; the plan name (employer + product) is shown as the sample
+                          plan_sponsor_name=(f"EIN {p.get('planId')}" if (p.get("planIdType") or "").lower() == "ein" else p.get("planName", "")),
+                          sponsor_label=p.get("planName", ""))
+                     for p in f.get("reportingPlans") or []]
+            yield dict(reporting_plans=plans, in_network_files=[dict(description=f.get("reportingEntityName", ""), location=base + f["filePath"])])
+
+
 def read_index(url, limit_bytes=0, employers_path=None):
     """Stream the whole index once and fold every employer copy of a network into one entry. With employers_path, also
     write every plan (employer, plan id, plan name, market) with the networks it uses: the employer lookup for HR teams."""
     import ijson
     bstats = {}
-    if BLOBS:   # many small indexes (UnitedHealthcare)
+    if METAS:   # file lists with their plans (Aetna)
+        raw = type("R", (), {"n": 0})()
+        structures = meta_structures(METAS, bstats)
+    elif BLOBS:   # many small indexes (UnitedHealthcare)
         raw = type("R", (), {"n": 0})()
         structures = blob_structures(url, bstats, limit=int(limit_bytes / 3000) if limit_bytes else 0)
     else:
@@ -280,8 +319,8 @@ def read_index(url, limit_bytes=0, employers_path=None):
     try:
         # the header (insurer name, date) sits in the first few KB: read it from a small separate request
         try:
-            if BLOBS:
-                raise ValueError("header comes from the first employer index")
+            if BLOBS or METAS:
+                raise ValueError("header comes from the file lists")
             hb = requests.get(url, headers={"User-Agent": UA, "Range": "bytes=0-65535"}, timeout=60).content
             ht = __import__("zlib").decompressobj(16 + 15).decompress(hb)[:20000].decode("utf-8", "replace") if url.endswith(".gz") else hb.decode("utf-8", "replace")
             for k in ("reporting_entity_name", "last_updated_on", "version"):
@@ -322,7 +361,7 @@ def read_index(url, limit_bytes=0, employers_path=None):
                 e["structures"] += 1
                 e["plans"] += len(plans)
                 for pl in plans:
-                    sp = (pl.get("plan_sponsor_name") or "").strip()
+                    sp = (pl.get("sponsor_label") or pl.get("plan_sponsor_name") or "").strip()
                     if sp and len(e["sponsor_sample"]) < 25 and sp not in e["sample_seen"]:
                         e["sample_seen"].add(sp); e["sponsor_sample"].append(sp)
                     e["market"][(pl.get("plan_market_type") or "").lower()] += 1
@@ -361,12 +400,12 @@ def read_index(url, limit_bytes=0, employers_path=None):
             u = set()
             for i in ids: u |= set_sponsors.get(i, set())
             nets[net]["employers"] = len(u)
-    if BLOBS:
+    if BLOBS or METAS:
         head.update(bstats.get("head") or {})
         head["last_updated_on"] = bstats.get("month") or head.get("last_updated_on", "")   # the listing's file date
         raw.n = bstats.get("bytes", 0)
     return head, nets, dict(structures=n_struct, plans=n_plans, links=n_links, bytes_read=raw.n, network_sets=len(sets),
-                            **({"index_files": bstats.get("files"), "index_files_failed": bstats.get("failed")} if BLOBS else {}))
+                            **({"index_files": bstats.get("files"), "index_files_failed": bstats.get("failed")} if (BLOBS or METAS) else {}))
 
 
 # ---------------- enrich: sizes, dates, states ----------------
@@ -479,6 +518,9 @@ def state_of(e):
         st = state_from_name(name)
         if st:
             return st, "network name"
+        m = re.search(r"---([A-Z]{2})$", e["key"])   # Aetna: Aetna-Health-Inc.---PA
+        if m and m.group(1) in set(STATES.values()):
+            return m.group(1), "company name"
         if BLOBS:   # the companies posting it: one state among them settles it (UnitedHealthcare of South Carolina, ...)
             cs = {state_from_name(re.sub(r"[-_]+", " ", c)) for c in e["descriptions"]} - {""}
             if len(cs) == 1:
@@ -494,6 +536,8 @@ def state_of(e):
             tot = sum(e["npi_states"].values())
             if tot >= 8 and n / tot >= 0.75:
                 return st, f"provider sample ({n} of {tot} in {st})"
+            if METAS and tot >= 8 and n / tot <= 0.6:   # Aetna's national plans: providers spread across many states
+                return "national", f"providers spread across states (sample: {n} of {tot} in {st})"
             return "", f"unclear (provider sample {n} of {tot} in {st})"
     s = state_from_name(e.get("reporting_entity", ""))
     if s:
@@ -523,6 +567,10 @@ def finalize(nets):
         if missing > 0:
             problems.append(f"{missing} of {e['parts_declared']} parts not listed in the index")
         desc_all = " ".join(e["descriptions"]).lower() + " " + k.lower()
+        if METAS:   # Aetna's plan names carry the coverage (PPO Dental 2000, Vision ...)
+            samp = " ".join(e["sponsor_sample"]).lower()
+            if samp.count("dental") * 2 > len(e["sponsor_sample"]): desc_all += " dental"
+            elif samp.count("vision") * 2 > len(e["sponsor_sample"]): desc_all += " vision"
         cover = "dental" if "dental" in desc_all else "vision" if "vision" in desc_all else "medical"
         rows.append(dict(
             network=k, kind=e["kind"], coverage=cover, plan_code=e["plan_code"], net_code=e["net_code"],
@@ -702,5 +750,6 @@ if __name__ == "__main__":
     a = ap.parse_args()
     STRIP_DATE = bool(INSURERS[a.insurer].get("strip_date"))
     BLOBS = bool(INSURERS[a.insurer].get("blobs"))
+    METAS = INSURERS[a.insurer].get("metas") or []
     PEEK_TOP = int(INSURERS[a.insurer].get("peek_top") or 0)
     {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)

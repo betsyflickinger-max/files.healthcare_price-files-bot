@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
     inputs:
       insurer:
-        description: "Insurer (anthem, cigna, uhc)"
+        description: "Insurer (anthem, cigna, uhc, aetna)"
         default: "anthem"
       cmd:
         description: "build (read the index), report (summary of the newest catalog) or rows (network-list rows)"
