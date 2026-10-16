@@ -7,7 +7,7 @@ first automatic build is November 2026. Stages:
   split    tx_split.py on rented machines for every Texas insurer table not split by metro yet (insurers re-post monthly
            under new names, and the insurer bot retires last month's tables), plus one machine that re-splits the October
            "rest of Texas" tables into the metro-area pages (tx_split.py SRC=rest; once per table). Split tables whose insurer
-           table was retired are moved to work/retired/<YYYY-MM>/tx_metro/, and each metro's provider list is rebuilt from the Texas list.
+           table was retired are moved to history/insurers/<YYYY-MM>/tx_metro/ (kept permanently), and each metro's provider list is rebuilt from the Texas list.
   build    every_code.py per metro on several machines that share the work (same settings as the October hand run,
            v2/v3 code). A metro is done when site/every-tx/<metro>/<YYYY-MM>/embed.json exists.
   publish  city_page.py --deploy for each page: El Paso, Austin, San Antonio, Houston, then the 18 metro areas and small towns
@@ -77,7 +77,10 @@ def retire_stale():
         for sub in ('rates', 'membership'):
             for t, k in tables(f'data/tx/metro/{m}/{sub}/').items():
                 if t not in current:
-                    s3.copy_object(Bucket=B, Key=f'work/retired/{MONTH}/tx_metro/{m}/{sub}/{t}.parquet', CopySource={'Bucket': B, 'Key': k})
+                    dst = f'history/insurers/{MONTH}/tx_metro/{m}/{sub}/{t}.parquet'   # kept permanently (Oct 15, 2026)
+                    s3.copy({'Bucket': B, 'Key': k}, B, dst)   # multipart copy: no 5 GB limit
+                    if s3.head_object(Bucket=B, Key=dst)['ContentLength'] != s3.head_object(Bucket=B, Key=k)['ContentLength']:
+                        raise RuntimeError(f'copy of {k} came out a different size; left in place')
                     s3.delete_object(Bucket=B, Key=k); moved += 1
     return moved
 

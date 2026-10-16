@@ -8,7 +8,7 @@ For each file:
      every in-scope provider into data/rates/<name>.parquet and data/membership/<name>.parquet.
   2. Upload both to R2 data/full/rates/ and data/full/membership/.
   3. Double-count fix: if this network's previous table had a different name (insurers date their file
-     names), move the old tables to work/retired/<yyyy-mm>/ so a build over data/full/rates/*.parquet
+     names), move the old tables to history/insurers/<yyyy-mm>/ (kept permanently) so a build over data/full/rates/*.parquet
      counts each network once. The old table is only moved after the new one is safely uploaded.
   4. Upload the file's inventory (06f census) to bot/insurers/census/<yyyy-mm>/<scope>/<table>.json.
   5. Write a result marker: bot/insurers/runs/<RUN_ID>/done/<slot>.json
@@ -92,6 +92,9 @@ def exists(key):
         return False
 
 
+HISTORY = "history/insurers/"   # every replaced insurer table, by month replaced; kept permanently
+
+
 def move(src, dst):
     """Copy then delete. s3.copy does a multipart copy for big tables (copy_object stops at 5 GB); the old table is
     deleted only once the copy exists at the full size."""
@@ -157,12 +160,19 @@ def one(job):
         for sub in ("rates", "membership", "codes", "ends"):
             k = f"{OUT}{sub}/{old}.parquet"
             if exists(k):
-                try:
-                    move(k, f"work/retired/{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet")
-                except Exception as e:  # never leave the old table next to the new one (builds would count it twice)
-                    log(f"[{job['slot']}] could not archive old table {k} ({type(e).__name__}); deleting it instead "
-                        "(the new table replaces it; the insurer's original file is the source)")
-                    s3.delete_object(Bucket=B, Key=k)
+                # Oct 15, 2026 (Betsy): never delete a table; old months are kept for price history in history/insurers/
+                # (outside work/, which has a 60-day cleanup rule). If archiving keeps failing, the file is reported as
+                # failed and the old table stays where it is until the next try; nothing is removed.
+                dst = f"{HISTORY}{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet"
+                for i in range(3):
+                    try:
+                        move(k, dst)
+                        break
+                    except Exception as e:
+                        if i == 2:
+                            raise RuntimeError(f"could not archive old table {k} after 3 tries ({type(e).__name__}); "
+                                               "it was left in place, nothing deleted")
+                        time.sleep(60 * (i + 1))
         res["retired"] = old
     res.update(ok=True, secs=round(time.time() - t0))
     return res

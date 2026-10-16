@@ -70,7 +70,7 @@ def h2(areas):
         codes = json.load(open(f'{d}/embed.json'))['codes']
         open(f'{d}/page.html', 'w').write('<script type="application/json" id="data">' +
                                           json.dumps({'codes': codes, 'hosp': {'src': []}}) + '</script>')
-        env = dict(os.environ, UPLOAD='1', HKEY=a['prefix'] + 'hosp/h/', NP=os.environ.get('NP', '8'), MEM=os.environ.get('MEM', '11GB'))
+        env = dict(os.environ, AREA=area, UPLOAD='1', HKEY=a['prefix'] + 'hosp/h/', NP=os.environ.get('NP', '8'), MEM=os.environ.get('MEM', '11GB'))
         r = subprocess.run([sys.executable, f'{HERE}/h2_build.py', f'{d}/rows/*.parquet', f'{HERE}/payer_name_mapping.csv',
                             f'{d}/page.html', f'{d}/out'], env=env)
         if r.returncode:

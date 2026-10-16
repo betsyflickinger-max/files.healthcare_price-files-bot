@@ -215,7 +215,7 @@ def main():
 
 def cleanup(prev):
     """After a build is live: delete only build leftovers. Kept forever: raw/ (original price files), data/ insurer and
-    hospital tables, work/retired/ (last month's tables), site/deploy/, site/builds/ (state + logs), the A cache.
+    hospital tables, history/insurers/ and work/retired/ (replaced insurer tables, every month), site/deploy/, site/builds/ (state + logs), the A cache.
     Kept: the live build and the one before it (rollback). Deleted: older site/every/<build>/ folders and
     work/every/<build>/ scratch for builds other than the live one."""
     import re
