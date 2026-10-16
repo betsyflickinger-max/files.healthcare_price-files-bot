@@ -15,7 +15,22 @@ MONTH = os.environ.get('ST_BUILD') or time.strftime('%Y-%m')
 # Oct 16, 2026: ST_SCOPE=nc builds North Carolina (its own insurer tables data/nc/, build id stnc-YYYY-MM); default s7.
 SCOPE = os.environ.get('ST_SCOPE', 's7')
 STB = 'st' if SCOPE == 's7' else 'st' + SCOPE   # no '-' inside, so '<STB>-<YYYY-MM>'.split('-', 1) still gives the month
+# Oct 16, 2026: rebuild some states only, after new insurer tables landed for them (Anthem's Colorado, Georgia and Missouri
+# networks). Named in site/state_rebuild.json (this repo), e.g. {"st": {"base": "2026-10", "build": "2026-10b", "states":
+# ["CO", "GA", "MO"]}}, and used while "base" is this month's build. It is a fresh build (its own folder, so its own stage-B
+# work; the stage-A cache is shared, so unchanged tables aren't read again) that splits only tables not split before. The
+# pages publisher (hosp_area.py) republishes a state whenever its newest build is newer than the one its page came from.
+BASE, REBUILD = MONTH, {}
+if not os.environ.get('ST_BUILD'):
+    try:
+        import json
+        REBUILD = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state_rebuild.json'))).get(STB) or {}
+        if REBUILD.get('base') == MONTH and REBUILD.get('build') and REBUILD.get('states'): MONTH = REBUILD['build']
+        else: REBUILD = {}
+    except Exception: REBUILD = {}
 os.environ['BUILD'] = STB + '-' + MONTH
+try: open('/tmp/st_bid', 'w').write(os.environ['BUILD'])   # the workflow reads the build id from here
+except Exception: pass
 PAGES_WF = 'state-pages.yml' if SCOPE == 's7' else f'{SCOPE}-pages.yml'
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import orchestrate as O
@@ -26,7 +41,7 @@ SP = O.SP
 SIZE = 's-8vcpu-32gb-amd'
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
                 'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
-STATES = SCOPE_STATES[SCOPE]
+STATES = {k: v for k, v in SCOPE_STATES[SCOPE].items() if not REBUILD or k in REBUILD['states']}
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # Oct 14 8:20pm CT: Georgia's batches (90-150M rows) don't fit in 6 GB, so its machines spent 60-85% of their time waiting on
 # disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
@@ -158,8 +173,9 @@ def release_finished(left):
 # machine's unfinished pieces are simply done by the others, and every finished piece is kept). They come back afterwards.
 HOSP_SLOTS = 3
 def hosp_waiting(left):
-    pub = getj(f'site/builds/hosp-{STB}-{MONTH}/state.json', {}).get('published', {})
-    return [x for x in STATES.values() if x not in left and x not in pub]
+    h = getj(f'site/builds/hosp-{STB}-{BASE}/state.json', {})   # a rebuild's pages are republished by the month's page build
+    pub, frm = h.get('published', {}), h.get('published_from', {})
+    return [x for x in STATES.values() if x not in left and (x not in pub or (REBUILD and frm.get(x) != tout(x)))]
 def build_cap(left):
     """machines the state builds may use: the account limit, less the orchestrator's reserve and the hospital slots"""
     want = min(HOSP_SLOTS, len(hosp_waiting(left)))

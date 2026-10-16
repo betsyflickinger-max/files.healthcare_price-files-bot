@@ -200,6 +200,15 @@ nc_note = f"{bm} build, stage: {stnc.get('stage', 'not started')}"
 if stnc.get("split_failed"): nc_note += f"; {len(stnc['split_failed'])} tables not split"
 if stnc.get("problems"): nc_note += f"; problems: {'; '.join(stnc['problems'][-3:])}"
 if (hnc.get("published") or {}): nc_note += "; page published"
+s7_note = f"{bm} build, stage: {st7.get('stage', '?')}"
+try: rb = json.load(open(HERE.parent / "site" / "state_rebuild.json")).get("st") or {}
+except Exception: rb = {}   # Oct 16, 2026: a rebuild of some states (new Anthem tables for CO, GA, MO)
+if rb.get("base") == bm and rb.get("build"):
+    rst = getj(f"site/builds/st-{rb['build']}/state.json", {}) or {}
+    rnames = {"TN": "Tennessee", "CO": "Colorado", "OK": "Oklahoma", "AL": "Alabama", "MS": "Mississippi", "MO": "Missouri", "GA": "Georgia"}
+    rdone = [rnames[c] for c in rb["states"] if c in rnames and ls(f"site/every-st/{rnames[c].lower()}/{rb['build']}/embed.json")]
+    s7_note += (f"; rebuild of {', '.join(rnames.get(c, c) for c in rb['states'])} with new insurer tables: "
+                f"stage {rst.get('stage', 'waiting for insurer files')}" + (f", built: {', '.join(rdone)}" if rdone else ""))
 hosp = ST.get("hospitals", {}); names_ = ST.get("code_names", {})
 def tot(*scs, f): return sum(counts.get(s, {}).get(f, 0) for s in scs)
 BOTS = [
@@ -220,7 +229,7 @@ BOTS = [
     ("texas_pages", "Texas city pages", "Builds the 23 Texas city and metro Price Finder pages", "site-build.yml",
      "Monthly, after the Dallas refresh", "", None, None, None, None, None, ""),
     ("state_pages", "Seven-state page builder", "Builds the Price Finder pages for TN, CO, OK, AL, MS, MO, GA", "state-pages.yml",
-     "Hourly while a build runs", "states", 7, built7, None, None, None, f"{bm} build, stage: {st7.get('stage', '?')}"),
+     "Hourly while a build runs", "states", 7, built7, None, None, None, s7_note),
     ("nc_pages", "North Carolina page builder", "Builds the North Carolina Price Finder page", "nc-pages.yml",
      "Hourly at :11 while a build runs", "states", 1, 1 if ls(f"site/every-st/north-carolina/{bm}/embed.json") else 0, None,
      None, None, nc_note),

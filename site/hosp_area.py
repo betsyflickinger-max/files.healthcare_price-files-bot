@@ -209,7 +209,7 @@ def run():
         O.log('parse:', len(todo) - len(failed), 'of', len(todo), 'files parsed;', busy, 'machines working')
         if not busy:
             st['parse_failed'] = failed; st['stage'] = 'h2'
-    if S7 and st['stage'] in ('h2', 'publish'):
+    if S7 and st['stage'] in ('h2', 'publish', 'done'):   # 'done': still checks for a newer insurer build to republish
         return state_by_state(O, st)
     if st['stage'] == 'h2' and not ready:
         O.log('hospital files parsed; waiting for the state insurer builds before building each state\'s hospital pages')
@@ -283,6 +283,7 @@ def publish_one(O, st, a, how):
                        capture_output=True, text=True, timeout=3600)
     print(r.stdout[-1200:], r.stderr[-1200:], flush=True)
     st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
+    st.setdefault('published_from', {})[a] = newest_build(O.s3, O.B, a)
     O.log('published', a, '->', st['published'][a])
     O.putj(O.SP + 'state.json', st)
 
@@ -295,6 +296,19 @@ def state_by_state(O, st):
     SP, month = O.SP, O.BID.split('-', 2)[2]
     st['names_fixed'] = True   # state pages were never published before the name fix; fix_names runs before each publish
     areas = st['areas']
+    # Oct 16, 2026: a state rebuilt after the month's build (orchestrate_states.py rebuild, e.g. new Anthem tables) has a newer
+    # insurer build than the one its page was published from: rebuild its hospital files next to it and publish it again.
+    # Pages published before this was added count as published from their newest build at the first check.
+    frm = st.setdefault('published_from', {})
+    for a in areas:
+        if a not in st['published']: continue
+        nb = newest_build(O.s3, O.B, a)
+        if a not in frm: frm[a] = nb; continue
+        if nb and nb != frm[a]:
+            O.log(a, 'has a newer insurer build', nb, 'than its page (', frm[a], '): rebuilding its hospital files and publishing it again')
+            st['published'].pop(a, None); st['launches'].pop(f'h2-{a}', None); st['stage'] = 'h2'
+            try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{a}.done')
+            except Exception: pass
     ready = [a for a in areas if O.exists(f'site/every-st/{a}/{month}/embed.json')]
     done = {k.rsplit('/', 1)[1][:-5] for k in O.ls(SP + 'h2/')}
     busy = 0
