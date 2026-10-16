@@ -47,7 +47,11 @@ W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
 # 10:05pm CT result: worse. The 2 x 13 GB machines were 5-9% busy with 42-67% iowait and landed no batch in 1.5 h, while 4 x 6 GB
 # machines were 34-49% busy and landed 7. Back to 4 x 6 GB everywhere (kept as a per-state hook).
-WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
+WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
+        # Oct 16 11:40am CT (Betsy OK'd): North Carolina's batches are 165-210M rows (Georgia-size). Many took over 2 hours,
+        # so the 120-min freeze check restarted 13 machines mid-batch and threw the work away. Split each unfinished batch
+        # into 6 pieces (~30M rows, like Georgia's, which fit 4 x 6 GB workers) and allow 4 hours before the check fires.
+        'north-carolina': dict(SPLIT='6', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
 # so each piece (~25-40M rows) fits in a worker's 6 GB like other states' batches. Finished whole batches are kept.
 # Oct 14: STALL_MIN 360 (default 60; 180 was still too short: georgia-c5 went 3h12m without its first batch): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.
@@ -172,6 +176,19 @@ def release_finished(left):
 # wait for their pages; the newest machines of the state with the most give them up (stage B has no claims: a stopped
 # machine's unfinished pieces are simply done by the others, and every finished piece is kept). They come back afterwards.
 HOSP_SLOTS = 3
+# Oct 16, 2026: machines launched before a change to their settings (WBIG) keep the old settings until relaunched. A build
+# listed here gets its machines created before the cutoff stopped once; ensure() then relaunches them with the new
+# settings. Finished stage-B batches stay in R2; only the batch each machine was working on is redone.
+RELAUNCH_BEFORE = {'stnc-2026-10': '2026-10-16T16:39:00Z'}
+def relaunch_old(left):
+    cut = RELAUNCH_BEFORE.get(O.BID)
+    if not cut: return
+    for d in O.droplets():
+        if any(d['name'].startswith(f'upfront-site-{O.BID}-{s}-c') for s in left) and d.get('created_at', '9') < cut:
+            try: O.do('DELETE', f"/droplets/{d['id']}"); log('relaunching with new settings:', d['name'])
+            except Exception as e: log('relaunch stop failed', d['name'], repr(e)[:150])
+
+
 def hosp_waiting(left):
     h = getj(f'site/builds/hosp-{STB}-{BASE}/state.json', {})   # a rebuild's pages are republished by the month's page build
     pub, frm = h.get('published', {}), h.get('published_from', {})
@@ -274,9 +291,11 @@ def main():
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
                            MEM='18GB', WORK='/d', AORDER='desc', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
-                            **{**W, **WBIG.get(slug, {})})
+)
+                env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         release_finished(left)
+        relaunch_old(left)
         cap, held = build_cap(left)
         make_room(st, left, cap)
         fit_to_work(st, left)
