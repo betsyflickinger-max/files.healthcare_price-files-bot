@@ -43,6 +43,15 @@ INSURERS = {
         latest="https://www.cigna.com/static/mrf/latest.json",
         strip_date=True,
     ),
+    # Oct 16, 2026: UnitedHealthcare posts no single index: one small index per employer (~68,000, ~0.2 GB in all) in a
+    # public file listing that also gives every file's size. Read them all (32 at a time) and fold them like one index.
+    # Provider samples only for the 400 networks most employers use (7,000+ networks; a sample reads 3 MB each).
+    "uhc": dict(
+        name="UnitedHealthcare",
+        blobs="https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/",
+        strip_date=True,
+        peek_top=400,
+    ),
 }
 
 # BlueCard-style names: 2026-10_051_06B0_in-network-rates_1_of_5.json.gz  -> network 051_06B0, part 1 of 5
@@ -117,6 +126,8 @@ def find_index(ins, month=None):
     """Newest index that answers: the 1st of this month, then the previous two months (or, for an insurer with a
     'latest' pointer, the table of contents that pointer names)."""
     cfg = INSURERS[ins]
+    if cfg.get("blobs"):
+        return cfg["blobs"], 0, ""
     if cfg.get("latest"):
         d = requests.get(cfg["latest"], headers={"User-Agent": UA}, timeout=60).json()
         url = next(f["url"] for m in d["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
@@ -158,14 +169,25 @@ class Counted(io.RawIOBase):
 
 
 DATE_PREFIX = re.compile(r"^\d{4}[-_]\d{2}[-_]\d{2}_")
+BLOBS = False        # set from the insurer's settings (UnitedHealthcare): many small indexes from a file listing
+PEEK_TOP = 0         # set from the insurer's settings: provider samples only for the N networks most employers use
 STRIP_DATE = False   # set from the insurer's settings (Cigna): drop the leading date and "_in-network-rates" from keys
+
+
+UHC_MARKET = re.compile(r"_(Third-Party-Administrator|Insurer|Health-Insurance-Issuer|Group-Health-Plan)_", re.I)
 
 
 def network_of(url):
     info = _network_of(url)
     if STRIP_DATE and info["kind"] != "bluecard":
         k = DATE_PREFIX.sub("", info["key"])
-        info["key"] = re.sub(r"[_-]in-network-rates$", "", k, flags=re.I)
+        k = re.sub(r"[_-]in-network-rates$", "", k, flags=re.I)
+        if BLOBS:   # UnitedHealthcare posts the same network file under each company that uses it: one key per network
+            m = UHC_MARKET.search(k)
+            if m:
+                info["company"] = k[:m.start()]
+                k = k[m.end():]
+        info["key"] = k
     return info
 
 
@@ -189,15 +211,63 @@ def _network_of(url):
     return dict(key=base, part=1, parts=1, ym="", plan_code="", net_code="", fname=fname, host=host, kind="single")
 
 
+def blob_structures(list_url, stats, limit=0):
+    """UnitedHealthcare: every employer's own small index from the public listing, newest month only, read 32 at a
+    time; yields their reporting_structure items in listing order. stats gets files, failed and bytes."""
+    blobs = requests.get(list_url, headers={"User-Agent": UA}, timeout=600).json()["blobs"]
+    idx = [b for b in blobs if b["name"].endswith("_index.json")]
+    month = max(b["name"][:10] for b in idx)
+    idx = [b for b in idx if b["name"].startswith(month)]
+    if limit:
+        idx = idx[:limit]
+    stats.update(files=len(idx), failed=0, bytes=0, month=month)
+    print(f"{len(idx):,} employer indexes dated {month}", flush=True)
+
+    def get(b):
+        for t in range(4):
+            try:
+                r = requests.get(b["downloadUrl"], headers={"User-Agent": UA}, timeout=120)
+                if r.status_code == 200:
+                    return r.content
+            except requests.RequestException:
+                pass
+            time.sleep(2 * (t + 1))
+        return None
+
+    with ThreadPoolExecutor(64) as ex:
+        for i, body in enumerate(ex.map(get, idx), 1):
+            if body is None:
+                stats["failed"] += 1
+                continue
+            stats["bytes"] += len(body)
+            try:
+                j = json.loads(body)
+            except ValueError:
+                stats["failed"] += 1
+                continue
+            if i == 1:
+                stats["head"] = {k: j.get(k, "") for k in ("reporting_entity_name", "last_updated_on", "version")}
+            for rs in j.get("reporting_structure") or []:
+                yield rs
+            if i % 5000 == 0:
+                print(f"  {i:,} of {len(idx):,} indexes read ({stats['failed']} failed)", flush=True)
+
+
 def read_index(url, limit_bytes=0, employers_path=None):
     """Stream the whole index once and fold every employer copy of a network into one entry. With employers_path, also
     write every plan (employer, plan id, plan name, market) with the networks it uses: the employer lookup for HR teams."""
     import ijson
-    r = requests.get(url, headers={"User-Agent": UA}, stream=True, timeout=(60, 600))
-    r.raise_for_status()
-    r.raw.decode_content = False
-    raw = Counted(r.raw, limit_bytes)
-    src = gzip.GzipFile(fileobj=io.BufferedReader(raw, 1 << 22)) if url.endswith(".gz") else io.BufferedReader(raw, 1 << 22)
+    bstats = {}
+    if BLOBS:   # many small indexes (UnitedHealthcare)
+        raw = type("R", (), {"n": 0})()
+        structures = blob_structures(url, bstats, limit=int(limit_bytes / 3000) if limit_bytes else 0)
+    else:
+        r = requests.get(url, headers={"User-Agent": UA}, stream=True, timeout=(60, 600))
+        r.raise_for_status()
+        r.raw.decode_content = False
+        raw = Counted(r.raw, limit_bytes)
+        src = gzip.GzipFile(fileobj=io.BufferedReader(raw, 1 << 22)) if url.endswith(".gz") else io.BufferedReader(raw, 1 << 22)
+        structures = None
     nets = {}
     head = {}
     emp = emp_f = None
@@ -210,6 +280,8 @@ def read_index(url, limit_bytes=0, employers_path=None):
     try:
         # the header (insurer name, date) sits in the first few KB: read it from a small separate request
         try:
+            if BLOBS:
+                raise ValueError("header comes from the first employer index")
             hb = requests.get(url, headers={"User-Agent": UA, "Range": "bytes=0-65535"}, timeout=60).content
             ht = __import__("zlib").decompressobj(16 + 15).decompress(hb)[:20000].decode("utf-8", "replace") if url.endswith(".gz") else hb.decode("utf-8", "replace")
             for k in ("reporting_entity_name", "last_updated_on", "version"):
@@ -217,7 +289,7 @@ def read_index(url, limit_bytes=0, employers_path=None):
                 if m: head[k] = m.group(1)
         except Exception:
             pass
-        for rs in ijson.items(src, "reporting_structure.item", buf_size=1 << 20):
+        for rs in (structures if structures is not None else ijson.items(src, "reporting_structure.item", buf_size=1 << 20)):
             n_struct += 1
             plans = rs.get("reporting_plans") or []
             n_plans += len(plans)
@@ -236,7 +308,7 @@ def read_index(url, limit_bytes=0, employers_path=None):
                                        ym=info["ym"], parts_declared=info["parts"], parts={}, descriptions=Counter(),
                                        hosts=Counter(), structures=0, plans=0, sponsor_sample=[], sample_seen=set(),
                                        market=Counter(), id_types=Counter(), hios_states=Counter())
-                e["descriptions"][(f.get("description") or "").strip()[:120]] += 1
+                e["descriptions"][(info.get("company") or f.get("description") or "").strip()[:120]] += 1
                 e["hosts"][info["host"]] += 1
                 e["parts_declared"] = max(e["parts_declared"], info["parts"])
                 p = e["parts"].get(info["part"])
@@ -289,7 +361,12 @@ def read_index(url, limit_bytes=0, employers_path=None):
             u = set()
             for i in ids: u |= set_sponsors.get(i, set())
             nets[net]["employers"] = len(u)
-    return head, nets, dict(structures=n_struct, plans=n_plans, links=n_links, bytes_read=raw.n, network_sets=len(sets))
+    if BLOBS:
+        head.update(bstats.get("head") or {})
+        head["last_updated_on"] = bstats.get("month") or head.get("last_updated_on", "")   # the listing's file date
+        raw.n = bstats.get("bytes", 0)
+    return head, nets, dict(structures=n_struct, plans=n_plans, links=n_links, bytes_read=raw.n, network_sets=len(sets),
+                            **({"index_files": bstats.get("files"), "index_files_failed": bstats.get("failed")} if BLOBS else {}))
 
 
 # ---------------- enrich: sizes, dates, states ----------------
@@ -333,11 +410,14 @@ def peek(e, sample=12):
     first = e["parts"][min(e["parts"])]
     out = dict(reporting_entity="", last_updated_on="", npi_states={})
     try:
-        r = requests.get(first["url"], headers={"User-Agent": UA, "Range": "bytes=0-3000000"}, timeout=120)
-        if r.status_code not in (200, 206):
-            out["peek_error"] = f"HTTP {r.status_code}"; return out
+        # stream and stop at 3 MB: some hosts ignore Range and would send the whole file (UnitedHealthcare: 9+ GB)
+        with requests.get(first["url"], headers={"User-Agent": UA, "Range": "bytes=0-3000000"}, timeout=120, stream=True) as r:
+            if r.status_code not in (200, 206):
+                out["peek_error"] = f"HTTP {r.status_code}"; return out
+            r.raw.decode_content = False
+            body = r.raw.read(3_000_001)
         d = __import__("zlib").decompressobj(16 + 15)
-        text = d.decompress(r.content)[:6_000_000].decode("utf-8", "replace") if first["fname"].endswith(".gz") else r.text
+        text = d.decompress(body, 6_000_000).decode("utf-8", "replace") if first["fname"].endswith(".gz") else body.decode("utf-8", "replace")
     except Exception as ex:
         out["peek_error"] = repr(ex)[:120]; return out
     m = re.search(r'"reporting_entity_name"\s*:\s*"([^"]*)"', text); out["reporting_entity"] = m.group(1) if m else ""
@@ -358,10 +438,15 @@ def enrich(nets, threads=24):
         list(ex.map(head_part, parts))
     for e in nets.values():
         e["hios_top"] = e["hios_states"].most_common(1)[0][0] if e["hios_states"] else ""
+    todo = list(nets)
+    if STRIP_DATE:   # a network whose name already settles its state needs no provider sample
+        todo = [k for k in todo if not state_of(nets[k])[0]]
+    if PEEK_TOP:
+        todo = sorted(nets, key=lambda k: -(nets[k].get("employers") or 0))[:PEEK_TOP]
     with ThreadPoolExecutor(12) as ex:
-        peeks = dict(zip(nets, ex.map(peek, nets.values())))
+        peeks = dict(zip(todo, ex.map(peek, [nets[k] for k in todo])))
     for k, e in nets.items():
-        e.update(peeks[k])
+        e.update(peeks.get(k) or dict(reporting_entity="", last_updated_on="", npi_states={}))
 
 
 # ---------------- summarize, compare, write ----------------
@@ -380,6 +465,10 @@ NATIONAL_RE = re.compile(r"\b(national|pathwell|oap|open access|ppo|localplus|lo
                          r"healthpartners|mvp|sagamore|upper midwest)\b")
 
 
+UHC_NATIONAL = re.compile(r"\b(choice plus|choice epo|choice|core|core epo|navigate|navigate epo|charter|charter epo|select plus|select epo|"
+                          r"select|options ppo|options|nexusaco|nexusaco oa|ohph|optum|ppo ndc|doctors plan|surest|ps1)\b")
+
+
 def state_of(e):
     if STRIP_DATE:
         name = re.sub(r"[-_]+", " ", e["key"].lower())
@@ -390,6 +479,14 @@ def state_of(e):
         st = state_from_name(name)
         if st:
             return st, "network name"
+        if BLOBS:   # the companies posting it: one state among them settles it (UnitedHealthcare of South Carolina, ...)
+            cs = {state_from_name(re.sub(r"[-_]+", " ", c)) for c in e["descriptions"]} - {""}
+            if len(cs) == 1:
+                return cs.pop(), "company name"
+        if BLOBS and UHC_NATIONAL.search(name):
+            return "national", "national product (network name)"
+        if BLOBS and re.search(r"\b(freedom|liberty)\b", name):
+            return "multi", "Oxford network (NY, NJ, CT)"
         if NATIONAL_RE.search(name):
             return "national", "national product (network name)"
         if e.get("npi_states"):
@@ -604,4 +701,6 @@ if __name__ == "__main__":
     ap.add_argument("--label-prefix", default="")
     a = ap.parse_args()
     STRIP_DATE = bool(INSURERS[a.insurer].get("strip_date"))
+    BLOBS = bool(INSURERS[a.insurer].get("blobs"))
+    PEEK_TOP = int(INSURERS[a.insurer].get("peek_top") or 0)
     {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)

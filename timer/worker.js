@@ -14,6 +14,7 @@ const JOBS = [
   ['11 * * * *', 'nc-pages.yml'],
   ['17 9 2 * *', 'catalog.yml', { insurer: 'anthem', cmd: 'build' }],
   ['47 9 2 * *', 'catalog.yml', { insurer: 'cigna', cmd: 'build' }],
+  ['17 11 2 * *', 'catalog.yml', { insurer: 'uhc', cmd: 'build' }],
   ['17 * 20-28 * *', 'hosp-areas.yml'],
   ['17 9 * * *', 'hospitals.yml'],
   ['37 9 * * *', 'names.yml', { max_codes: '20000' }],
