@@ -200,7 +200,7 @@ def join(a):
     c.sql("""
       CREATE TABLE employers AS
       WITH ff AS (
-        SELECT * EXCLUDE (rk) FROM (SELECT *, row_number() OVER (PARTITION BY ein ORDER BY coalesce(active_participants, participants_boy, 0) DESC) rk FROM f) WHERE rk = 1),
+        SELECT * EXCLUDE (rk) FROM (SELECT *, row_number() OVER (PARTITION BY ein ORDER BY regexp_matches(upper(plan_name), 'ASSISTANCE PROGRAM|\bEAP\b|DENTAL|VISION|DISABILITY|LIFE INS|SEVERANCE|CAFETERIA|FLEXIBLE SPENDING') , coalesce(active_participants, participants_boy, 0) DESC) rk FROM f) WHERE rk = 1),
       fe AS (SELECT ein, count(*) AS health_plans_filed, string_agg(DISTINCT funding, '; ') AS funding_all FROM f GROUP BY 1),
       li AS (SELECT ein, string_agg(DISTINCT insurer, ', ' ORDER BY insurer) AS listed_by, any_value(sponsor_listed) AS sponsor_listed,
                     sum(network_count) AS networks FROM employer_plans GROUP BY 1)
@@ -219,6 +219,37 @@ def join(a):
                                  FROM employer_plans p WHERE p.ein = e.ein) AS networks_by_insurer
                     FROM employers e WHERE dfw ORDER BY coalesce(active_participants, participants_boy, 0) DESC)
               TO '{WORK}/dfw_employers.csv' (HEADER, DELIMITER ',')""")
+    # site data for the Employer Plans page: every Texas employer the catalogs list, with the networks each insurer's
+    # index ties it to (network names as the insurer's index describes them, file-part wording dropped)
+    rows = c.sql("""
+      SELECT e.ein, e.employer, e.city, e.zip5, e.dfw, e.naics, e.active_participants, e.participants_boy, e.f5500_year,
+             e.plan_year_begin, e.funding, e.stop_loss_on_file, e.health_carriers, e.stop_loss_carriers, e.f5500_ack_id, e.f5500_plan_name,
+             list(struct_pack(i := p.insurer, n := p.networks, c := p.plans_listed)) AS ins
+      FROM employers e JOIN employer_plans p USING (ein)
+      WHERE e.state = 'TX'
+      GROUP BY ALL ORDER BY coalesce(any_value(e.active_participants), any_value(e.participants_boy), 0) DESC""").fetchall()
+    desc = {(i, n): d for i, n, d, s_ in c.sql("SELECT insurer, network, description, state FROM netd").fetchall()}
+    import re as _re
+    def nname(i, n):
+        d = _re.sub(r"\s*in-network file.*$", "", desc.get((i, n)) or "", flags=_re.I).strip()
+        return d or n
+    site = []
+    for r in rows:
+        ins = {}
+        for x in r[16]:
+            names = sorted({nname(x["i"], n) for n in (x["n"] or [])})
+            ins[NAMES[x["i"]]] = names[:40] + ([f"and {len(names) - 40} more"] if len(names) > 40 else [])
+        site.append(dict(ein=r[0], name=r[1], city=r[2], dfw=bool(r[4]), naics=r[5], active=r[6], boy=r[7], year=r[8],
+                         pyb=r[9], funding=r[10], stop_loss=bool(r[11]), carriers=r[12] or "", sl_carriers=r[13] or "",
+                         ack=r[14], plan=r[15], ins=ins))
+    meta = dict(built=stamp, catalogs={NAMES[i]: m for i, m in months.items()},
+                f5500=(st.get("bot/employers/f5500/meta.json") or {}).get("years", []),
+                counts=dict(zip(["employers", "with_5500", "texas", "dfw", "dfw_self"], c.sql(
+                    """SELECT count(*), count(*) FILTER (WHERE has_f5500), count(*) FILTER (WHERE state='TX'), count(*) FILTER (WHERE dfw),
+                              count(*) FILTER (WHERE dfw AND funding='self-funded') FROM employers""").fetchone())),
+                by_insurer={NAMES[i]: n for i, n in c.sql("SELECT insurer, count(*) FROM employer_plans GROUP BY 1").fetchall()})
+    json.dump(dict(meta=meta, employers=site), open(f"{WORK}/site_employers.json", "w"), separators=(",", ":"), default=str)
+    print(f"site_employers.json: {len(site):,} Texas employers")
     # report
     L = [f"# Employer plans: insurer catalogs joined to Form 5500 ({stamp})", "",
          "Catalog months: " + ", ".join(f"{NAMES[i]} {m}" for i, m in months.items()), ""]
@@ -248,7 +279,7 @@ def join(a):
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(rep + "\n")
     if st.c:
-        for n in ("employer_plans.parquet", "employers.parquet", "dfw_employers.csv", "report.md"):
+        for n in ("employer_plans.parquet", "employers.parquet", "dfw_employers.csv", "report.md", "site_employers.json"):
             st.c.upload_file(f"{WORK}/{n}", st.b, base + n)
         st.put("bot/employers/latest.json", dict(date=stamp, catalogs=months))
         print("uploaded", base)
