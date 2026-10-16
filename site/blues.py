@@ -73,7 +73,7 @@ def hospital_label(payer, area):
 SQL_SHORT = """when file_label ilike 'BCBSTX%' then 'BCBSTX'
  when file_label ilike 'BCBSOK%' then 'BCBSOK'
  when file_label ilike 'Anthem Colorado%' then 'Anthem Colorado' when file_label ilike 'Anthem Georgia%' then 'Anthem Georgia'
- when file_label ilike 'Anthem Missouri%' then 'Anthem Missouri'
+ when file_label ilike 'Anthem Missouri%' then 'Anthem Missouri' when file_label ilike 'Anthem Connecticut%' then 'Anthem Connecticut'
  when file_label ilike 'BCBS Alabama%' then 'BCBS Alabama' when file_label ilike 'BCBS Mississippi%' then 'BCBS Mississippi'
  when file_label ilike 'Blue KC%' then 'Blue KC'
  when reporting_entity_name ilike '%blue cross%of texas%' then 'BCBSTX'
