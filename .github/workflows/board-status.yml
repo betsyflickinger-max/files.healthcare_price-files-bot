@@ -19,7 +19,7 @@ permissions:
 jobs:
   status:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 50   # Oct 16: status.py now takes ~25 min (more areas); at 25 most runs hit the limit and the board went stale
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
