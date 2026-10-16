@@ -53,8 +53,8 @@ jobs:
           # keep moving the build forward every 5 minutes (GitHub's schedule doesn't fire reliably), until the insurer part is done
           for i in $(seq 1 64); do
             git pull -q --ff-only origin main || true   # Oct 14: pick up code fixes within 5 min, not at the next fresh run
-            python site/orchestrate_states.py | tee -a "$GITHUB_STEP_SUMMARY"
-            if [ "$(python site/build_stage.py site/builds/st-$(date +%Y-%m)/state.json)" = hosp ]; then echo "ready=1" >> "$GITHUB_OUTPUT"; exit 0; fi
+            python site/orchestrate_states.py | tee -a "$GITHUB_STEP_SUMMARY"   # writes /tmp/st_bid (a rebuild of some states has its own id)
+            if [ "$(python site/build_stage.py site/builds/$(cat /tmp/st_bid 2>/dev/null || echo st-$(date +%Y-%m))/state.json)" = hosp ]; then echo "ready=1" >> "$GITHUB_OUTPUT"; exit 0; fi
             sleep 300
           done
           gh workflow run state-pages.yml --ref main   # out of time: hand over to a fresh run
