@@ -24,7 +24,8 @@ if not GEO: raise SystemExit('STOP: tx_zip_metro.csv not found')
 def ls(p): return [(o['Key'], o['Size']) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p) for o in pg.get('Contents', [])]
 REST = E.get('SRC') == 'rest'
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
-                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+                'nc': {'NC': 'north-carolina'},   # Oct 16, 2026: North Carolina has its own scope
+                'ct': {'CT': 'connecticut'}}   # Oct 16, 2026: Connecticut has its own scope (data/ct/)
 SC = E.get('SCOPE', '')
 ST = SC in SCOPE_STATES
 STATES = SCOPE_STATES.get(SC, {})

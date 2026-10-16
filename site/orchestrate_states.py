@@ -40,7 +40,8 @@ E = os.environ
 SP = O.SP
 SIZE = 's-8vcpu-32gb-amd'
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
-                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+                'nc': {'NC': 'north-carolina'},   # Oct 16, 2026: North Carolina has its own scope
+                'ct': {'CT': 'connecticut'}}   # Oct 16, 2026: Connecticut has its own scope (data/ct/)
 STATES = {k: v for k, v in SCOPE_STATES[SCOPE].items() if not REBUILD or k in REBUILD['states']}
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # Oct 14 8:20pm CT: Georgia's batches (90-150M rows) don't fit in 6 GB, so its machines spent 60-85% of their time waiting on
