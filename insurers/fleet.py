@@ -168,7 +168,7 @@ def held_scopes(s3, b, all_jobs, names):
         # Oct 16, 2026: each state build reads only its own area's tables: st-* = seven states (s7), stnc-* = North
         # Carolina (nc). The North Carolina build was holding 78 seven-state Anthem files for no reason.
         site = [n for n in names if n.startswith("upfront-site-") and not n.startswith("upfront-site-hosp-")]
-        if sc in ("s7", "nc"):
+        if sc not in ("dfw", "tx"):   # Oct 16: any state scope (s7, nc, ct, ...) is held only by its own build
             pre = "upfront-site-st-" if sc == "s7" else f"upfront-site-st{sc}-"
             builds = [n for n in site if n.startswith(pre)]
         else:

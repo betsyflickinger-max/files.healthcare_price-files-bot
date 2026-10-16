@@ -188,7 +188,7 @@ def sbe_issuers(states):
 # reading-list name -> pattern for CMS / state marketplace names. Molina is left out on purpose: it is on the list but its
 # files are not posted (Price File Watch), so it gets searched like any other missing insurer.
 ALIASES = {"Aetna": r"aetna", "Alliant": r"alliant", "Ambetter": r"ambetter", "Anthem Colorado": r"anthem",
-           "Anthem Georgia": r"anthem", "Anthem Missouri": r"anthem", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
+           "Anthem Georgia": r"anthem", "Anthem Missouri": r"anthem", "Anthem Connecticut": r"anthem", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
            "BCBSOK": r"blue ?cross.*oklahoma", "BCBST": r"blue ?cross.*tennessee", "BCBSTX": r"blue ?cross.*texas",
            "BSW Health Plan": r"baylor scott", "Blue KC": r"blue ?cross.*kansas city|blue ?kc", "Cigna": r"cigna",
            "Curative": r"curative", "CHRISTUS Health Plan": r"christus", "Community Health Choice": r"community health choice",
@@ -201,7 +201,7 @@ NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r
 def known_networks():
     """(scope states, reading-list insurer) the bot already reads."""
     known = []
-    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"})):
+    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"})):
         p = ROOT / "insurers" / f
         if p.exists():
             for r in csv.DictReader(open(p, encoding="utf-8")):
