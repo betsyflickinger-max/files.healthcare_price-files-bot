@@ -30,8 +30,8 @@ sys.path.insert(0, HERE)
 from catalog import Store   # same R2 helper as the catalog
 
 DOL = "https://www.askebsa.dol.gov/FOIA%20Files/{y}/Latest/{f}_{y}_Latest.zip"
-INSURERS = ["anthem", "uhc", "cigna", "aetna"]
-NAMES = {"anthem": "Anthem", "uhc": "UnitedHealthcare", "cigna": "Cigna", "aetna": "Aetna"}
+INSURERS = ["anthem", "uhc", "cigna", "aetna", "hcsc"]
+NAMES = {"anthem": "Anthem", "uhc": "UnitedHealthcare", "cigna": "Cigna", "aetna": "Aetna", "hcsc": "BCBS TX/IL/OK/NM/MT (HCSC)"}
 # Dallas-Fort Worth = sponsor mailing ZIP 750-753 or 760-762, the same ZIP rule the site uses for the DFW area (site/hosp_area.py)
 WORK = os.environ.get("WORK", "/tmp/employers")
 
