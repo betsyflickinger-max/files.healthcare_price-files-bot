@@ -11,7 +11,7 @@ SRC=rest: re-split the tables already split into the old "rest" metro (data/tx/m
 pages the same way; done markers data/tx/metro/_done_rest/<table>.json. The rest/ copies are left in place.
 SCOPE=s7 (Oct 13, 2026): split the first national batch (data/s7/) by the provider's practice state instead, into
 data/s7/state/<state slug>/rates|membership/<table>.parquet, done markers data/s7/state/_done/<table>.json. Same filters.
-Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=rest]; [SCOPE=s7]; MEM; THREADS; WORK."""
+Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=rest]; [SCOPE=s7|nc]; MEM; THREADS; WORK."""
 import json, os, time, glob, shutil, duckdb, boto3
 E = os.environ
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
@@ -23,12 +23,15 @@ GEO = next((p for p in (f'{HERE}/tx_zip_metro.csv', f'{HERE}/../reference/geo/tx
 if not GEO: raise SystemExit('STOP: tx_zip_metro.csv not found')
 def ls(p): return [(o['Key'], o['Size']) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p) for o in pg.get('Contents', [])]
 REST = E.get('SRC') == 'rest'
-ST = E.get('SCOPE') == 's7'
-STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
+SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
+                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+SC = E.get('SCOPE', '')
+ST = SC in SCOPE_STATES
+STATES = SCOPE_STATES.get(SC, {})
 RIN, MIN, DONE = (('data/tx/metro/rest/rates/', 'data/tx/metro/rest/membership/', 'data/tx/metro/_done_rest/') if REST else
-                  ('data/s7/rates/', 'data/s7/membership/', 'data/s7/state/_done/') if ST else
+                  (f'data/{SC}/rates/', f'data/{SC}/membership/', f'data/{SC}/state/_done/') if ST else
                   ('data/tx/rates/', 'data/tx/membership/', 'data/tx/metro/_done/'))
-OUTD = 'data/s7/state/' if ST else 'data/tx/metro/'
+OUTD = f'data/{SC}/state/' if ST else 'data/tx/metro/'
 # z = 3-digit ZIP area, g.slug = metro area page of the 5-digit ZIP. A rest/ table holds only rest-of-Texas providers, so SRC=rest
 # uses the metro-area table alone (a provider can't land in a city folder and overwrite that city's split of the same table).
 AREA = "coalesce(g.slug, 'small-towns')"
@@ -36,7 +39,7 @@ METRO = AREA if REST else f"""case when z between '770' and '775' then 'houston'
   when z between '786' and '787' then 'austin' when z between '798' and '799' then 'el-paso'
   when (z between '750' and '753') or (z between '760' and '762') then 'dfw' else {AREA} end"""
 if ST: METRO = 'case st ' + ' '.join(f"when '{k}' then '{v}'" for k, v in STATES.items()) + " else 'dfw' end"   # 'dfw' = dropped
-s3.download_file(B, 'data/scope/s7_npis_all.parquet' if ST else 'data/scope/tx_npis_all.parquet', f'{W}/npis.parquet')
+s3.download_file(B, f'data/scope/{SC}_npis_all.parquet' if ST else 'data/scope/tx_npis_all.parquet', f'{W}/npis.parquet')
 allt = [k.rsplit('/', 1)[1][:-8] for k, _ in sorted(ls(RIN), key=lambda x: -x[1]) if k.endswith('.parquet')]
 tables = allt if E.get('ALL') else [t for t in E['TABLES'].split(',') if t]
 for t in tables:

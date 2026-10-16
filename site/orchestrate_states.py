@@ -12,7 +12,11 @@ Env: as orchestrate.py, plus [ST_BUILD=YYYY-MM] [FORCE=1]."""
 import csv, io, os, sys, time
 
 MONTH = os.environ.get('ST_BUILD') or time.strftime('%Y-%m')
-os.environ['BUILD'] = 'st-' + MONTH
+# Oct 16, 2026: ST_SCOPE=nc builds North Carolina (its own insurer tables data/nc/, build id stnc-YYYY-MM); default s7.
+SCOPE = os.environ.get('ST_SCOPE', 's7')
+STB = 'st' if SCOPE == 's7' else 'st' + SCOPE   # no '-' inside, so '<STB>-<YYYY-MM>'.split('-', 1) still gives the month
+os.environ['BUILD'] = STB + '-' + MONTH
+PAGES_WF = 'state-pages.yml' if SCOPE == 's7' else f'{SCOPE}-pages.yml'
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import orchestrate as O
 from orchestrate import B, s3, log, exists, getj, putj, ls, ensure, free_slots
@@ -20,7 +24,9 @@ from orchestrate import B, s3, log, exists, getj, putj, ls, ensure, free_slots
 E = os.environ
 SP = O.SP
 SIZE = 's-8vcpu-32gb-amd'
-STATES = {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'}
+SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
+                'nc': {'NC': 'north-carolina'}}   # Oct 16, 2026: North Carolina has its own scope
+STATES = SCOPE_STATES[SCOPE]
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # Oct 14 8:20pm CT: Georgia's batches (90-150M rows) don't fit in 6 GB, so its machines spent 60-85% of their time waiting on
 # disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
@@ -41,19 +47,19 @@ def sizes(prefix):
 
 
 def s7_busy():
-    m = s3.get_object(Bucket=B, Key='bot/insurers/s7/manifest.csv')['Body'].read().decode()
+    m = s3.get_object(Bucket=B, Key=f'bot/insurers/{SCOPE}/manifest.csv')['Body'].read().decode()
     return sum(1 for r in csv.DictReader(io.StringIO(m)) if r.get('status') in ('running', 'queued'))
 
 
 def state_npis():
     import duckdb
-    s3.download_file(B, 'data/scope/s7_npis_all.parquet', '/tmp/s7_npis_all.parquet')
+    s3.download_file(B, f'data/scope/{SCOPE}_npis_all.parquet', '/tmp/s7_npis_all.parquet')
     c, out = duckdb.connect(), {}
     for st, slug in STATES.items():
         c.execute(f"copy (select * from read_parquet('/tmp/s7_npis_all.parquet') where upper(state) = '{st}') to '/tmp/npis_{slug}.parquet' (format parquet, compression zstd)")
         out[slug] = c.execute(f"select count(*) from read_parquet('/tmp/npis_{slug}.parquet')").fetchone()[0]
         if out[slug] < 1000: raise SystemExit(f'STOP: only {out[slug]} providers for {slug}; nothing changed')
-    for slug in out: s3.upload_file(f'/tmp/npis_{slug}.parquet', B, f'data/s7/state/{slug}/npis.parquet')
+    for slug in out: s3.upload_file(f'/tmp/npis_{slug}.parquet', B, f'data/{SCOPE}/state/{slug}/npis.parquet')
     return out
 
 
@@ -104,7 +110,7 @@ def rebalance(st, left, run, cap=10**9):
 # Announced one run after the state is first seen done, so the freed slots' moves (written by rebalance) are included.
 # States finished before this was added were already reported by hand.
 ANNOUNCE_FROM = '2026-10-14 21:30'   # UTC
-NAMES = {v: v.title() for v in STATES.values()}
+NAMES = {v: v.replace('-', ' ').title() for v in STATES.values()}
 def ct(t):   # a UTC datetime -> "Oct 14 5:03 PM CT"
     from zoneinfo import ZoneInfo
     return t.astimezone(ZoneInfo('America/Chicago')).strftime('%b %d %-I:%M %p CT')
@@ -122,7 +128,7 @@ def announce(st, left):
     moves = st.get('log', [])[st['announce_log_i']:]
     still = [f"- {NAMES[x]}: {batches_done(x)} of {NB} batches done, {st['machines'][x]} machines"
              for x in left]
-    title = ' + '.join(NAMES[x] for x in new) + (' done: all 7 states built' if not left else ' done; machines moved on')
+    title = ' + '.join(NAMES[x] for x in new) + (f' done: all {len(STATES)} states built' if len(STATES) > 1 and not left else ' done' if not left else ' done; machines moved on')
     body = '\n'.join([' '.join(f"{NAMES[x]} finished its Price Finder data at {finished_at(x)}." for x in new), '',
                       '**Where the free machines went**', *(['- ' + m for m in moves] or ['- none yet (slots go out on the next runs)']), '',
                       '**Still building**', *(still or ['- nothing: every state is built']), '',
@@ -130,7 +136,7 @@ def announce(st, left):
     O.issue(title, body)
     try:   # Oct 15: start the publishing job now (it runs beside this build) instead of at the next hourly run
         import subprocess
-        subprocess.run(['gh', 'workflow', 'run', 'state-pages.yml', '--ref', 'main'], timeout=60, stdin=subprocess.DEVNULL, capture_output=True)
+        subprocess.run(['gh', 'workflow', 'run', PAGES_WF, '--ref', 'main'], timeout=60, stdin=subprocess.DEVNULL, capture_output=True)
     except Exception as e: log('could not start the page publisher:', repr(e)[:150])
     st['announced'] += new; st['announce_log_i'] = len(st.get('log', []))
 
@@ -152,7 +158,7 @@ def release_finished(left):
 # machine's unfinished pieces are simply done by the others, and every finished piece is kept). They come back afterwards.
 HOSP_SLOTS = 3
 def hosp_waiting(left):
-    pub = getj(f'site/builds/hosp-st-{MONTH}/state.json', {}).get('published', {})
+    pub = getj(f'site/builds/hosp-{STB}-{MONTH}/state.json', {}).get('published', {})
     return [x for x in STATES.values() if x not in left and x not in pub]
 def build_cap(left):
     """machines the state builds may use: the account limit, less the orchestrator's reserve and the hospital slots"""
@@ -207,13 +213,13 @@ def main():
     log('state pages build', MONTH, 'stage', st['stage'])
     if st['stage'] == 'wait':
         busy = s7_busy()
-        if busy and not E.get('FORCE'): log(busy, 'seven-state insurer files still queued or being read; waiting'); return putj(SP + 'state.json', st)
+        if busy and not E.get('FORCE'): log(busy, SCOPE, 'insurer files still queued or being read; waiting'); return putj(SP + 'state.json', st)
         if free_slots() < 2: log('not enough free machines; waiting'); return putj(SP + 'state.json', st)
         O.bundle()
         st.update(stage='split', started=time.strftime('%Y-%m-%d %H:%M'))
     if st['stage'] == 'split':
-        sz = sizes('data/s7/rates/')
-        done = {k.rsplit('/', 1)[1][:-5] for k in ls('data/s7/state/_done/')}
+        sz = sizes(f'data/{SCOPE}/rates/')
+        done = {k.rsplit('/', 1)[1][:-5] for k in ls(f'data/{SCOPE}/state/_done/')}
         todo = sorted((t for t in sz if t not in done), key=lambda t: -sz[t])
         if 'split_jobs' not in st:
             jobs = [[] for _ in range(min(SPLIT_MACHINES, max(1, len(todo))))]
@@ -224,7 +230,7 @@ def main():
             role = f'split-{i + 1}'
             left = [t for t in job if t not in done]
             finished = not left or (st['launches'].get(role, 0) >= 3 and not O.alive(role))
-            ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE='s7', TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
+            ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE=SCOPE, TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
             busy += not finished
         if 'back_jobs' not in st:   # Oct 13: 530 GB on 4 machines is slow; a second machine per list works from the small end
             st['back_jobs'] = [list(reversed(j[1:])) for j in st['split_jobs'] if len(j) > 2]
@@ -232,13 +238,13 @@ def main():
             role = f'split-{i + 1}b'
             left = [t for t in job if t not in done]
             finished = not left or (st['launches'].get(role, 0) >= 3 and not O.alive(role))
-            ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE='s7', TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
+            ensure(st, role, SIZE, RUN_SPLIT, dict(SCOPE=SCOPE, TABLES=','.join(job), MEM='24GB', THREADS='8', WORK='/d'), finished)
             busy += not finished
-        log(len(todo), 'of', len(sz), 'seven-state tables left to split')
+        log(len(todo), 'of', len(sz), SCOPE, 'tables left to split')
         if not busy:
             st['split_failed'] = todo
             st['providers'] = state_npis()
-            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(sizes(f'data/s7/state/{s}/rates/').values()) // int(GB_PER_MACHINE * 1e9))))
+            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(sizes(f'data/{SCOPE}/state/{s}/rates/').values()) // int(GB_PER_MACHINE * 1e9))))
                               for s in STATES.values()}
             st['stage'] = 'build'
             log('providers per state', st['providers'], 'machines', st['machines'])
@@ -246,7 +252,7 @@ def main():
         left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
         def run(slug, i):
                 n = st['machines'][slug]
-                env = dict(RATES=f'data/s7/state/{slug}/rates/', NPIS=f'data/s7/state/{slug}/npis.parquet', TOUT=tout(slug),
+                env = dict(RATES=f'data/{SCOPE}/state/{slug}/rates/', NPIS=f'data/{SCOPE}/state/{slug}/npis.parquet', TOUT=tout(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
                            MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
@@ -266,7 +272,7 @@ def main():
         if not left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
         lift_pause()
-        log('insurer builds done; the hospital step (hosp_area.py, HOSP_SCOPE=s7) builds hospitals and publishes the pages')
+        log('insurer builds done; the hospital step (hosp_area.py, HOSP_SCOPE=s7 or nc) builds hospitals and publishes the pages')
     putj(SP + 'state.json', st)
 
 

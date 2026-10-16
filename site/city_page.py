@@ -52,14 +52,16 @@ CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest
 # First national batch (Oct 13, 2026): one page per state, built from data/s7/ split by the provider's practice state.
 # Localities from CMS 2026 GPCI2026.csv (checked at build time: the build stops if a state/locality pair is missing).
 # GA and MO have more than one doctor-fee locality; the page uses the one with the most providers (Atlanta, St. Louis) and says so.
-STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA'}
+STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA',
+            'north-carolina': 'NC'}   # Oct 16, 2026: North Carolina, its own scope (data/nc/)
+SCOPE_OF = {'north-carolina': 'nc'}   # state pages not listed here are in the seven-state scope (data/s7/)
 STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colorado', '01', 'Colorado'),
                'oklahoma': ('Oklahoma', '00', 'Oklahoma'), 'alabama': ('Alabama', '00', 'Alabama'),
                'mississippi': ('Mississippi', '00', 'Mississippi'), 'missouri': ('Missouri', '01', 'Metropolitan St. Louis'),
-               'georgia': ('Georgia', '01', 'Atlanta')}
+               'georgia': ('Georgia', '01', 'Atlanta'), 'north-carolina': ('North Carolina', '00', 'North Carolina')}   # NC: one statewide locality (CMS locality file)
 for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
 def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
-def npis_key(slug): return f'data/s7/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
+def npis_key(slug): return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
 # how a sentence names the area ("every El Paso-area hospital", "no rate ... in the El Paso area"), when the name doesn't fit
 AREA = {'small-towns': ('small-town Texas', 'small-town Texas'), **{k: (v[0], v[0]) for k, v in STATE_PAGES.items()}}
 # map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX).
@@ -75,7 +77,7 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'small-towns': '-106.8,25.7,-93.4,36.7',
             'tennessee': '-90.6,34.7,-81.4,36.9', 'colorado': '-109.3,36.7,-101.8,41.3', 'oklahoma': '-103.3,33.4,-94.2,37.3',
             'alabama': '-88.7,29.9,-84.7,35.3', 'mississippi': '-91.9,29.9,-87.9,35.3', 'missouri': '-96.0,35.7,-88.9,40.9',
-            'georgia': '-85.9,30.1,-80.6,35.3'}
+            'georgia': '-85.9,30.1,-80.6,35.3', 'north-carolina': '-84.6,33.5,-75.2,36.9'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
@@ -218,7 +220,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     ins = sorted({n.split('|', 1)[0] for n in D['nets'] if D.get('scope', {}).get(n)}) or sorted({n.split('|', 1)[0] for n in D['nets']})
     w.sub(r'<p><b>Sources\.</b>.*?</p>',
           f'<p><b>Sources.</b> Insurer Transparency in Coverage files dated {dates[0]} to {dates[-1]}: {", ".join(ins)}. Each file was read '
-          f'for every {"provider in Tennessee, Colorado, Oklahoma, Alabama, Mississippi, Missouri and Georgia" if slug in STATE_OF else "Texas provider"}, then narrowed to providers whose practice address in the federal NPI Registry is '
+          f'for every {"North Carolina provider" if SCOPE_OF.get(slug) == "nc" else "provider in Tennessee, Colorado, Oklahoma, Alabama, Mississippi, Missouri and Georgia" if slug in STATE_OF else "Texas provider"}, then narrowed to providers whose practice address in the federal NPI Registry is '
           f'{where}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
           f'insurer\'s own page. ' + (f'Hospital price files: {nh} files from hospitals {where}, each line linked to its file. Providers\' posted cash '
           f'prices are not on the {name} page yet.</p>' if hosp_index else f'Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>'), regex=True)

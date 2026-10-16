@@ -201,7 +201,7 @@ NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r
 def known_networks():
     """(scope states, reading-list insurer) the bot already reads."""
     known = []
-    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"})):
+    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"})):
         p = ROOT / "insurers" / f
         if p.exists():
             for r in csv.DictReader(open(p, encoding="utf-8")):
