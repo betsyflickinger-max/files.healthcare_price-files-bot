@@ -242,7 +242,7 @@ def summarize(D, code, t, h):
             if key not in per[k] or r[3] < per[k][key]['v']:
                 per[k][key] = entry(fi, r)
     # what the page leads with: the clinician's fee for visits and therapy, otherwise the facility fee when there is one
-    kind = 'doc' if (cat in ('Office visits', 'Behavioral health', 'Physical therapy') or anes) and per['doc'] else ('fac' if per['fac'] else 'doc')
+    kind = 'doc' if (cat in ('Office visits', 'Behavioral health', 'Physical therapy', 'Maternity') or anes) and per['doc'] else ('fac' if per['fac'] else 'doc')
     lines = sorted(per[kind].values(), key=lambda e: (e['v'], e['name']))
     by_net = {}
     for e in lines:
@@ -551,15 +551,15 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     # by network
     net_rows = ''.join(
-        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}</div></td><td class='num'>{n['n']:,}</td>"
-        f"<td class='num'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
-        f"<td class='num'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
+        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
+        f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
+        f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
         for n in S['networks'])
     net_sec = (f"<section class='sec'><p class='kicker'>By insurer network</p><h2>Who pays what</h2>"
                f"<p class='lede'>Each line counts the providers with a published {sg} in that network and shows the lowest and highest. "
                f"Your plan's network decides which line applies to you.</p>"
-               f"<div class='tbl'><table class='rates'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
+               f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
@@ -653,8 +653,8 @@ def range_cell(s):
     if not s or not s['lo']:
         return "<td class='num m' colspan='2'>none published yet</td>"
     if s['lines'] == 1:
-        return f"<td class='num'>{money(s['lo']['v'])}</td><td class='num'>—</td>"
-    return f"<td class='num'>{money(s['lo']['v'])}</td><td class='num'>{money(s['hi']['v'])}</td>"
+        return f"<td class='num' data-l='Lowest'>{money(s['lo']['v'])}</td><td class='num' data-l='Highest'>—</td>"
+    return f"<td class='num' data-l='Lowest'>{money(s['lo']['v'])}</td><td class='num' data-l='Highest'>{money(s['hi']['v'])}</td>"
 
 
 def area_index(area, rows, au, pf_path):
@@ -663,10 +663,10 @@ def area_index(area, rows, au, pf_path):
     for ps, s in rows:
         cats.setdefault(s['cat'], []).append((ps, s))
     tbl = ''.join(
-        f"<h3 class='h3 cat'>{esc(c)}</h3><div class='tbl'><table class='rates'><thead><tr><th>Procedure</th><th>What's compared</th>"
+        f"<h3 class='h3 cat'>{esc(c)}</h3><div class='tbl'><table class='rates stack'><thead><tr><th>Procedure</th><th>What's compared</th>"
         f"<th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead><tbody>"
         + ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(s['name'])}</b></a><div class='m'>{esc(s['code'])}</div></td>"
-                  f"<td class='m'>{esc(fee_words(s)[0]) if s['lo'] else ''}</td><td class='num'>{s['providers']:,}</td>{range_cell(s)}</tr>" for ps, s in items)
+                  f"<td class='m' data-l='Compared'>{esc(fee_words(s)[0]) if s['lo'] else ''}</td><td class='num' data-l='Providers'>{s['providers']:,}</td>{range_cell(s)}</tr>" for ps, s in items)
         + "</tbody></table></div>" for c, items in cats.items())
     n = sum(1 for _, s in rows if s['lo'])
     title = f"Healthcare prices in {area['name']}: {len(rows)} procedures compared | {SITE['name']}"
@@ -697,12 +697,12 @@ def national_procedure(code, name, ps, per_area):
                 f"{money(lo[2]['lo']['v'])} ({lo[2]['lo']['name']}, {lo[0]['name']}) to {money(hi[2]['hi']['v'])} "
                 f"({hi[2]['hi']['name']}, {hi[0]['name']}).")
     rows = ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(a['name'])}</b></a><div class='m'>{esc(area_group(a))}</div></td>"
-                   f"<td class='num'>{(s['providers'] if s else 0):,}</td>{range_cell(s)}</tr>"
+                   f"<td class='num' data-l='Providers'>{(s['providers'] if s else 0):,}</td>{range_cell(s)}</tr>"
                    for a, au, s in sorted(per_area, key=lambda x: (not (x[2] and x[2]['lo']), x[2]['lo']['v'] if x[2] and x[2]['lo'] else 0)))
     title = f"{name}: what it costs, place by place | {SITE['name']}"
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All procedures</a> · {esc(S0['type'] if S0 else '')} {esc(code)}</p>
 <h1 class="letters">{esc(name)}<em> place by place</em></h1><p class="lead">{esc(lead)}</p></div></section>
-<div class="wrap"><section class="sec"><div class="tbl"><table class="rates"><thead><tr><th>Place</th><th class="num">Providers</th><th class="num">Lowest</th><th class="num">Highest</th></tr></thead>
+<div class="wrap"><section class="sec"><div class="tbl"><table class="rates stack"><thead><tr><th>Place</th><th class="num">Providers</th><th class="num">Lowest</th><th class="num">Highest</th></tr></thead>
 <tbody>{rows}</tbody></table></div><p class="cap">Each place's figures are its own {esc(pl)}, lowest to highest, from the insurer files read for that place. Open a place for every source.</p></section></div></main>'''
     jsonld = {'@context': 'https://schema.org', '@type': 'MedicalWebPage', 'name': title, 'description': lead,
               'url': SITE['origin'] + f'/costs/{ps}/', 'dateModified': TODAY.isoformat(),
@@ -780,6 +780,9 @@ table.rates{border-collapse:collapse;width:100%;min-width:560px;font-variant-num
 .chip:hover{background:var(--hi)}
 .srcs p{max-width:52em;color:var(--muted);font-size:15px}.srcs details{margin-top:12px;font-size:15px}.srcs summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
 .srcs ul{padding-left:18px;margin:6px 0 0}.srcs li{margin:6px 0}
+@media(max-width:640px){table.stack{min-width:0}table.stack thead{display:none}table.stack tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;padding:12px 14px;border-bottom:1px solid #CFC6B0}
+table.stack td{padding:0;border:0;text-align:left}table.stack td:first-child{grid-column:1/-1}table.stack .num{text-align:left;white-space:normal}
+table.stack td[data-l]::before{content:attr(data-l);display:block;font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}table.stack td[colspan]{grid-column:1/-1}}
 footer{background:var(--board);color:#D8C7AE}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
 footer b{font:900 22px var(--display);text-transform:uppercase;color:var(--board-ink);letter-spacing:.03em}footer a{color:var(--board-ink)}
 '''
@@ -855,7 +858,7 @@ def national_section(areas, summaries, procs, n_rates_note):
               f"<p><a class='btn' href='/costs/{au}/{ps}/'>See the receipts</a></p></div>")
 
     opts_proc = ''.join(f"<option value='{esc(ps)}'{' selected' if c == '45378' else ''}>{esc(n)}</option>" for c, n, cat, ps in sorted(procs, key=lambda p: p[1]))
-    opts_area = (f"<optgroup label='Texas'>" + ''.join(f"<option value='{au}'>{esc(a['name'])}</option>" for a, au in sorted(tx, key=lambda x: x[0]['name']))
+    opts_area = (f"<optgroup label='Texas'>" + ''.join(f"<option value='{au}'{' selected' if a['slug'] == 'dfw' else ''}>{esc(a['name'])}</option>" for a, au in sorted(tx, key=lambda x: x[0]['name']))
                  + "</optgroup><optgroup label='States'>" + ''.join(f"<option value='{au}'>{esc(a['name'])}</option>" for a, au in sorted(st_areas, key=lambda x: x[0]['name']))
                  + "</optgroup>")
     chips = lambda items: ''.join(f"<a class='chip-l' href='/costs/{au}/'>{esc(a['name'])}</a>" for a, au in sorted(items, key=lambda x: x[0]['name']))
