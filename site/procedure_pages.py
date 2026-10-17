@@ -815,7 +815,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         title = f"{tc} Cost in {area['name']} ({yr})"
     title += f" | {SITE['name']}"
     desc = lede(S, area)
-    csv_url = f'{url}prices.csv' if S.get('csv') is not None else None
+    csv_url = f'{url}prices.csv' if S.get('csv') is not None or S.get('has_csv') else None
     finder = f"{pf_path}?code={S['code']}"
     tiles = []
     if S['lo']:
@@ -1303,7 +1303,7 @@ Prices appear exactly as the insurer, hospital or provider published them. Spot 
 
 
 # ---------------------------------------------------------------- build
-def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
+def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender=False):
     site = os.path.join(site_dir, 'site')
     site_settings(site)
     areas = json.load(open(os.path.join(site, 'cities.json'), encoding='utf-8'))
@@ -1367,7 +1367,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
     for a in live:
         au, D_med = area_url_slug(a['slug']), pages[a['slug']][1]
         mine = [(slugs[c], summaries[(a['slug'], c)]) for c in codes if (a['slug'], c) in summaries]
-        if a in todo:
+        if a in todo or rerender:   # rerender: write every page again from saved figures (after a retry on a newer site)
             for c in codes:
                 S = summaries.get((a['slug'], c))
                 if not S:
@@ -1380,6 +1380,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
                 open(os.path.join(d, 'index.html'), 'w', encoding='utf-8').write(procedure_page(a, S, others, related, D_med, a['path'], au, ps))
                 rows = S.pop('csv', None)
                 if rows is not None:
+                    S['has_csv'] = True
                     with open(os.path.join(d, 'prices.csv'), 'w', newline='', encoding='utf-8') as fh:
                         w = csv.writer(fh)
                         w.writerow([f"# {S['name']} ({S['type']} {S['code']}) in {a['name']}. Source files linked per row. Built {TODAY.isoformat()} by {SITE['name']}."])
@@ -1487,40 +1488,47 @@ def deploy(force=False):
     s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
                       aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
     B, KEY, SKEY, d = E["R2_BUCKET"], 'site/deploy/current.tgz', 'site/deploy/costs_state.json', '/tmp/costs'
-    shutil.rmtree(d, ignore_errors=True)
-    os.makedirs(d)
-    s3.download_file(B, KEY, f'{d}/site.tgz')
-    etag = s3.head_object(Bucket=B, Key=KEY)['ETag']
-    with tarfile.open(f'{d}/site.tgz') as t:
-        t.extractall(d, filter='fully_trusted')
-    if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
-        sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
-    for root, _, fs in os.walk(f'{d}/site'):
-        if root.endswith('price-finder') and 'index.html' in fs:
-            pth = os.path.join(root, 'index.html'); t0 = open(pth, encoding='utf-8').read(); t1 = label_high(t0)
-            if t1 is None: print('price finder code not as expected, flag label not added:', pth)
-            elif t1 != t0: open(pth, 'w', encoding='utf-8').write(t1)
-    try:   # the layout the monthly refresh starts from
-        lay = s3.get_object(Bucket=B, Key='site/deploy/price-finder.html')['Body'].read().decode()
-        new_lay = label_high(lay)
-        if new_lay and new_lay != lay:
-            s3.put_object(Bucket=B, Key='site/deploy/price-finder.html', Body=new_lay.encode(), ContentType='text/html; charset=utf-8')
-    except Exception as e:
-        print('layout not updated:', e)
     try:
-        prev = json.loads(s3.get_object(Bucket=B, Key=SKEY)['Body'].read())
+        prev = None if force else json.loads(s3.get_object(Bucket=B, Key=SKEY)['Body'].read())
     except Exception:
         prev = None
-    if force:
-        prev = None
-    home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
-    st = build(d, Store(d), prev=prev)
-    changed = (not prev) or st['pages'] > 0 or st.get('notes_changed') or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
-    if not changed:
-        print('no area page changed since the last run; nothing to deploy')
-        return
-    if s3.head_object(Bucket=B, Key=KEY)['ETag'] != etag:
-        sys.exit('STOP: the live site changed while building (another build deployed). Run again.')
+    first = True
+    for attempt in range(4):
+        # If another build deploys while this one runs, start over from the newer site, reusing everything already worked out
+        # (only areas whose page changed are recomputed), so nothing anyone else published is ever overwritten.
+        shutil.rmtree(d, ignore_errors=True)
+        os.makedirs(d)
+        s3.download_file(B, KEY, f'{d}/site.tgz')
+        etag = s3.head_object(Bucket=B, Key=KEY)['ETag']
+        with tarfile.open(f'{d}/site.tgz') as t:
+            t.extractall(d, filter='fully_trusted')
+        if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
+            sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
+        for root, _, fs in os.walk(f'{d}/site'):
+            if root.endswith('price-finder') and 'index.html' in fs:
+                pth = os.path.join(root, 'index.html'); t0 = open(pth, encoding='utf-8').read(); t1 = label_high(t0)
+                if t1 is None: print('price finder code not as expected, flag label not added:', pth)
+                elif t1 != t0: open(pth, 'w', encoding='utf-8').write(t1)
+        if first:
+            try:   # the layout the monthly refresh starts from
+                lay = s3.get_object(Bucket=B, Key='site/deploy/price-finder.html')['Body'].read().decode()
+                new_lay = label_high(lay)
+                if new_lay and new_lay != lay:
+                    s3.put_object(Bucket=B, Key='site/deploy/price-finder.html', Body=new_lay.encode(), ContentType='text/html; charset=utf-8')
+            except Exception as e:
+                print('layout not updated:', e)
+        home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
+        st = build(d, Store(d), prev=prev, rerender=not first)
+        changed = (not prev) or not first or st['pages'] > 0 or st.get('notes_changed') or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
+        if not changed:
+            print('no area page changed since the last run; nothing to deploy')
+            return
+        if s3.head_object(Bucket=B, Key=KEY)['ETag'] == etag:
+            break
+        print(f'the live site changed while building (another build deployed); starting over from the newer site (attempt {attempt + 2})')
+        prev, first = dict(st, built=TODAY.isoformat()), False
+        if attempt == 3:
+            sys.exit('STOP: the live site kept changing; nothing deployed. The next daily run will try again.')
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
