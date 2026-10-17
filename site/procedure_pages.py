@@ -271,6 +271,9 @@ def summarize(D, code, t, h):
     def hsrc(s):
         x = H['src'][s]
         return {'name': nice(x[0]), 'city': x[1], 'date': x[3], 'url': x[4], 'unit': x[6] or 'row'}
+    nsrc, nins = len(H.get('src') or []), len(H.get('ins') or [])
+    hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc], 'p': hc.get('p'),
+          'r': [r for r in hc.get('r', []) if r[0] < nsrc and r[1] < nins]}   # a per-code file newer than the page's lists: skip unknown entries
     hcash = {}
     for r in hc.get('c', []):
         if r[5] == 0 and (r[0] not in hcash or r[2] < hcash[r[0]]['v']):
@@ -979,8 +982,17 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
         for a in todo:
             D = page_data(pages[a['slug']][0])[0]
             mine = [c for c in codes if c in has[a['slug']]]
-            for c, S in zip(mine, ex.map(lambda c: summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c)), mine)):
-                summaries[(a['slug'], c)] = S
+            def one(c):
+                try:
+                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c))
+                except Exception as e:     # one bad file never stops the rest; that page keeps its last version
+                    print(f"  {a['slug']} {c}: skipped ({type(e).__name__}: {e})", flush=True)
+                    return None
+            for c, S in zip(mine, ex.map(one, mine)):
+                if S:
+                    summaries[(a['slug'], c)] = S
+                elif f"{a['slug']}|{c}" in keep:
+                    summaries[(a['slug'], c)] = keep[f"{a['slug']}|{c}"]
             del D
             print('summarized', a['slug'], flush=True)
 
@@ -1038,7 +1050,7 @@ def deploy(force=False):
     s3.download_file(B, KEY, f'{d}/site.tgz')
     etag = s3.head_object(Bucket=B, Key=KEY)['ETag']
     with tarfile.open(f'{d}/site.tgz') as t:
-        t.extractall(d)
+        t.extractall(d, filter='fully_trusted')
     if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
         sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
     try:
