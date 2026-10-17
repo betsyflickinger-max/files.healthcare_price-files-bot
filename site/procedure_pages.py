@@ -180,6 +180,71 @@ def area_group(a):
     return 'Texas' if area_state(a) == 'TX' else 'States'
 
 
+# Everyday names people search for, and other names for the same thing (page titles, headings and "also called").
+SEARCH_NAMES = {
+    '00811': ('Anesthesia for a colonoscopy', ['colonoscopy sedation']), '00812': ('Anesthesia for a screening colonoscopy', ['screening colonoscopy sedation']),
+    '19120': ('Breast lump removal', ['excisional breast biopsy', 'fibroadenoma removal']),
+    '216': ('Heart valve surgery (hospital stay)', ['valve replacement with cardiac catheterization']),
+    '22551': ('Neck fusion (ACDF)', ['anterior cervical discectomy and fusion', 'cervical spine surgery']),
+    '27130': ('Hip replacement', ['total hip arthroplasty']), '27447': ('Knee replacement', ['total knee arthroplasty', 'TKA']),
+    '29826': ('Shoulder decompression surgery', ['arthroscopic acromioplasty', 'subacromial decompression']),
+    '29827': ('Rotator cuff repair', ['arthroscopic rotator cuff surgery']), '29881': ('Knee arthroscopy (meniscus)', ['meniscectomy', 'knee scope']),
+    '29888': ('ACL reconstruction', ['ACL surgery']), '42820': ('Tonsillectomy (child under 12)', ['tonsils and adenoids removal', 'T&A']),
+    '43235': ('Upper endoscopy (EGD)', ['EGD', 'upper GI endoscopy']), '43239': ('Upper endoscopy with biopsy', ['EGD with biopsy']),
+    '43644': ('Gastric bypass', ['Roux-en-Y gastric bypass', 'bariatric surgery']), '43775': ('Gastric sleeve', ['sleeve gastrectomy', 'bariatric surgery']),
+    '45378': ('Colonoscopy', ['diagnostic colonoscopy']), '45380': ('Colonoscopy with biopsy', []),
+    '45385': ('Colonoscopy with polyp removal', ['polypectomy']), '45391': ('Colonoscopy with ultrasound', ['endoscopic ultrasound of the colon']),
+    '460': ('Spinal fusion (hospital stay)', ['lumbar fusion', 'back fusion']), '470': ('Hip or knee replacement (hospital stay)', ['joint replacement']),
+    '473': ('Neck fusion (hospital stay)', ['cervical fusion']), '47562': ('Gallbladder removal', ['laparoscopic cholecystectomy']),
+    '49505': ('Hernia repair', ['inguinal hernia surgery']), '55250': ('Vasectomy', []), '55700': ('Prostate biopsy', []),
+    '55866': ('Robotic prostatectomy', ['prostate removal surgery']),
+    '59400': ('Vaginal birth', ['having a baby', 'labor and delivery', 'childbirth']), '59510': ('C-section', ['cesarean delivery']),
+    '59610': ('VBAC', ['vaginal birth after C-section']), '62322': ('Lower back epidural injection', ['epidural steroid injection']),
+    '62323': ('Lower back epidural injection with imaging', ['epidural steroid injection with fluoroscopy']),
+    '63030': ('Lumbar discectomy', ['laminotomy', 'herniated disc surgery']), '64483': ('Lower back nerve root injection', ['transforaminal epidural steroid injection']),
+    '64721': ('Carpal tunnel surgery', ['carpal tunnel release']), '66821': ('YAG laser after cataract surgery', ['posterior capsulotomy']),
+    '66984': ('Cataract surgery', []), '70450': ('Head CT scan', ['CT head without contrast']), '70551': ('Brain MRI', ['MRI brain without contrast']),
+    '70553': ('Brain MRI with contrast', ['MRI brain with and without contrast']), '72110': ('Lower back X-ray', ['lumbar spine X-ray']),
+    '72148': ('Lower back MRI', ['lumbar MRI']), '72193': ('Pelvic CT scan', ['CT pelvis with contrast']), '73721': ('Knee MRI', ['MRI knee']),
+    '74177': ('CT scan of the abdomen and pelvis', ['CT abdomen and pelvis with contrast']),
+    '743': ('Uterine surgery, non-cancer (hospital stay)', ['hysterectomy']), '75571': ('Heart calcium score', ['coronary calcium scan', 'CAC score']),
+    '76700': ('Abdominal ultrasound', []), '76805': ('Pregnancy ultrasound', ['anatomy scan']), '76830': ('Transvaginal ultrasound', ['pelvic ultrasound']),
+    '77065': ('Diagnostic mammogram (one breast)', []), '77066': ('Diagnostic mammogram', ['diagnostic mammogram of both breasts']),
+    '77067': ('Mammogram', ['screening mammogram']), '80048': ('Basic metabolic panel', ['BMP blood test']),
+    '80053': ('Comprehensive metabolic panel', ['CMP blood test', 'blood panel']), '80055': ('Prenatal blood panel', ['obstetric panel']),
+    '80061': ('Cholesterol test', ['lipid panel']), '80069': ('Kidney function test', ['renal panel']), '80076': ('Liver function test', ['liver panel', 'LFT']),
+    '81000': ('Urinalysis (manual, with microscope)', []), '81001': ('Urinalysis with microscope', []), '81002': ('Urinalysis (manual)', []),
+    '81003': ('Urinalysis (automated)', ['urine test']), '84153': ('PSA test', ['prostate-specific antigen test']), '84154': ('Free PSA test', []),
+    '84443': ('Thyroid (TSH) test', ['TSH blood test']), '85025': ('CBC with differential', ['complete blood count']), '85027': ('Complete blood count (CBC)', []),
+    '85610': ('PT/INR blood clotting test', ['prothrombin time']), '85730': ('PTT blood clotting test', []), '88305': ('Pathology tissue exam', ['biopsy pathology']),
+    '90832': ('Therapy session (30 minutes)', ['psychotherapy']), '90834': ('Therapy session (45 minutes)', ['psychotherapy']),
+    '90837': ('Therapy session (60 minutes)', ['psychotherapy']), '90846': ('Family therapy (without the patient)', []),
+    '90847': ('Family therapy', ['family psychotherapy']), '90853': ('Group therapy', []), '93000': ('EKG', ['ECG', 'electrocardiogram']),
+    '93452': ('Heart catheterization', ['cardiac cath']), '95810': ('Sleep study', ['polysomnography']), '97110': ('Physical therapy (15 minutes)', ['therapeutic exercise']),
+    '99203': ('New patient doctor visit (30 minutes)', ['office visit']), '99204': ('New patient doctor visit (45 minutes)', ['office visit']),
+    '99205': ('New patient doctor visit (60 minutes)', ['office visit']), '99243': ('Specialist consultation (40 minutes)', []),
+    '99244': ('Specialist consultation (60 minutes)', []), '99385': ('Annual physical, new patient (ages 18–39)', ['preventive visit']),
+    '99386': ('Annual physical, new patient (ages 40–64)', ['preventive visit']),
+}
+
+# The person behind the site, for the byline, the About page and the pages' structured data. Change here; every page follows.
+AUTHOR = {'name': 'Betsy Flickinger', 'role': 'former employee-benefits consultant',
+          'bio': ("Betsy spent years as an employee-benefits consultant, helping employers buy health plans and seeing from the inside "
+                  "how the prices insurers negotiate stay hidden from the people paying the bills. Federal rules now make insurers and "
+                  "hospitals publish those prices. This site reads the files and puts every price in plain view, with a link to the file it came from.")}
+
+
+def common(S):
+    return SEARCH_NAMES.get(S['code'], (re.sub(r'\s*\([^)]*\)', '', S['name']).strip() or S['name'], []))[0]
+
+
+def aliases(S):
+    return SEARCH_NAMES.get(S['code'], ('', []))[1]
+
+
+def updated():
+    return TODAY.strftime('%B %-d, %Y')
+
 # ---------------------------------------------------------------- the numbers for one area x code
 KIND = {'A': 'surgery center', 'H': 'hospital', 'G': 'practice, clinic, lab or imaging center', 'P': 'clinician'}
 PROD = ['Employer and individual plans', 'Marketplace (ACA) plans', 'Medicare Advantage', 'Medicaid and CHIP', 'Plan type not stated']
@@ -295,8 +360,33 @@ def summarize(D, code, t, h):
 
     cash = sorted([c for c in D.get('cash', []) if c.get('code') == code], key=lambda c: c['v'])
     dates = sorted({e['date'] for e in lines})
+
+    # facts that make each page its own (all real published figures, nothing averaged)
+    byp = {}
+    for e in lines:
+        byp.setdefault((e['name'], e['city']), []).append(e)
+    spread = None
+    for (nm, ct), es in byp.items():
+        if len({x['net'] for x in es}) >= 3 and es[0]['v'] >= 10:
+            r = es[-1]['v'] / es[0]['v']
+            if spread is None or r > spread['x']:
+                spread = {'name': nm, 'city': ct, 'x': r, 'n': len(es), 'lo': es[0], 'hi': es[-1]}
+    sc_lo = next((e for e in lines if e['kind'] == 'A'), None) if kind == 'fac' else None
+    h_lo = next((e for e in lines if e['kind'] == 'H'), None) if kind == 'fac' else None
+    cities = {}
+    for nm, ct in byp:
+        if ct:
+            cities[ct] = cities.get(ct, 0) + 1
+    top_cities = [c for c, _ in sorted(cities.items(), key=lambda x: (-x[1], x[0]))[:15]]
+    hdates = {s_: H['src'][s_][3] for s_ in hfiles} if H.get('src') else {}
+    h_stale = sum(1 for d in hdates.values() if is_stale(d) or not d)
+    rows = None
+    if len(lines) <= 5000:            # a downloadable copy of every figure behind the page (kept off very large lists)
+        rows = [['insurer rate', e['name'], e['city'], KIND.get(e['kind'], ''), e['ins'], e['plan'], e['v'], e['date'], e['url']] for e in lines]
+        rows += [['hospital cash price', e['name'], e['city'], 'hospital', '', '', e['v'], e['date'], e['url']] for e in hcash]
+        rows += [['posted cash price', c['name'], c['city'], '', '', c.get('label', ''), c['v'], c.get('chk', ''), c['src']] for c in cash]
     return {
-        'code': code, 'name': C['name'], 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
+        'code': code, 'name': C['name'], 'common': SEARCH_NAMES.get(code, (None,))[0] or re.sub(r'\s*\([^)]*\)', '', C['name']).strip(), 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
         'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in lines}), 'networks': networks,
         'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
         'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
@@ -305,6 +395,8 @@ def summarize(D, code, t, h):
         'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
         'any': bool(lines or hcash or hrate or cash),
+        'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
+        'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
     }
 
 
@@ -345,7 +437,7 @@ def lede(S, area):
         if S['lines'] == 1:
             out.append(f"One insurer-negotiated {sg} for {lower_name(S)} is published in {area['name']}: {money(S['lo']['v'])} at {who(S['lo'])}.")
         else:
-            out.append(f"Insurers' negotiated {pl} for {lower_name(S)} in {area['name']} run from {money(S['lo']['v'])} to "
+            out.append(f"Insurers' negotiated {pl} for {lower_name(S, True)} in {area['name']} run from {money(S['lo']['v'])} to "
                        f"{money(S['hi']['v'])}, across {S['providers']:,} {prov_noun(S)} "
                        f"and {len(S['networks'])} {'network' if len(S['networks']) == 1 else 'networks'}.")
         if S['code'].startswith('00'):
@@ -365,8 +457,12 @@ def cheapest_cash(S):
     return min(c, key=lambda p: p[0]['v']) if c else None
 
 
-def lower_name(S):
-    n = S['name']
+def lower_name(S, article=False):
+    """The everyday name inside a sentence; with article=True, "a colonoscopy" / "an EKG" where English wants one."""
+    n = S.get('common') or S['name']
+    if article and not re.match(r'(Anesthesia|Physical therapy|Family therapy|Group therapy|YAG)', n) and 'surgery' not in n.lower():
+        low = n if re.match(r'^(MRI|CT|EKG|PSA|TSH|ACL|EGD|PT|VBAC|CBC)\b', n) or n[:2].isupper() else n[0].lower() + n[1:]
+        return ('an ' if re.match(r'^(EKG|MRI|[aeiouAEIOU])', low) and not low.lower().startswith(('uri', 'ult')) else 'a ') + low
     return n if re.match(r'^(MRI|CT|EKG|PSA|TSH|ACL|EGD|PT)\b', n) or n[:2].isupper() else n[0].lower() + n[1:]
 
 
@@ -452,7 +548,7 @@ def shell(title, desc, canon, body, jsonld, noindex=False):
 <nav class="nav" id="nav" aria-label="Main">{SITE['nav']}</nav></div></header>
 {body}
 <footer><div class="wrap"><span><b>{esc(SITE['name'])}</b><br>Every price links to the file it came from.</span>
-<span><a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/disclaimers/">Disclaimers</a> · <a href="/privacy/">Privacy</a></span></div></footer>
+<span><a href="/about/">About</a> · <a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/disclaimers/">Disclaimers</a> · <a href="/privacy/">Privacy</a></span></div></footer>
 <script>(()=>{{const b=document.getElementById('menuBtn'),n=document.getElementById('nav');b.addEventListener('click',()=>{{const o=n.classList.toggle('open');b.setAttribute('aria-expanded',String(o));}});}})();</script>
 </body></html>'''
 
@@ -516,11 +612,92 @@ def med_headline(S):
     return None
 
 
+def stands_out(S, area):
+    """Two to four sentences written from this page's own figures (so no two pages read alike)."""
+    out, pl = [], fee_words(S)[0]
+    sc, h = S.get('sc_lo'), S.get('h_lo')
+    if sc and h:
+        lo, hi = (sc, h) if sc['v'] <= h['v'] else (h, sc)
+        out.append(f"The lowest {pl[:-1] if pl.endswith('s') else pl} at a surgery center is {money(sc['v'])} ({esc(sc['name'])}); at a hospital, "
+                   f"{money(h['v'])} ({esc(h['name'])})." + (f" Going to the {'surgery center' if lo is sc else 'hospital'} saves "
+                   f"{money(hi['v'] - lo['v'])} at the lowest published rate." if hi['v'] > lo['v'] else ''))
+    sp = S.get('spread')
+    if sp and sp['x'] >= 1.5:
+        out.append(f"Same place, different insurer: at {esc(sp['name'])}{', ' + esc(sp['city']) if sp['city'] else ''}, the published rate runs from "
+                   f"{money(sp['lo']['v'])} ({esc(netname(sp['lo']['ins'], sp['lo']['plan']))}) to {money(sp['hi']['v'])} "
+                   f"({esc(netname(sp['hi']['ins'], sp['hi']['plan']))}), {sp['x']:.1f} times as much.")
+    nets = [n for n in S['networks'] if not n['flat']]
+    if len(nets) >= 3:
+        a, b = nets[0], max(nets, key=lambda n: n['lo']['v'])
+        if b['lo']['v'] > a['lo']['v']:
+            out.append(f"Network matters: the lowest rate in {esc(netname(a['ins'], a['plan']))} is {money(a['lo']['v'])}; in "
+                       f"{esc(netname(b['ins'], b['plan']))} even the lowest is {money(b['lo']['v'])}.")
+    mh = med_headline(S)
+    if mh and S['lo'] and mh[0] > 0:
+        x = S['lo']['v'] / mh[0]
+        out.append(f"The lowest negotiated rate here is {x:.1f} times Medicare's {money(mh[0])} ({esc(mh[1])})."
+                   if x >= 1.05 else f"The lowest negotiated rate here, {money(S['lo']['v'])}, is at or below Medicare's {money(mh[0])}.")
+    if S.get('h_total'):
+        out.append(f"{S['h_stale']} of the {S['h_total']} hospital price files that list this code are over six months old or undated."
+                   if S['h_stale'] else f"All {S['h_total']} hospital price files that list this code are dated within the last six months.")
+    return out[:5]
+
+
+def faq(S, area, med_area):
+    """Questions people search, answered only from this page's figures."""
+    cm, an, pl = lower_name(S, True), area['name'], fee_words(S)[0]
+    qa = []
+    cc = cheapest_cash(S)
+    ncash = len(S['cash']) + len(S['hcash'])
+    if cc:
+        e, k = cc
+        a = (f"The lowest cash price we found in {an} is {money(e['v'])} at {e['name']}"
+             + (", from the hospital's own price file; that covers the hospital's fee only, and the doctor and anesthesia bill separately." if k == 'hospital' else ", posted on its own website.")
+             + f" We found {ncash} cash {'price' if ncash == 1 else 'prices'} in all. If you pay cash, ask for a written Good Faith Estimate when you schedule; "
+               "you can dispute a bill that comes in $400 or more above it.")
+    else:
+        a = (f"We haven't found a posted cash price for {cm} in {an} yet. Ask the provider for its self-pay price and a written Good Faith "
+             "Estimate before you schedule; providers must give one to patients paying cash.")
+    qa.append((f"How much does {cm} cost without insurance in {an}?", a))
+    if S['lo']:
+        a = (f"It depends on your insurer's network and where you go. Published negotiated {pl} in {an} run from {money(S['lo']['v'])} to "
+             f"{money(S['hi']['v'])}. That rate is the total; what you owe depends on your plan. Before you meet your deductible you may pay "
+             "the whole negotiated rate; after that, your coinsurance or copay.")
+        qa.append((f"How much does {cm} cost with insurance in {an}?", a))
+        if S['lines'] > 1 and S['lo']['v'] > 0:
+            a = (f"The highest published rate is {S['hi']['v'] / S['lo']['v']:.0f} times the lowest. Each insurer negotiates its own contract with each "
+                 "hospital, surgery center and doctor, so the same service has many prices.")
+            sc, h = S.get('sc_lo'), S.get('h_lo')
+            if sc and h and h['v'] > sc['v']:
+                a += f" Here, the lowest hospital rate ({money(h['v'])}) is above the lowest surgery center rate ({money(sc['v'])})."
+            sp = S.get('spread')
+            if sp and sp['x'] >= 1.5:
+                a += f" Even at one place, {sp['name']}, rates range {sp['x']:.1f}-fold depending on the insurer."
+            qa.append((f"Why do {lower_name(S)} prices vary so much?", a))
+    inc, exc = includes(S)
+    qa.append((f"What does the price of {cm} include?", f"{inc} Not included: {exc[0].lower() + exc[1:]}"))
+    mh = med_headline(S)
+    if mh:
+        qa.append((f"What does Medicare pay for {cm}?", f"Traditional Medicare's 2026 rate is {money(mh[0])} ({mh[1]}{', ' + med_area if 'local' in mh[1] else ''}). "
+                   "It's a benchmark; people with private insurance or no insurance can't get Medicare's rate."))
+    qa.append(("Where do these prices come from?", "From the files insurers must publish under the federal Transparency in Coverage rule, hospitals' "
+               f"standard charges files, and prices providers post themselves. Each figure on this page links to its file and date. Updated {updated()}."))
+    return qa
+
+
 def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     pl, sg = fee_words(S)
     url = f'/costs/{au}/{ps}/'
-    title = f"{S['name']}: what it costs in {area['name']} | {SITE['name']}"
+    cm, yr = common(S), TODAY.year
+    if S['lo'] and S['lines'] > 1:
+        title = f"{cm} Cost in {area['name']}: {short_money(S['lo']['v'])} to {short_money(S['hi']['v'])} ({yr})"
+    elif S['lo']:
+        title = f"{cm} Cost in {area['name']}: {short_money(S['lo']['v'])} ({yr})"
+    else:
+        title = f"{cm} Cost in {area['name']} ({yr})"
+    title += f" | {SITE['name']}"
     desc = lede(S, area)
+    csv_url = f'{url}prices.csv' if S.get('csv') is not None else None
     finder = f"{pf_path}?code={S['code']}"
     tiles = []
     if S['lo']:
@@ -620,20 +797,35 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                   + ''.join(f"<li>{esc(i)} · {src_link({'url': u, 'date': d})}</li>" for i, d, u in files) + "</ul></details>" if files else '')
                + "</section>")
 
+    stand = stands_out(S, area)
+    stand_sec = (f"<section class='sec'><p class='kicker'>What stands out</p><h2>{esc(cm)} prices in {esc(area['name'])}, in brief</h2>"
+                 f"<ul class='facts'>{''.join(f'<li>{x}</li>' for x in stand)}</ul>"
+                 + (f"<p class='cap'>Providers on this page are in {esc(', '.join(S['cities'][:12]))}{' and more' if len(S['cities']) > 12 else ''}.</p>" if S.get('cities') else '')
+                 + "</section>") if stand else ''
+    qa = faq(S, area, med_area)
+    faq_sec = (f"<section class='sec faq'><p class='kicker'>Questions people ask</p><h2>{esc(cm)} cost: the short answers</h2>"
+               + ''.join(f"<h3>{esc(q)}</h3><p>{esc(a)}</p>" for q, a in qa) + "</section>")
+    byline = (f"<p class='byline'>By <a href='/about/'>{esc(AUTHOR['name'])}</a>, {esc(AUTHOR['role'])} · Updated {updated()} · "
+              f"<a href='/methodology/'>How we read the files</a></p>")
+    aka = aliases(S)
     body = f'''<main>
 <section class="board"><div class="wrap">
-<p class="eyebrow"><a href="/costs/{au}/">{esc(area['name'])}</a> · {esc(S['type'] or 'Code')} {esc(S['code'])} · {esc(S['cat'])}</p>
-<h1 class="letters">{esc(S['name'])}<em> in {esc(area['name'])}</em></h1>
+<p class="eyebrow"><a href="/costs/{au}/">{esc(area['name'])}</a> · {esc(S['type'] or 'Code')} {esc(S['code'])} · {esc(S['name'])}</p>
+<h1 class="letters">{esc(cm)} cost<em> in {esc(area['name'])}</em></h1>
 <p class="lead">{esc(desc)}</p>
+{byline}
+{f'<p class="aka">Also called: {esc(", ".join(aka))}.</p>' if aka else ''}
 {('<div class="tiles">' + ''.join(tiles) + '</div>') if tiles else ''}
-<p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{' <a class="btn ghost" href="/plan-calculator/">What would I owe?</a>' if area['slug'] == 'dfw' else ''}</p>
+<p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{' <a class="btn ghost" href="/plan-calculator/">What would I owe?</a>' if area['slug'] == 'dfw' else ''}{f' <a class="btn ghost" href="{esc(csv_url)}" download>Download the data (CSV)</a>' if csv_url else ''}</p>
 </div></section>
 <div class="wrap">
+{stand_sec}
 {net_sec}
 {('<section class="sec split">' + low_sec + cash_sec + '</section>') if (low_sec or cash_sec) else ''}
 {hosp_sec}
 {inc_sec}
 {med_sec}
+{faq_sec}
 {links_sec}
 {src_sec}
 </div></main>'''
@@ -641,12 +833,20 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         {'@type': 'MedicalWebPage', 'name': title, 'description': desc, 'url': SITE['origin'] + url, 'dateModified': TODAY.isoformat(),
          'inLanguage': 'en-US', 'about': {'@type': 'MedicalProcedure', 'name': S['name'],
                                          'code': {'@type': 'MedicalCode', 'code': S['code'], 'codingSystem': 'MS-DRG' if S['drg'] else (S['type'] or 'CPT')}},
-         'spatialCoverage': {'@type': 'Place', 'name': area['name']}, 'isBasedOn': [u for _, _, u in files][:20]},
+         'spatialCoverage': {'@type': 'Place', 'name': area['name']}, 'isBasedOn': [u for _, _, u in files][:20],
+         'author': {'@type': 'Person', 'name': AUTHOR['name'], 'jobTitle': AUTHOR['role'], 'url': SITE['origin'] + '/about/'},
+         'lastReviewed': TODAY.isoformat(), 'alternateName': [cm] + aka},
+        {'@type': 'FAQPage', 'mainEntity': [{'@type': 'Question', 'name': q, 'acceptedAnswer': {'@type': 'Answer', 'text': a}} for q, a in qa]},
         {'@type': 'BreadcrumbList', 'itemListElement': [
             {'@type': 'ListItem', 'position': 1, 'name': 'Prices', 'item': SITE['origin'] + '/costs/'},
             {'@type': 'ListItem', 'position': 2, 'name': area['name'], 'item': SITE['origin'] + f'/costs/{au}/'},
-            {'@type': 'ListItem', 'position': 3, 'name': S['name'], 'item': SITE['origin'] + url}]}]}
-    return shell(title, desc, url, body, jsonld, noindex=not S['any'])
+            {'@type': 'ListItem', 'position': 3, 'name': cm, 'item': SITE['origin'] + url}]}]}
+    if csv_url:
+        jsonld['@graph'].append({'@type': 'Dataset', 'name': f'{cm} prices in {area["name"]}', 'description': desc, 'url': SITE['origin'] + url,
+                                 'creator': {'@type': 'Person', 'name': AUTHOR['name']}, 'dateModified': TODAY.isoformat(),
+                                 'license': SITE['origin'] + '/terms/', 'isAccessibleForFree': True,
+                                 'distribution': [{'@type': 'DataDownload', 'encodingFormat': 'text/csv', 'contentUrl': SITE['origin'] + csv_url}]})
+    return shell(title, desc, url, body, jsonld, noindex=not S.get('index', S['any']))
 
 
 def range_cell(s):
@@ -669,11 +869,18 @@ def area_index(area, rows, au, pf_path):
                   f"<td class='m' data-l='Compared'>{esc(fee_words(s)[0]) if s['lo'] else ''}</td><td class='num' data-l='Providers'>{s['providers']:,}</td>{range_cell(s)}</tr>" for ps, s in items)
         + "</tbody></table></div>" for c, items in cats.items())
     n = sum(1 for _, s in rows if s['lo'])
-    title = f"Healthcare prices in {area['name']}: {len(rows)} procedures compared | {SITE['name']}"
+    title = f"Healthcare Prices in {area['name']} ({TODAY.year}): {len(rows)} Procedures Compared | {SITE['name']}"
+    cityc = {}
+    for _, s_ in rows:
+        for i, c_ in enumerate(s_.get('cities') or []):
+            cityc[c_] = cityc.get(c_, 0) + (15 - i)
+    cities = [c_ for c_, _ in sorted(cityc.items(), key=lambda x: -x[1])][:20]
     desc = (f"What insurers pay hospitals, surgery centers and doctors in {area['name']} for {len(rows)} common procedures, from the price "
             f"files they must publish. Lowest and highest published rate for each, linked to the source.")
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All places</a> · {esc(area_group(area))}</p>
 <h1 class="letters">What care costs<em> in {esc(area['name'])}</em></h1><p class="lead">{esc(desc)} {n} of {len(rows)} have at least one published insurer rate here so far.</p>
+<p class="byline">By <a href="/about/">{esc(AUTHOR['name'])}</a>, {esc(AUTHOR['role'])} · Updated {updated()}</p>
+{f'<p class="aka">Includes providers in {esc(", ".join(cities))}{" and more" if len(cities) == 20 else ""}.</p>' if len(cities) > 1 else ''}
 <p class="ctas"><a class="btn hi" href="{esc(pf_path)}">Search every billing code in the Price Finder</a></p></div></section>
 <div class="wrap"><section class="sec">{tbl}<p class="cap">Lowest and highest are real published figures, not averages: one line per provider per network, that provider's standard rate. Open a procedure for the sources.</p></section></div></main>'''
     jsonld = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title, 'description': desc,
@@ -699,9 +906,10 @@ def national_procedure(code, name, ps, per_area):
     rows = ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(a['name'])}</b></a><div class='m'>{esc(area_group(a))}</div></td>"
                    f"<td class='num' data-l='Providers'>{(s['providers'] if s else 0):,}</td>{range_cell(s)}</tr>"
                    for a, au, s in sorted(per_area, key=lambda x: (not (x[2] and x[2]['lo']), x[2]['lo']['v'] if x[2] and x[2]['lo'] else 0)))
-    title = f"{name}: what it costs, place by place | {SITE['name']}"
+    cm = SEARCH_NAMES.get(code, (name,))[0]
+    title = f"{cm} Cost by City and State ({TODAY.year}): {len(same) or len(per_area)} Places Compared | {SITE['name']}"
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All procedures</a> · {esc(S0['type'] if S0 else '')} {esc(code)}</p>
-<h1 class="letters">{esc(name)}<em> place by place</em></h1><p class="lead">{esc(lead)}</p></div></section>
+<h1 class="letters">{esc(cm)} cost<em> place by place</em></h1><p class="lead">{esc(lead)}</p></div></section>
 <div class="wrap"><section class="sec"><div class="tbl"><table class="rates stack"><thead><tr><th>Place</th><th class="num">Providers</th><th class="num">Lowest</th><th class="num">Highest</th></tr></thead>
 <tbody>{rows}</tbody></table></div><p class="cap">Each place's figures are its own {esc(pl)}, lowest to highest, from the insurer files read for that place. Open a place for every source.</p></section></div></main>'''
     jsonld = {'@context': 'https://schema.org', '@type': 'MedicalWebPage', 'name': title, 'description': lead,
@@ -723,7 +931,7 @@ def costs_index(areas, procs):
         cats.setdefault(cat, []).append((code, name, ps))
     plist = ''.join(f"<h3 class='h3 cat'>{esc(c)}</h3><div class='chips'>" + ''.join(
         f"<a class='chip' href='/costs/{ps}/'>{esc(n)}</a>" for code, n, ps in items) + "</div>" for c, items in cats.items())
-    title = f"Healthcare prices by place and procedure | {SITE['name']}"
+    title = f"Healthcare Prices by Place and Procedure ({TODAY.year}) | {SITE['name']}"
     desc = (f"{len(procs)} common procedures in {len(areas)} places, from the price files hospitals and insurers are required to publish. "
             f"Every price links to its source.")
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">Prices</p><h1 class="letters">Look up<em> a price</em></h1>
@@ -783,7 +991,10 @@ table.rates{border-collapse:collapse;width:100%;min-width:560px;font-variant-num
 @media(max-width:640px){table.stack{min-width:0}table.stack thead{display:none}table.stack tr{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;padding:12px 14px;border-bottom:1px solid #CFC6B0}
 table.stack td{padding:0;border:0;text-align:left}table.stack td:first-child{grid-column:1/-1}table.stack .num{text-align:left;white-space:normal}
 table.stack td[data-l]::before{content:attr(data-l);display:block;font:700 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}table.stack td[colspan]{grid-column:1/-1}}
-footer{background:var(--board);color:#D8C7AE}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
+footer{background:var(--board);color:#D8C7AE}
+.byline{margin:0;font:14px/1.5 var(--mono);color:var(--board-sub)}.aka{margin:0;font-size:15px;color:var(--board-sub)}
+.facts{margin:0;padding:0 0 0 20px;max-width:52em;display:grid;gap:10px;font-size:17px}.facts li::marker{color:var(--stamp)}
+.faq h3{margin:26px 0 6px;font-size:19px}.faq p{margin:0;max-width:50em;color:var(--muted)}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
 footer b{font:900 22px var(--display);text-transform:uppercase;color:var(--board-ink);letter-spacing:.03em}footer a{color:var(--board-ink)}
 '''
 
@@ -940,6 +1151,27 @@ def patch_home(site, section):
     open(p, 'w', encoding='utf-8').write(s)
 
 
+def about_page(site):
+    """/about/: who is behind the site (written only if the site doesn't have its own About page)."""
+    p = os.path.join(site, 'about', 'index.html')
+    if os.path.isfile(p) and 'procedure_pages.py' not in open(p, encoding='utf-8').read():
+        return
+    body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">About</p><h1 class="letters">Who keeps<em> the receipts</em></h1>
+<p class="lead">{esc(AUTHOR['bio'])}</p></div></section><div class="wrap">
+<section class="sec"><p class="kicker">How it works</p><h2>Straight from the files</h2><div class="doors">
+<div class="door"><h3>Every price has a source</h3><span>Each figure links to the insurer, hospital or provider file it came from, with the file's date.</span></div>
+<div class="door"><h3>Nothing is estimated</h3><span>No averages and no modeled prices. Ranges are the lowest and highest published figures.</span></div>
+<div class="door"><h3>Old files are flagged</h3><span>Anything over six months old is marked. Files are re-read every month.</span></div></div>
+<p class="cap" style="margin-top:18px"><a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/price-file-watch/">Who isn't publishing</a></p></section>
+<section class="sec"><p class="kicker">Independence</p><h2>No one pays to be listed</h2><p class="lede">Providers can't pay to rank higher or to have a price removed.
+Prices appear exactly as the insurer, hospital or provider published them. Spot an error? The <a href="/corrections/">corrections page</a> says how to report it.</p></section>
+</div></main><!-- written by procedure_pages.py -->'''
+    jsonld = {'@context': 'https://schema.org', '@type': 'AboutPage', 'name': f"About {SITE['name']}", 'url': SITE['origin'] + '/about/',
+              'mainEntity': {'@type': 'Person', 'name': AUTHOR['name'], 'jobTitle': AUTHOR['role'], 'description': AUTHOR['bio']}}
+    os.makedirs(os.path.dirname(p), exist_ok=True)
+    open(p, 'w', encoding='utf-8').write(shell(f"About | {SITE['name']}", AUTHOR['bio'], '/about/', body, jsonld))
+
+
 # ---------------------------------------------------------------- build
 def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
     site = os.path.join(site_dir, 'site')
@@ -1016,11 +1248,18 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
                 d = os.path.join(out, au, ps)
                 os.makedirs(d, exist_ok=True)
                 open(os.path.join(d, 'index.html'), 'w', encoding='utf-8').write(procedure_page(a, S, others, related, D_med, a['path'], au, ps))
+                rows = S.pop('csv', None)
+                if rows is not None:
+                    with open(os.path.join(d, 'prices.csv'), 'w', newline='', encoding='utf-8') as fh:
+                        w = csv.writer(fh)
+                        w.writerow([f"# {S['name']} ({S['type']} {S['code']}) in {a['name']}. Source files linked per row. Built {TODAY.isoformat()} by {SITE['name']}."])
+                        w.writerow(['type', 'provider', 'city', 'kind', 'insurer', 'network or label', 'price', 'file date', 'source'])
+                        w.writerows(rows)
                 n_written += 1
         os.makedirs(os.path.join(out, au), exist_ok=True)
         open(os.path.join(out, au, 'index.html'), 'w', encoding='utf-8').write(area_index(a, mine, au, a['path']))
         sitemap.append(f'/costs/{au}/')
-        sitemap += [f'/costs/{au}/{ps}/' for ps, s in mine if s['any']]
+        sitemap += [f'/costs/{au}/{ps}/' for ps, s in mine if s.get('index', s['any'])]
     for c, n, cat, ps in procs:
         per = [(a, area_url_slug(a['slug']), summaries.get((a['slug'], c))) for a in live]
         d = os.path.join(out, ps)
@@ -1036,6 +1275,9 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
         + ''.join(f'<url><loc>{esc(SITE["origin"] + u)}</loc><lastmod>{TODAY.isoformat()}</lastmod></url>\n' for u in sitemap) + '</urlset>\n')
     patch_home(site, national_section([(a, area_url_slug(a['slug'])) for a in live], summaries, procs, ''))
     print(f'wrote {n_written} procedure pages, {len(live)} area indexes, {len(procs)} procedure indexes; sitemap {len(sitemap)} URLs')
+    about_page(site)
+    for v in summaries.values():
+        v.pop('csv', None)
     slim = {f'{k[0]}|{k[1]}': v for k, v in summaries.items()}
     return {'fp': fps, 'summaries': slim, 'built': TODAY.isoformat(), 'pages': n_written}
 

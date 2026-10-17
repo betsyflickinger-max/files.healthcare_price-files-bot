@@ -67,3 +67,7 @@ It rebuilds only areas whose Price Finder page changed since the last run (finge
 `site/deploy/costs_state.json`), and everything on the first run of each month. URLs never change once made:
 `site/procedure_slugs.csv`. Pages follow the homepage's robots setting (noindex while the site is a private preview).
 Offline test: `python site/procedure_pages.py build DIR --offline DEV --codes 45378,73721` with DEV/<area>/{t,h}/<code>.txt.
+Search: titles follow how people search ("Colonoscopy Cost in Houston: $427 to $11,500 (2026)") using the everyday names in
+`SEARCH_NAMES`; each page has a "What stands out" list and a Q&A section written from its own figures (FAQPage data), a byline
+and /about/ page (`AUTHOR`), a CSV of every figure behind the page (`prices.csv`, lists up to 5,000 lines), and Dataset data.
+Pages with fewer than 5 providers and fewer than 3 cash prices carry noindex and stay out of the sitemap until they have more.
