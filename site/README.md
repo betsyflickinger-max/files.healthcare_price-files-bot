@@ -62,7 +62,7 @@ procedure across every area), `/costs/` and `/costs/sitemap.xml`. It also writes
 homepage (between `<!-- NATIONAL:START -->` and `<!-- NATIONAL:END -->`; the receipts, chargemaster and house-rules views are
 left alone). Figures come from the same data as each area's Price Finder: the page's embedded data and its per-code `pf/t`
 and `pf/h` files in R2 (prefixes read from the area's own Pages Functions). Lowest and highest are real published figures,
-each linked to its file; $0 lines, percent-of-charges rates and rates flagged as unusually low are counted, not used.
+each linked to its file; $0 lines, percent-of-charges rates and rates flagged as unusually low or unusually high (over 20x the median, likely placeholders) are counted, not used.
 It rebuilds only areas whose Price Finder page changed since the last run (fingerprints and summaries in R2
 `site/deploy/costs_state.json`), and everything on the first run of each month. URLs never change once made:
 `site/procedure_slugs.csv`. Pages follow the homepage's robots setting (noindex while the site is a private preview).

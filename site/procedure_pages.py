@@ -282,8 +282,18 @@ def summarize(D, code, t, h):
     fac_kinds = {'H', 'A'} if drg or cat not in ('Imaging', 'Lab tests', 'Heart', 'Other', 'Physical therapy', 'Office visits',
                                                   'Behavioral health') else {'H', 'A', 'G'}
     anes = code.startswith('00')
+    # Unusually high: over 20 times the median published dollar rate for the code (5 or more rates; facility fees measured
+    # against the kinds of places counted below). Set high enough that real hospital prices are never caught, only
+    # placeholder-looking figures such as a $59,999.99 colonoscopy. Bit 8 from insurer builds after Oct 17, 2026; computed here
+    # for older builds. The median is only the screening line; it is never shown as a price.
+    def _med(xs):
+        xs = sorted(xs)
+        return xs[len(xs) // 2] if len(xs) >= 5 else None
+    meds = {k: _med([r[3] for fi_, rs in f.items() for r in rs if (1 if (r[1] or anes) else 0) == k and not r[2] and not r[4] & 6 and r[3] > 0
+                     and (k == 1 or D['fac'][int(fi_)][2] in fac_kinds)]) for k in (0, 1)}
     per = {'fac': {}, 'doc': {}}        # (fi, net) -> lowest dollar entry
     pct, flagged = {'fac': set(), 'doc': set()}, {'fac': set(), 'doc': set()}
+    high = {'fac': set(), 'doc': set()}
     other_kind = set()
     for fi, rs in f.items():
         fk = D['fac'][int(fi)][2]
@@ -302,6 +312,10 @@ def summarize(D, code, t, h):
                 continue
             if r[4] & 2:
                 flagged[k].add((fi, r[0]))
+                continue
+            m_ = meds[1 if r[1] else 0]
+            if r[4] & 8 or (m_ and r[3] > 20 * m_):
+                high[k].add((fi, r[0]))
                 continue
             key = (fi, r[0])
             if key not in per[k] or r[3] < per[k][key]['v']:
@@ -389,7 +403,7 @@ def summarize(D, code, t, h):
         'code': code, 'name': C['name'], 'common': SEARCH_NAMES.get(code, (None,))[0] or re.sub(r'\s*\([^)]*\)', '', C['name']).strip(), 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
         'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in lines}), 'networks': networks,
         'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
-        'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
+        'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_high': len(high[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
         'fac_kinds': sorted(fac_kinds) if kind == 'fac' else [],
         'doc_lo': doc[0] if doc else None, 'doc_hi': doc[-1] if doc else None, 'doc_n': len(doc),
         'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
@@ -689,12 +703,16 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     pl, sg = fee_words(S)
     url = f'/costs/{au}/{ps}/'
     cm, yr = common(S), TODAY.year
+    small = {'a', 'an', 'the', 'of', 'with', 'and', 'for', 'in', 'or', 'after', 'without', 'to'}
+    tc = ' '.join(w if (i and w.lower() in small) or w[:1].isupper() or not w[:1].isalpha() else w[:1].upper() + w[1:]
+                  for i, w in enumerate(cm.split(' ')))
+    tc = re.sub(r'\((\w)', lambda m: '(' + m.group(1).upper(), tc)
     if S['lo'] and S['lines'] > 1:
-        title = f"{cm} Cost in {area['name']}: {short_money(S['lo']['v'])} to {short_money(S['hi']['v'])} ({yr})"
+        title = f"{tc} Cost in {area['name']}: {short_money(S['lo']['v'])} to {short_money(S['hi']['v'])} ({yr})"
     elif S['lo']:
-        title = f"{cm} Cost in {area['name']}: {short_money(S['lo']['v'])} ({yr})"
+        title = f"{tc} Cost in {area['name']}: {short_money(S['lo']['v'])} ({yr})"
     else:
-        title = f"{cm} Cost in {area['name']} ({yr})"
+        title = f"{tc} Cost in {area['name']} ({yr})"
     title += f" | {SITE['name']}"
     desc = lede(S, area)
     csv_url = f'{url}prices.csv' if S.get('csv') is not None else None
@@ -718,6 +736,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     notes = []
     if S['n_flag']:
         notes.append(f"{S['n_flag']:,} {'rate is' if S['n_flag'] == 1 else 'rates are'} flagged in the insurer files as unusually low and left out of these figures.")
+    if S.get('n_high'):
+        notes.append(f"{S['n_high']:,} {'rate is' if S['n_high'] == 1 else 'rates are'} more than 20 times the middle published rate for this code, "
+                     "likely placeholders in the insurer files, and left out of these figures. They're labeled \"unusually high\" in the Price Finder.")
     if S.get('n_other_kind'):
         rest = 'individual clinicians' if 'G' in S['fac_kinds'] else ('surgery centers, clinics, labs and individual clinicians' if S['drg'] else 'clinics, labs and individual clinicians')
         notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees filed under {rest} are in the Price Finder.")
@@ -1283,6 +1304,17 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
 
 
 # ---------------------------------------------------------------- deploy (same pull / deploy / save-back steps as site_files.py)
+PF_OLD = """(r[4] & 2 ? '<span class="flag low">unusually low</span>' : '');"""
+PF_NEW = """(r[4] & 2 ? '<span class="flag low">unusually low</span>' : '') + (r[4] & 8 ? '<span class="flag low">unusually high</span>' : '');"""
+
+
+def label_high(text):
+    """Teach a Price Finder page to show the 'unusually high' flag (bit 8). Idempotent; None if the page's code isn't as expected."""
+    if PF_NEW in text:
+        return text
+    return text.replace(PF_OLD, PF_NEW, 1) if PF_OLD in text else None
+
+
 def deploy(force=False):
     import boto3
     E = {k: "".join(os.environ.get(k, "").split()) for k in
@@ -1298,6 +1330,18 @@ def deploy(force=False):
         t.extractall(d, filter='fully_trusted')
     if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
         sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
+    for root, _, fs in os.walk(f'{d}/site'):
+        if root.endswith('price-finder') and 'index.html' in fs:
+            pth = os.path.join(root, 'index.html'); t0 = open(pth, encoding='utf-8').read(); t1 = label_high(t0)
+            if t1 is None: print('price finder code not as expected, flag label not added:', pth)
+            elif t1 != t0: open(pth, 'w', encoding='utf-8').write(t1)
+    try:   # the layout the monthly refresh starts from
+        lay = s3.get_object(Bucket=B, Key='site/deploy/price-finder.html')['Body'].read().decode()
+        new_lay = label_high(lay)
+        if new_lay and new_lay != lay:
+            s3.put_object(Bucket=B, Key='site/deploy/price-finder.html', Body=new_lay.encode(), ContentType='text/html; charset=utf-8')
+    except Exception as e:
+        print('layout not updated:', e)
     try:
         prev = json.loads(s3.get_object(Bucket=B, Key=SKEY)['Body'].read())
     except Exception:
