@@ -1,0 +1,1085 @@
+"""Static "what it costs" pages: one page per featured procedure per Price Finder area, plus index pages and the national
+front page section of the homepage.
+
+  python site/procedure_pages.py build SITE_DIR [--areas dfw,houston] [--codes 45378,73721] [--offline DEV_DIR]
+  python site/procedure_pages.py deploy [--force]   # pull the live site from R2, rebuild what changed, deploy, save back
+
+What it writes (all inside SITE_DIR/site):
+  costs/<area>/<procedure>/index.html   one page per area x featured procedure (codes89.csv), e.g. costs/houston/colonoscopy-diagnostic/
+  costs/<area>/index.html               every featured procedure in that area, lowest to highest
+  costs/<procedure>/index.html          one procedure across every area
+  costs/index.html, costs/costs.css     the index of indexes and the shared stylesheet
+  costs/sitemap.xml                     every page that has at least one price (pages without one carry noindex)
+  index.html                            only the part between <!-- NATIONAL:START --> and <!-- NATIONAL:END --> is replaced
+
+Every figure comes from the same files the area's Price Finder page reads: the page's embedded data, and the per-code insurer
+(pf/t) and hospital (pf/h) files in R2 named by the page's own functions. Nothing is estimated or averaged: ranges are the lowest
+and highest published figure, each linked to the file it came from. Rates an insurer file marks as unusually low, $0 lines and
+percent-of-charges rates are left out of the ranges and counted on the page. Pages follow the site's robots setting: while the
+homepage says noindex, so do these pages.
+
+Deploy runs only when an area's Price Finder page changed since the last run (fingerprints in R2
+site/deploy/costs_state.json), so it is cheap to run daily. URLs never change once made: site/procedure_slugs.csv keeps them.
+"""
+import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
+from concurrent.futures import ThreadPoolExecutor
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+REPO = os.path.dirname(HERE)
+TODAY = dt.date.today()
+STALE_DAYS = 183
+esc = lambda s: html.escape(str(s if s is not None else ''), quote=True)
+
+
+def parse_date(d):
+    """File dates as the files write them: 2026-04-01, 5/29/2026, 2026/05/29 ... None if unreadable."""
+    if not d:
+        return None
+    d = str(d).strip()[:10]
+    for f in ('%Y-%m-%d', '%m/%d/%Y', '%Y/%m/%d', '%m-%d-%Y', '%Y%m%d'):
+        try:
+            return dt.datetime.strptime(d, f).date()
+        except ValueError:
+            pass
+    m = re.match(r'(\d{1,2})/(\d{1,2})/(\d{2,4})', d)
+    if m:
+        y = int(m.group(3)); y += 2000 if y < 100 else 0
+        try:
+            return dt.date(y, int(m.group(1)), int(m.group(2)))
+        except ValueError:
+            return None
+    return None
+
+
+def is_stale(d):
+    x = parse_date(d)
+    return bool(x) and (TODAY - x).days > STALE_DAYS
+
+
+def money(v):
+    return '$' + f'{v:,.2f}'
+
+
+def short_money(v):
+    return '$' + (f'{v:,.0f}' if v >= 100 else f'{v:,.2f}')
+
+
+# ---------------------------------------------------------------- data access
+class Store:
+    """Reads per-code files for one area, from R2 (live) or a local folder (offline test)."""
+
+    def __init__(self, site_dir, offline=None):
+        self.site_dir, self.offline, self.s3 = site_dir, offline, None
+        if not offline:
+            import boto3
+            E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
+            self.s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+                                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+            self.B = E["R2_BUCKET"]
+        self._cur = None
+
+    def prefix(self, area, kind):
+        """R2 prefix for an area's per-code files, read from the area's own Pages Function (so it follows each rebuild)."""
+        if area['slug'] == 'dfw':
+            if self._cur is None:
+                self._cur = self.s3.get_object(Bucket=self.B, Key='site/every/CURRENT')['Body'].read().decode().strip()
+            return f'site/every/{self._cur}/{kind}/'
+        fn = os.path.join(self.site_dir, 'functions', area['slug'], 'price-finder', 'pf', kind, '[code].js')
+        if not os.path.isfile(fn):
+            return None
+        src = open(fn, encoding='utf-8').read()
+        m = re.search(r'PREFIX = "([^"]+)"', src)
+        if not m:
+            return None
+        p = m.group(1)
+        # the t/ function adds 't/' itself; the h/ function's prefix already ends in .../h/
+        return p + 't/' if kind == 't' and "PREFIX + 't/'" in src else p
+
+    def get(self, area, kind, code):
+        if self.offline:
+            p = os.path.join(self.offline, area['slug'], kind, code + '.txt')
+            return decode(open(p).read()) if os.path.isfile(p) else None
+        pre = self.prefix(area, kind)
+        if not pre:
+            return None
+        try:
+            body = self.s3.get_object(Bucket=self.B, Key=pre + code + '.txt')['Body'].read().decode()
+        except Exception:
+            return None
+        return decode(body)
+
+
+def decode(text):
+    """Per-code files are gzip, base64-encoded as .txt (same as the Price Finder's getB64)."""
+    raw = base64.b64decode(text.strip())
+    try:
+        return json.loads(gzip.decompress(raw))
+    except OSError:
+        return json.loads(raw)
+
+
+def page_data(path):
+    s = open(path, encoding='utf-8').read()
+    m = re.search(r'<script type="application/json" id="data">(.*?)</script>', s, re.S)
+    D = json.loads(m.group(1))
+    a = re.search(r"var MED_AREA = '([^']*)'", s)
+    return D, (a.group(1) if a else ''), hashlib.sha256(s.encode()).hexdigest()[:16]
+
+
+# ---------------------------------------------------------------- names, slugs, areas
+def slugify(s):
+    s = s.lower().replace('&', ' and ').replace('+', ' plus ')
+    s = re.sub(r"['’]", '', s)
+    return re.sub(r'[^a-z0-9]+', '-', s).strip('-')
+
+
+SLUG_OVERRIDE = {'73721': 'knee-mri', '70551': 'brain-mri', '70553': 'brain-mri-with-and-without-contrast', '72148': 'lower-back-mri',
+                 '74177': 'ct-scan-abdomen-and-pelvis', '70450': 'head-ct-scan', '72193': 'ct-scan-pelvis', '85025': 'cbc-blood-test',
+                 '80061': 'cholesterol-test', '93000': 'ekg', '84443': 'thyroid-tsh-test', '59400': 'vaginal-birth', '59510': 'c-section',
+                 '59610': 'vbac-vaginal-birth-after-c-section', '43235': 'upper-endoscopy-egd', '43239': 'upper-endoscopy-egd-with-biopsy'}
+
+
+def load_slugs(codes, names):
+    """Stable procedure URLs: once a code has a slug it keeps it, even if its plain-English name is reworded later.
+    New slugs: the plain name without its (parenthesis), unless two codes would share it; then the full name."""
+    path = os.path.join(HERE, 'procedure_slugs.csv')
+    have = {r['code']: r['slug'] for r in csv.DictReader(open(path))} if os.path.isfile(path) else {}
+    short = {c: slugify(re.sub(r'\([^)]*\)', '', names[c])) for c in codes if c in names}
+    dup = {v for v in short.values() if list(short.values()).count(v) > 1}
+    used = set(have.values())
+    for c in codes:
+        if c not in have and c in names:
+            s = SLUG_OVERRIDE.get(c) or (slugify(names[c]) if short[c] in dup else short[c]) or c.lower()
+            if s in used:
+                s = f'{s}-{c.lower()}'
+            have[c] = s
+            used.add(s)
+    with open(path, 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['code', 'slug'])
+        for c in sorted(have):
+            w.writerow([c, have[c]])
+    return have
+
+
+def area_url_slug(slug):
+    return 'dallas-fort-worth' if slug == 'dfw' else slug
+
+
+STATES = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA',
+          'north-carolina': 'NC', 'connecticut': 'CT', 'illinois': 'IL', 'new-york': 'NY', 'california': 'CA', 'louisiana': 'LA',
+          'florida': 'FL', 'kentucky': 'KY', 'arizona': 'AZ', 'new-mexico': 'NM', 'north-dakota': 'ND', 'south-dakota': 'SD',
+          'michigan': 'MI', 'indiana': 'IN', 'washington-dc': 'DC'}
+
+
+def area_state(a):
+    return STATES.get(a['slug'], 'TX')
+
+
+def area_group(a):
+    return 'Texas' if area_state(a) == 'TX' else 'States'
+
+
+# ---------------------------------------------------------------- the numbers for one area x code
+KIND = {'A': 'surgery center', 'H': 'hospital', 'G': 'practice, clinic, lab or imaging center', 'P': 'clinician'}
+PROD = ['Employer and individual plans', 'Marketplace (ACA) plans', 'Medicare Advantage', 'Medicaid and CHIP', 'Plan type not stated']
+SHOWN = {'Superior/Ambetter/Wellcare (Centene)': 'Ambetter / Superior / Wellcare'}
+
+
+def nice(t):
+    if t and t == t.upper():
+        return re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), t.lower()).replace(' Er ', ' ER ')
+    return t
+
+
+def summarize(D, code, t, h):
+    """Everything a procedure page shows, as plain data. Mirrors the Price Finder's own rules (see the page's main script):
+    one line per provider per network = that provider's lowest standard rate (no modifier) in that network; $0 lines,
+    percent-of-charges lines and lines the file flags as unusually low are kept out of the low/high figures."""
+    C = D['codes'][code]
+    f = (t or {}).get('f') or C.get('f') or {}
+    nets = [n.split('|', 1) for n in D['nets']]
+    drg = 'DRG' in (C.get('type') or '')
+
+    def fac(i):
+        x = D['fac'][int(i)]
+        return {'name': x[0], 'city': x[1], 'kind': x[2]}
+
+    def entry(fi, r):
+        x = fac(fi)
+        x.update(v=r[3], net=r[0], ins=nets[r[0]][0], plan=nets[r[0]][1], date=D['dates'][r[5]], url=D['urls'][r[6]], low=bool(r[4] & 2))
+        return x
+
+    # Facility fees count only for the kinds of places that do this service: hospitals and surgery centers, plus imaging
+    # centers, labs and clinics for scans, tests and office services (a "facility fee" filed under an individual or a
+    # fertility lab for a colonoscopy is counted on the page but left out of the figures). Inpatient groups: hospitals only.
+    cat = C.get('cat', '')
+    fac_kinds = {'H', 'A'} if drg or cat not in ('Imaging', 'Lab tests', 'Heart', 'Other', 'Physical therapy', 'Office visits',
+                                                  'Behavioral health') else {'H', 'A', 'G'}
+    anes = code.startswith('00')
+    per = {'fac': {}, 'doc': {}}        # (fi, net) -> lowest dollar entry
+    pct, flagged = {'fac': set(), 'doc': set()}, {'fac': set(), 'doc': set()}
+    other_kind = set()
+    for fi, rs in f.items():
+        fk = D['fac'][int(fi)][2]
+        for r in rs:
+            if anes:                     # anesthesia: every published dollar line is the anesthesia fee, however the file classes it
+                r = [r[0], 1] + list(r[2:])
+            if not r[1] and fk not in fac_kinds:
+                if not r[2] and not r[4] & 6:
+                    other_kind.add((fi, r[0]))
+                continue
+            if r[4] & 4:                 # $0 listed: paid inside another charge
+                continue
+            k = 'doc' if r[1] else 'fac'
+            if r[2]:                     # percent of billed charges
+                pct[k].add((fi, r[0]))
+                continue
+            if r[4] & 2:
+                flagged[k].add((fi, r[0]))
+                continue
+            key = (fi, r[0])
+            if key not in per[k] or r[3] < per[k][key]['v']:
+                per[k][key] = entry(fi, r)
+    # what the page leads with: the clinician's fee for visits and therapy, otherwise the facility fee when there is one
+    kind = 'doc' if (cat in ('Office visits', 'Behavioral health', 'Physical therapy') or anes) and per['doc'] else ('fac' if per['fac'] else 'doc')
+    lines = sorted(per[kind].values(), key=lambda e: (e['v'], e['name']))
+    by_net = {}
+    for e in lines:
+        by_net.setdefault(e['net'], []).append(e)
+    networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'n': len(es), 'lo': es[0], 'hi': es[-1],
+                 'flat': len(es) >= 5 and es[0]['v'] == es[-1]['v']} for n, es in by_net.items()]
+    networks.sort(key=lambda x: (x['lo']['v'], x['ins'], x['plan']))
+    flat = {n for n, es in by_net.items() if len(es) >= 5 and es[0]['v'] == es[-1]['v']}
+    # lowest 10 providers (each provider once, at its lowest network). Networks that pay every provider the same amount
+    # stay in the network table, labeled, but are left out of this ranking (same rule as the procedure packages).
+    seen, lowest = set(), []
+    for e in lines:
+        if e['net'] in flat:
+            continue
+        k = (e['name'], e['city'])
+        if k not in seen:
+            seen.add(k)
+            lowest.append(e)
+        if len(lowest) == 10:
+            break
+    doc = sorted(per['doc'].values(), key=lambda e: e['v']) if kind == 'fac' else []
+
+    # hospital price files (45 CFR 180)
+    H = D.get('hosp') or {}
+    hc = h or {'c': [], 'r': []}
+    def hsrc(s):
+        x = H['src'][s]
+        return {'name': nice(x[0]), 'city': x[1], 'date': x[3], 'url': x[4], 'unit': x[6] or 'row'}
+    hcash = {}
+    for r in hc.get('c', []):
+        if r[5] == 0 and (r[0] not in hcash or r[2] < hcash[r[0]]['v']):
+            hcash[r[0]] = dict(hsrc(r[0]), v=r[2], row=r[4], list=r[3])
+    hcash = sorted(hcash.values(), key=lambda e: e['v'])
+    hrate, hfiles = {}, set()
+    plans = hc.get('p') or H.get('plans') or []
+    for r in hc.get('r', []):
+        hfiles.add(r[0])
+        if r[4] or r[5]:                 # doctor's line or percent of charges
+            continue
+        k = (r[0], r[1])
+        if k not in hrate or r[6] < hrate[k]['v']:
+            ins = H['ins'][r[1]]
+            hrate[k] = dict(hsrc(r[0]), v=r[6], row=r[7], ins=SHOWN.get(ins, ins), plan=plans[r[3]] if r[3] < len(plans) else '',
+                            prod=PROD[r[2]] if r[2] < len(PROD) else '')
+    hrate = sorted(hrate.values(), key=lambda e: e['v'])
+    hfiles |= {r[0] for r in hc.get('c', [])}
+
+    cash = sorted([c for c in D.get('cash', []) if c.get('code') == code], key=lambda c: c['v'])
+    dates = sorted({e['date'] for e in lines})
+    return {
+        'code': code, 'name': C['name'], 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
+        'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in lines}), 'networks': networks,
+        'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
+        'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
+        'fac_kinds': sorted(fac_kinds) if kind == 'fac' else [],
+        'doc_lo': doc[0] if doc else None, 'doc_hi': doc[-1] if doc else None, 'doc_n': len(doc),
+        'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
+        'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
+        'any': bool(lines or hcash or hrate or cash),
+    }
+
+
+# ---------------------------------------------------------------- wording
+def fee_words(S):
+    if S['code'].startswith('00'):
+        return 'rates', 'rate'
+    if S['drg']:
+        return 'hospital-stay rates', 'hospital-stay rate'
+    return ('facility fees', 'facility fee') if S['kind'] == 'fac' else ("clinicians' fees", "clinician's fee")
+
+
+def kinds_words(S):
+    k = set(S.get('fac_kinds') or [])
+    return 'hospitals, surgery centers, and imaging centers, labs and clinics' if 'G' in k else ('hospitals' if S['drg'] else 'hospitals and surgery centers')
+
+
+def prov_noun(S):
+    if S['kind'] != 'fac':
+        return 'provider' if S['providers'] == 1 else 'providers'
+    if S['drg']:
+        return 'hospital' if S['providers'] == 1 else 'hospitals'
+    return 'facility' if S['providers'] == 1 else ('facilities' if 'G' in (S.get('fac_kinds') or []) else 'hospitals and surgery centers')
+
+
+def netname(ins, plan):
+    return plan if plan.lower().startswith(ins.lower()) else f'{ins} {plan}'
+
+
+def who(e):
+    return f"{e['name']}{', ' + e['city'] if e.get('city') else ''}"
+
+
+def lede(S, area):
+    pl, sg = fee_words(S)
+    out = []
+    if S['lo']:
+        if S['lines'] == 1:
+            out.append(f"One insurer-negotiated {sg} for {lower_name(S)} is published in {area['name']}: {money(S['lo']['v'])} at {who(S['lo'])}.")
+        else:
+            out.append(f"Insurers' negotiated {pl} for {lower_name(S)} in {area['name']} run from {money(S['lo']['v'])} to "
+                       f"{money(S['hi']['v'])}, across {S['providers']:,} {prov_noun(S)} "
+                       f"and {len(S['networks'])} {'network' if len(S['networks']) == 1 else 'networks'}.")
+        if S['code'].startswith('00'):
+            out.append('Many insurers publish anesthesia as a rate per time unit, not a total for the case.')
+    cheapest = cheapest_cash(S)
+    if cheapest:
+        e, src = cheapest
+        out.append(f"The lowest cash price we found is {money(e['v'])} at {e['name']}" +
+                   (" (the hospital's own fee only)." if src == 'hospital' else '.'))
+    if not out:
+        out.append(f"We haven't found a published price for {lower_name(S)} in {area['name']}'s files yet.")
+    return ' '.join(out)
+
+
+def cheapest_cash(S):
+    c = [(x, 'posted') for x in S['cash'][:1]] + [(x, 'hospital') for x in S['hcash'][:1]]
+    return min(c, key=lambda p: p[0]['v']) if c else None
+
+
+def lower_name(S):
+    n = S['name']
+    return n if re.match(r'^(MRI|CT|EKG|PSA|TSH|ACL|EGD|PT)\b', n) or n[:2].isupper() else n[0].lower() + n[1:]
+
+
+def includes(S):
+    """(what the main figure covers, what it leaves out) in plain words, by kind of service."""
+    cat, code = S['cat'], S['code']
+    if code.startswith('00'):
+        return ("The anesthesia professional's fee, as the insurer publishes it. Insurers often pay anesthesia as base units plus "
+                "time units, so the total depends on how long the procedure takes.",
+                "The procedure itself, the facility fee and the doctor doing the procedure all bill separately.")
+    if S['drg']:
+        return ("One payment to the hospital for the whole stay in this group: room, nursing, operating room, supplies and drugs.",
+                "Doctors' fees (surgeon, anesthesia, other specialists) bill separately, and so can care after you leave.")
+    if cat == 'Maternity':
+        return ("A global code covers the doctor's care: prenatal visits, the delivery and the check-up after.",
+                "The hospital stay, anesthesia (such as an epidural), lab work and ultrasounds bill separately.")
+    if cat == 'Lab tests':
+        return ("The lab test itself, as the lab or hospital bills it.",
+                "The blood draw often bills as its own small charge, and so does the visit that ordered the test.")
+    if cat == 'Imaging':
+        if S['kind'] == 'fac':
+            return ("The facility's fee for doing the scan: the machine, the technologist and the room.",
+                    "The radiologist's fee for reading the scan bills separately. If contrast is not part of this code, it can add a charge.")
+        return ("The amount for the scan as billed by the clinician or imaging center.",
+                "If done at a hospital, the hospital can add its own facility fee.")
+    if cat in ('Office visits', 'Behavioral health', 'Physical therapy', 'Heart', 'Other') and S['kind'] == 'doc':
+        return ("The clinician's fee for the visit or service.",
+                "If the clinic is owned by a hospital, the hospital can bill a separate facility fee. Tests and procedures done "
+                "at the visit bill separately.")
+    if S['kind'] == 'fac':
+        return ("The facility fee at the hospital or surgery center: the room, equipment, nursing staff and supplies.",
+                "The doctor's fee, anesthesia and pathology (if tissue goes to a lab) bill separately, and so do follow-up visits. "
+                "If more is done during the procedure, a different code can be billed.")
+    return ("The clinician's fee for this service.", "Any facility fee, anesthesia and lab work bill separately.")
+
+
+# ---------------------------------------------------------------- HTML
+SITE = {'name': 'What It Costs', 'robots': 'noindex,nofollow', 'origin': 'https://upfront-dfw-preview.pages.dev', 'nav': ''}
+
+
+def site_settings(site):
+    """Name, robots setting and navigation come from the live homepage, so a rename or going public carries over."""
+    home = open(os.path.join(site, 'index.html'), encoding='utf-8').read()
+    m = re.search(r'<meta property="og:site_name" content="([^"]+)"', home)
+    if m:
+        SITE['name'] = html.unescape(m.group(1))
+    m = re.search(r'<meta name="robots" content="([^"]+)"', home)
+    SITE['robots'] = m.group(1) if m else ''
+    m = re.search(r'<meta property="og:url" content="(https://[^/"]+)', home)
+    if m:
+        SITE['origin'] = m.group(1)
+    m = re.search(r'<nav class="nav" id="nav"[^>]*>(.*?)</nav>', home, re.S)
+    nav = m.group(1) if m else ''
+    nav = re.sub(r'<button[^>]*data-open[^>]*>.*?</button>', '', nav, flags=re.S)
+    nav = nav.replace('href="#/', 'href="/#/')
+    nav = re.sub(r'\s+data-route="[^"]*"', '', nav)
+    if '/costs/' not in nav:
+        nav = nav.replace('<a href="/price-finder/">', '<a href="/costs/">Prices</a><a href="/price-finder/">', 1)
+    SITE['nav'] = nav.strip()
+
+
+def logo():
+    n = SITE['name'].split(' ')
+    return esc(' '.join(n[:-1])) + (' <span>' + esc(n[-1]) + '</span>' if len(n) > 1 else esc(n[0]))
+
+
+def shell(title, desc, canon, body, jsonld, noindex=False):
+    robots = SITE['robots'] or ''
+    if noindex and 'noindex' not in robots:
+        robots = 'noindex' + (',' + robots if robots else '')
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+{f'<meta name="robots" content="{esc(robots)}">' if robots else ''}
+<title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{esc(SITE['origin'] + canon)}">
+<meta property="og:site_name" content="{esc(SITE['name'])}"><meta property="og:type" content="article"><meta property="og:title" content="{esc(title)}">
+<meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(SITE['origin'] + canon)}"><meta property="og:image" content="{esc(SITE['origin'])}/og.jpg">
+<meta name="theme-color" content="#4A1C1C"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Courier+Prime:wght@400;700&family=Public+Sans:ital,wght@0,400;0,600;0,800;1,400&display=swap">
+<link rel="stylesheet" href="/costs/costs.css">
+<script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False).replace('</', '<\\/')}</script>
+</head><body>
+<header class="bar"><div class="wrap"><a class="logo" href="/">{logo()}</a>
+<button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
+<nav class="nav" id="nav" aria-label="Main">{SITE['nav']}</nav></div></header>
+{body}
+<footer><div class="wrap"><span><b>{esc(SITE['name'])}</b><br>Every price links to the file it came from.</span>
+<span><a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/disclaimers/">Disclaimers</a> · <a href="/privacy/">Privacy</a></span></div></footer>
+<script>(()=>{{const b=document.getElementById('menuBtn'),n=document.getElementById('nav');b.addEventListener('click',()=>{{const o=n.classList.toggle('open');b.setAttribute('aria-expanded',String(o));}});}})();</script>
+</body></html>'''
+
+
+def src_link(e, label=None):
+    stale = is_stale(e.get('date'))
+    text = label or ('file dated ' + e['date'] if e.get('date') else 'file has no date')
+    return (f'<a class="src" href="{esc(e["url"])}" target="_blank" rel="noopener">{esc(text)} ↗</a>'
+            + (' <span class="flag">over 6 months old</span>' if stale else ''))
+
+
+def hosp_link(e):
+    d = e['date'] or 'undated'
+    stale = is_stale(e.get('date'))
+    return (f'<a class="src" href="{esc(e["url"])}" target="_blank" rel="noopener">{esc(d)} · {esc(e["unit"])} {e["row"]:,} ↗</a>'
+            + (' <span class="flag">over 6 months old</span>' if stale else ('' if e.get('date') else ' <span class="flag">no date in file</span>')))
+
+
+def tile(label, v, sub):
+    return f'<div class="tile"><p class="tl">{esc(label)}</p><p class="tv">{v}</p><div class="ts">{sub}</div></div>'
+
+
+def med_lines(S, med_area):
+    m, src = S['med'], S['med_src']
+    if not m:
+        return []
+    L = []
+    lk = lambda k: f'<a class="src" href="{esc(src[k][1])}" target="_blank" rel="noopener">CMS {esc(src[k][2])} ↗</a>' if k in src else ''
+    if m.get('opps'):
+        L.append(('Hospital outpatient facility fee', 'national rate before local wage adjustment', m['opps'][0], lk('opps')))
+    if m.get('asc'):
+        L.append(('Surgery center facility fee', 'national rate before local wage adjustment', m['asc'][0], lk('asc')))
+    if m.get('pfs'):
+        d = m['pfs'].get('dal') or [None, None]
+        if d[1] is not None:
+            L.append(('Doctor, when done in a hospital or surgery center', med_area, d[1], lk('pfs')))
+        if d[0] is not None and d[0] != d[1]:
+            L.append(('Doctor or clinic, when done in an office', med_area + ', includes office costs', d[0], lk('pfs')))
+        if d[0] is not None and d[0] == d[1]:
+            L.append(('Total when billed by an office or imaging center', med_area, d[0], lk('pfs')))
+    if m.get('pfs26'):
+        L.append(('Doctor reading the results only', med_area, m['pfs26']['dal'][1], lk('pfs')))
+    if m.get('lab'):
+        L.append(('Lab test', 'national payment limit', m['lab'], lk('lab')))
+    return L
+
+
+def med_headline(S):
+    m = S['med']
+    if not m:
+        return None
+    if S['kind'] == 'fac' and m.get('opps'):
+        return m['opps'][0], 'hospital outpatient facility fee'
+    if m.get('lab'):
+        return m['lab'], 'lab payment limit'
+    d = (m.get('pfs') or {}).get('dal') or [None, None]
+    if S['kind'] == 'doc' and d[0] is not None:
+        return d[0], 'office rate, local'
+    if d[1] is not None:
+        return d[1], "doctor's fee, local"
+    return None
+
+
+def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
+    pl, sg = fee_words(S)
+    url = f'/costs/{au}/{ps}/'
+    title = f"{S['name']}: what it costs in {area['name']} | {SITE['name']}"
+    desc = lede(S, area)
+    finder = f"{pf_path}?code={S['code']}"
+    tiles = []
+    if S['lo']:
+        tiles.append(tile(f'Lowest negotiated {sg}', money(S['lo']['v']), f"{esc(who(S['lo']))}<br>{esc(netname(S['lo']['ins'], S['lo']['plan']))} · {src_link(S['lo'])}"))
+        if S['lines'] > 1:
+            tiles.append(tile(f'Highest negotiated {sg}', money(S['hi']['v']), f"{esc(who(S['hi']))}<br>{esc(netname(S['hi']['ins'], S['hi']['plan']))} · {src_link(S['hi'])}"))
+    cc = cheapest_cash(S)
+    if cc:
+        e, kind = cc
+        sub = (f"{esc(e['name'])}{', ' + esc(e['city']) if e.get('city') else ''}<br>"
+               + (f"posted on its site, checked {esc(e['chk'])} · <a class='src' href='{esc(e['src'])}' target='_blank' rel='noopener'>source ↗</a>"
+                  if kind == 'posted' else f"hospital's own fee only · {hosp_link(e)}"))
+        tiles.append(tile('Lowest cash price', money(e['v']) + (('–' + money(e['hi'])) if kind == 'posted' and e.get('hi') else ''), sub))
+    mh = med_headline(S)
+    if mh:
+        tiles.append(tile('Medicare pays', money(mh[0]), f"{esc(mh[1])}, 2026 · a benchmark, not a price you can get"))
+
+    notes = []
+    if S['n_flag']:
+        notes.append(f"{S['n_flag']:,} {'rate is' if S['n_flag'] == 1 else 'rates are'} flagged in the insurer files as unusually low and left out of these figures.")
+    if S.get('n_other_kind'):
+        rest = 'individual clinicians' if 'G' in S['fac_kinds'] else ('surgery centers, clinics, labs and individual clinicians' if S['drg'] else 'clinics, labs and individual clinicians')
+        notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees filed under {rest} are in the Price Finder.")
+    if any(n['flat'] for n in S['networks']):
+        notes.append("Networks marked \"same rate everywhere\" pay every listed provider the same amount; they're left out of the lowest-10 list.")
+    if S['n_pct']:
+        notes.append(f"{S['n_pct']:,} {'rate is' if S['n_pct'] == 1 else 'rates are'} published as a percent of billed charges, with no dollar figure.")
+
+    # by network
+    net_rows = ''.join(
+        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}</div></td><td class='num'>{n['n']:,}</td>"
+        f"<td class='num'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
+        f"<td class='num'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
+        f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
+        for n in S['networks'])
+    net_sec = (f"<section class='sec'><p class='kicker'>By insurer network</p><h2>Who pays what</h2>"
+               f"<p class='lede'>Each line counts the providers with a published {sg} in that network and shows the lowest and highest. "
+               f"Your plan's network decides which line applies to you.</p>"
+               f"<div class='tbl'><table class='rates'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
+               f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
+
+    low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
+                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
+    low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol></div>") if low_li else ''
+
+    cash_items = [(c['v'], f"<li><span><b>{esc(c['name'])}</b> · {esc(c['city'])}<span class='m'>posted cash price{' · ' + esc(c['label']) if c.get('label') else ''}"
+                           f"{' · ' + esc(c['note']) if c.get('note') else ''} · checked {esc(c['chk'])} · <a class='src' href='{esc(c['src'])}' target='_blank' rel='noopener'>source ↗</a></span></span>"
+                           f"<span class='n'>{money(c['v'])}{('–' + money(c['hi'])) if c.get('hi') else ''}</span></li>") for c in S['cash']]
+    cash_items += [(e['v'], f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>hospital price file, hospital fee only"
+                            f"{' · list price ' + money(e['list']) if e.get('list') else ''} · {hosp_link(e)}</span></span><span class='n'>{money(e['v'])}</span></li>")
+                   for e in S['hcash'][:10]]
+    cash_items.sort(key=lambda x: x[0])
+    more_h = len(S['hcash']) - 10
+    cash_sec = (f"<div><p class='kicker'>Paying without insurance</p><h3 class='h3'>Cash prices</h3><ol class='word'>{''.join(x[1] for x in cash_items)}</ol>"
+                + (f"<p class='cap'>{more_h} more hospital cash prices in the <a href='{esc(finder)}'>Price Finder</a>.</p>" if more_h > 0 else '')
+                + "<p class='cap'>Ask for a written <b>Good Faith Estimate</b> when you schedule. Providers must give one to patients paying "
+                  "cash, and you can dispute a bill that comes in $400 or more above it.</p></div>") if cash_items else ''
+
+    hosp_sec = ''
+    if S['hrate']:
+        hr = S['hrate']
+        rows = ''.join(f"<li><span><b>{esc(e['name'])}</b><span class='m'>{esc(e['ins'])} · {esc(e['plan'])} · {hosp_link(e)}</span></span>"
+                       f"<span class='n'>{money(e['v'])}</span></li>" for e in hr[:5])
+        hosp_sec = (f"<section class='sec'><p class='kicker'>In hospitals' own price files</p><h2>What hospitals say they're paid</h2>"
+                    f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {S['hfiles']:,} hospital "
+                    f"{'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from {money(hr[0]['v'])} to "
+                    f"{money(hr[-1]['v'])} (hospital fee only, one line per hospital per insurer). The five lowest:</p><ol class='word'>{rows}</ol></section>")
+
+    inc, exc = includes(S)
+    doc_line = ''
+    if S['doc_lo'] and S['doc_n'] > 1:
+        doc_line = (f"<p class='cap'>The doctor's own fee for this code, billed separately: {money(S['doc_lo']['v'])} to {money(S['doc_hi']['v'])} "
+                    f"across {S['doc_n']:,} published rates.</p>")
+    inc_sec = (f"<section class='sec'><p class='kicker'>Read the fine print</p><h2>What the price covers</h2><div class='doors'>"
+               f"<div class='door'><h3>Included</h3><span>{esc(inc)}</span></div><div class='door'><h3>Not included</h3><span>{esc(exc)}{doc_line}</span></div>"
+               f"<div class='door'><h3>What you'd pay</h3><span>A negotiated rate is the total the insurer and provider agreed. Until you meet your "
+               f"deductible you may owe all of it; after that, your coinsurance or copay.{' The <a href=/plan-calculator/>Plan Calculator</a> does the math for DFW marketplace plans.' if area['slug'] == 'dfw' else ''}</span></div>"
+               f"</div></section>")
+
+    ml = med_lines(S, med_area)
+    med_sec = (f"<section class='sec'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
+               f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare.</p><ol class='word'>"
+               + ''.join(f"<li><span><b>{esc(a)}</b><span class='m'>{esc(b)} · {lk}</span></span><span class='n'>{money(v)}</span></li>" for a, b, v, lk in ml)
+               + "</ol></section>") if ml else ''
+
+    chips = lambda items: ''.join(f"<a class='chip' href='{esc(u)}'>{esc(t)}</a>" for t, u in items)
+    links_sec = (f"<section class='sec split'><div><p class='kicker'>Same procedure, other places</p><div class='chips'>{chips(others)}</div></div>"
+                 f"<div><p class='kicker'>Related in {esc(area['name'])}</p><div class='chips'>{chips(related)}</div></div></section>")
+
+    files = sorted({(e['ins'], e['date'], e['url']) for n in S['networks'] for e in (n['lo'], n['hi'])})
+    src_sec = (f"<section class='sec srcs'><p class='kicker'>Sources</p><p>Insurer rates: the in-network rate files insurers must publish under the "
+               f"Transparency in Coverage rule (45 CFR 147.212). Hospital prices: each hospital's standard charges file (45 CFR 180). "
+               f"Medicare: CMS fee schedules. Cash prices posted by providers are checked by hand on the date shown. "
+               f"This page was built {TODAY.isoformat()} from the same files as the <a href='{esc(finder)}'>{esc(area['name'])} Price Finder</a>. "
+               f"<a href='/methodology/'>How we read the files</a>.</p>"
+               + (f"<details><summary>Insurer files behind the figures on this page ({len(files)})</summary><ul>"
+                  + ''.join(f"<li>{esc(i)} · {src_link({'url': u, 'date': d})}</li>" for i, d, u in files) + "</ul></details>" if files else '')
+               + "</section>")
+
+    body = f'''<main>
+<section class="board"><div class="wrap">
+<p class="eyebrow"><a href="/costs/{au}/">{esc(area['name'])}</a> · {esc(S['type'] or 'Code')} {esc(S['code'])} · {esc(S['cat'])}</p>
+<h1 class="letters">{esc(S['name'])}<em> in {esc(area['name'])}</em></h1>
+<p class="lead">{esc(desc)}</p>
+{('<div class="tiles">' + ''.join(tiles) + '</div>') if tiles else ''}
+<p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{' <a class="btn ghost" href="/plan-calculator/">What would I owe?</a>' if area['slug'] == 'dfw' else ''}</p>
+</div></section>
+<div class="wrap">
+{net_sec}
+{('<section class="sec split">' + low_sec + cash_sec + '</section>') if (low_sec or cash_sec) else ''}
+{hosp_sec}
+{inc_sec}
+{med_sec}
+{links_sec}
+{src_sec}
+</div></main>'''
+    jsonld = {'@context': 'https://schema.org', '@graph': [
+        {'@type': 'MedicalWebPage', 'name': title, 'description': desc, 'url': SITE['origin'] + url, 'dateModified': TODAY.isoformat(),
+         'inLanguage': 'en-US', 'about': {'@type': 'MedicalProcedure', 'name': S['name'],
+                                         'code': {'@type': 'MedicalCode', 'code': S['code'], 'codingSystem': 'MS-DRG' if S['drg'] else (S['type'] or 'CPT')}},
+         'spatialCoverage': {'@type': 'Place', 'name': area['name']}, 'isBasedOn': [u for _, _, u in files][:20]},
+        {'@type': 'BreadcrumbList', 'itemListElement': [
+            {'@type': 'ListItem', 'position': 1, 'name': 'Prices', 'item': SITE['origin'] + '/costs/'},
+            {'@type': 'ListItem', 'position': 2, 'name': area['name'], 'item': SITE['origin'] + f'/costs/{au}/'},
+            {'@type': 'ListItem', 'position': 3, 'name': S['name'], 'item': SITE['origin'] + url}]}]}
+    return shell(title, desc, url, body, jsonld, noindex=not S['any'])
+
+
+def range_cell(s):
+    if not s or not s['lo']:
+        return "<td class='num m' colspan='2'>none published yet</td>"
+    if s['lines'] == 1:
+        return f"<td class='num'>{money(s['lo']['v'])}</td><td class='num'>—</td>"
+    return f"<td class='num'>{money(s['lo']['v'])}</td><td class='num'>{money(s['hi']['v'])}</td>"
+
+
+def area_index(area, rows, au, pf_path):
+    """rows: [(slug, summary)] in display order."""
+    cats = {}
+    for ps, s in rows:
+        cats.setdefault(s['cat'], []).append((ps, s))
+    tbl = ''.join(
+        f"<h3 class='h3 cat'>{esc(c)}</h3><div class='tbl'><table class='rates'><thead><tr><th>Procedure</th><th>What's compared</th>"
+        f"<th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead><tbody>"
+        + ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(s['name'])}</b></a><div class='m'>{esc(s['code'])}</div></td>"
+                  f"<td class='m'>{esc(fee_words(s)[0]) if s['lo'] else ''}</td><td class='num'>{s['providers']:,}</td>{range_cell(s)}</tr>" for ps, s in items)
+        + "</tbody></table></div>" for c, items in cats.items())
+    n = sum(1 for _, s in rows if s['lo'])
+    title = f"Healthcare prices in {area['name']}: {len(rows)} procedures compared | {SITE['name']}"
+    desc = (f"What insurers pay hospitals, surgery centers and doctors in {area['name']} for {len(rows)} common procedures, from the price "
+            f"files they must publish. Lowest and highest published rate for each, linked to the source.")
+    body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All places</a> · {esc(area_group(area))}</p>
+<h1 class="letters">What care costs<em> in {esc(area['name'])}</em></h1><p class="lead">{esc(desc)} {n} of {len(rows)} have at least one published insurer rate here so far.</p>
+<p class="ctas"><a class="btn hi" href="{esc(pf_path)}">Search every billing code in the Price Finder</a></p></div></section>
+<div class="wrap"><section class="sec">{tbl}<p class="cap">Lowest and highest are real published figures, not averages: one line per provider per network, that provider's standard rate. Open a procedure for the sources.</p></section></div></main>'''
+    jsonld = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title, 'description': desc,
+              'url': SITE['origin'] + f'/costs/{au}/', 'dateModified': TODAY.isoformat()}
+    return shell(title, desc, f'/costs/{au}/', body, jsonld)
+
+
+def national_procedure(code, name, ps, per_area):
+    """per_area: [(area, au, summary)]."""
+    have = [(a, au, s) for a, au, s in per_area if s and s['lo']]
+    kinds = [s['kind'] for _, _, s in have]
+    kind = max(set(kinds), key=kinds.count) if kinds else 'fac'
+    same = [(a, au, s) for a, au, s in have if s['kind'] == kind]
+    S0 = same[0][2] if same else (per_area[0][2] if per_area else None)
+    pl = fee_words(S0)[0] if S0 else 'rates'
+    lead = f"We haven't found a published rate for {name} yet."
+    if same:
+        lo = min(same, key=lambda x: x[2]['lo']['v'])
+        hi = max(same, key=lambda x: x[2]['hi']['v'])
+        lead = (f"Across the {len(same)} places we've read, insurers' negotiated {pl} for {lower_name(S0)} run from "
+                f"{money(lo[2]['lo']['v'])} ({lo[2]['lo']['name']}, {lo[0]['name']}) to {money(hi[2]['hi']['v'])} "
+                f"({hi[2]['hi']['name']}, {hi[0]['name']}).")
+    rows = ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(a['name'])}</b></a><div class='m'>{esc(area_group(a))}</div></td>"
+                   f"<td class='num'>{(s['providers'] if s else 0):,}</td>{range_cell(s)}</tr>"
+                   for a, au, s in sorted(per_area, key=lambda x: (not (x[2] and x[2]['lo']), x[2]['lo']['v'] if x[2] and x[2]['lo'] else 0)))
+    title = f"{name}: what it costs, place by place | {SITE['name']}"
+    body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All procedures</a> · {esc(S0['type'] if S0 else '')} {esc(code)}</p>
+<h1 class="letters">{esc(name)}<em> place by place</em></h1><p class="lead">{esc(lead)}</p></div></section>
+<div class="wrap"><section class="sec"><div class="tbl"><table class="rates"><thead><tr><th>Place</th><th class="num">Providers</th><th class="num">Lowest</th><th class="num">Highest</th></tr></thead>
+<tbody>{rows}</tbody></table></div><p class="cap">Each place's figures are its own {esc(pl)}, lowest to highest, from the insurer files read for that place. Open a place for every source.</p></section></div></main>'''
+    jsonld = {'@context': 'https://schema.org', '@type': 'MedicalWebPage', 'name': title, 'description': lead,
+              'url': SITE['origin'] + f'/costs/{ps}/', 'dateModified': TODAY.isoformat(),
+              'about': {'@type': 'MedicalProcedure', 'name': name, 'code': {'@type': 'MedicalCode', 'code': code}}}
+    return shell(title, lead, f'/costs/{ps}/', body, jsonld, noindex=not same)
+
+
+def costs_index(areas, procs):
+    """areas: [(area, au, n_with_price)], procs: [(code, name, cat, ps)]."""
+    groups = {}
+    for a, au, n in areas:
+        groups.setdefault(area_group(a), []).append((a, au, n))
+    places = ''.join(f"<h3 class='h3 cat'>{esc(g)}</h3><div class='chips'>" + ''.join(
+        f"<a class='chip' href='/costs/{au}/'>{esc(a['name'])}</a>" for a, au, n in sorted(items, key=lambda x: x[0]['name'])) + "</div>"
+        for g, items in sorted(groups.items()))
+    cats = {}
+    for code, name, cat, ps in procs:
+        cats.setdefault(cat, []).append((code, name, ps))
+    plist = ''.join(f"<h3 class='h3 cat'>{esc(c)}</h3><div class='chips'>" + ''.join(
+        f"<a class='chip' href='/costs/{ps}/'>{esc(n)}</a>" for code, n, ps in items) + "</div>" for c, items in cats.items())
+    title = f"Healthcare prices by place and procedure | {SITE['name']}"
+    desc = (f"{len(procs)} common procedures in {len(areas)} places, from the price files hospitals and insurers are required to publish. "
+            f"Every price links to its source.")
+    body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">Prices</p><h1 class="letters">Look up<em> a price</em></h1>
+<p class="lead">{esc(desc)}</p></div></section><div class="wrap"><section class="sec"><p class="kicker">Pick a place</p><h2>{len(areas)} places</h2>{places}</section>
+<section class="sec"><p class="kicker">Or a procedure</p><h2>{len(procs)} procedures</h2>{plist}</section></div></main>'''
+    return shell(title, desc, '/costs/', body, {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title,
+                                                'url': SITE['origin'] + '/costs/', 'dateModified': TODAY.isoformat()})
+
+
+CSS = r'''/* What It Costs: shared stylesheet for /costs/ pages (written by price-files-bot site/procedure_pages.py). Same tokens as the homepage. */
+:root{--board:#4A1C1C;--board-line:#552424;--board-ink:#F7EBD3;--board-sub:#E3CDB0;--paper:#FBF6EA;--ground:#E9DCBC;--ink:#2A1A12;--muted:#5E4B3A;--rule:#2A1A12;
+--stamp:#1F4FBF;--hi:#FFE27A;--display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;--body:"Public Sans","Helvetica Neue",Arial,sans-serif;--mono:"Courier Prime","Courier New",monospace;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:17px/1.55 var(--body)}a{color:var(--ink)}
+:focus-visible{outline:3px solid var(--stamp);outline-offset:2px}.wrap{max-width:1120px;margin:0 auto;padding-inline:16px}@media(min-width:700px){.wrap{padding-inline:28px}}
+.bar{position:sticky;top:0;z-index:20;background:var(--board);color:var(--board-ink);border-bottom:3px solid var(--stamp)}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
+.logo{font:900 30px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;color:var(--board-ink);text-decoration:none;white-space:nowrap}.logo span{color:var(--hi)}
+.nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.nav a{color:var(--board-ink);text-decoration:none;padding:10px 10px;font-weight:600;font-size:15px;white-space:nowrap}.nav a:hover{color:var(--hi)}
+.menu-btn{display:none;background:none;border:2px solid var(--board-ink);color:var(--board-ink);min-height:44px;padding:0 14px;font:700 15px var(--body);cursor:pointer}
+@media(max-width:1600px){.menu-btn{display:inline-block}.nav{display:none;position:absolute;left:0;right:0;top:100%;background:var(--board);flex-direction:column;align-items:stretch;padding:8px 16px 16px;border-bottom:3px solid var(--stamp)}.nav.open{display:flex}.nav a{padding:14px 4px;border-bottom:1px solid #6b3a3a}}
+.board{background:var(--board);color:var(--board-ink);background-image:repeating-linear-gradient(var(--board) 0 26px,var(--board-line) 26px 28px)}
+.board .wrap{padding-block:44px 52px;display:grid;gap:22px}.board a{color:var(--hi)}
+.eyebrow{margin:0;font:700 14px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--hi)}
+.letters{font:900 clamp(40px,7vw,88px)/.95 var(--display);text-transform:uppercase;letter-spacing:.03em;margin:0;text-wrap:balance}.letters em{font-style:normal;color:var(--hi)}
+.lead{margin:0;max-width:44em;font-size:19px;color:var(--board-ink)}
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.tile{background:var(--paper);color:var(--ink);padding:16px 16px 14px;border-top:6px solid var(--ink);min-width:0}
+.tile .tl{margin:0;font:700 12.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.tile .tv{margin:4px 0 6px;font:700 30px/1.1 var(--mono);font-variant-numeric:tabular-nums}
+.tile .ts{font-size:14px;line-height:1.45;color:var(--muted);overflow-wrap:anywhere}.tile a{color:var(--stamp)}
+.ctas{margin:0;display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;min-height:48px;padding:12px 18px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;text-decoration:none;font-size:15px}
+.btn.hi{background:var(--hi);color:var(--ink)!important}.btn.ghost{border:2px solid var(--board-ink);color:var(--board-ink)!important}.btn:hover{filter:brightness(.93)}
+.sec{padding-block:44px}.sec+.sec{border-top:2px solid var(--rule)}
+.kicker{font:700 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--stamp);margin:0 0 8px}
+h2{font:900 clamp(32px,5vw,52px)/1 var(--display);text-transform:uppercase;letter-spacing:.02em;margin:0 0 12px;text-wrap:balance}
+h3,.h3{font:800 20px/1.25 var(--body);margin:0 0 8px}.h3.cat{margin:26px 0 10px}
+.lede{max-width:44em;margin:0 0 18px;color:var(--muted);font-size:17px}.cap{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:52em}
+.split{display:grid;gap:40px;align-items:start}@media(min-width:900px){.split{grid-template-columns:1fr 1fr}}.split>*{min-width:0}
+.tbl{overflow-x:auto;background:var(--paper);border:2px solid var(--rule)}
+table.rates{border-collapse:collapse;width:100%;min-width:560px;font-variant-numeric:tabular-nums}
+.rates th,.rates td{padding:12px 14px;text-align:left;border-bottom:1px solid #CFC6B0;vertical-align:top}
+.rates th{font:700 12.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;border-bottom:2px solid var(--rule)}
+.rates .num{text-align:right;font-family:var(--mono);font-weight:700;white-space:nowrap}.rates .num .m{font-family:var(--body);font-weight:400;white-space:normal}
+.m{font-size:13.5px;color:var(--muted);font-weight:400;line-height:1.4}td.m{font-size:14px}
+.word{list-style:none;margin:0;padding:0}.word li{display:grid;grid-template-columns:1fr auto;gap:4px 20px;align-items:baseline;padding:12px 0;border-top:1px solid var(--rule)}
+.word li:last-child{border-bottom:1px solid var(--rule)}.word li>span:first-child{min-width:0}.word .m{display:block;overflow-wrap:anywhere}
+.word .n{font:700 19px var(--mono);white-space:nowrap;font-variant-numeric:tabular-nums}
+.src{font:13px var(--mono);color:var(--stamp);white-space:nowrap}.flag{font:700 11.5px var(--mono);text-transform:uppercase;letter-spacing:.05em;background:var(--hi);color:var(--ink);padding:1px 5px;white-space:nowrap}
+.doors{display:grid;border:2px solid var(--rule)}@media(min-width:800px){.doors{grid-template-columns:repeat(3,1fr)}}
+.door{display:flex;flex-direction:column;gap:8px;padding:22px;background:var(--paper);border-bottom:2px solid var(--rule)}.door:last-child{border-bottom:0}
+@media(min-width:800px){.door{border-bottom:0;border-right:2px solid var(--rule)}.door:last-child{border-right:0}}.door .cap{margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px}
+.chip:hover{background:var(--hi)}
+.srcs p{max-width:52em;color:var(--muted);font-size:15px}.srcs details{margin-top:12px;font-size:15px}.srcs summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
+.srcs ul{padding-left:18px;margin:6px 0 0}.srcs li{margin:6px 0}
+footer{background:var(--board);color:#D8C7AE}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
+footer b{font:900 22px var(--display);text-transform:uppercase;color:var(--board-ink);letter-spacing:.03em}footer a{color:var(--board-ink)}
+'''
+
+
+# ---------------------------------------------------------------- the national section of the homepage
+TILEMAP = [  # (state, col, row): a standard US tile-grid map
+    ('AK', 0, 0), ('ME', 11, 0), ('VT', 10, 1), ('NH', 11, 1), ('WA', 1, 2), ('ID', 2, 2), ('MT', 3, 2), ('ND', 4, 2), ('MN', 5, 2), ('IL', 6, 2),
+    ('WI', 7, 2), ('MI', 8, 2), ('NY', 9, 2), ('MA', 10, 2), ('RI', 11, 2), ('OR', 1, 3), ('NV', 2, 3), ('WY', 3, 3), ('SD', 4, 3), ('IA', 5, 3),
+    ('IN', 6, 3), ('OH', 7, 3), ('PA', 8, 3), ('NJ', 9, 3), ('CT', 10, 3), ('CA', 1, 4), ('UT', 2, 4), ('CO', 3, 4), ('NE', 4, 4), ('MO', 5, 4),
+    ('KY', 6, 4), ('WV', 7, 4), ('VA', 8, 4), ('MD', 9, 4), ('DE', 10, 4), ('AZ', 2, 5), ('NM', 3, 5), ('KS', 4, 5), ('AR', 5, 5), ('TN', 6, 5),
+    ('NC', 7, 5), ('SC', 8, 5), ('DC', 9, 5), ('OK', 4, 6), ('LA', 5, 6), ('MS', 6, 6), ('AL', 7, 6), ('GA', 8, 6), ('HI', 0, 7), ('TX', 4, 7),
+    ('FL', 9, 7)]
+
+
+def hospital_counts():
+    path = os.path.join(REPO, 'data', 'hospitals.csv')
+    tot, found = {}, {}
+    if not os.path.isfile(path):
+        return tot, found
+    for r in csv.DictReader(open(path, encoding='utf-8')):
+        s = r['state']
+        tot[s] = tot.get(s, 0) + 1
+        if r.get('mrf_url'):
+            found[s] = found.get(s, 0) + 1
+    return tot, found
+
+
+def national_section(areas, summaries, procs, n_rates_note):
+    """The homepage's front-page section. areas: [(area, au)]; summaries: {(slug, code): summary}."""
+    tot, found = hospital_counts()
+    live_states = {area_state(a) for a, _ in areas}
+    state_link = {}
+    for a, au in areas:
+        st = area_state(a)
+        if st != 'TX':
+            state_link[st] = f'/costs/{au}/'
+    state_link['TX'] = '#tx-places'
+    W, Hh = 12, 8
+    cells = []
+    for st, c, r in TILEMAP:
+        t, f_ = tot.get(st, 0), found.get(st, 0)
+        share = f_ / t if t else 0
+        band = 0 if not t else (1 if share < .5 else 2 if share < .7 else 3)
+        live = st in live_states
+        label = f"{st}: price files found for {f_} of {t} hospitals" + ('; Price Finder live' if live else '')
+        inner = (f"<rect x='{c * 50 + 2}' y='{r * 50 + 2}' width='46' height='46' class='b{band}{' live' if live else ''}'/>"
+                 f"<text x='{c * 50 + 25}' y='{r * 50 + 24}' class='st'>{st}</text>"
+                 f"<text x='{c * 50 + 25}' y='{r * 50 + 39}' class='pc'>{round(share * 100) if t else '–'}{'%' if t else ''}</text>")
+        cells.append(f"<a href='{state_link[st]}' aria-label='{esc(label)}'><title>{esc(label)}</title>{inner}</a>" if st in state_link
+                     else f"<g role='img' aria-label='{esc(label)}'><title>{esc(label)}</title>{inner}</g>")
+    T, F = sum(tot.values()), sum(found.values())
+    tx = [(a, au) for a, au in areas if area_state(a) == 'TX']
+    st_areas = [(a, au) for a, au in areas if area_state(a) != 'TX']
+
+    # the biggest spread among featured procedures, from the data (changes with every build)
+    best = None
+    for (slug, code), s in summaries.items():
+        if s['lo'] and s['lines'] >= 20 and s['kind'] == 'fac' and s['lo']['v'] >= 50:
+            x = s['hi']['v'] / s['lo']['v']
+            if x <= 20 and code in ('45378', '73721', '27447', '66984', '74177', '29881', '47562', '43239', '70551', '72148') and (best is None or x > best[0]):
+                best = (x, slug, s)
+    ex = ''
+    if best:
+        x, slug, s = best
+        a = next(a for a, _ in areas if a['slug'] == slug)
+        au = area_url_slug(slug)
+        ps = next(p for c, _, _, p in procs if c == s['code'])
+        ex = (f"<div class='receiptish'><p class='kicker'>From the files</p><h2>{esc(s['name'])} in {esc(a['name'])}: "
+              f"{money(s['lo']['v'])} to {money(s['hi']['v'])}</h2><p class='lede'>Same procedure, same area, different negotiated facility fees. "
+              f"The lowest is {esc(s['lo']['name'])} ({esc(s['lo']['ins'])}); the highest is {esc(s['hi']['name'])} ({esc(s['hi']['ins'])}), "
+              f"{x:.1f} times as much. Both straight from the insurers' own files.</p>"
+              f"<p><a class='btn' href='/costs/{au}/{ps}/'>See the receipts</a></p></div>")
+
+    opts_proc = ''.join(f"<option value='{esc(ps)}'{' selected' if c == '45378' else ''}>{esc(n)}</option>" for c, n, cat, ps in sorted(procs, key=lambda p: p[1]))
+    opts_area = (f"<optgroup label='Texas'>" + ''.join(f"<option value='{au}'>{esc(a['name'])}</option>" for a, au in sorted(tx, key=lambda x: x[0]['name']))
+                 + "</optgroup><optgroup label='States'>" + ''.join(f"<option value='{au}'>{esc(a['name'])}</option>" for a, au in sorted(st_areas, key=lambda x: x[0]['name']))
+                 + "</optgroup>")
+    chips = lambda items: ''.join(f"<a class='chip-l' href='/costs/{au}/'>{esc(a['name'])}</a>" for a, au in sorted(items, key=lambda x: x[0]['name']))
+    pop = [('45378', 'a colonoscopy'), ('73721', 'a knee MRI'), ('27447', 'a knee replacement'), ('59400', 'having a baby'),
+           ('66984', 'cataract surgery'), ('80053', 'a blood panel')]
+    pslug = {c: p for c, _, _, p in procs}
+    return f'''<!-- NATIONAL:START (written by price-files-bot site/procedure_pages.py; edits here are replaced on the next build) -->
+<style>
+.board .wrap{{grid-template-columns:minmax(0,1fr)}}.nat-search{{display:grid;gap:10px;max-width:760px;min-width:0}}.nat-search label{{font:700 14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--hi)}}
+.nat-search .row{{display:flex;flex-wrap:wrap;gap:10px}}.nat-search select{{flex:1 1 240px;min-width:0;width:100%;text-overflow:ellipsis;background:var(--paper);color:var(--ink);border:0;padding:14px 12px;font-size:18px;min-height:52px}}
+.nat-search button{{background:var(--hi);color:var(--ink);border:0;padding:14px 20px;font-weight:800;min-height:52px;cursor:pointer;text-transform:uppercase;letter-spacing:.04em}}
+.nat-pop{{display:flex;flex-wrap:wrap;gap:8px;align-items:center;color:var(--board-sub);font-size:15px}}.nat-pop a{{color:var(--board-ink);border:1px solid #8a6a5a;padding:7px 11px;text-decoration:none;min-height:40px;display:inline-flex;align-items:center}}.nat-pop a:hover{{border-color:var(--hi);color:var(--hi)}}
+.nat-map svg{{width:100%;max-width:680px;height:auto;display:block}}.nat-map rect{{stroke:var(--paper);stroke-width:2}}
+.nat-map .b0{{fill:#D9CDB0}}.nat-map .b1{{fill:#B9A27E}}.nat-map .b2{{fill:#8A6A4E}}.nat-map .b3{{fill:#4A1C1C}}.nat-map rect.live{{stroke:var(--stamp);stroke-width:5}}
+.nat-map text{{text-anchor:middle;pointer-events:none}}.nat-map .st{{font:700 14px var(--mono)}}.nat-map .pc{{font:11px var(--mono)}}
+.nat-map .b0+text,.nat-map .b0+text+text,.nat-map .b1+text,.nat-map .b1+text+text{{fill:var(--ink)}}.nat-map .b2+text,.nat-map .b2+text+text,.nat-map .b3+text,.nat-map .b3+text+text{{fill:#FBF6EA}}
+.nat-map a:hover rect{{filter:brightness(1.15)}}.nat-key{{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin-top:10px}}.nat-key i{{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px}}
+.chip-l{{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px;margin:0 8px 8px 0}}.chip-l:hover{{background:var(--hi)}}
+@media(max-width:1600px){{.menu-btn{{display:inline-block}}.nav{{display:none;position:absolute;left:0;right:0;top:100%;background:var(--board);flex-direction:column;align-items:stretch;padding:8px 16px 16px;border-bottom:3px solid var(--stamp)}}.nav.open{{display:flex}}.nav a{{padding:14px 4px;border-bottom:1px solid #6b3a3a}}.nav .ask{{margin-top:10px}}}}
+</style>
+<section data-view="home">
+<div class="board"><div class="wrap">
+<p style="font:700 14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hi);margin:0">The receipt for the U.S. healthcare system</p>
+<h1 class="letters">What is this going to <em>cost me?</em></h1>
+<p style="font-size:21px;color:var(--board-ink)">Hospitals and insurers are required to publish their prices. They buried them in files too big to open. We opened them, and every price here links back to the file it came from.</p>
+<form class="nat-search" id="natForm" action="/costs/" method="get">
+<label for="natProc">What do you need?</label>
+<div class="row"><select id="natProc" aria-label="Procedure">{opts_proc}</select>
+<select id="natArea" aria-label="Where">{opts_area}</select><button type="submit">Show me</button></div>
+<p class="nat-pop">Popular: {''.join(f"<a href='/costs/{pslug[c]}/'>{esc(t)}</a>" for c, t in pop if c in pslug)} · <a href="/price-finder/">every billing code</a></p>
+</form>
+<p class="msg" style="display:none" id="msg"></p><div id="homeChips" hidden></div><form id="searchForm" hidden><input id="q"></form>
+</div></div>
+<div class="wrap">
+<div class="sec split">
+<div><p class="kicker">Where the files are</p><h2>{F:,} of {T:,} hospitals</h2>
+<p class="lede">That's how many hospital price files we've found so far, out of every hospital on Medicare's list, state by state. The rule has applied since 2021.
+Outlined states have a Price Finder with insurers' negotiated rates. We're still looking for the rest, and the <a href="/price-file-watch/">Price File Watch</a> names who isn't publishing.</p>
+<div class="nat-map"><svg viewBox="0 0 {W * 50} {Hh * 50}" role="group" aria-label="Map: share of hospitals whose price file we have found, by state">{''.join(cells)}</svg>
+<div class="nat-key"><span><i style="background:#D9CDB0"></i>none yet</span><span><i style="background:#B9A27E"></i>under half</span><span><i style="background:#8A6A4E"></i>half to 70%</span><span><i style="background:#4A1C1C"></i>70% or more</span><span><i style="outline:3px solid var(--stamp);outline-offset:-3px;background:none"></i>Price Finder live</span></div>
+<p class="cap">Source: CMS Hospital General Information list; files found by our bot, which keeps searching. "Not found yet" doesn't always mean a hospital isn't publishing.</p></div></div>
+<div><p class="kicker">Pick your place</p><h2>{len(areas)} places, {len(procs)} procedures</h2>
+<p class="lede">Every place has a page for each common procedure, with the lowest and highest published price and the source for each, plus a Price Finder for every billing code.</p>
+<h3 id="tx-places">Texas</h3><div>{chips(tx)}</div><h3 style="margin-top:18px">States</h3><div>{chips(st_areas)}</div>
+<p style="margin-top:14px"><a class="btn" href="/costs/">Browse every price page</a></p></div>
+</div>
+{('<div class="sec">' + ex + '</div>') if ex else ''}
+<div class="sec"><p class="kicker">Three ways in</p><h2>Who this is for</h2><div class="doors">
+<a class="door" href="/costs/"><h3>Patients</h3><span>Look up a procedure where you live, see what your insurer has agreed to pay, and find the lowest cash price.</span><span class="go">Look up a price →</span></a>
+<a class="door" href="/employer-plans/"><h3>Employers and HR</h3><span>See which networks your plan uses and what those networks actually pay, provider by provider.</span><span class="go">Employer plans →</span></a>
+<a class="door" href="/price-file-watch/"><h3>Reporters and lawmakers</h3><span>Who isn't publishing usable price files, with the date we checked and the rule they're under.</span><span class="go">Price File Watch →</span></a>
+</div></div>
+<div class="sec"><p class="kicker">House rules</p><h2>How we keep receipts</h2><div class="doors">
+<div class="door"><h3>Every price has a source</h3><span>Each figure links to the hospital, insurer or provider file it came from.</span></div>
+<div class="door"><h3>Every price has a date</h3><span>We show the date on each file and flag anything over six months old.</span></div>
+<div class="door"><h3>Nothing is estimated</h3><span>No averages, no modeled prices. Lowest and highest are real published figures. <a href="/methodology/">How we read the files</a>.</span></div>
+</div></div>
+</div>
+<script>(function(){{var f=document.getElementById('natForm');if(!f)return;f.addEventListener('submit',function(e){{e.preventDefault();location.href='/costs/'+document.getElementById('natArea').value+'/'+document.getElementById('natProc').value+'/';}});
+}})();</script>
+</section>
+<!-- NATIONAL:END -->'''
+
+
+def patch_home(site, section):
+    """Put the national section on the homepage in place of the old DFW-only home view, once; later builds replace only the
+    marked block. The receipts, chargemaster and house-rules views stay as they are."""
+    p = os.path.join(site, 'index.html')
+    s = open(p, encoding='utf-8').read()
+    if '<!-- NATIONAL:START' in s:
+        s = re.sub(r'<!-- NATIONAL:START.*?<!-- NATIONAL:END -->', lambda m: section, s, flags=re.S)
+    else:
+        m = re.search(r'<!-- HOME -->\s*<section data-view="home">.*?(?=<section data-view="receipt")', s, re.S)
+        if not m:
+            raise SystemExit('STOP: homepage layout changed (no <!-- HOME --> section before the receipt view); homepage not touched')
+        s = s[:m.start()] + section + '\n' + s[m.end():]
+    if '/costs/' not in re.search(r'<nav class="nav".*?</nav>', s, re.S).group(0):
+        s = s.replace('<a href="/start-here/">Start here</a>', '<a href="/start-here/">Start here</a> <a href="/costs/">Prices</a>', 1)
+    open(p, 'w', encoding='utf-8').write(s)
+
+
+# ---------------------------------------------------------------- build
+def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
+    site = os.path.join(site_dir, 'site')
+    site_settings(site)
+    areas = json.load(open(os.path.join(site, 'cities.json'), encoding='utf-8'))
+    codes = [r['code'] for r in csv.DictReader(open(os.path.join(HERE, 'codes89.csv')))]
+    if only_codes:
+        codes = [c for c in codes if c in only_codes]
+    out = os.path.join(site, 'costs')
+    os.makedirs(out, exist_ok=True)
+    open(os.path.join(out, 'costs.css'), 'w').write(CSS)
+    # summaries of areas not rebuilt this run are kept from the last run, so the indexes always cover every area
+    keep = prev.get('summaries', {}) if prev else {}
+    summaries, names, cats, fps, todo = {}, {}, {}, {}, []
+    pages, has = {}, {}                   # slug -> (page path, Medicare area label); slug -> featured codes on that page
+    new_month = not prev or str(prev.get('built', ''))[:7] != TODAY.isoformat()[:7]   # once a month everything is rebuilt
+    for a in areas:                       # pass 1: fingerprints and names only (each page's data is big; never hold them all)
+        p = os.path.join(site, a['path'].strip('/'), 'index.html')
+        if not os.path.isfile(p):
+            print('no page for', a['slug'])
+            continue
+        D, med_area, fp = page_data(p)
+        fps[a['slug']] = fp
+        pages[a['slug']] = (p, med_area)
+        has[a['slug']] = {c for c in codes if c in D['codes']}
+        for c in has[a['slug']]:
+            names.setdefault(c, D['codes'][c]['name'])
+            cats.setdefault(c, D['codes'][c].get('cat', ''))
+        del D
+        rebuild = (only_areas is None or a['slug'] in only_areas) and (new_month or not keep or prev.get('fp', {}).get(a['slug']) != fp)
+        if rebuild:
+            todo.append(a)
+        else:
+            for c in codes:
+                k = f"{a['slug']}|{c}"
+                if k in keep:
+                    summaries[(a['slug'], c)] = keep[k]
+    slugs = load_slugs(codes, names)
+    procs = [(c, names[c], cats[c], slugs[c]) for c in codes if c in names]
+    print(f"{len(todo)} of {len(pages)} areas to rebuild")
+
+    with ThreadPoolExecutor(8) as ex:    # pass 2: one area at a time
+        for a in todo:
+            D = page_data(pages[a['slug']][0])[0]
+            mine = [c for c in codes if c in has[a['slug']]]
+            for c, S in zip(mine, ex.map(lambda c: summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c)), mine)):
+                summaries[(a['slug'], c)] = S
+            del D
+            print('summarized', a['slug'], flush=True)
+
+    live = [a for a in areas if a['slug'] in pages]
+    sitemap = []
+    n_written = 0
+    for a in live:
+        au, D_med = area_url_slug(a['slug']), pages[a['slug']][1]
+        mine = [(slugs[c], summaries[(a['slug'], c)]) for c in codes if (a['slug'], c) in summaries]
+        if a in todo:
+            for c in codes:
+                S = summaries.get((a['slug'], c))
+                if not S:
+                    continue
+                ps = slugs[c]
+                others = [(o['name'], f"/costs/{area_url_slug(o['slug'])}/{ps}/") for o in live if o is not a and (o['slug'], c) in summaries]
+                related = [(names[x], f'/costs/{au}/{slugs[x]}/') for x in codes if x != c and cats.get(x) == S['cat'] and (a['slug'], x) in summaries][:12]
+                d = os.path.join(out, au, ps)
+                os.makedirs(d, exist_ok=True)
+                open(os.path.join(d, 'index.html'), 'w', encoding='utf-8').write(procedure_page(a, S, others, related, D_med, a['path'], au, ps))
+                n_written += 1
+        os.makedirs(os.path.join(out, au), exist_ok=True)
+        open(os.path.join(out, au, 'index.html'), 'w', encoding='utf-8').write(area_index(a, mine, au, a['path']))
+        sitemap.append(f'/costs/{au}/')
+        sitemap += [f'/costs/{au}/{ps}/' for ps, s in mine if s['any']]
+    for c, n, cat, ps in procs:
+        per = [(a, area_url_slug(a['slug']), summaries.get((a['slug'], c))) for a in live]
+        d = os.path.join(out, ps)
+        os.makedirs(d, exist_ok=True)
+        open(os.path.join(d, 'index.html'), 'w', encoding='utf-8').write(national_procedure(c, n, ps, per))
+        sitemap.append(f'/costs/{ps}/')
+    with_price = {a['slug']: sum(1 for c in codes if (summaries.get((a['slug'], c)) or {}).get('lo')) for a in live}
+    open(os.path.join(out, 'index.html'), 'w', encoding='utf-8').write(
+        costs_index([(a, area_url_slug(a['slug']), with_price[a['slug']]) for a in live], procs))
+    sitemap.insert(0, '/costs/')
+    open(os.path.join(out, 'sitemap.xml'), 'w').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + ''.join(f'<url><loc>{esc(SITE["origin"] + u)}</loc><lastmod>{TODAY.isoformat()}</lastmod></url>\n' for u in sitemap) + '</urlset>\n')
+    patch_home(site, national_section([(a, area_url_slug(a['slug'])) for a in live], summaries, procs, ''))
+    print(f'wrote {n_written} procedure pages, {len(live)} area indexes, {len(procs)} procedure indexes; sitemap {len(sitemap)} URLs')
+    slim = {f'{k[0]}|{k[1]}': v for k, v in summaries.items()}
+    return {'fp': fps, 'summaries': slim, 'built': TODAY.isoformat(), 'pages': n_written}
+
+
+# ---------------------------------------------------------------- deploy (same pull / deploy / save-back steps as site_files.py)
+def deploy(force=False):
+    import boto3
+    E = {k: "".join(os.environ.get(k, "").split()) for k in
+         ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "CLOUDFLARE_API_TOKEN")}
+    s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
+                      aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+    B, KEY, SKEY, d = E["R2_BUCKET"], 'site/deploy/current.tgz', 'site/deploy/costs_state.json', '/tmp/costs'
+    shutil.rmtree(d, ignore_errors=True)
+    os.makedirs(d)
+    s3.download_file(B, KEY, f'{d}/site.tgz')
+    etag = s3.head_object(Bucket=B, Key=KEY)['ETag']
+    with tarfile.open(f'{d}/site.tgz') as t:
+        t.extractall(d)
+    if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
+        sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
+    try:
+        prev = json.loads(s3.get_object(Bucket=B, Key=SKEY)['Body'].read())
+    except Exception:
+        prev = None
+    if force:
+        prev = None
+    home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
+    st = build(d, Store(d), prev=prev)
+    changed = (not prev) or st['pages'] > 0 or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
+    if not changed:
+        print('no area page changed since the last run; nothing to deploy')
+        return
+    if s3.head_object(Bucket=B, Key=KEY)['ETag'] != etag:
+        sys.exit('STOP: the live site changed while building (another build deployed). Run again.')
+    env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    print(r.stdout[-1500:], r.stderr[-1500:])
+    if r.returncode != 0:
+        sys.exit('deploy failed; the preview site is unchanged')
+    os.remove(f'{d}/site.tgz')
+    with tarfile.open('/tmp/costs-site.tgz', 'w:gz') as t:
+        for name in os.listdir(d):
+            t.add(f'{d}/{name}', arcname=f'./{name}')
+    s3.upload_file('/tmp/costs-site.tgz', B, KEY)
+    s3.put_object(Bucket=B, Key=SKEY, Body=json.dumps(st).encode())
+    print('deployed and saved to', KEY)
+
+
+if __name__ == '__main__':
+    ap = argparse.ArgumentParser()
+    ap.add_argument('cmd', choices=['build', 'deploy'])
+    ap.add_argument('site_dir', nargs='?')
+    ap.add_argument('--areas')
+    ap.add_argument('--codes')
+    ap.add_argument('--offline')
+    ap.add_argument('--force', action='store_true')
+    A = ap.parse_args()
+    if A.cmd == 'deploy':
+        deploy(A.force)
+    else:
+        build(A.site_dir, Store(A.site_dir, A.offline), set(A.areas.split(',')) if A.areas else None, set(A.codes.split(',')) if A.codes else None)

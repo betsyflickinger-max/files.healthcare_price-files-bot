@@ -1,0 +1,52 @@
+name: Procedure pages
+
+# Builds the static "what it costs" pages (/costs/<area>/<procedure>/), their index pages and the national section of the
+# homepage from the live Price Finder pages, and deploys them to the preview site. Runs daily; does nothing unless an area's
+# Price Finder page changed (or it's a new month). Shares the website build's lock, so it never deploys at the same time as
+# the monthly refresh or a city page. See site/procedure_pages.py.
+
+on:
+  schedule:
+    - cron: "17 11 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild every page even if nothing changed"
+        type: boolean
+        default: false
+
+concurrency:
+  group: site-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      FORCE: ${{ inputs.force && '--force' || '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install boto3==1.35.36
+      - shell: bash
+        run: python site/procedure_pages.py deploy $FORCE | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Keep new procedure URLs (site/procedure_slugs.csv) so they never change
+        shell: bash
+        run: |
+          git config user.name "price-files-bot"; git config user.email "bot@users.noreply.github.com"
+          git add site/procedure_slugs.csv
+          git diff --cached --quiet || (git commit -m "Procedure pages: new procedure URLs" && git push)
