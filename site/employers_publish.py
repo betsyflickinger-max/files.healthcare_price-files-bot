@@ -1,4 +1,4 @@
-"""Publish the Employer Plans page (/employer-plans/) to the preview site.
+"""Publish the Employer Plans page (/employer-plans/) and the Insurers page (/insurers/) to the preview site.
 
   1. the page + its search list (site/employers_page.py), from R2 bot/employers/<newest>/site_employers.json
   2. "Employer Plans" in the nav of every page, and of the pages the monthly builds start from
@@ -21,24 +21,29 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "bot"))
 import store  # noqa: E402
 
-NAV_ADD = '<a href="/employer-plans/">Employer Plans</a>'
+# links added to the site nav, in order, each after the one before it (or after Surprise Bills / Price File Watch)
+NAV = [("/employer-plans/", "Employer Plans"), ("/insurers/", "Insurers")]
 
 
 def add_nav(html):
-    """Adds the Employer Plans link after Surprise Bills (or Price File Watch) in the site's nav bars. Idempotent."""
-    out, pos = [], 0
-    for m in re.finditer(r'<(span|nav)[^>]*class="(sn-links|toplinks|nav)"[^>]*>', html):
-        end = html.find("</" + m.group(1) + ">", m.end())
-        block = html[m.end():end]
-        if end < 0 or "/employer-plans/" in block:
-            continue
-        anchor = '<a href="/surprise-bills/"' if '<a href="/surprise-bills/"' in block else '<a href="/price-file-watch/"'
-        if anchor not in block:
-            continue
-        j = m.end() + block.index(anchor)
-        k = html.index("</a>", j) + 4
-        out.append(html[pos:k] + NAV_ADD); pos = k
-    return "".join(out) + html[pos:]
+    """Adds the Employer Plans and Insurers links to the site's nav bars, after Surprise Bills (or Price File Watch).
+    Idempotent: a link already in a nav bar is left alone."""
+    for href, label in NAV:
+        out, pos = [], 0
+        for m in re.finditer(r'<(span|nav)[^>]*class="(sn-links|toplinks|nav)"[^>]*>', html):
+            end = html.find("</" + m.group(1) + ">", m.end())
+            block = html[m.end():end]
+            if end < 0 or f'href="{href}"' in block:
+                continue
+            anchor = next((f'<a href="{h}"' for h in [x for x, _ in NAV if x != href][::-1] + ["/surprise-bills/", "/price-file-watch/"]
+                           if f'<a href="{h}"' in block and [x for x, _ in NAV].index(href) > ([x for x, _ in NAV].index(h) if h in [x for x, _ in NAV] else -1)), None)
+            if not anchor:
+                continue
+            j = m.end() + block.index(anchor)
+            k = html.index("</a>", j) + 4
+            out.append(html[pos:k] + f'<a href="{href}">{label}</a>'); pos = k
+        html = "".join(out) + html[pos:]
+    return html
 
 
 def main():
@@ -64,6 +69,13 @@ def main():
     print(r.stdout, r.stderr)
     if r.returncode:
         sys.exit("STOP: the Employer Plans page failed; nothing deployed")
+
+    # 1b. the Insurers page (data committed in insurers/mlr/, CMS MLR 2024)
+    r = subprocess.run([sys.executable, str(HERE / "insurers_page.py"), str(HERE.parent / "insurers/mlr/site_insurers.json"), str(d / "site/insurers")],
+                       capture_output=True, text=True)
+    print(r.stdout, r.stderr)
+    if r.returncode:
+        sys.exit("STOP: the Insurers page failed; nothing deployed")
 
     # 2. nav on every page and on the build templates
     n = 0
@@ -108,7 +120,7 @@ def main():
     s3.upload_file(str(out / "site_new.tgz"), B, "site/deploy/current.tgz")
     for key, f in tmpl:
         s3.upload_file(str(f), B, key)
-    print("live: https://upfront-dfw-preview.pages.dev/employer-plans/")
+    print("live: https://upfront-dfw-preview.pages.dev/employer-plans/ and https://upfront-dfw-preview.pages.dev/insurers/")
 
 
 if __name__ == "__main__":

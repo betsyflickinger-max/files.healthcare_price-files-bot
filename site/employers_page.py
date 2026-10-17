@@ -14,6 +14,15 @@ from pathlib import Path
 E = html.escape
 FUND = {"self-funded": "Self-funded", "insured": "Insured", "mixed": "Insured and self-paid parts",
         "not stated": "Funding not stated"}
+# insurer name on this page -> its parent company on the Insurers page (/insurers/#slug)
+PARENT = {"UnitedHealthcare": "unitedhealth-group", "Anthem": "elevance-health-anthem", "Cigna": "cigna-group",
+          "Aetna": "cvs-health-aetna", "BCBS TX/IL/OK/NM/MT (HCSC)": "health-care-service-corp-hcsc"}
+
+
+def ilink(k):
+    return f'<a href="/insurers/#{PARENT[k]}">{E(k)}</a>' if k in PARENT else E(k)
+
+
 DOL = "https://www.dol.gov/agencies/ebsa/about-ebsa/our-activities/public-disclosure/foia/form-5500-datasets"
 EFAST = "https://www.efast.dol.gov/5500Search/"
 
@@ -40,13 +49,13 @@ def main(src, out):
     top = [e for e in dfw if e.get("active")][:25]
     rows = "".join(
         f"<tr><td><b>{E(e['name'] or '')}</b><div class=\"meta\">{E((e['city'] or '').title())}</div></td>"
-        f"<td>{E(', '.join(e['ins']))}</td><td>{E(fund(e))}</td><td>{n(e['active'])}</td><td>{E(str(e['year'] or ''))}</td></tr>"
+        f"<td>{', '.join(ilink(k) for k in e['ins'])}</td><td>{E(fund(e))}</td><td>{n(e['active'])}</td><td>{E(str(e['year'] or ''))}</td></tr>"
         for e in top)
     names = sorted({k for e in emp for k in e["ins"]})
     by_ins = sorted(((k, sum(1 for e in emp if k in e["ins"]), sum(1 for e in dfw if k in e["ins"]),
                       sum(1 for e in dfw if k in e["ins"] and e["funding"] == "self-funded")) for k in names), key=lambda r: -r[1])
     ins_rows = "".join(
-        f"<tr><td><b>{E(k)}</b></td><td>{n(a)}</td><td>{n(b)}</td><td>{n(c_)}</td>"
+        f"<tr><td><b>{ilink(k)}</b></td><td>{n(a)}</td><td>{n(b)}</td><td>{n(c_)}</td>"
         f"<td><button type=\"button\" class=\"lnk\" data-ins=\"{E(k)}\">Show list</button></td></tr>" for k, a, b, c_ in by_ins)
     ins_opts = "".join(f"<option>{E(k)}</option>" for k in names)
     ins_line = " · ".join(f"{E(k)} {n(v)}" for k, v in sorted(M["by_insurer"].items(), key=lambda kv: -kv[1]))
@@ -59,7 +68,7 @@ def main(src, out):
               open(out / "employers.json", "w"), separators=(",", ":"))
     page = TEMPLATE
     for k, v in dict(BUILT=long_date(M["built"]), N_ALL=n(c["employers"]), N_5500=n(c["with_5500"]), N_TX=n(len(emp)),
-                     N_DFW=n(len(dfw)), N_DFW_SELF=n(self_dfw), ROWS=rows, INS_ROWS=ins_rows, INS_OPTS=ins_opts, INS_LINE=ins_line, CATALOGS=cats, YEARS=E(years),
+                     N_DFW=n(len(dfw)), N_DFW_SELF=n(self_dfw), ROWS=rows, INS_ROWS=ins_rows, INS_OPTS=ins_opts, PARENT_JS=json.dumps(PARENT), INS_LINE=ins_line, CATALOGS=cats, YEARS=E(years),
                      DOL=DOL, EFAST=EFAST).items():
         page = page.replace("{{" + k + "}}", v)
     if "{{" in page:
@@ -154,7 +163,7 @@ th.s[aria-sort=descending]::after{content:" ▼"}
 </div>
 
 <h2 id="by-insurer">Employers by insurer</h2>
-<p class="sub">Texas employers each insurer's price file index names. An employer listed by two insurers counts under both.</p>
+<p class="sub">Texas employers each insurer's price file index names. An employer listed by two insurers counts under both. Click an insurer to see the parent company that owns it and its sister companies on the <a href="/insurers/">Insurers</a> page.</p>
 <div class="bar"><button type="button" class="btn" data-export="t-ins">Export CSV</button></div>
 <div class="tw"><table id="t-ins">
 <thead><tr><th>Insurer or administrator</th><th>Texas employers</th><th>In Dallas–Fort Worth</th><th>DFW, self-funded as filed</th><th></th></tr></thead>
@@ -191,11 +200,13 @@ th.s[aria-sort=descending]::after{content:" ▼"}
 <script>
 (function(){
   var P=null,q=document.getElementById('q'),res=document.getElementById('res'),only=document.getElementById('dfwonly');
+  var PARENT={{PARENT_JS}};
+  var ilink=function(k){return PARENT[k]?'<a href="/insurers/#'+PARENT[k]+'">'+esc(k)+'</a>':esc(k);};
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var num=function(x){return x==null?'—':Number(x).toLocaleString('en-US');};
   function load(){ if(P) return Promise.resolve(); return fetch('employers.json').then(function(r){return r.json();}).then(function(x){P=x;}); }
   function card(e){
-    var ins=Object.keys(e[3]).map(function(k){var nets=e[3][k];return '<div><b>'+esc(k)+'</b>'+(nets.length?' <span class="nets">· '+nets.map(esc).join(' · ')+'</span>':'')+'</div>';}).join('');
+    var ins=Object.keys(e[3]).map(function(k){var nets=e[3][k];return '<div><b>'+ilink(k)+'</b>'+(nets.length?' <span class="nets">· '+nets.map(esc).join(' · ')+'</span>':'')+'</div>';}).join('');
     var f='<span>'+esc(e[4])+'</span>';
     if(e[5]!=null) f+='<span><b>'+num(e[5])+'</b> active participants</span>';
     if(e[6]) f+='<span>Form 5500 '+esc(e[6])+'</span>';
@@ -238,7 +249,7 @@ th.s[aria-sort=descending]::after{content:" ▼"}
       if(x==null||x==='') return 1; if(y==null||y==='') return -1;
       return (typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y)))*sortD;});
     cnt.textContent=num(view.length)+' of '+num(P.length)+' employers';
-    tb.innerHTML=view.map(function(e){return '<tr><td><b>'+esc(e[0])+'</b>'+(e[2]?'<div class="meta">Dallas–Fort Worth</div>':'')+'</td><td>'+esc(e[1])+'</td><td>'+esc(insOf(e))+'</td><td>'+esc(e[4])+'</td><td>'+num(e[5])+'</td><td>'+esc(e[6]||'')+'</td><td>'+esc(e[11])+'</td></tr>';}).join('');
+    tb.innerHTML=view.map(function(e){return '<tr><td><b>'+esc(e[0])+'</b>'+(e[2]?'<div class="meta">Dallas–Fort Worth</div>':'')+'</td><td>'+esc(e[1])+'</td><td>'+Object.keys(e[3]).map(ilink).join(', ')+'</td><td>'+esc(e[4])+'</td><td>'+num(e[5])+'</td><td>'+esc(e[6]||'')+'</td><td>'+esc(e[11])+'</td></tr>';}).join('');
   }
   document.querySelectorAll('#t-all th.s').forEach(function(th){th.addEventListener('click',function(){var k=+th.getAttribute('data-k');
     if(k===sortK) sortD=-sortD; else {sortK=k;sortD=(k===5||k===6)?-1:1;}
