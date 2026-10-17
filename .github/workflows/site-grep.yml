@@ -1,0 +1,35 @@
+name: Site grep (read-only)
+
+# Prints the text around a pattern in one file of the live preview site (R2 site/deploy/current.tgz). Changes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: "File inside the site, e.g. site/price-finder/index.html (or r2:<key> for any R2 text object)"
+        default: "site/price-finder/index.html"
+      pattern:
+        description: "Regular expression"
+        default: "URLSearchParams|location\\.hash"
+      context:
+        description: "Characters of context on each side"
+        default: "300"
+
+permissions:
+  contents: read
+
+jobs:
+  grep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36
+      - run: python site/site_grep.py "${{ inputs.path }}" "${{ inputs.pattern }}" "${{ inputs.context }}"
