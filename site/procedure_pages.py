@@ -591,7 +591,7 @@ def includes(S):
 
 
 # ---------------------------------------------------------------- HTML
-SITE = {'name': 'What It Costs', 'robots': 'noindex,nofollow', 'origin': 'https://upfront-dfw-preview.pages.dev', 'nav': ''}
+SITE = {'name': 'What It Costs', 'robots': 'noindex,nofollow', 'origin': 'https://files.healthcare', 'nav': ''}
 
 
 def site_settings(site):

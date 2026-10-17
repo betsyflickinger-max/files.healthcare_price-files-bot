@@ -205,7 +205,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     w = Words(pre + '\x00' + post)
     w.sub('<title>What It Costs Price Finder</title>', f'<title>{name} Price Finder · What It Costs</title>')
     w.sub('content="Price Finder · What It Costs"', f'content="{name} Price Finder · What It Costs"')
-    w.sub('content="https://upfront-dfw-preview.pages.dev/price-finder/"', f'content="https://upfront-dfw-preview.pages.dev/{slug}/price-finder/"')
+    w.sub('content="https://files.healthcare/price-finder/"', f'content="https://files.healthcare/{slug}/price-finder/"')
     w.sub(r'<meta property="og:image[^>]*>', '', n=4, regex=True)   # the share image shows a DFW hospital
     w.sub('content="summary_large_image"', 'content="summary"')
     w.sub('every DFW hospital, surgery center, doctor, lab and imaging center,',
@@ -415,7 +415,7 @@ def main():
     if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
     s3.upload_file(f'{A.out}/site.tgz', B, 'site/deploy/current.tgz')
-    print(f'live: https://upfront-dfw-preview.pages.dev/{A.city}/price-finder/')
+    print(f'live: https://files.healthcare/{A.city}/price-finder/')
 
 
 if __name__ == '__main__':
