@@ -42,6 +42,13 @@ def main(src, out):
         f"<tr><td><b>{E(e['name'] or '')}</b><div class=\"meta\">{E((e['city'] or '').title())}</div></td>"
         f"<td>{E(', '.join(e['ins']))}</td><td>{E(fund(e))}</td><td>{n(e['active'])}</td><td>{E(str(e['year'] or ''))}</td></tr>"
         for e in top)
+    names = sorted({k for e in emp for k in e["ins"]})
+    by_ins = sorted(((k, sum(1 for e in emp if k in e["ins"]), sum(1 for e in dfw if k in e["ins"]),
+                      sum(1 for e in dfw if k in e["ins"] and e["funding"] == "self-funded")) for k in names), key=lambda r: -r[1])
+    ins_rows = "".join(
+        f"<tr><td><b>{E(k)}</b></td><td>{n(a)}</td><td>{n(b)}</td><td>{n(c_)}</td>"
+        f"<td><button type=\"button\" class=\"lnk\" data-ins=\"{E(k)}\">Show list</button></td></tr>" for k, a, b, c_ in by_ins)
+    ins_opts = "".join(f"<option>{E(k)}</option>" for k in names)
     ins_line = " · ".join(f"{E(k)} {n(v)}" for k, v in sorted(M["by_insurer"].items(), key=lambda kv: -kv[1]))
     cats = ", ".join(f"{E(k)} ({E(v)})" for k, v in M["catalogs"].items())
     years = " and ".join(str(y) for y in M.get("f5500") or []) or "latest"
@@ -52,7 +59,7 @@ def main(src, out):
               open(out / "employers.json", "w"), separators=(",", ":"))
     page = TEMPLATE
     for k, v in dict(BUILT=long_date(M["built"]), N_ALL=n(c["employers"]), N_5500=n(c["with_5500"]), N_TX=n(len(emp)),
-                     N_DFW=n(len(dfw)), N_DFW_SELF=n(self_dfw), ROWS=rows, INS_LINE=ins_line, CATALOGS=cats, YEARS=E(years),
+                     N_DFW=n(len(dfw)), N_DFW_SELF=n(self_dfw), ROWS=rows, INS_ROWS=ins_rows, INS_OPTS=ins_opts, INS_LINE=ins_line, CATALOGS=cats, YEARS=E(years),
                      DOL=DOL, EFAST=EFAST).items():
         page = page.replace("{{" + k + "}}", v)
     if "{{" in page:
@@ -111,6 +118,18 @@ th:nth-child(2),th:nth-child(3){text-align:left}
 .ins b{font-weight:600}
 .nets{color:var(--ink-2)}
 .empty{color:var(--ink-2);font-size:14px}
+.bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 4px;font-size:14px}
+.bar select,.bar input[type=search]{font:14px var(--body);padding:6px 8px;border:1px solid var(--ink-2);border-radius:2px;background:transparent;color:var(--ink)}
+.btn,.lnk{font:600 13px var(--body);color:var(--brick);background:transparent;border:1px solid var(--brick);border-radius:2px;padding:5px 10px;cursor:pointer}
+.lnk{border:0;padding:0;text-decoration:underline}
+.btn:hover{background:var(--brick-soft)}
+th.s{cursor:pointer;user-select:none}
+th.s:hover{color:var(--ink)}
+th.s[aria-sort=ascending]::after{content:" ▲"}
+th.s[aria-sort=descending]::after{content:" ▼"}
+.count{font:13px var(--type);color:var(--ink-2)}
+.tall{max-height:70vh;overflow:auto;border-bottom:1px solid var(--rule)}
+.tall thead th{position:sticky;top:0;background:var(--paper)}
 .notes{margin-top:48px;padding-top:16px;border-top:2px solid var(--ink);display:grid;gap:12px;font-size:14px;color:var(--ink-2);max-width:70ch}
 .notes b{color:var(--ink)}
 </style>
@@ -134,9 +153,32 @@ th:nth-child(2),th:nth-child(3){text-align:left}
   <div id="res" aria-live="polite"></div>
 </div>
 
+<h2 id="by-insurer">Employers by insurer</h2>
+<p class="sub">Texas employers each insurer's price file index names. An employer listed by two insurers counts under both.</p>
+<div class="bar"><button type="button" class="btn" data-export="t-ins">Export CSV</button></div>
+<div class="tw"><table id="t-ins">
+<thead><tr><th>Insurer or administrator</th><th>Texas employers</th><th>In Dallas–Fort Worth</th><th>DFW, self-funded as filed</th><th></th></tr></thead>
+<tbody>{{INS_ROWS}}</tbody></table></div>
+
+<h2 id="all">All Texas employers</h2>
+<p class="sub">Every Texas employer in these indexes. Click a column heading to sort; filter by insurer, area or funding; export what you see.</p>
+<div class="bar">
+  <input type="search" id="f-q" placeholder="Filter by name, city or EIN" aria-label="Filter by name, city or EIN">
+  <select id="f-ins" aria-label="Insurer"><option value="">All insurers</option>{{INS_OPTS}}</select>
+  <select id="f-area" aria-label="Area"><option value="">All of Texas</option><option value="dfw">Dallas–Fort Worth</option></select>
+  <select id="f-fund" aria-label="Funding"><option value="">Any funding</option><option>Self-funded</option><option>Insured</option><option>Insured and self-paid parts</option><option>Funding not stated</option><option>No Form 5500 found</option></select>
+  <button type="button" class="btn" id="x-all">Export CSV</button>
+  <span class="count" id="c-all"></span>
+</div>
+<div class="tw tall"><table id="t-all">
+<thead><tr><th class="s" data-k="0">Employer</th><th class="s" data-k="1">City</th><th class="s" data-k="12">Insurers</th><th class="s" data-k="4">Funding (Form 5500)</th><th class="s" data-k="5" aria-sort="descending">Active participants</th><th class="s" data-k="6">Form 5500 year</th><th class="s" data-k="11">EIN</th></tr></thead>
+<tbody></tbody></table></div>
+
 <h2>Largest Dallas–Fort Worth employers we found</h2>
 <p class="sub">By active participants on the employer's most recent health-plan Form 5500. "Listed by" is the insurer or administrator whose price file index names the employer's plan; an employer can use more than one.</p>
 <div class="tw"><table>
+<div class="bar"><button type="button" class="btn" data-export="t-top">Export CSV</button></div>
+<div class="tw"><table id="t-top">
 <thead><tr><th>Employer</th><th>Listed by</th><th>Funding (Form 5500)</th><th>Active participants</th><th>Form 5500 year</th></tr></thead>
 <tbody>{{ROWS}}</tbody></table></div>
 
@@ -170,6 +212,46 @@ th:nth-child(2),th:nth-child(3){text-align:left}
     }).catch(function(){res.innerHTML='<p class="empty">Could not load the employer list.</p>';});
   }
   var tm; q.addEventListener('input',function(){clearTimeout(tm);tm=setTimeout(show,180);}); only.addEventListener('change',show);
+
+  // ---- CSV export: any table on the page (as shown), and the all-employers table (every filtered row, with networks)
+  function csvCell(v){v=v==null?'':String(v).replace(/\s+/g,' ').trim();return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+  function download(name,rows){var b=new Blob(['\ufeff'+rows.map(function(r){return r.map(csvCell).join(',');}).join('\r\n')],{type:'text/csv;charset=utf-8'});
+    var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}
+  var stamp=(document.querySelector('.asof')||{}).textContent||'';
+  function tableRows(t){return Array.prototype.map.call(t.querySelectorAll('tr'),function(tr){return Array.prototype.map.call(tr.children,function(c){return c.tagName==='TH'?c.textContent:c.innerText;}).filter(function(x,i,arr){return !(i===arr.length-1&&/Show list/.test(x))&&!(i===arr.length-1&&x===''&&tr.parentNode.tagName==='THEAD');});});}
+  document.querySelectorAll('[data-export]').forEach(function(b){b.addEventListener('click',function(){var id=b.getAttribute('data-export');download('employer-plans-'+id.replace('t-','')+'.csv',tableRows(document.getElementById(id)));});});
+
+  // ---- all Texas employers: sortable, filterable
+  var tb=document.querySelector('#t-all tbody'),cnt=document.getElementById('c-all'),fq=document.getElementById('f-q'),fi=document.getElementById('f-ins'),fa=document.getElementById('f-area'),ff=document.getElementById('f-fund');
+  var sortK=5,sortD=-1,view=[];
+  function insOf(e){return Object.keys(e[3]).join(', ');}
+  function key(e,k){return k===12?insOf(e):e[k];}
+  function render(){
+    var t=fq.value.trim().toLowerCase(),d=t.replace(/[^0-9]/g,'');
+    view=P.filter(function(e){
+      if(fa.value==='dfw'&&!e[2]) return false;
+      if(fi.value&&!(fi.value in e[3])) return false;
+      if(ff.value&&String(e[4]).indexOf(ff.value)!==0) return false;
+      if(t&&!(String(e[0]).toLowerCase().indexOf(t)>=0||String(e[1]).toLowerCase().indexOf(t)>=0||(d.length>=4&&String(e[11]).indexOf(d)===0))) return false;
+      return true;});
+    view.sort(function(a,b){var x=key(a,sortK),y=key(b,sortK);
+      if(x==null||x==='') return 1; if(y==null||y==='') return -1;
+      return (typeof x==='number'&&typeof y==='number'?x-y:String(x).localeCompare(String(y)))*sortD;});
+    cnt.textContent=num(view.length)+' of '+num(P.length)+' employers';
+    tb.innerHTML=view.map(function(e){return '<tr><td><b>'+esc(e[0])+'</b>'+(e[2]?'<div class="meta">Dallas–Fort Worth</div>':'')+'</td><td>'+esc(e[1])+'</td><td>'+esc(insOf(e))+'</td><td>'+esc(e[4])+'</td><td>'+num(e[5])+'</td><td>'+esc(e[6]||'')+'</td><td>'+esc(e[11])+'</td></tr>';}).join('');
+  }
+  document.querySelectorAll('#t-all th.s').forEach(function(th){th.addEventListener('click',function(){var k=+th.getAttribute('data-k');
+    if(k===sortK) sortD=-sortD; else {sortK=k;sortD=(k===5||k===6)?-1:1;}
+    document.querySelectorAll('#t-all th.s').forEach(function(h){h.removeAttribute('aria-sort');});
+    th.setAttribute('aria-sort',sortD>0?'ascending':'descending');render();});});
+  [fq,fi,fa,ff].forEach(function(x){x.addEventListener(x===fq?'input':'change',function(){load().then(render);});});
+  document.querySelectorAll('button[data-ins]').forEach(function(b){b.addEventListener('click',function(){fi.value=b.getAttribute('data-ins');load().then(render);document.getElementById('all').scrollIntoView({behavior:'smooth'});});});
+  document.getElementById('x-all').addEventListener('click',function(){
+    var rows=[['Employer','City','Dallas-Fort Worth','EIN','Insurers listing the plan','Networks (by insurer)','Funding (Form 5500)','Active participants','Form 5500 year','Form 5500 plan name','Form 5500 filing ID','Health insurers on Schedule A','Stop-loss insurers on Schedule A']];
+    view.forEach(function(e){rows.push([e[0],e[1],e[2]?'yes':'no',e[11],insOf(e),Object.keys(e[3]).map(function(k){return k+': '+e[3][k].join(' | ');}).join(' || '),e[4],e[5],e[6],e[7],e[8],e[9],e[10]]);});
+    rows.push([]);rows.push(['Source: insurer Transparency in Coverage indexes and DOL Form 5500 datasets. '+stamp]);
+    download('employer-plans-texas'+(fa.value==='dfw'?'-dfw':'')+(fi.value?'-'+fi.value.replace(/[^A-Za-z]+/g,'-').toLowerCase():'')+'.csv',rows);});
+  load().then(render).catch(function(){cnt.textContent='Could not load the employer list.';});
 })();
 </script>
 </body></html>
