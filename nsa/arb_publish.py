@@ -117,7 +117,7 @@ def main():
     s3.upload_file(str(out / "site_new.tgz"), B, "site/deploy/current.tgz")
     for key, f in patched_tmpl:
         s3.upload_file(str(f), B, key)
-    print("live: https://upfront-dfw-preview.pages.dev/surprise-bills/")
+    print("live: https://files.healthcare/surprise-bills/")
 
 
 if __name__ == "__main__":
