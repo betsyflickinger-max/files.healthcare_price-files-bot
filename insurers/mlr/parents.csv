@@ -1,0 +1,201 @@
+rank_by_lives,parent_group,states,states_filed,issuers,total_lives,individual_lives,small_group_lives,large_group_lives,total_premium,top5_states,scope,tic_landing_page,tic_note
+1,Kaiser Permanente,9,13,8,8723660,1038084,931160,6754416,63995614516,"CA (6,644,911); WA (426,240); CO (360,475); OR (341,192); MD (295,962)",multi_state,https://healthy.kaiserpermanente.org/front-door/machine-readable,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page (regional variants exist per KP region)"
+2,UnitedHealth Group,51,51,54,8089244,1914414,1397254,4777576,49376856592,"TX (1,486,657); CA (1,053,683); FL (789,267); NY (706,634); NV (294,482)",national,https://transparency-in-coverage.uhc.com/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+3,Health Care Service Corp (HCSC),5,5,1,6342013,1935363,1142533,3264117,45878109171,"TX (3,507,937); IL (1,962,566); OK (604,722); MT (134,371); NM (132,417)",multi_state,https://www.bcbstx.com/member/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page; BCBSTX page; IL equivalent https://www.bcbsil.com/member/machine-readable-files also opened"
+4,Elevance Health (Anthem),14,14,22,6310921,1276657,1116037,3918227,48867526096,"CA (2,047,228); VA (738,300); OH (548,497); GA (460,989); IN (375,332)",multi_state,https://www.anthem.com/machine-readable-file/search/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+5,Centene (Ambetter),28,28,19,4472199,4085082,116640,270477,28815966615,"FL (1,042,093); TX (521,891); CA (513,971); GA (512,704); TN (260,383)",national,https://www.centene.com/price-transparency-files.html,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+6,CVS Health (Aetna),46,47,20,4202756,1847995,100679,2254082,27489971965,"FL (1,025,156); CA (529,568); NY (418,253); TX (370,408); NC (346,953)",national,https://health1.aetna.com/app/public/#/one/insurerCode=AETNACVS_I&brandCode=ALICSI/machine-readable-transparency-in-coverage,"from project insurer_tic_index.csv (Payerset docs); not re-opened: site sends incomplete TLS chain; other brandCodes: ALICFI, TEXASFI, AETNACVS"
+7,Cigna Group,46,56,16,2642649,544313,40777,2057559,19861585048,"CA (331,673); FL (274,612); NY (244,294); TX (236,891); TN (171,864)",national,https://www.cigna.com/legal/compliance/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+8,Florida Blue (GuideWell),1,1,5,2613689,1495531,247220,870938,23029001572,"FL (2,613,689)",single_state,https://www.floridablue.com/members/tools-resources/transparency/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+9,Blue Shield of California,1,1,2,2229812,701160,416192,1112460,18920556936,"CA (2,229,812)",single_state,https://www.blueshieldca.com/en/home/help-and-resources/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+10,Oscar Health,17,19,8,1852992,1852992,0,0,6431309999,"FL (871,881); GA (367,102); NJ (256,543); TX (141,000); OH (72,324)",multi_state,https://www.hioscar.com/transparency-in-coverage-files/oscar,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+11,Blue Cross Blue Shield of Michigan,2,2,4,1470687,171833,303939,994914,9946278127,"MI (1,404,540); VT (66,147)",multi_state,https://www.bcbsm.com/mrf/index/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+12,CareFirst BlueCross BlueShield,3,3,3,1354612,173211,291209,890192,10568867745,"MD (901,668); DC (233,429); VA (219,515)",multi_state,https://individual.carefirst.com/individuals-families/mandates-policies/machine-readable-data.page,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+13,Highmark Health,4,4,10,1303717,213587,179814,910316,10120280047,"PA (818,147); NY (223,760); WV (159,023); DE (102,787)",multi_state,https://mrfdata.hmhs.com/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+14,Blue Cross and Blue Shield of North Carolina,1,1,1,1104290,413412,177176,513702,7858028400,"NC (1,104,290)",single_state,https://www.bluecrossnc.com/policies-best-practices/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+15,BCBS of Alabama,1,1,1,917909,192059,183161,542689,6471330118,"AL (917,909)",single_state,https://www.bcbsal.org/web/transparency-in-coverage,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+16,Regence (Cambia),4,4,5,917332,123561,226003,567768,5941115467,"WA (342,050); OR (242,510); ID (170,642); UT (162,130)",multi_state,,not found: regence.com CAA/TIC info page describes the rule but no file link found; old producer-news MRF page 404
+17,BCBS of Massachusetts,1,1,2,838143,24457,144401,669285,7149632902,"MA (838,143)",single_state,https://transparency-in-coverage.bluecrossma.com/,"found by web search (title ""Transparency in Coverage - Blue Cross Blue Shield""); not opened: incomplete TLS chain"
+18,Independence Blue Cross,5,5,9,761122,283950,174862,302310,5142639356,"PA (590,870); NJ (144,253); NC (15,385); DE (6,412); FL (4,202)",multi_state,https://www.ibx.com/resources/for-members/transparency-in-coverage.html,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page (JS-rendered; file links not visible to plain fetch)"
+19,Horizon BCBS of New Jersey,1,1,2,749563,240828,147102,361633,5645965566,"NJ (749,563)",single_state,https://horizonblue.sapphiremrfhub.com/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page (Sapphire MRF hub)"
+20,BCBS of South Carolina,1,1,2,664242,303511,65291,295440,4558875368,"SC (664,242)",single_state,https://www.southcarolinablues.com/en/home/about-us/privacy-and-legal/transparency-in-coverage.html,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+21,Intermountain (SelectHealth),4,4,1,638003,329880,129300,178823,3547873013,"UT (555,374); ID (67,168); NV (9,087); CO (6,374)",multi_state,https://selecthealth.org/transparency-in-coverage,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page; open file folder https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/"
+22,BCBS of Tennessee,1,1,1,608285,117870,117801,372614,4067937861,"TN (608,285)",single_state,https://www.bcbst.com/tcr,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+23,Wellmark BCBS,2,2,3,595238,125162,149805,320271,3933015973,"IA (468,016); SD (127,222)",multi_state,https://www.wellmark.com/transparency,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page (JS-rendered)"
+24,Corewell Health (Priority Health),2,2,4,589908,157665,118160,314083,3360374393,"MI (566,350); IN (23,558)",multi_state,https://www.priorityhealth.com/landing/transparency,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page; links to S3 TableOfContents.html"
+25,Premera Blue Cross,2,2,4,572665,57359,62165,453141,4425310560,"WA (464,610); AK (108,055)",multi_state,https://www.premera.com/visitor/transparency,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+26,BCBS of Louisiana,1,1,3,506615,126905,135058,244652,4186005289,"LA (506,615)",single_state,,not found (guessed paths 404; search gave no landing page)
+27,Medica,11,11,6,504749,145523,60312,298914,3607094685,"WI (218,576); MN (180,947); NE (55,901); MO (13,563); OK (12,439)",multi_state,https://www.medica.com/transparency-in-coverage,"found by web search (title ""Transparency in Coverage and machine readable files""); site returns bot challenge (403) to plain fetch"
+28,HMSA (Hawaii Medical Service Association),1,1,1,472937,21175,52493,399269,2723111065,"HI (472,937)",single_state,https://www.hmsa.com/help-center/transparency-in-coverage-machine-readable-files/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+29,"Blue Cross and Blue Shield of Arizona, Inc.",1,1,1,422828,102721,65198,254909,2752076249,"AZ (422,828)",single_state,,not found (only Medicaid Health Choice page surfaced)
+30,Molina Healthcare,15,15,14,404360,323343,0,81017,2559322979,"FL (81,017); OH (77,720); CA (59,400); WA (39,342); MI (35,687)",multi_state,,"not found: Molina TiC/PricingTransparency pages return ""Page Not Found"" or redirect to /ifp (2026-10-16)"
+31,Triple-S Salud Inc.,1,2,1,401651,79455,29582,292614,993461739,"PR (401,651)",single_state,https://salud.grupotriples.com/en/transparency-in-coverage-machine-readable-files/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+32,Arkansas BCBS,1,1,3,398808,184176,58792,155840,2544725633,"AR (398,808)",single_state,https://www.arkansasbluecross.com/policies/transparency/mrfs,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+33,Harvard Pilgrim (Point32Health),4,5,3,385723,44946,106141,234636,3369272045,"MA (281,631); ME (53,621); NH (44,083); RI (6,388)",multi_state,https://www.harvardpilgrim.org/public/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+34,BCBS of Minnesota,1,1,2,382785,57058,87997,237730,2941007515,"MN (382,785)",single_state,https://www.bluecrossmn.com/transparency-coverage-machine-readable-files,"opened 2026-10-16, HTTP 200 (JS-rendered); title confirmed by web search"
+35,Lifetime Healthcare (Excellus),1,1,1,367934,22535,134730,210669,2864524877,"NY (367,934)",single_state,https://news.excellusbcbs.com/developer-info/transparency-coverage-mrf,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+36,EmblemHealth (HIP),3,3,7,347946,79953,5995,261998,3723473573,"NY (254,818); CT (93,002); MA (126)",multi_state,https://transparency.emblemhealth.com/,"found by web search (title ""Price Transparency Machine Readable - EmblemHealth""); plain fetch returned 406"
+37,UPMC Health Plan,1,1,4,325870,106625,114465,104780,2160263236,"PA (325,870)",single_state,https://www.upmchealthplan.com/transparency-in-coverage,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+38,BCBS of Kansas City,2,2,2,300603,13955,10611,276037,1723498910,"MO (180,962); KS (119,641)",multi_state,https://www.bluekc.com/transparency-in-coverage/,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page; files at https://bcbskc.sapphiremrfhub.com/"
+39,Medical Mutual of Ohio,2,29,5,294209,63897,48956,181356,2264800767,"OH (292,911); MI (1,298)",multi_state,https://www.medmutual.com/mrf,opened 2026-10-16; redirects to HealthSparq MRF portal (productCode=MRF)
+40,HealthPartners,4,4,1,284241,8529,5208,270504,1166500652,"MN (234,767); WI (43,277); SD (4,399); ND (1,798)",multi_state,https://www.healthpartners.com/hp/legal-notices/disclosures/transparency/index.html,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page; page links per-network MRF pages on Azure blob"
+41,BCBS of Mississippi (Mississippi Ins Grp),1,1,1,267094,26160,77945,162989,1459779219,"MS (267,094)",single_state,https://www.bcbsms.com/about-us/transparency-in-coverage,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+42,BCBS of Kansas,1,1,1,265920,30400,67534,167986,1784623534,"KS (265,920)",single_state,https://www.bcbsks.com/transparency-in-coverage,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+43,Baylor Scott & White Health Plan,1,1,3,263558,230684,15851,17023,1625469450,"TX (263,558)",single_state,https://www.bswhealthplan.com/transparency,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+44,University Health Care & Gundersen Lutheran Group,4,4,4,255180,28950,24735,201495,1786705304,"WI (243,631); IL (9,240); MN (2,289); IA (20)",multi_state,,not found (Quartz page 404; only a QHP PDF)
+45,L.A. Care Health Plan,1,1,1,246195,196228,0,49967,846322243,"CA (246,195)",single_state,https://lacare.org/transparency-coverage-machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+46,CareSource,6,6,6,243489,243489,0,0,1580296968,"IN (82,660); OH (70,070); GA (37,169); WV (24,874); KY (19,838)",multi_state,,
+47,Tufts Health Plan (Point32Health),1,2,3,212713,186458,26255,0,1034123100,"MA (212,713)",single_state,https://tuftshealthplan.com/visitor/legal-notices/machine-readable-files,"opened 2026-10-16, HTTP 200, page is a TiC/MRF page"
+48,Blue Cross and Blue Shield of Nebraska,1,1,1,197437,16418,7892,173127,1559757313,"NE (197,437)",single_state,,
+49,Sentara Health Plans,2,2,3,185858,82056,34192,69610,1186302998,"VA (147,154); FL (38,704)",multi_state,,
+50,Providence Health Plan,2,2,1,169609,41664,43412,84532,1259397487,"OR (167,632); WA (1,977)",multi_state,,
+51,MVP Health Care,2,2,2,154739,31905,49257,73577,1432350231,"NY (127,727); VT (27,012)",multi_state,,
+52,Blue Cross Blue Shield of North Dakota,1,1,1,150210,30319,43828,76063,1075496850,"ND (150,210)",single_state,,
+53,CDPHP,1,1,2,147486,3718,46630,97138,1271991624,"NY (147,486)",single_state,,
+54,Sanford Health Plan/Sanford Health Plan of Minnesota,4,4,2,140013,44552,7545,87916,915281077,"ND (95,445); SD (39,374); MN (4,817); IA (377)",multi_state,,
+55,Blue Cross & Blue Shield of Rhode Island,1,1,1,139562,17843,40107,81612,1068641921,"RI (139,562)",single_state,,
+56,PacificSource,4,4,1,138834,41105,37084,60645,1078455315,"OR (69,975); ID (31,057); MT (29,991); WA (7,811)",multi_state,,
+57,Sharp Health Plan,1,1,1,137718,36107,22603,79008,857102580,"CA (137,718)",single_state,,
+58,Henry Ford Health Systems Group,1,1,2,136472,3746,38666,94060,930993827,"MI (136,472)",single_state,,
+59,Carle Holding Co Grp,5,5,4,133489,35142,11654,86693,1438581125,"IL (129,622); NC (3,299); WA (310); IA (203); IN (55)",multi_state,,
+60,"Blue Cross of Idaho Health Service, Inc.",1,1,1,130638,27146,30277,73215,1049891104,"ID (130,638)",single_state,,
+61,Sutter Health Alliance,1,1,1,118165,2869,33185,82111,822464312,"CA (118,165)",single_state,,
+62,Western Health Advantage,1,1,1,117736,16438,22212,79086,834822322,"CA (117,736)",single_state,,
+63,"Meridian Health Plan of Michigan, Inc.",1,1,1,115109,115109,0,0,486042618,"MI (115,109)",single_state,,
+64,"Community Health Choice, Inc.",1,1,1,110756,110756,0,0,1097148205,"TX (110,756)",single_state,,
+65,Capital Advantage Assurance Company,1,1,1,108084,53621,30026,24437,972570783,"PA (108,084)",single_state,,
+66,"Boston Medical Center Health Plan, Inc.",1,1,1,106759,105586,1173,0,404699084,"MA (106,759)",single_state,,
+67,Independent Health Benefits Corporation,1,1,1,96824,9362,53816,33646,704839050,"NY (96,824)",single_state,,
+68,"Mass General Brigham Health Plan, Inc",1,1,1,86539,26213,39000,21326,908382146,"MA (86,539)",single_state,,
+69,Health One Alliance Grp,2,2,1,84132,80052,0,4080,424404702,"GA (82,789); TN (1,343)",multi_state,,
+70,Capital Blue Cross,1,1,3,77437,568,143,76726,420605521,"PA (77,437)",single_state,,
+71,Oregon Dental Grp,4,5,1,75326,42976,12258,20092,575206613,"OR (56,562); AK (9,829); TX (4,486); ID (4,449)",multi_state,,
+72,AMERICAN INTL GRP,52,52,1,73237,73236,0,1,17375791,"NY (44,880); FL (6,444); NJ (3,891); CA (2,426); PA (1,468)",national,,
+73,QualChoice Holdings Inc.,1,1,2,72856,46618,13103,13135,486291469,"AR (72,856)",single_state,,
+74,"Security Health Plan of Wisconsin, Inc.",1,1,1,71183,26479,4812,39892,546658896,"WI (71,183)",single_state,,
+75,Blue Cross Blue Shield of Wyoming,1,1,1,68090,29823,8952,29315,633000218,"WY (68,090)",single_state,,
+76,Geisinger Health Plan,1,1,2,66002,18880,17805,29317,638349918,"PA (66,002)",single_state,,
+77,CommunityCare Grp,1,1,2,65343,16248,10666,38429,376303281,"OK (65,343)",single_state,,
+78,Group Health Cooperative of South Central Wisconsin,1,1,1,65182,5016,7550,52616,461604756,"WI (65,182)",single_state,,
+79,University Health Alliance,1,1,1,58935,0,18726,40209,362290979,"HI (58,935)",single_state,,
+80,County of Santa Clara,1,1,1,56239,28760,30,27449,502079462,"CA (56,239)",single_state,,
+81,Common Ground Healthcare Cooperative,1,1,1,54105,51026,3079,0,430652768,"WI (54,105)",single_state,,
+82,"Health First Commercial Plans, Inc.",1,1,1,53086,53086,0,0,440136024,"FL (53,086)",single_state,,
+83,Curative Inc Grp,3,3,1,51527,0,0,51527,150787531,"TX (45,697); FL (5,694); GA (136)",multi_state,,
+84,Montana Health Cooperative,3,3,1,51109,41725,6091,3293,435472820,"MT (29,576); WY (13,609); ID (7,924)",multi_state,,
+85,UCare Minnesota,1,1,1,49414,49414,0,0,279625846,"MN (49,414)",single_state,,
+86,CHRISTUS HEALTH PLAN,1,1,1,49341,49341,0,0,293506613,"TX (49,341)",single_state,,
+87,Baystate Hlth Grp,1,1,1,48022,7485,17176,23361,394417080,"MA (48,022)",single_state,,
+88,"Healthfirst PHSP, Inc.",1,1,1,47240,47240,0,0,385930496,"NY (47,240)",single_state,,
+89,Network Hlth Grp,1,1,1,43802,7894,1776,34132,323902884,"WI (43,802)",single_state,,
+90,State Farm Mutual Group,8,10,1,41544,29,0,41515,346911630,"IL (41,515); NJ (10); WA (9); UT (6); PA (1)",multi_state,,
+91,MetroPlus Health Plan,1,1,1,41206,9850,0,31356,355931939,"NY (41,206)",single_state,,
+92,MAPFRE Insurance Group,2,2,1,40855,0,4505,36350,50219536,"PR (40,675); VI (180)",multi_state,,
+93,Neighborhood Health Plan of Rhode Island,1,1,1,40160,37770,2390,0,194525155,"RI (40,160)",single_state,,
+94,Presbyterian Health Plan,1,1,2,39339,17572,9349,12418,309019246,"NM (39,339)",single_state,,
+95,Hawaii Management Alliance Association,1,1,1,36943,0,7643,29300,222835065,"HI (36,943)",single_state,,
+96,"Mennonite General Hospital, Inc",1,1,1,36585,12217,826,23542,70771977,"PR (36,585)",single_state,,
+97,"Avera Health Plans, Inc.",3,3,1,34380,17743,7402,9235,265298025,"SD (33,616); IA (735); NE (29)",multi_state,,
+98,Community Health Plan of Washington,1,1,1,34146,34146,0,0,106897143,"WA (34,146)",single_state,,
+99,COX INS GRP,1,1,1,32569,10110,510,21949,205541015,"MO (32,569)",single_state,,
+100,AultCare Insurance Company,1,1,1,30424,6453,5086,18885,197045931,"OH (30,424)",single_state,,
+101,Maine Community Health Options,1,2,1,30167,20067,6713,3387,255908641,"ME (30,167)",single_state,,
+102,Inland Empire Health Plan,1,1,1,28932,28932,0,0,86545089,"CA (28,932)",single_state,,
+103,PHP Insurance Company,1,1,2,28100,12986,6352,8762,158980274,"MI (28,100)",single_state,,
+104,US Health and Life Insurance Company,4,4,1,27602,27602,0,0,159953868,"TX (19,148); TN (5,580); KS (2,079); IN (795)",multi_state,,
+105,Nippon Life Insurance Company of America,12,13,1,27025,0,0,27025,253937444,"CA (13,965); NY (7,368); IL (1,827); NJ (1,444); GA (730)",multi_state,,
+106,"Independent Health Association, Inc",1,1,1,26562,0,0,26562,262748874,"NY (26,562)",single_state,,
+107,Tokio Marine Holdings Inc GRP,32,43,1,26452,0,0,26452,5372093,"TX (4,385); AZ (3,056); FL (2,958); TN (2,932); OH (1,884)",national,,
+108,WellCare Management Group (Centene),1,1,1,26102,26102,0,0,163266246,"KY (26,102)",single_state,,
+109,"Aspirus Health Plan, Inc.",1,1,1,25367,8865,1174,15328,201093669,"WI (25,367)",single_state,,
+110,Renown Health,1,1,2,25278,6536,4983,13759,181467339,"NV (25,278)",single_state,,
+111,Holman Professional Counseling Centers,1,1,1,24320,0,0,24320,4980033,"CA (24,320)",single_state,,
+112,"VIVA Health, Inc.",1,1,1,23817,0,2784,21033,118290709,"AL (23,817)",single_state,,
+113,TRH Health Insurance Company,1,1,1,20266,20266,0,0,92571625,"TN (20,266)",single_state,,
+114,The Health Plan (WV),2,2,2,19531,95,1337,18099,133873883,"WV (18,036); OH (1,495)",multi_state,,
+115,Summa Hlth Grp,1,1,2,17781,8034,3372,6375,117193445,"OH (17,781)",single_state,,
+116,"Scripps Health Plan Services, Inc.",1,1,1,17656,0,0,17656,118837203,"CA (17,656)",single_state,,
+117,CHRISTUS Health Plan Louisiana,1,1,1,17306,17306,0,0,20728140,"LA (17,306)",single_state,,
+118,Mercy Alliance Inc Group,2,2,2,17057,4950,1837,10270,116319551,"WI (15,261); IL (1,796)",multi_state,,
+119,University of Utah Health Insurance Plans,1,1,1,16230,11303,0,4927,146045934,"UT (16,230)",single_state,,
+120,Medical Associates Clinic,3,3,2,15420,0,3143,12277,97153610,"IA (9,671); WI (4,283); IL (1,466)",multi_state,,
+121,Chorus Community Health Plans,1,1,1,13391,13391,0,0,130042289,"WI (13,391)",single_state,,
+122,WISCONSIN PHYSICIANS SERV INS GRP,1,2,2,13258,553,1733,10972,112529349,"WI (13,258)",single_state,,
+123,Group Health Cooperative of Eau Claire,1,1,1,12855,0,401,12454,101926545,"WI (12,855)",single_state,,
+124,Fallon Grp,1,1,1,12853,12673,180,0,87954959,"MA (12,853)",single_state,,
+125,"Sendero Health Plans, inc.",1,1,1,11923,11923,0,0,136118682,"TX (11,923)",single_state,,
+126,"HealthPartners UnityPoint Health, Inc.",1,1,1,11857,0,1695,10162,79182626,"IA (11,857)",single_state,,
+127,"Denver Health Medical Plan, Inc.",1,1,1,11834,11834,0,0,85820761,"CO (11,834)",single_state,,
+128,Healthy Workers,1,1,1,11166,0,0,11166,98309465,"CA (11,166)",single_state,,
+129,"Community Care Health Plan, Inc.",1,1,1,11105,0,915,10190,76084550,"CA (11,105)",single_state,,
+130,Sidecar Health Insurance Company,3,3,1,9958,0,0,9958,48859222,"OH (7,917); GA (1,997); FL (44)",multi_state,,
+131,"County of Ventura, dba Ventura County Health Care Plan",1,1,1,9908,0,0,9908,83261754,"CA (9,908)",single_state,,
+132,"Indiana University Health Plans, Inc.",1,1,1,9637,0,2991,6646,63451730,"IN (9,637)",single_state,,
+133,"St. Luke's Health Plan, Inc.",1,1,1,8931,7675,482,774,36770851,"ID (8,931)",single_state,,
+134,Chinese Community Health Plan,1,1,1,8321,4930,758,2633,50135014,"CA (8,321)",single_state,,
+135,CONTRA COSTA MEDICAL SERVICES DBA CONTRA COSTA HEALTH PLAN,1,1,1,6554,0,0,6554,65783051,"CA (6,554)",single_state,,
+136,"Southeastern Indiana Health Organization, Inc.",1,1,1,6279,0,1882,4397,46441028,"IN (6,279)",single_state,,
+137,Memorial Hermann Commercial Health Plan,1,1,1,6173,0,199,5974,19610841,"TX (6,173)",single_state,,
+138,ALAMEDA ALLIANCE FOR HEALTH,1,1,1,5790,0,0,5790,34254980,"CA (5,790)",single_state,,
+139,Plan Medico Servicios de Salud Bella Vista,1,1,1,5120,3159,278,1683,8229748,"PR (5,120)",single_state,,
+140,Mass General Brigham Health Insurance Company,1,1,1,4286,0,0,4286,38790537,"MA (4,286)",single_state,,
+141,"Auxilio Platino, Inc.",1,1,1,3915,0,73,3842,7458641,"PR (3,915)",single_state,,
+142,"GMS Reinsurance Company, LTD",1,2,1,3833,0,2672,1161,25233488,"MI (3,833)",single_state,,
+143,"AMHIC, A Reciprocal Association & Sub",1,1,1,3104,0,1510,1594,27202066,"DC (3,104)",single_state,,
+144,"Vantage Health Plan of Mississippi, Inc.",1,1,1,3055,3055,0,0,21185446,"MS (3,055)",single_state,,
+145,Select Health of South Carolina,1,1,1,2774,2774,0,0,18629407,"SC (2,774)",single_state,,
+146,McLaren Hlth Grp,1,1,2,2418,2418,0,0,30121667,"MI (2,418)",single_state,,
+147,SHELTER INS GRP,16,23,1,2166,36,37,2093,12595668,MO (651); AR (340); TN (187); OK (169); MS (167),multi_state,,
+148,Community First Insurance Plans,1,1,1,1974,1974,0,0,24890012,"TX (1,974)",single_state,,
+149,WMI Mutual Insurance Company,6,7,1,1708,0,1098,610,12451283,MT (835); UT (800); OR (28); ID (25); AZ (13),multi_state,,
+150,Memorial Hermann Health Insurance Company,1,1,1,1472,0,118,1354,5581365,"TX (1,472)",single_state,,
+151,"Samaritan Health Plans, Inc",1,1,1,1337,0,0,1337,10015755,"OR (1,337)",single_state,,
+152,Piedmont Comm Hlth Grp,1,1,2,1299,0,1159,140,21101874,"VA (1,299)",single_state,,
+153,San Mateo Health Commission,1,1,1,1296,0,0,1296,7856506,"CA (1,296)",single_state,,
+154,GlobalHealth Holdings Grp,1,1,1,1210,0,0,1210,16366944,"OK (1,210)",single_state,,
+155,"Ryder Health Plan, Inc.",1,1,1,1041,533,0,508,1120476,"PR (1,041)",single_state,,
+156,BridgeSpan Health Company,3,4,1,954,954,0,0,9408004,WA (462); UT (254); OR (238),multi_state,,
+157,"Taro Health Plan of Maine, Inc.",1,1,1,938,798,140,0,4069874,ME (938),single_state,,
+158,American General Life Insurance Company,14,17,1,928,928,0,0,73680,GA (334); FL (165); TN (120); AL (76); MS (70),multi_state,,
+159,EQUITABLE HOLDINGS INC GRP,1,1,1,921,921,0,0,3352890,NY (921),single_state,,
+160,Santa Cruz-Monterey-Merced-San Benito-Mariposa Managed Medical Care Commission,1,1,1,712,0,0,712,5481228,CA (712),single_state,,
+161,Integon National Insurance Company,2,2,1,442,0,442,0,2375474,TX (304); IN (138),multi_state,,
+162,MemorialCare Select Health Plan,1,1,1,387,0,0,387,2477471,CA (387),single_state,,
+163,"Taro Health Plan of Oklahoma, Inc.",1,1,1,329,329,0,0,2472773,OK (329),single_state,,
+164,Humana,2,44,13,320,0,124,196,417811144,FL (316); IL (4),multi_state,https://developers.humana.com/syntheticdata/healthplan-price-transparency,"from project insurer_tic_index.csv; opened 2026-10-16 HTTP 200 but JS-only (""Loading..."")"
+165,EDUCATORS MUT GRP,2,3,2,264,0,0,264,1544998,ID (211); UT (53),multi_state,,
+166,GUARDIAN LIFE GRP,28,51,1,243,243,0,0,228304,NY (91); FL (22); CA (15); MD (13); MN (10),national,,
+167,AMERICAN FAMILY INS GRP,11,18,2,53,53,0,0,0,MN (31); KS (4); ND (4); IA (3); MO (3),multi_state,,
+168,BCS Insurance,10,17,2,42,0,0,42,884060,OK (13); IN (8); TX (4); MN (4); IL (4),multi_state,,
+169,LIBERTY MUT GRP,8,12,1,14,14,0,0,32205,OH (4); ID (2); KY (2); MN (2); GA (1),multi_state,,
+170,Goldman Sachs Grp,2,2,1,8,8,0,0,33631,NY (7); MN (1),multi_state,,
+171,AMERICAN FIDELITY GROUP,1,2,1,5,0,0,5,0,WA (5),single_state,,
+172,Assurity Life Insurance Company,1,7,1,1,1,0,0,211,FL (1),single_state,,
+173,Community First Grp,1,1,1,1,0,1,0,11940,TX (1),single_state,,
+174,Croy Hall Mgt Grp,0,1,2,0,0,0,0,0,,single_state,,
+175,Atlanta International Insurance Company,0,1,1,0,0,0,0,0,,single_state,,
+176,CNO Financial Grp,0,4,2,0,0,0,0,0,,single_state,,
+177,FirstCare (Baylor Scott & White),0,1,2,0,0,0,0,-388594,,single_state,,
+178,"Healthfirst Insurance Company, Inc.",0,1,1,0,0,0,0,27560406,,single_state,,
+179,Investors Life Insurance Company of North America,0,4,1,0,0,0,0,0,,single_state,,
+180,HARTFORD FIRE & CAS GRP,0,4,1,0,0,0,0,0,,single_state,,
+181,Mutual of Omaha Insurance Company,0,14,2,0,0,0,0,0,,single_state,,
+182,MotivHealth Insurance Company,0,4,1,0,0,0,0,0,,single_state,,
+183,LIBERTY UNION LIFE ASSURANCE COMPANY,0,1,1,0,0,0,0,0,,single_state,,
+184,LIBERTY NATL GRP,0,50,4,0,0,0,0,0,,single_state,,
+185,"New York State Catholic Health Plan, Inc.",0,1,1,0,0,0,0,0,,single_state,,
+186,National Health Insurance Company,0,1,1,0,0,0,0,13645,,single_state,,
+187,NATIONWIDE CORP GRP,0,11,1,0,0,0,0,0,,single_state,,
+188,NEW ERA LIFE GRP,0,52,4,0,0,0,0,0,,single_state,,
+189,PROTECTIVE LIFE INS GRP,0,3,2,0,0,0,0,0,,single_state,,
+190,SiriusPoint Ltd.,0,4,1,0,0,0,0,0,,single_state,,
+191,SUN LIFE ASSUR CO OF CN GRP,0,2,2,0,0,0,0,0,,single_state,,
+192,PRUDENTIAL OF AMER GRP,0,54,1,0,0,0,0,0,,single_state,,
+193,"South Dakota State Medical Holding Company, Inc.",0,1,1,0,0,0,0,0,,single_state,,
+194,Trustmark Insurance Company,0,25,1,0,0,0,0,0,,single_state,,
+195,Thrivent Financial for Lutherans,0,19,1,0,0,0,0,0,,single_state,,
+196,Transamerica Financial Life Insurance Company,0,1,1,0,0,0,0,0,,single_state,,
+197,TALCOTT RESOLUTION,0,1,1,0,0,0,0,0,,single_state,,
+198,Transamerica Life Insurance Company,0,42,1,0,0,0,0,0,,single_state,,
+199,Union Fidelity Life Insurance Company,0,25,1,0,0,0,0,0,,single_state,,
+200,Wellfleet Insurance Company,0,1,1,0,0,0,0,0,,single_state,,
