@@ -230,24 +230,40 @@ def join(a):
       GROUP BY ALL ORDER BY coalesce(any_value(e.active_participants), any_value(e.participants_boy), 0) DESC""").fetchall()
     desc = {(i, n): d for i, n, d, s_ in c.sql("SELECT insurer, network, description, state FROM netd").fetchall()}
     import re as _re
+    # catalog network key -> the Dallas-Fort Worth Price Finder network it is (insurers/networks.csv, matched by file name)
+    def nkey(x):
+        x = _re.sub(r"^\d{4}[-_]\d{2}([-_]\d{2})?_", "", x)
+        x = _re.sub(r"[_-]in-network-rates.*$", "", x, flags=_re.I)
+        m = _re.search(r"_(Third-Party-Administrator|Insurer|Health-Insurance-Issuer|Group-Health-Plan)_", x, flags=_re.I)
+        return (x[m.end():] if m else x).lower()
+    pf = {}
+    try:
+        for row in csv.DictReader(open(os.path.join(HERE, "networks.csv"))):
+            if row.get("enabled") == "yes" and row.get("current_table"):
+                pf[nkey(row["current_table"])] = f'{row["insurer"]}|{row["network_label"]}'
+    except FileNotFoundError:
+        pass
+
     def nname(i, n):
         d = _re.sub(r"\s*in-network file.*$", "", desc.get((i, n)) or "", flags=_re.I).strip()
         return d or n
     site = []
     for r in rows:
-        ins = {}
+        ins, pfn = {}, set()
         for x in r[16]:
+            pfn.update(pf[nkey(n)] for n in (x["n"] or []) if nkey(n) in pf)
             names = sorted({nname(x["i"], n) for n in (x["n"] or [])})
             ins[NAMES[x["i"]]] = names[:40] + ([f"and {len(names) - 40} more"] if len(names) > 40 else [])
         site.append(dict(ein=r[0], name=r[1], city=r[2], dfw=bool(r[4]), naics=r[5], active=r[6], boy=r[7], year=r[8],
                          pyb=r[9], funding=r[10], stop_loss=bool(r[11]), carriers=r[12] or "", sl_carriers=r[13] or "",
-                         ack=r[14], plan=r[15], ins=ins))
+                         ack=r[14], plan=r[15], ins=ins, pf=sorted(pfn)))
     meta = dict(built=stamp, catalogs={NAMES[i]: m for i, m in months.items()},
                 f5500=(st.get("bot/employers/f5500/meta.json") or {}).get("years", []),
                 counts=dict(zip(["employers", "with_5500", "texas", "dfw", "dfw_self"], c.sql(
                     """SELECT count(*), count(*) FILTER (WHERE has_f5500), count(*) FILTER (WHERE state='TX'), count(*) FILTER (WHERE dfw),
                               count(*) FILTER (WHERE dfw AND funding='self-funded') FROM employers""").fetchone())),
                 by_insurer={NAMES[i]: n for i, n in c.sql("SELECT insurer, count(*) FROM employer_plans GROUP BY 1").fetchall()})
+    print(f"Texas employers with a network in the DFW Price Finder: {sum(1 for e in site if e['pf']):,} of {len(site):,}")
     json.dump(dict(meta=meta, employers=site), open(f"{WORK}/site_employers.json", "w"), separators=(",", ":"), default=str)
     print(f"site_employers.json: {len(site):,} Texas employers")
     # report

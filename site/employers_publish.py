@@ -46,6 +46,22 @@ def add_nav(html):
     return html
 
 
+NET_ANCHOR = "const qc = new URLSearchParams(location.search).get('code');"
+NET_PATCH = ("/*netparam*/ { const qn = new URLSearchParams(location.search).get('net'); "
+             "const lab = x => String(x).split('|').slice(1).join('|').toLowerCase() || String(x).toLowerCase(); "
+             "let ni = qn && Array.isArray(D.nets) ? D.nets.indexOf(qn) : -1; "
+             "if (qn && ni < 0 && Array.isArray(D.nets)) ni = D.nets.findIndex(n => lab(n) === lab(qn)); "
+             "if (ni >= 0) { S.pay = String(ni); S.showAll = {}; const ps = document.getElementById('pay'); if (ps) ps.value = S.pay; } }\n  ")
+
+
+def add_net_param(html):
+    """Price Finder pages: ?net=<insurer|network> opens the page with that network chosen under "How are you paying?"
+    (Employer Plans links here). Idempotent; pages without the ?code= handler are left alone."""
+    if "/*netparam*/" in html or NET_ANCHOR not in html:
+        return html
+    return html.replace(NET_ANCHOR, NET_PATCH + NET_ANCHOR, 1)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--no-deploy", action="store_true")
@@ -82,6 +98,8 @@ def main():
     for f in (d / "site").rglob("*.html"):
         s = f.read_text(encoding="utf-8")
         s2 = add_nav(s)
+        if f.name == "index.html" and f.parent.name == "price-finder":
+            s2 = add_net_param(s2)
         if s2 != s:
             f.write_text(s2, encoding="utf-8"); n += 1
     print(f"  nav link added to {n} pages")
@@ -93,7 +111,7 @@ def main():
             html = s3.get_object(Bucket=B, Key=key)["Body"].read().decode("utf-8")
         except Exception:
             continue
-        h2 = add_nav(html)
+        h2 = add_net_param(add_nav(html))
         if h2 != html:
             (out / f"tmpl_{i}.html").write_text(h2, encoding="utf-8"); tmpl.append((key, out / f"tmpl_{i}.html"))
     print(f"  nav link added to {len(tmpl)} build templates")
