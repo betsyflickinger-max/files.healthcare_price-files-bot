@@ -36,6 +36,7 @@ jobs:
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       FORCE: ${{ (inputs.force || github.event_name == 'push') && '--force' || '' }}
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

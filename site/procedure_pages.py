@@ -1503,7 +1503,11 @@ def deploy(force=False):
         with tarfile.open(f'{d}/site.tgz') as t:
             t.extractall(d, filter='fully_trusted')
         if not os.path.isfile(f'{d}/site/price-finder/index.html') or not os.path.isdir(f'{d}/functions'):
-            sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
+            if first or attempt == 3:
+                sys.exit(f'STOP: current.tgz is missing site/ or functions/ ({sorted(os.listdir(d))}); nothing deployed')
+            print(f'site download looked incomplete ({sorted(os.listdir(d))}); trying again in a minute', flush=True)
+            import time; time.sleep(60)
+            continue
         for root, _, fs in os.walk(f'{d}/site'):
             if root.endswith('price-finder') and 'index.html' in fs:
                 pth = os.path.join(root, 'index.html'); t0 = open(pth, encoding='utf-8').read(); t1 = label_high(t0)
@@ -1538,7 +1542,8 @@ def deploy(force=False):
     os.remove(f'{d}/site.tgz')
     with tarfile.open('/tmp/costs-site.tgz', 'w:gz') as t:
         for name in os.listdir(d):
-            t.add(f'{d}/{name}', arcname=f'./{name}')
+            if name != '.wrangler':          # wrangler's scratch folder isn't part of the site
+                t.add(f'{d}/{name}', arcname=f'./{name}')
     s3.upload_file('/tmp/costs-site.tgz', B, KEY)
     s3.put_object(Bucket=B, Key=SKEY, Body=json.dumps(st).encode())
     print('deployed and saved to', KEY)
