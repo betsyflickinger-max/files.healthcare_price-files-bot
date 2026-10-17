@@ -245,6 +245,20 @@ def aliases(S):
 def updated():
     return TODAY.strftime('%B %-d, %Y')
 
+NOT_HERE = re.compile(r'rehab|behavioral|psychiatr|hospice|nursing|long[- ]?term|\bltac\b|kindred|select specialty|\bopco\b|real estate|'
+                      r'skilled|senior living|assisted living|home health|dialysis|\bdental|\bdds\b|pharmacy')
+SPECIALTY = [(re.compile(r'\beye\b|vision|retina|ophthalm|lasik|cataract'), ('Eye',)),
+             (re.compile(r'cardiac|cardio|\bheart\b|\bcath\b|vascular'), ('Heart', 'Imaging', 'Inpatient stays')),
+             (re.compile(r'nephrolog|kidney'), ('Lab tests',)),
+             (re.compile(r'dermatolog|plastic surg|cosmetic|aesthetic'), ()),
+             (re.compile(r'\bpain\b'), ('Pain management', 'Spine')),
+             (re.compile(r'endoscop|gastro|\bgi\b|digestive|colon'), ('GI', 'Anesthesia')),
+             (re.compile(r'orthop|\bspine\b|sports med'), ('Orthopedics', 'Spine', 'Pain management', 'Imaging', 'Physical therapy'))]
+FERTILITY = re.compile(r'reproduct|fertility|\bivf\b|\bccrm\b')
+IMAGING = re.compile(r'imag|radiolog|\bmri\b|diagnostic|\bscan|x-?ray|ultrasound|mammo|breast')
+LAB = re.compile(r'\blab\b|labs\b|laborator|diagnostic|patholog|quest|labcorp|bioreference|sonic|clinical ref')
+
+
 # ---------------------------------------------------------------- the numbers for one area x code
 KIND = {'A': 'surgery center', 'H': 'hospital', 'G': 'practice, clinic, lab or imaging center', 'P': 'clinician'}
 PROD = ['Employer and individual plans', 'Marketplace (ACA) plans', 'Medicare Advantage', 'Medicaid and CHIP', 'Plan type not stated']
@@ -279,9 +293,31 @@ def summarize(D, code, t, h):
     # centers, labs and clinics for scans, tests and office services (a "facility fee" filed under an individual or a
     # fertility lab for a colonoscopy is counted on the page but left out of the figures). Inpatient groups: hospitals only.
     cat = C.get('cat', '')
-    fac_kinds = {'H', 'A'} if drg or cat not in ('Imaging', 'Lab tests', 'Heart', 'Other', 'Physical therapy', 'Office visits',
-                                                  'Behavioral health') else {'H', 'A', 'G'}
+    # Scans and lab tests: hospitals plus imaging centers, labs and clinics (surgery centers' MRI or lab contract lines are
+    # rates on paper for services they don't offer). Visits, heart tests, therapy: any facility. Surgeries and inpatient stays:
+    # hospitals and surgery centers (inpatient: hospitals).
+    fac_kinds = ({'H'} if drg else {'H', 'G'} if cat in ('Imaging', 'Lab tests')
+                 else {'H', 'A', 'G'} if cat in ('Heart', 'Other', 'Physical therapy', 'Office visits', 'Behavioral health') else {'H', 'A'})
     anes = code.startswith('00')
+    # Insurer files list contract rates for places that never do the service ("ghost rates"). Beyond the kind of place, keep out
+    # places whose names say they don't (rehab, psychiatric, nursing...), and for scans and lab tests count clinics only when the
+    # name says imaging or lab. A name test can only leave a place out, never put one in; the Price Finder still shows them all.
+    def fits(fi):
+        x = fit_cache.get(fi)
+        if x is None:
+            nm, kd = D['fac'][int(fi)][0].lower(), D['fac'][int(fi)][2]
+            x = kd in fac_kinds and not NOT_HERE.search(nm) and not (FERTILITY.search(nm) and cat not in ('Imaging', 'Lab tests', 'Maternity'))
+            # single-specialty places named for another specialty (an eye surgery center for a colonoscopy)
+            for rx, ok in SPECIALTY:
+                if x and rx.search(nm) and cat not in ok:
+                    x = False
+            if x and kd == 'G' and cat == 'Imaging':
+                x = bool(IMAGING.search(nm))
+            elif x and kd == 'G' and cat == 'Lab tests':
+                x = bool(LAB.search(nm)) and 'cath' not in nm
+            fit_cache[fi] = x
+        return x
+    fit_cache = {}
     # Unusually high: over 20 times the median published dollar rate for the code (5 or more rates; facility fees measured
     # against the kinds of places counted below). Set high enough that real hospital prices are never caught, only
     # placeholder-looking figures such as a $59,999.99 colonoscopy. Bit 8 from insurer builds after Oct 17, 2026; computed here
@@ -290,17 +326,17 @@ def summarize(D, code, t, h):
         xs = sorted(xs)
         return xs[len(xs) // 2] if len(xs) >= 5 else None
     meds = {k: _med([r[3] for fi_, rs in f.items() for r in rs if (1 if (r[1] or anes) else 0) == k and not r[2] and not r[4] & 6 and r[3] > 0
-                     and (k == 1 or D['fac'][int(fi_)][2] in fac_kinds)]) for k in (0, 1)}
+                     and (k == 1 or fits(fi_))]) for k in (0, 1)}
     per = {'fac': {}, 'doc': {}}        # (fi, net) -> lowest dollar entry
     pct, flagged = {'fac': set(), 'doc': set()}, {'fac': set(), 'doc': set()}
     high = {'fac': set(), 'doc': set()}
+    high_e = {'fac': [], 'doc': []}
     other_kind = set()
     for fi, rs in f.items():
-        fk = D['fac'][int(fi)][2]
         for r in rs:
             if anes:                     # anesthesia: every published dollar line is the anesthesia fee, however the file classes it
                 r = [r[0], 1] + list(r[2:])
-            if not r[1] and fk not in fac_kinds:
+            if not r[1] and not fits(fi):
                 if not r[2] and not r[4] & 6:
                     other_kind.add((fi, r[0]))
                 continue
@@ -316,6 +352,7 @@ def summarize(D, code, t, h):
             m_ = meds[1 if r[1] else 0]
             if r[4] & 8 or (m_ and r[3] > 20 * m_):
                 high[k].add((fi, r[0]))
+                high_e[k].append(entry(fi, r))
                 continue
             key = (fi, r[0])
             if key not in per[k] or r[3] < per[k][key]['v']:
@@ -343,6 +380,32 @@ def summarize(D, code, t, h):
         if len(lowest) == 10:
             break
     doc = sorted(per['doc'].values(), key=lambda e: e['v']) if kind == 'fac' else []
+    # highest 10 providers (each provider once, at its highest network; same-rate-everywhere networks left out, like the lowest 10)
+    seen, highest = set(), []
+    for e in reversed(lines):
+        if e['net'] in flat:
+            continue
+        k = (e['name'], e['city'])
+        if k not in seen:
+            seen.add(k)
+            highest.append(e)
+        if len(highest) == 10:
+            break
+    # the biggest gap inside one network (what a patient on that plan could save by choosing where to go)
+    gap = None
+    for n, es in by_net.items():
+        if n in flat or len({(e['name'], e['city']) for e in es}) < 5:
+            continue
+        if gap is None or es[-1]['v'] - es[0]['v'] > gap['hi']['v'] - gap['lo']['v']:
+            gap = {'ins': nets[n][0], 'plan': nets[n][1], 'lo': es[0], 'hi': es[-1]}
+    # placeholder-looking rates, for the Price File Watch notes (counts by network, a few examples)
+    hx = high_e[kind]
+    high_counts = {}
+    for e in hx:
+        k = f"{e['ins']}|{e['plan']}"
+        high_counts[k] = high_counts.get(k, 0) + 1
+    high_ex = [{'ins': e['ins'], 'plan': e['plan'], 'name': e['name'], 'city': e['city'], 'v': e['v'], 'date': e['date'], 'url': e['url']}
+               for e in sorted(hx, key=lambda e: -e['v'])[:5]]
 
     # hospital price files (45 CFR 180)
     H = D.get('hosp') or {}
@@ -409,6 +472,7 @@ def summarize(D, code, t, h):
         'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
         'any': bool(lines or hcash or hrate or cash),
+        'highest': highest, 'gap': gap, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
         'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
     }
@@ -425,7 +489,9 @@ def fee_words(S):
 
 def kinds_words(S):
     k = set(S.get('fac_kinds') or [])
-    return 'hospitals, surgery centers, and imaging centers, labs and clinics' if 'G' in k else ('hospitals' if S['drg'] else 'hospitals and surgery centers')
+    if 'G' in k:
+        return 'hospitals, surgery centers, and imaging centers, labs and clinics' if 'A' in k else 'hospitals, imaging centers, labs and clinics'
+    return 'hospitals' if S['drg'] else 'hospitals and surgery centers'
 
 
 def prov_noun(S):
@@ -626,9 +692,32 @@ def med_headline(S):
     return None
 
 
+def covers(S):
+    if S['drg']:
+        return "Both are the hospital's payment for the whole stay; doctors bill separately."
+    if S['code'].startswith('00'):
+        return 'Both are the anesthesia rate as published.'
+    return ("Both are the facility fee only; the doctor and anesthesia bill separately." if S['kind'] == 'fac'
+            else "Both are the clinician's fee only; any facility fee is extra.")
+
+
+def savings(S):
+    """Same network, same procedure: the biggest gap a patient on that plan could avoid by choosing where to go."""
+    g = S.get('gap')
+    if not g or g['hi']['v'] - g['lo']['v'] < 1:
+        return ''
+    d = g['hi']['v'] - g['lo']['v']
+    return (f"Same procedure, same network ({esc(netname(g['ins'], g['plan']))}): {money(g['hi']['v'])} at {esc(g['hi']['name'])}, "
+            f"{money(g['lo']['v'])} at {esc(g['lo']['name'])}. That's {money(d)} more for the same {esc(fee_words(S)[1])}, and before you meet "
+            f"your deductible, much of that difference can be yours to pay. {esc(covers(S))}")
+
+
 def stands_out(S, area):
     """Two to four sentences written from this page's own figures (so no two pages read alike)."""
     out, pl = [], fee_words(S)[0]
+    sv = savings(S)
+    if sv:
+        out.append(sv)
     sc, h = S.get('sc_lo'), S.get('h_lo')
     if sc and h:
         lo, hi = (sc, h) if sc['v'] <= h['v'] else (h, sc)
@@ -654,7 +743,7 @@ def stands_out(S, area):
     if S.get('h_total'):
         out.append(f"{S['h_stale']} of the {S['h_total']} hospital price files that list this code are over six months old or undated."
                    if S['h_stale'] else f"All {S['h_total']} hospital price files that list this code are dated within the last six months.")
-    return out[:5]
+    return out[:6]
 
 
 def faq(S, area, med_area):
@@ -740,8 +829,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         notes.append(f"{S['n_high']:,} {'rate is' if S['n_high'] == 1 else 'rates are'} more than 20 times the middle published rate for this code, "
                      "likely placeholders in the insurer files, and left out of these figures. They're labeled \"unusually high\" in the Price Finder.")
     if S.get('n_other_kind'):
-        rest = 'individual clinicians' if 'G' in S['fac_kinds'] else ('surgery centers, clinics, labs and individual clinicians' if S['drg'] else 'clinics, labs and individual clinicians')
-        notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees filed under {rest} are in the Price Finder.")
+        notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees are listed for places unlikely to offer this "
+                     "service (individual clinicians, rehab, psychiatric or nursing facilities, clinics that don't do it). Insurer files often list "
+                     "rates for every contracted place, whether or not it does the procedure. They're all in the Price Finder.")
     if any(n['flat'] for n in S['networks']):
         notes.append("Networks marked \"same rate everywhere\" pay every listed provider the same amount; they're left out of the lowest-10 list.")
     if S['n_pct']:
@@ -763,6 +853,12 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
                      f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
     low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol></div>") if low_li else ''
+    hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
+                    f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>"
+                    for e in (S.get('highest') or []))
+    sv = savings(S)
+    high_sec = (f"<div><p class='kicker'>Highest published</p><h3 class='h3'>The 10 highest {pl}</h3>"
+                + (f"<p class='save'>{sv}</p>" if sv else '') + f"<ol class='word'>{hi_li}</ol></div>") if hi_li and S['lines'] >= 12 else ''
 
     cash_items = [(c['v'], f"<li><span><b>{esc(c['name'])}</b> · {esc(c['city'])}<span class='m'>posted cash price{' · ' + esc(c['label']) if c.get('label') else ''}"
                            f"{' · ' + esc(c['note']) if c.get('note') else ''} · checked {esc(c['chk'])} · <a class='src' href='{esc(c['src'])}' target='_blank' rel='noopener'>source ↗</a></span></span>"
@@ -842,7 +938,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 <div class="wrap">
 {stand_sec}
 {net_sec}
-{('<section class="sec split">' + low_sec + cash_sec + '</section>') if (low_sec or cash_sec) else ''}
+{('<section class="sec split">' + low_sec + high_sec + '</section>') if (low_sec or high_sec) else ''}
+{('<section class="sec split">' + cash_sec + '<div></div></section>') if cash_sec else ''}
 {hosp_sec}
 {inc_sec}
 {med_sec}
@@ -1015,6 +1112,7 @@ table.stack td[data-l]::before{content:attr(data-l);display:block;font:700 11px 
 footer{background:var(--board);color:#D8C7AE}
 .byline{margin:0;font:14px/1.5 var(--mono);color:var(--board-sub)}.aka{margin:0;font-size:15px;color:var(--board-sub)}
 .facts{margin:0;padding:0 0 0 20px;max-width:52em;display:grid;gap:10px;font-size:17px}.facts li::marker{color:var(--stamp)}
+.save{margin:0 0 12px;padding:12px 14px;background:var(--paper);border-left:6px solid var(--stamp);font-size:16px}
 .faq h3{margin:26px 0 6px;font-size:19px}.faq p{margin:0;max-width:50em;color:var(--muted)}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
 footer b{font:900 22px var(--display);text-transform:uppercase;color:var(--board-ink);letter-spacing:.03em}footer a{color:var(--board-ink)}
 '''
@@ -1295,17 +1393,73 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None):
         '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
         + ''.join(f'<url><loc>{esc(SITE["origin"] + u)}</loc><lastmod>{TODAY.isoformat()}</lastmod></url>\n' for u in sitemap) + '</urlset>\n')
     patch_home(site, national_section([(a, area_url_slug(a['slug'])) for a in live], summaries, procs, ''))
+    notes_changed = patch_notes(site_dir, placeholder_notes(summaries, {a['slug']: a['name'] for a in live}, slugs))
     print(f'wrote {n_written} procedure pages, {len(live)} area indexes, {len(procs)} procedure indexes; sitemap {len(sitemap)} URLs')
     about_page(site)
     for v in summaries.values():
         v.pop('csv', None)
     slim = {f'{k[0]}|{k[1]}': v for k, v in summaries.items()}
-    return {'fp': fps, 'summaries': slim, 'built': TODAY.isoformat(), 'pages': n_written}
+    return {'fp': fps, 'summaries': slim, 'built': TODAY.isoformat(), 'pages': n_written, 'notes_changed': notes_changed}
 
 
 # ---------------------------------------------------------------- deploy (same pull / deploy / save-back steps as site_files.py)
 PF_OLD = """(r[4] & 2 ? '<span class="flag low">unusually low</span>' : '');"""
 PF_NEW = """(r[4] & 2 ? '<span class="flag low">unusually low</span>' : '') + (r[4] & 8 ? '<span class="flag low">unusually high</span>' : '');"""
+
+
+def placeholder_notes(summaries, areas_by_slug, slugs):
+    """A private-notes card per insurer network whose files carry placeholder-looking rates (over 20x the median)."""
+    by = {}
+    for (slug, code), S in summaries.items():
+        for k, n in (S.get('high_counts') or {}).items():
+            b = by.setdefault(k, {'n': 0, 'codes': set(), 'areas': set(), 'ex': []})
+            b['n'] += n
+            b['codes'].add(code)
+            b['areas'].add(areas_by_slug.get(slug, slug))
+        for e in S.get('high_ex') or []:
+            k = f"{e['ins']}|{e['plan']}"
+            if k in by:
+                by[k]['ex'].append(dict(e, code=code, proc=S.get('common') or S['name'], area=areas_by_slug.get(slug, slug)))
+    if not by:
+        return ''
+    cards = []
+    for k, b in sorted(by.items(), key=lambda x: -x[1]['n']):
+        ins, plan = k.split('|', 1)
+        ex = sorted(b['ex'], key=lambda e: -e['v'])[:3]
+        exs = '; '.join(f"{esc(e['proc'])} ({esc(e['code'])}) at {esc(e['name'])}, {esc(e['area'])}: {money(e['v'])} "
+                        f"(<a href=\"{esc(e['url'])}\" target=\"_blank\" rel=\"noopener\">file dated {esc(e['date'])}</a>)" for e in ex)
+        cards.append(f"""<div class="item"><div>
+  <h4>{esc(ins)}: {esc(plan)}</h4>
+  <div class="who">{b['n']:,} placeholder-looking rates across {len(b['codes'])} of our featured procedures, in {len(b['areas'])} {'place' if len(b['areas']) == 1 else 'places'}</div>
+  <p>Rates over 20 times the typical published rate for the same procedure in the same place. Examples: {exs}.</p>
+  <div class="ev">Found by the bot {TODAY.isoformat()}. Not yet checked by hand: open the linked file and confirm the line before publishing.</div>
+</div><span class="stamp s-note">Review</span></div>""")
+    return ("<!-- PLACEHOLDERS:START (written by price-files-bot site/procedure_pages.py every run; edits here are replaced) -->\n"
+            "<h3>Placeholder-looking rates (rebuilt automatically)</h3>\n"
+            "<p class=\"sub\">Insurer networks whose files carry rates over 20 times the typical rate for the same procedure and place, "
+            "such as a $59,999.99 colonoscopy. Left out of the price pages' figures and labeled \"unusually high\" in the Price Finder. "
+            "A possible public entry once checked: the rule requires real rates.</p>\n" + "\n".join(cards) + "\n<!-- PLACEHOLDERS:END -->")
+
+
+def patch_notes(d, block):
+    """Put the placeholder list into the Price File Watch private notes (functions/api/watch-notes.js), right after the intro."""
+    p = os.path.join(d, 'functions', 'api', 'watch-notes.js')
+    if not block or not os.path.isfile(p):
+        return False
+    js = open(p, encoding='utf-8').read()
+    block = block.replace('\\', '\\\\').replace('`', '\\`').replace('${', '\\${')   # it lives inside a JS template string
+    if '<!-- PLACEHOLDERS:START' in js:
+        new = re.sub(r'<!-- PLACEHOLDERS:START.*?<!-- PLACEHOLDERS:END -->', lambda m: block, js, flags=re.S)
+    else:
+        m = re.search(r'(<h2>My notes \(private\)</h2>\s*<p class="sub">.*?</p>)', js, re.S)
+        if not m:
+            print('notes layout changed; placeholder list not added')
+            return False
+        new = js[:m.end()] + '\n\n' + block + '\n' + js[m.end():]
+    if new != js:
+        open(p, 'w', encoding='utf-8').write(new)
+        return True
+    return False
 
 
 def label_high(text):
@@ -1350,7 +1504,7 @@ def deploy(force=False):
         prev = None
     home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
     st = build(d, Store(d), prev=prev)
-    changed = (not prev) or st['pages'] > 0 or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
+    changed = (not prev) or st['pages'] > 0 or st.get('notes_changed') or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
     if not changed:
         print('no area page changed since the last run; nothing to deploy')
         return

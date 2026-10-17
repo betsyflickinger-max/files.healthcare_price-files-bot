@@ -71,3 +71,10 @@ Search: titles follow how people search ("Colonoscopy Cost in Houston: $427 to $
 `SEARCH_NAMES`; each page has a "What stands out" list and a Q&A section written from its own figures (FAQPage data), a byline
 and /about/ page (`AUTHOR`), a CSV of every figure behind the page (`prices.csv`, lists up to 5,000 lines), and Dataset data.
 Pages with fewer than 5 providers and fewer than 3 cash prices carry noindex and stay out of the sitemap until they have more.
+Each page also lists the 10 highest rates and the biggest gap inside one network ("same procedure, same network: $4,157 at A,
+$232 at B"). Ghost rates (contract rates listed for places that don't do the service) are kept out of the figures by kind of
+place plus a name test that can only exclude (rehab, psychiatric, nursing; single-specialty names like an eye center for a
+colonoscopy; scans and labs count clinics only when the name says imaging or lab); the Price Finder still lists everything.
+Placeholder-looking rates (over 20x the median) are listed by insurer network, with example lines and file links, in the
+Price File Watch private notes (functions/api/watch-notes.js, between PLACEHOLDERS markers), rebuilt each run, for review
+before anything is made public.
