@@ -64,7 +64,7 @@ def main(src, out):
     self_dfw = sum(1 for e in dfw if e["funding"] == "self-funded")
     # search list: [name, city, dfw, insurers {name: [networks]}, funding text, active, year, plan, ack, carriers, stop-loss carriers, ein]
     json.dump([[e["name"], (e["city"] or "").title(), 1 if e["dfw"] else 0, e["ins"], fund(e), e["active"], e["year"],
-                e["plan"], e["ack"], e["carriers"], e["sl_carriers"], e["ein"]] for e in emp],
+                e["plan"], e["ack"], e["carriers"], e["sl_carriers"], e["ein"], e.get("pf") or []] for e in emp],
               open(out / "employers.json", "w"), separators=(",", ":"))
     page = TEMPLATE
     for k, v in dict(BUILT=long_date(M["built"]), N_ALL=n(c["employers"]), N_5500=n(c["with_5500"]), N_TX=n(len(emp)),
@@ -127,6 +127,7 @@ th:nth-child(2),th:nth-child(3){text-align:left}
 .ins b{font-weight:600}
 .nets{color:var(--ink-2)}
 .empty{color:var(--ink-2);font-size:14px}
+.pf{margin-top:10px;padding:8px 10px;background:var(--brick-soft);font-size:14px;border-radius:2px}
 .bar{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:10px 0 4px;font-size:14px}
 .bar select,.bar input[type=search]{font:14px var(--body);padding:6px 8px;border:1px solid var(--ink-2);border-radius:2px;background:transparent;color:var(--ink)}
 .btn,.lnk{font:600 13px var(--body);color:var(--brick);background:transparent;border:1px solid var(--brick);border-radius:2px;padding:5px 10px;cursor:pointer}
@@ -194,7 +195,7 @@ th.s[aria-sort=descending]::after{content:" ▼"}
 <section class="notes">
   <p><b>Where this comes from.</b> Insurer price file indexes (federal Transparency in Coverage rule): {{CATALOGS}}. Employers per insurer, nationwide: {{INS_LINE}}. Form 5500 health-plan filings, data years {{YEARS}}, from the Department of Labor's <a href="{{DOL}}" target="_blank" rel="noopener">Form 5500 datasets</a>; look up any filing by employer name in <a href="{{EFAST}}" target="_blank" rel="noopener">EFAST2</a>. {{N_ALL}} employers appear in the indexes; {{N_5500}} of them have a health-plan Form 5500.</p>
   <p><b>What "funding" means here.</b> It is what the employer's filing says, not our judgment. <i>Insured</i>: a Schedule A shows health coverage bought from an insurer. <i>Self-funded</i>: no insured health coverage on file, and the plan pays benefits from the employer's assets or a trust. <i>Insured and self-paid parts</i>: the filing shows both, often an insured option next to self-paid benefits. <i>Stop-loss on file</i>: the plan bought stop-loss insurance, which self-funded plans use to cap large claims.</p>
-  <p><b>What this leaves out.</b> Only plans that must file a Form 5500 (mostly 100 or more participants) show participants and funding. Location is the sponsor's mailing address on the filing; a Texas address doesn't mean every member lives in Texas. Insurers not listed above (for example, smaller administrators) aren't searched yet. Network names are the insurer's own file descriptions; to see the rates in a network, use the <a href="/price-finder/">Price Finder</a>.</p>
+  <p><b>What this leaves out.</b> Only plans that must file a Form 5500 (mostly 100 or more participants) show participants and funding. Location is the sponsor's mailing address on the filing; a Texas address doesn't mean every member lives in Texas. Insurers not listed above (for example, smaller administrators) aren't searched yet. Network names are the insurer's own file descriptions. Where a network is one the <a href="/price-finder/">Price Finder</a> carries for Dallas–Fort Worth (matched by its price file name), the employer's card links straight to that network's rates. Other networks, including other Blue plans' out-of-state BlueCard networks, aren't in the Price Finder yet.</p>
 </section>
 </div>
 <script>
@@ -205,6 +206,8 @@ th.s[aria-sort=descending]::after{content:" ▼"}
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var num=function(x){return x==null?'—':Number(x).toLocaleString('en-US');};
   function load(){ if(P) return Promise.resolve(); return fetch('employers.json').then(function(r){return r.json();}).then(function(x){P=x;}); }
+  function pfLinks(e){var L=e[12]||[];if(!L.length) return '';
+    return '<div class="pf"><b>See its rates in the Dallas–Fort Worth Price Finder:</b> '+L.map(function(n){var p=n.split('|');return '<a href="/price-finder/?net='+encodeURIComponent(n)+'">'+esc(p[1]||n)+'</a>';}).join(' · ')+'</div>';}
   function card(e){
     var ins=Object.keys(e[3]).map(function(k){var nets=e[3][k];return '<div><b>'+ilink(k)+'</b>'+(nets.length?' <span class="nets">· '+nets.map(esc).join(' · ')+'</span>':'')+'</div>';}).join('');
     var f='<span>'+esc(e[4])+'</span>';
@@ -212,7 +215,7 @@ th.s[aria-sort=descending]::after{content:" ▼"}
     if(e[6]) f+='<span>Form 5500 '+esc(e[6])+'</span>';
     if(e[9]) f+='<span>Insured by '+esc(e[9])+'</span>';
     if(e[10]) f+='<span>Stop-loss: '+esc(e[10])+'</span>';
-    return '<div class="card"><h3>'+esc(e[0])+'</h3><div class="meta">'+esc(e[1])+(e[2]?' · Dallas–Fort Worth':'')+' · EIN '+esc(e[11])+(e[7]?' · '+esc(e[7]):'')+'</div><div class="facts">'+f+'</div><div class="ins">'+ins+'</div>'+(e[8]?'<div class="meta" style="margin-top:8px">Form 5500 filing ID '+esc(e[8])+'</div>':'')+'</div>';
+    return '<div class="card"><h3>'+esc(e[0])+'</h3><div class="meta">'+esc(e[1])+(e[2]?' · Dallas–Fort Worth':'')+' · EIN '+esc(e[11])+(e[7]?' · '+esc(e[7]):'')+'</div><div class="facts">'+f+'</div><div class="ins">'+ins+'</div>'+pfLinks(e)+(e[8]?'<div class="meta" style="margin-top:8px">Form 5500 filing ID '+esc(e[8])+'</div>':'')+'</div>';
   }
   function show(){ var t=q.value.trim().toLowerCase(); if(t.length<2){res.innerHTML='';return;}
     load().then(function(){
@@ -258,8 +261,8 @@ th.s[aria-sort=descending]::after{content:" ▼"}
   [fq,fi,fa,ff].forEach(function(x){x.addEventListener(x===fq?'input':'change',function(){load().then(render);});});
   document.querySelectorAll('button[data-ins]').forEach(function(b){b.addEventListener('click',function(){fi.value=b.getAttribute('data-ins');load().then(render);document.getElementById('all').scrollIntoView({behavior:'smooth'});});});
   document.getElementById('x-all').addEventListener('click',function(){
-    var rows=[['Employer','City','Dallas-Fort Worth','EIN','Insurers listing the plan','Networks (by insurer)','Funding (Form 5500)','Active participants','Form 5500 year','Form 5500 plan name','Form 5500 filing ID','Health insurers on Schedule A','Stop-loss insurers on Schedule A']];
-    view.forEach(function(e){rows.push([e[0],e[1],e[2]?'yes':'no',e[11],insOf(e),Object.keys(e[3]).map(function(k){return k+': '+e[3][k].join(' | ');}).join(' || '),e[4],e[5],e[6],e[7],e[8],e[9],e[10]]);});
+    var rows=[['Employer','City','Dallas-Fort Worth','EIN','Insurers listing the plan','Networks (by insurer)','Funding (Form 5500)','Active participants','Form 5500 year','Form 5500 plan name','Form 5500 filing ID','Health insurers on Schedule A','Stop-loss insurers on Schedule A','Networks in the DFW Price Finder']];
+    view.forEach(function(e){rows.push([e[0],e[1],e[2]?'yes':'no',e[11],insOf(e),Object.keys(e[3]).map(function(k){return k+': '+e[3][k].join(' | ');}).join(' || '),e[4],e[5],e[6],e[7],e[8],e[9],e[10],(e[12]||[]).map(function(n){return n.split('|')[1]||n;}).join(' | ')]);});
     rows.push([]);rows.push(['Source: insurer Transparency in Coverage indexes and DOL Form 5500 datasets. '+stamp]);
     download('employer-plans-texas'+(fa.value==='dfw'?'-dfw':'')+(fi.value?'-'+fi.value.replace(/[^A-Za-z]+/g,'-').toLowerCase():'')+'.csv',rows);});
   load().then(render).catch(function(){cnt.textContent='Could not load the employer list.';});
