@@ -12,6 +12,17 @@ import hashlib
 import os, sys, csv, json, gzip, base64, time, duckdb, boto3, glob, shutil
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+import re
+
+
+def looks_placeholder(v, median):
+    """Filler number, not a real price (same rule as site/procedure_pages.py): over 5x the code's median and shaped like filler
+    (59,999.99 / 99,999 / 9,999.99 / round $100,000+ over 20x), or over 100x the median. Real high prices are never caught."""
+    if not median or v <= 5 * median:
+        return False
+    t = f'{v:.2f}'.rstrip('0').rstrip('.')
+    nines = '9999' in t or bool(re.fullmatch(r'\d*999(\.99?)?', t))
+    return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 E = os.environ
 s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
@@ -270,7 +281,7 @@ def work(u):
     """One bucket (or one piece of one). DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
     other rates, $0 count, flat-case-rate, unusually-low and unusually-high flags (median via approx_quantile;
-    flag bits: 1 flat case rate, 2 under a fifth of the median, 4 $0 listed, 8 over 20 times the median)."""
+    flag bits: 1 flat case rate, 2 under a fifth of the median, 4 $0 listed, 8 filler-looking: over 5x the median and shaped like filler, or over 100x)."""
     k, sp = unit_parts(u)
     try:
         return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{u}.json')['Body'].read()))
@@ -331,7 +342,7 @@ def work(u):
             v, tin, modi, st, nt, dt, url = h
             isflat = fee == 0 and t == 0 and not modi and (npi, ins, net, v) in FLAT
             m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
-            ishigh = bool(m and m[1] >= 5 and t == 0 and v > 20 * m[0])   # unusually high: over 20x the median, likely a placeholder (e.g. 59999.99)
+            ishigh = bool(m and m[1] >= 5 and t == 0 and looks_placeholder(v, m[0]))   # filler-looking rate (e.g. 59999.99)
             rest = [r for r in pos[:9] if r is not h]
             others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
             if SORTV == '2': di_, ui_ = (D0 if dt is None else dt), (U0 if url is None else url)
@@ -420,7 +431,7 @@ def work3(u, c, src, MD):
             if npos:
                 isflat = fee == 0 and t == 0 and not modi and (npis[pi], ins, net, v) in FLAT
                 m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
-                ishigh = bool(m and m[1] >= 5 and t == 0 and v > 20 * m[0])   # unusually high: over 20x the median, likely a placeholder (e.g. 59999.99)
+                ishigh = bool(m and m[1] >= 5 and t == 0 and looks_placeholder(v, m[0]))   # filler-looking rate (e.g. 59999.99)
                 others = [[float(o_['v']), labc(o_['modi'], o_['st'], o_['nt'], o_['tin'] != tin)] for o_ in [o_ for o_ in (ot or []) if o_['rp'] != hrp][:8]]
                 row = [n, fee, t, float(v), (1 if isflat else 0) | (2 if islow else 0) | (8 if ishigh else 0), di_, ui_, npos - 1, others, zeros, labc(modi, st, nt, False)]
             else:

@@ -245,6 +245,18 @@ def aliases(S):
 def updated():
     return TODAY.strftime('%B %-d, %Y')
 
+def looks_placeholder(v, median):
+    """A filler number, not a real price: far above the code's median AND shaped like filler (59,999.99, 99,999, 9,999.99, a round
+    $100,000+), or so extreme no real price fits (over 100x the median). Real but outrageous prices (a $33,148 hospital carpal
+    tunnel fee) are never caught: they stay on the pages."""
+    if not median or v <= 5 * median:
+        return False
+    t = f'{v:.2f}'.rstrip('0').rstrip('.')
+    nines = '9999' in t or bool(re.fullmatch(r'\d*999(\.99?)?', t))
+    roundbig = v >= 100000 and v % 10000 == 0
+    return nines or (roundbig and v > 20 * median) or v > 100 * median
+
+
 NOT_HERE = re.compile(r'rehab|behavioral|psychiatr|hospice|nursing|long[- ]?term|\bltac\b|kindred|select specialty|\bopco\b|real estate|'
                       r'skilled|senior living|assisted living|home health|dialysis|\bdental|\bdds\b|pharmacy')
 SPECIALTY = [(re.compile(r'\beye\b|vision|retina|ophthalm|lasik|cataract'), ('Eye',)),
@@ -318,10 +330,9 @@ def summarize(D, code, t, h):
             fit_cache[fi] = x
         return x
     fit_cache = {}
-    # Unusually high: over 20 times the median published dollar rate for the code (5 or more rates; facility fees measured
-    # against the kinds of places counted below). Set high enough that real hospital prices are never caught, only
-    # placeholder-looking figures such as a $59,999.99 colonoscopy. Bit 8 from insurer builds after Oct 17, 2026; computed here
-    # for older builds. The median is only the screening line; it is never shown as a price.
+    # Unusually high = placeholder-looking (see looks_placeholder): measured against the code's median published dollar rate
+    # (5 or more rates; facility fees against the places counted below). Bit 8 from insurer builds after Oct 17, 2026; computed
+    # here for older builds. The median is only a screening line; it is never shown as a price.
     def _med(xs):
         xs = sorted(xs)
         return xs[len(xs) // 2] if len(xs) >= 5 else None
@@ -350,7 +361,7 @@ def summarize(D, code, t, h):
                 flagged[k].add((fi, r[0]))
                 continue
             m_ = meds[1 if r[1] else 0]
-            if r[4] & 8 or (m_ and r[3] > 20 * m_):
+            if r[4] & 8 or (m_ and looks_placeholder(r[3], m_)):
                 high[k].add((fi, r[0]))
                 high_e[k].append(entry(fi, r))
                 continue
@@ -826,8 +837,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     if S['n_flag']:
         notes.append(f"{S['n_flag']:,} {'rate is' if S['n_flag'] == 1 else 'rates are'} flagged in the insurer files as unusually low and left out of these figures.")
     if S.get('n_high'):
-        notes.append(f"{S['n_high']:,} {'rate is' if S['n_high'] == 1 else 'rates are'} more than 20 times the middle published rate for this code, "
-                     "likely placeholders in the insurer files, and left out of these figures. They're labeled \"unusually high\" in the Price Finder.")
+        notes.append(f"{S['n_high']:,} {'rate looks' if S['n_high'] == 1 else 'rates look'} like filler numbers in the insurer files "
+                     "(such as 59,999.99, far above every real rate for this code) and {'is' if S['n_high'] == 1 else 'are'} left out of these figures. They're labeled \"unusually high\" in the Price Finder.")
     if S.get('n_other_kind'):
         notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees are listed for places unlikely to offer this "
                      "service (individual clinicians, rehab, psychiatric or nursing facilities, clinics that don't do it). Insurer files often list "
@@ -1430,13 +1441,13 @@ def placeholder_notes(summaries, areas_by_slug, slugs):
                         f"(<a href=\"{esc(e['url'])}\" target=\"_blank\" rel=\"noopener\">file dated {esc(e['date'])}</a>)" for e in ex)
         cards.append(f"""<div class="item"><div>
   <h4>{esc(ins)}: {esc(plan)}</h4>
-  <div class="who">{b['n']:,} placeholder-looking rates across {len(b['codes'])} of our featured procedures, in {len(b['areas'])} {'place' if len(b['areas']) == 1 else 'places'}</div>
-  <p>Rates over 20 times the typical published rate for the same procedure in the same place. Examples: {exs}.</p>
+  <div class="who">{b['n']:,} filler-looking rates across {len(b['codes'])} of our featured procedures, in {len(b['areas'])} {'place' if len(b['areas']) == 1 else 'places'}</div>
+  <p>Rates far above the typical published rate for the same procedure and place, shaped like filler (59,999.99, 99,999, round $100,000+) or over 100 times typical. Examples: {exs}.</p>
   <div class="ev">Found by the bot {TODAY.isoformat()}. Not yet checked by hand: open the linked file and confirm the line before publishing.</div>
 </div><span class="stamp s-note">Review</span></div>""")
     return ("<!-- PLACEHOLDERS:START (written by price-files-bot site/procedure_pages.py every run; edits here are replaced) -->\n"
             "<h3>Placeholder-looking rates (rebuilt automatically)</h3>\n"
-            "<p class=\"sub\">Insurer networks whose files carry rates over 20 times the typical rate for the same procedure and place, "
+            "<p class=\"sub\">Insurer networks whose files carry filler-looking rates far above the typical rate for the same procedure and place, "
             "such as a $59,999.99 colonoscopy. Left out of the price pages' figures and labeled \"unusually high\" in the Price Finder. "
             "A possible public entry once checked: the rule requires real rates.</p>\n" + "\n".join(cards) + "\n<!-- PLACEHOLDERS:END -->")
 
