@@ -199,7 +199,15 @@ def hosp_waiting(left):
 def build_cap(left):
     """machines the state builds may use: the account limit, less the orchestrator's reserve and the hospital slots"""
     want = min(HOSP_SLOTS, len(hosp_waiting(left)))
-    return int(O.do('GET', '/account')['account']['droplet_limit']) - O.RESERVE - want, want
+    limit = int(O.do('GET', '/account')['account']['droplet_limit'])
+    cap = limit - O.RESERVE - want
+    # Oct 18, 2026: machine shares (machine_shares.py) - leave room for waiting insurer files; rebuilds get at most a quarter
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        import machine_shares
+        cap = min(cap, machine_shares.build_cap(O.BID, limit, O.RESERVE, [d['name'] for d in O.droplets()], s3, B, log) - want)
+    except Exception as e: log('machine shares check failed (using the old cap):', repr(e)[:150])
+    return max(cap, 1), want
 def make_room(st, left, cap):
     while left and sum(st['machines'][x] for x in left) > cap:
         s = max(left, key=lambda x: st['machines'][x])
@@ -244,6 +252,47 @@ def fit_to_work(st, left):
                     except Exception as e: log('stop failed', name, repr(e)[:150])
 
 
+# Oct 18, 2026 (Betsy OK'd): price check (cost_check.py). After 2 hours of building, the build's real speed projects the
+# hours and dollars still needed; over $100 or a day without an OK in build_approvals.json, its machines are stopped
+# (finished batches stay in R2), a GitHub issue goes out, and the build waits.
+def units_total(slug): return NB * int(WBIG.get(slug, {}).get('SPLIT', '1'))
+def usd_hour(size):
+    try: return float(next(z['price_hourly'] for z in O.do('GET', '/sizes?per_page=200')['sizes'] if z['slug'] == size))
+    except Exception: return 0.25
+def cost_hold(st, left):
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import cost_check as C
+    lefts = {s: units_left(s) for s in left}
+    done_now = sum(units_total(s) - lefts[s] for s in left)
+    ck = st.setdefault('cost_check', {})
+    if 't0' not in ck: ck.update(t0=time.time(), done0=done_now); return False
+    h = ck.get('hold')
+    if h and not C.approved_usd(O.BID): log('price check: waiting for Betsy\'s OK:', h); return True
+    if h:   # approved: start again with fresh launch counts and a fresh measurement
+        log('price check: approved for $', C.approved_usd(O.BID), '- resuming')
+        st['cost_check'] = {'t0': time.time(), 'done0': done_now, 'approved_after': h}
+        for k in [k for k in st['launches'] if any(k.startswith(s + '-c') for s in left)]: st['launches'].pop(k)
+        return False
+    machines = sum(st['machines'][s] for s in left)
+    proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), machines, usd_hour(SIZE))
+    v = C.verdict(O.BID, proj)
+    if proj: ck['last'] = dict(at=time.strftime('%Y-%m-%d %H:%M'), hours_left=round(proj[0], 1) if proj[0] != float('inf') else None,
+                               usd_left=round(proj[1]) if proj[1] != float('inf') else None, units_per_hour=round(proj[2], 2))
+    if v == 'ok': return False
+    ck['hold'] = v
+    for d in O.droplets():
+        if d['name'].startswith(f'upfront-site-{O.BID}-'):
+            try: O.do('DELETE', f"/droplets/{d['id']}"); log('price check: stopped', d['name'])
+            except Exception as e: log('stop failed', d['name'], repr(e)[:150])
+    per = ', '.join(f"{NAMES.get(s, s)} {units_total(s) - lefts[s]} of {units_total(s)}" for s in left)
+    O.issue(f"Price check: {O.BID} paused, needs your OK",
+            f"The {O.BID} Price Finder build was stopped after its first {C.CHECK_AFTER_H} hours: {v}.\n\n"
+            f"Work done so far (kept in storage): {per}.\n\n"
+            f"To let it finish, tell Claude the most it may spend (it adds the build to build_approvals.json). "
+            f"Or ask Claude to make the data smaller first.")
+    log('price check: HOLD', v); return True
+
+
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
@@ -286,6 +335,9 @@ def main():
             log('providers per state', st['providers'], 'machines', st['machines'])
     if st['stage'] == 'build':
         left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
+        try:
+            if left and cost_hold(st, left): return putj(SP + 'state.json', st)
+        except Exception as e: log('price check failed (build goes on):', repr(e)[:200])
         # Oct 16: AORDER=desc: biggest tables first, so the machines share them early. North Carolina's build read them
         # last (smallest first), and its last ~2 hours went to the two Blue Cross NC tables (75 and 95 pieces).
         def run(slug, i):
