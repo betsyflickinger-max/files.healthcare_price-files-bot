@@ -241,9 +241,9 @@ def build(L):
            "Psychiatric": ("283Q", "282N"), "Childrens": ("282N",), "Acute Care Hospitals": ("282N",),
            "Critical Access Hospitals": ("282N",)}
     by_zip, by_city = collections.defaultdict(list), collections.defaultdict(list)
-    for npi, nm, tax, addr, z, city in L["org"]:
+    for npi, nm, tax, addr, z, cty in L["org"]:
         by_zip[(z or "")[:5]].append((npi, nm, tax or "", addr or ""))
-        by_city[(city or "").upper()].append((npi, nm, tax or "", addr or ""))
+        by_city[(cty or "").upper()].append((npi, nm, tax or "", addr or ""))
     stno = lambda a: (re.match(r"\s*(\d+)", a or "") or [None, None])[1]
     # slugs (unique)
     seen = collections.Counter()
