@@ -273,6 +273,8 @@ def patch_mw(s):
 
 
 def patch_looks_css(s):
+    if '/* ux: start pill */' not in s:
+        s += ('\n/* ux: start pill */html[data-look="hotline"]:not(#_) .start-pill{background:#45F0AE!important;color:#050807!important}\n')
     if '/* ux: phone */' in s:
         return s
     return s + ('\n/* ux: phone */@media(max-width:700px){.look-pick{left:auto;right:8px;bottom:8px;padding:4px 6px;gap:4px;font-size:12px;opacity:.9}'
