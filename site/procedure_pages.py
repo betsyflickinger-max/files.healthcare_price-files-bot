@@ -324,6 +324,27 @@ def kind_of(x):
 
 HOSP_NAME = re.compile(r'\bhospital\b', re.I)
 PARPLAN = re.compile(r'par\s*plan', re.I)
+# Hospital price files filed under the wrong area by name alone (Oct 18 audit: "Dallas County Hospital" in Perry, Iowa sat in
+# Dallas-Fort Worth). Left out of every page's figures here; the real fix is a state/address check where files are assigned to areas.
+WRONG_AREA = re.compile(r'dallascohospital\.org', re.I)
+
+
+def mostly_one(es):
+    """(providers, providers at the top amount, top amount) when a network pays most of its places one top amount, e.g. a flat case
+    rate (Curative's $11,500 colonoscopy at 32 of 43 DFW places, Oct 18). Each provider counted once, at its lowest rate in the
+    network. None otherwise. A network that pays everyone the same is the case where all places share it."""
+    provs = {}
+    for e in es:
+        k = (e['name'], e['city'])
+        if k not in provs or e['v'] < provs[k]:
+            provs[k] = e['v']
+    if len(provs) < 5:
+        return None
+    top = max(provs.values())
+    k = sum(1 for v in provs.values() if v == top)
+    return (len(provs), k, top) if k >= 5 and 2 * k >= len(provs) else None
+
+
 PUBLIC_PAYER = re.compile(r'^(?:medicare\b(?!.*advantage)|medicaid\b|tmhp\b|texas medicaid\b)', re.I)
 
 
@@ -430,13 +451,20 @@ def summarize(D, code, t, h):
         by_net.setdefault(e['net'], []).append(e)
     # each provider counted once per network (a provider can have several NPIs), so a network never shows more than the page total
     networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'n': len({(e['name'], e['city']) for e in es}), 'lo': es[0], 'hi': es[-1],
-                 'flat': len(es) >= 5 and es[0]['v'] == es[-1]['v'], 'par': bool(PARPLAN.search(nets[n][1] or ''))} for n, es in by_net.items()]
+                 'flat': bool(mostly_one(es)), 'one': mostly_one(es), 'par': bool(PARPLAN.search(nets[n][1] or ''))} for n, es in by_net.items()]
     # BCBSTX ParPlan: listed in the networks table, labeled, but kept out of the headline figures (Oct 18: what it represents is
     # under review; the same amount repeats across hospitals)
     lines = [e for e in allines if not PARPLAN.search(e['plan'] or '')]
     by_net = {n: es for n, es in by_net.items() if not PARPLAN.search(nets[n][1] or '')}
     networks.sort(key=lambda x: (x['lo']['v'], x['ins'], x['plan']))
-    flat = {n for n, es in by_net.items() if len(es) >= 5 and es[0]['v'] == es[-1]['v']}
+    flat = {n for n, es in by_net.items() if mostly_one(es)}
+    # Networks that pay most places one amount stay in the networks table, labeled, but out of the headline low/high and the
+    # comparisons below (Oct 18: a flat case rate was the page's "highest" and drove its "same network" and "same place" lines).
+    # Real high prices elsewhere stay in the figures.
+    kept = [e for e in lines if e['net'] not in flat]
+    flat_out = bool(kept) and len(kept) < len(lines)
+    if kept:
+        lines = kept
     # lowest 10 providers (each provider once, at its lowest network). Networks that pay every provider the same amount
     # stay in the network table, labeled, but are left out of this ranking (same rule as the procedure packages).
     seen, lowest = set(), []
@@ -484,8 +512,9 @@ def summarize(D, code, t, h):
         x = H['src'][s]
         return {'name': nice(x[0]), 'city': x[1], 'date': x[3], 'url': x[4], 'unit': x[6] or 'row'}
     nsrc, nins = len(H.get('src') or []), len(H.get('ins') or [])
-    hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc], 'p': hc.get('p'),
-          'r': [r for r in hc.get('r', []) if r[0] < nsrc and r[1] < nins]}   # a per-code file newer than the page's lists: skip unknown entries
+    wrong = {i for i, x in enumerate(H.get('src') or []) if WRONG_AREA.search(str(x[4] or ''))}
+    hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc and r[0] not in wrong], 'p': hc.get('p'),
+          'r': [r for r in hc.get('r', []) if r[0] < nsrc and r[1] < nins and r[0] not in wrong]}   # a per-code file newer than the page's lists: skip unknown entries
     hcash = {}
     for r in hc.get('c', []):
         if r[5] == 0 and (r[0] not in hcash or r[2] < hcash[r[0]]['v']):
@@ -544,7 +573,7 @@ def summarize(D, code, t, h):
         'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
         'any': bool(lines or hcash or hrate or cash),
-        'highest': highest, 'gap': gap, 'high_counts': high_counts, 'high_ex': high_ex,
+        'highest': highest, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
         'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
     }
@@ -923,13 +952,15 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                      "BCBSTX's allowed amount, file the claim and not bill the member above it (BCBSTX: bcbstx.com/provider/network/parplan.html). "
                      "ParPlan rates are listed in the networks table but left out of this page's low and high figures.")
     if any(n['flat'] for n in S['networks']):
-        notes.append("Networks marked \"same rate everywhere\" pay every listed provider the same amount; they're left out of the lowest-10 list.")
+        notes.append("Networks marked \"same rate everywhere\" or \"same $… at N of M places\" pay all or most of their listed places one amount. "
+                     "They're shown in the networks table but left out of the rankings"
+                     + (" and this page's low and high figures." if S.get('flat_out') else "."))
     if S['n_pct']:
         notes.append(f"{S['n_pct']:,} {'rate is' if S['n_pct'] == 1 else 'rates are'} published as a percent of billed charges, with no dollar figure.")
 
     # by network
     net_rows = ''.join(
-        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
+        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{(' · <span class=flag>same rate everywhere</span>' if n['one'][1] == n['one'][0] else f" · <span class=flag>same {money(n['one'][2])} at {n['one'][1]} of {n['one'][0]} places</span>") if n.get('one') else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
         f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
