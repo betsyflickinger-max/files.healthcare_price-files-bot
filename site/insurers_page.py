@@ -285,10 +285,11 @@ svg text{font-family:var(--body)}
   function mix(p){var t=p.i+p.sg+p.lg||1;
     return '<div class="mk" aria-hidden="true"><i style="width:'+(100*p.i/t)+'%;background:var(--brick)"></i><i style="width:'+(100*p.sg/t)+'%;background:var(--multi)"></i><i style="width:'+(100*p.lg/t)+'%;background:var(--single)"></i></div>'+
       '<div class="mklab"><span>Individual '+num(p.i)+'</span><span>Small employer '+num(p.sg)+'</span><span>Large employer '+num(p.lg)+'</span></div>';}
+var AKA={'Health Care Service Corp (HCSC)':'Runs <b>Blue Cross and Blue Shield</b> of Texas, Illinois, Oklahoma, New Mexico and Montana, as an independent licensee of the Blue Cross Blue Shield Association. It is owned by its members, not stockholders.'};
   function drawPanel(){
     var p=D.find(function(x){return x.n===sel;})||D[0];
     panel.innerHTML='<div><span class="pill '+p.s+'">'+SC[p.s]+'</span></div><h3>'+esc(p.n)+'</h3>'+
-      '<div class="mklab" style="font-size:14px"><span><b style="color:var(--ink)">'+num(p.l)+'</b> members</span><span><b style="color:var(--ink)">'+p.c.length+'</b> companies</span><span><b style="color:var(--ink)">'+p.st+'</b> states with members</span></div>'+mix(p)+
+      '<div class="mklab" style="font-size:14px"><span><b style="color:var(--ink)">'+num(p.l)+'</b> members</span><span><b style="color:var(--ink)">'+p.c.length+'</b> compan'+(p.c.length===1?'y':'ies')+'</span><span><b style="color:var(--ink)">'+p.st+'</b> state'+(p.st===1?'':'s')+' with members</span></div>'+(AKA[p.n]?'<p class="aka" style="margin:0;font-size:15px">'+AKA[p.n]+'</p>':'')+mix(p)+
       (p.u?'<div><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Its price-file page</a></div>':'<div class="mklab">No price-file page found for this parent yet.</div>')+companies(p);
   }
   function drawList(vis){

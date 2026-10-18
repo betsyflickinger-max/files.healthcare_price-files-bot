@@ -426,7 +426,15 @@ def patch_units_css(s):
 
 def patch_looks_js(s):
     s = s.replace("var KEY = 'hcf-look-v2';", "var KEY = 'hcf-look-v3'; // v3 (Oct 18): default changed to Units")
-    return s.replace("if (!ok(v)) v = 'hotline';", "if (!ok(v)) v = 'units';")
+    s = s.replace("if (!ok(v)) v = 'hotline';", "if (!ok(v)) v = 'units';")
+    # Each look also pins the page's own light/dark colors, so a dark-mode computer can't put
+    # dark-mode box colors under a light look's dark text (Oct 18: unreadable boxes on /insurers/).
+    old = "if (look === 'original') root.removeAttribute('data-look'); else root.setAttribute('data-look', look);"
+    new = ("if (look === 'original') { root.removeAttribute('data-look'); if (root.getAttribute('data-theme-by') === 'look') { root.removeAttribute('data-theme'); root.removeAttribute('data-theme-by'); } }\n"
+           "    else { root.setAttribute('data-look', look); root.setAttribute('data-theme', DARK.indexOf(look) >= 0 ? 'dark' : 'light'); root.setAttribute('data-theme-by', 'look'); }")
+    if 'data-theme-by' not in s:
+        s = s.replace(old, new).replace("  var root = document.documentElement;", "  var DARK = ['hotline', 'amber', 'pedal', 'phos'];\n  var root = document.documentElement;", 1)
+    return s
 
 
 def patch_start_band(s):
@@ -449,6 +457,17 @@ def patch_home_hero(s):
     return s[:j + 1] + home_bits.HOME_CSS2 + s[j + 1:]
 
 
+INS_OLD = ("'</b> companies</span><span><b style=\"color:var(--ink)\">'+p.st+'</b> states with members</span></div>'")
+INS_NEW = ("'</b> compan'+(p.c.length===1?'y':'ies')+'</span><span><b style=\"color:var(--ink)\">'+p.st+'</b> state'+(p.st===1?'':'s')+' with members</span></div>'+(AKA[p.n]?'<p class=\"aka\" style=\"margin:0;font-size:15px\">'+AKA[p.n]+'</p>':'')")
+INS_AKA = ("var AKA={'Health Care Service Corp (HCSC)':'Runs <b>Blue Cross and Blue Shield</b> of Texas, Illinois, Oklahoma, New Mexico and Montana, as an independent licensee of the Blue Cross Blue Shield Association. It is owned by its members, not stockholders.'};\n  function drawPanel(){")
+
+
+def patch_insurers(s):
+    if 'var AKA=' in s:
+        return s
+    return s.replace(INS_OLD, INS_NEW).replace('  function drawPanel(){', INS_AKA, 1)
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -466,6 +485,7 @@ def run(d):
     edit('looks/looks.css', patch_looks_css)
     edit('looks/looks.css', patch_units_css)
     edit('looks/looks.js', patch_looks_js)
+    edit('insurers/index.html', patch_insurers)
     edit('start-here/index.html', patch_start_band)
     edit('index.html', patch_home_hero)
     edit('disclaimers/index.html', patch_disclaimers)
