@@ -21,9 +21,26 @@ SHARED_HOSTS = ("blob.core.windows.net", "amazonaws.com", "cloudfront.net", "goo
                 "azureedge.net", "sharepoint.com", "box.com", "dropbox.com")
 
 
+def unwrap(u):
+    """Undo email-security link wrappers some hospitals pasted into cms-hpt.txt (Barracuda linkprotect, Proofpoint
+    urldefense, Microsoft safelinks); the wrapped link breaks once the wrapper expires. Oct 18 pre-launch check."""
+    u = u or ""
+    m = re.match(r"(?i)^https?://linkprotect\.cudasvc\.com/url\?a=([^&]+)", u)
+    if m:
+        return urllib.parse.unquote(m.group(1))
+    m = re.match(r"(?i)^https?://urldefense\.com/v3/__(.+?)__;", u)
+    if m:
+        return m.group(1)
+    m = re.match(r"(?i)^https?://[a-z0-9.]*safelinks\.protection\.outlook\.com/\?url=([^&]+)", u)
+    if m:
+        return urllib.parse.unquote(m.group(1))
+    return u
+
+
 def clean(u):
     u = (u or "").replace(" ", " ").replace("Â", "").strip()
     u = re.sub(r"^\s*mrf-url\s*:\s*", "", u, flags=re.I).strip()
+    u = unwrap(u)
     if u and not re.match(r"^https?://", u, re.I):
         u = "https://" + u.lstrip("/")
     p = urllib.parse.urlsplit(u)

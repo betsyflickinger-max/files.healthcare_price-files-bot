@@ -751,7 +751,7 @@ def shell(title, desc, canon, body, jsonld, noindex=False):
 {f'<meta name="robots" content="{esc(robots)}">' if robots else ''}
 <title>{esc(title)}</title><meta name="description" content="{esc(desc)}"><link rel="canonical" href="{esc(SITE['origin'] + canon)}">
 <meta property="og:site_name" content="{esc(SITE['name'])}"><meta property="og:type" content="article"><meta property="og:title" content="{esc(title)}">
-<meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(SITE['origin'] + canon)}"><meta property="og:image" content="{esc(SITE['origin'])}/og.jpg">
+<meta property="og:description" content="{esc(desc)}"><meta property="og:url" content="{esc(SITE['origin'] + canon)}"><meta property="og:image" content="{esc(SITE['origin'])}/og.jpg"><meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#4A1C1C"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Courier+Prime:wght@400;700&family=Public+Sans:ital,wght@0,400;0,600;0,800;1,400&display=swap">
 <link rel="stylesheet" href="/costs/costs.css">
@@ -762,7 +762,7 @@ def shell(title, desc, canon, body, jsonld, noindex=False):
 <nav class="nav" id="nav" aria-label="Main">{SITE['nav']}</nav></div></header>
 {body}
 <footer><div class="wrap"><span><b>{esc(SITE['name'])}</b><br>Every price links to the file it came from.</span>
-<span><a href="/about/">About</a> · <a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/disclaimers/">Disclaimers</a> · <a href="/privacy/">Privacy</a></span></div></footer>
+<span><a href="/about/">About</a> · <a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/disclaimers/">Disclaimers</a> · <a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/accessibility/">Accessibility</a></span></div></footer>
 <script>(()=>{{const b=document.getElementById('menuBtn'),n=document.getElementById('nav');b.addEventListener('click',()=>{{const o=n.classList.toggle('open');b.setAttribute('aria-expanded',String(o));}});}})();</script>
 </body></html>'''
 

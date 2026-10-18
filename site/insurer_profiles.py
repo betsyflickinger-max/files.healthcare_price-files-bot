@@ -25,6 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "site"))
 sys.path.insert(0, str(ROOT / "bot"))
 import insurers_page  # noqa: E402
+import page_meta  # noqa: E402  (canonical, share tags, site-info links)
 
 E = html.escape
 
@@ -383,7 +384,7 @@ def main(site_dir):
     for name in PARENTS:
         out = site / "insurers" / slug(name)
         out.mkdir(parents=True, exist_ok=True)
-        (out / "index.html").write_text(page(name, R, P, S, nets, fdates, emp, idr, T, BLUE), encoding="utf-8")
+        (out / "index.html").write_text(page_meta.normalize(page(name, R, P, S, nets, fdates, emp, idr, T, BLUE), f"insurers/{out.name}/index.html"), encoding="utf-8")
     print(f"wrote {len(PARENTS)} insurer profiles under {site}/insurers/")
 
 

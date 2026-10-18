@@ -16,6 +16,7 @@ What it does (every step checks a marker first, so running it twice changes noth
 The Price Finder additions are one added block between <!-- UX:START --> and <!-- UX:END --> and change no existing
 wording, so city_page.py's wording checks still pass.
 """
+import html
 import json
 import os
 import re
@@ -381,13 +382,14 @@ NOT_FOUND = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta 
 h1{font:600 40px/1.1 Georgia,serif;margin:0 0 12px}a{color:#9b3a2a}ul{padding-left:20px}</style></head><body><main>
 <p style="font:700 13px monospace;letter-spacing:.12em;text-transform:uppercase;color:#9b3a2a">404</p><h1>We couldn't find that page</h1>
 <p>The link may be old or mistyped. Try one of these:</p>
-<ul><li><a href="/">Home</a></li><li><a href="/start-here/">Start here: how the site works</a></li><li><a href="/costs/">Look up a price</a></li><li><a href="/price-finder/">Price Finder (every billing code)</a></li></ul>
+<ul><li><a href="/">Home</a></li><li><a href="/start-here/">Start here: how the site works</a></li><li><a href="/costs/">Look up a price</a></li><li><a href="/price-finder/">Price Finder (every billing code)</a></li><li><a href="/hospitals/">Hospitals</a></li><li><a href="/insurers/">Insurers</a></li><li><a href="/surprise-bills/">Surprise Bills</a></li></ul>
 </main></body></html>
 '''
 
 
 # ------------------------------------------------------------------ Oct 18: Units as the site look, same opening on every page
 import home_bits
+import page_meta
 
 UNITS_V1 = """
 /* ux: units v2 (Oct 18): every page opens on the same blue band; Start here stands out; labels readable on cream */
@@ -641,8 +643,14 @@ def fact2(rel):
             ins = b.replace(a, '', 1) if a in b else ''
             while ins and ins + ins in s:   # undo earlier double inserts (before Oct 18 this ran on every pass)
                 s = s.replace(ins + ins, ins)
+            while ins and len(ins) > 40 and s.count(ins) > 1:   # copies not side by side (another section landed between)
+                j = s.rfind(ins); s = s[:j] + s[j + len(ins):]
             if b not in s:          # idempotent: some replacements contain their own search text
                 s = s.replace(a, b)
+        while s.count('<h2 id="medicare-local">') > 1:   # a later copy (older wording) after the per-hospital section: drop it
+            i = s.find('<h2 id="medicare-local">', s.find('<h2 id="medicare-local">') + 5)
+            k = s.find('<h2', i + 5)
+            s = s[:i] + s[k:]
         return s
     return fn
 
@@ -799,6 +807,32 @@ def patch_method_ml(s):
     return s[:j + 5] + '\n' + METHOD_ML + s[j + 5:] if j > 0 else s
 
 
+def unwrap(u):  # same as bot/discover.py unwrap (kept here so this script needs no bot packages)
+    import urllib.parse
+    m = re.match(r"(?i)^https?://linkprotect\.cudasvc\.com/url\?a=([^&]+)", u)
+    if m:
+        return urllib.parse.unquote(m.group(1))
+    m = re.match(r"(?i)^https?://urldefense\.com/v3/__(.+?)__;", u)
+    if m:
+        return m.group(1)
+    m = re.match(r"(?i)^https?://[a-z0-9.]*safelinks\.protection\.outlook\.com/\?url=([^&]+)", u)
+    return urllib.parse.unquote(m.group(1)) if m else u
+
+
+WRAP = re.compile(r'(href=)?"(https?://(?:linkprotect\.cudasvc\.com/url\?a=|urldefense\.com/v3/__|[a-z0-9.]*safelinks\.protection\.outlook\.com/\?url=)[^"]+)"', re.I)
+
+
+def unwrap_links(s):
+    """Email-security wrappers around a hospital's file link (in links and in Price Finder data)."""
+    if 'cudasvc.com' not in s and 'urldefense.com' not in s and 'safelinks.protection' not in s:
+        return s
+    def rep(m):
+        if m.group(1):
+            return 'href="' + html.escape(unwrap(html.unescape(m.group(2))), quote=True) + '"'
+        return '"' + unwrap(m.group(2)) + '"'
+    return WRAP.sub(rep, s)
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -835,7 +869,7 @@ def run(d):
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, add_trust)
     nf = os.path.join(site, '404.html')
-    if not os.path.isfile(nf):
+    if not os.path.isfile(nf) or 'href="/hospitals/">Hospitals' not in open(nf, encoding='utf-8').read():
         open(nf, 'w', encoding='utf-8').write(NOT_FOUND); done.append('404.html')
     wn = os.path.join(d, 'functions', 'api', 'watch-notes.js')
     if os.path.isfile(wn):
@@ -855,6 +889,17 @@ def run(d):
         elif rel not in ('index.html', 'start-here/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
             edit(rel, patch_nav)
     print(f'local Medicare ranges written for {write_ml(d)} Price Finder pages')
+    # Oct 18 pre-launch: unwrap email-security link wrappers and give every page its missing basics
+    # (canonical, share tags, favicon, site-information links). Hospital pages have their own generator.
+    nw = 0
+    for root, _, fs in os.walk(site):
+        for f in fs:
+            if f.endswith('.html'):
+                pth = os.path.join(root, f); t0 = open(pth, encoding='utf-8').read()
+                t1 = unwrap_links(t0).replace('<a href="/privacy/">Privacy</a></span></div></footer>', '<a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/accessibility/">Accessibility</a></span></div></footer>')
+                if t1 != t0:
+                    open(pth, 'w', encoding='utf-8').write(t1); nw += 1
+    print(f'{nw} pages had wrapped links or the old costs footer fixed; {page_meta.run(site, skip=("hospitals/",))} pages given missing page basics')
     print(f'{len(done)} pages changed:', ', '.join(sorted(done)[:12]), '...' if len(done) > 12 else '')
 
 
@@ -869,7 +914,7 @@ def run_r2():
     n = 0
     for k in keys:
         s = s3.get_object(Bucket=B, Key=k)['Body'].read().decode('utf-8')
-        t = patch_pf_ml(er_names(fact_pf(patch_pf(s))))
+        t = page_meta.normalize(unwrap_links(patch_pf_ml(er_names(fact_pf(patch_pf(s))))), k.split('site/deploy/', 1)[-1].replace('price-finder.html', 'price-finder/index.html'))
         if t != s:
             s3.put_object(Bucket=B, Key=k, Body=t.encode('utf-8'), ContentType='text/html; charset=utf-8')
             n += 1
