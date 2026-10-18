@@ -22,6 +22,7 @@ Deploy runs only when an area's Price Finder page changed since the last run (fi
 site/deploy/costs_state.json), so it is cheap to run daily. URLs never change once made: site/procedure_slugs.csv keeps them.
 """
 import home_bits   # homepage hero pieces shared with site/ux_polish.py
+import visuals     # price line, bill slips, word cards on every price page
 import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -971,6 +972,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 <p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{' <a class="btn ghost" href="/plan-calculator/">What would I owe?</a>' if area['slug'] == 'dfw' else ''}{f' <a class="btn ghost" href="{esc(csv_url)}" download>Download the data (CSV)</a>' if csv_url else ''}</p>
 </div></section>
 <div class="wrap">
+{visuals.sections(S, sg, pf_path, mh, cc)}
 {stand_sec}
 {net_sec}
 {('<section class="sec split">' + low_sec + high_sec + '</section>') if (low_sec or high_sec) else ''}
@@ -981,7 +983,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 {faq_sec}
 {links_sec}
 {src_sec}
-</div></main>'''
+</div>{visuals.JS}
+</main>'''
     jsonld = {'@context': 'https://schema.org', '@graph': [
         {'@type': 'MedicalWebPage', 'name': title, 'description': desc, 'url': SITE['origin'] + url, 'dateModified': TODAY.isoformat(),
          'inLanguage': 'en-US', 'about': {'@type': 'MedicalProcedure', 'name': S['name'],
@@ -1153,7 +1156,7 @@ footer{background:var(--board);color:#D8C7AE}
 .save{margin:0 0 12px;padding:12px 14px;background:var(--paper);border-left:6px solid var(--stamp);font-size:16px}
 .faq h3{margin:26px 0 6px;font-size:19px}.faq p{margin:0;max-width:50em;color:var(--muted)}footer .wrap{padding-block:30px 40px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px;font-size:14px}
 footer b{font:900 22px var(--display);text-transform:uppercase;color:var(--board-ink);letter-spacing:.03em}footer a{color:var(--board-ink)}
-'''
+''' + visuals.CSS
 
 
 # ---------------------------------------------------------------- the national section of the homepage
