@@ -20,7 +20,7 @@ on:
         default: true
 
 concurrency:
-  group: site-build
+  group: site-build-v2   # Oct 18: old name stuck; every queued run sat pending and got replaced
   cancel-in-progress: false
 
 permissions:
