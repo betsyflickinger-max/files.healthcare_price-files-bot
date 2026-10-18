@@ -338,7 +338,26 @@ def main():
     if st['stage'] == 'split':
         sz = sizes(f'data/{SCOPE}/rates/')
         done = {k.rsplit('/', 1)[1][:-5] for k in ls(f'data/{SCOPE}/state/_done/')}
-        todo = sorted((t for t in sz if t not in done), key=lambda t: -sz[t])
+        # Oct 18, 2026 (Betsy OK'd): an update build splits only its own tables. Before, it split every table not split yet,
+        # so st-2026-10c (CO/MO Anthem) spent hours on GA_POHMMED0000, a 44 GB table it doesn't use. Other tables wait for a
+        # build that needs them (or a full rebuild).
+        need = update_tables()
+        if need is not None:
+            todo_all = [t for t in sz if t not in done]
+            todo_all and log('update mode: not splitting', len([t for t in todo_all if t not in need]), 'tables this build does not use')
+            for key in ('split_jobs', 'back_jobs'):
+                for i, job in enumerate(st.get(key, [])):
+                    keep = [t for t in job if t in need]
+                    if keep == job: continue
+                    log('update mode: dropped', [t for t in job if t not in need], 'from', key)
+                    st[key][i] = keep
+                    if not [t for t in keep if t not in done]:   # nothing left for that machine: stop it now (it holds a slot)
+                        name = f"upfront-site-{O.BID}-split-{i + 1}{'b' if key == 'back_jobs' else ''}"
+                        for d in O.droplets():
+                            if d['name'] == name:
+                                try: O.do('DELETE', f"/droplets/{d['id']}"); log('stopped', name)
+                                except Exception as e: log('stop failed', name, repr(e)[:150])
+        todo = sorted((t for t in sz if t not in done and (need is None or t in need)), key=lambda t: -sz[t])
         if 'split_jobs' not in st:
             jobs = [[] for _ in range(min(SPLIT_MACHINES, max(1, len(todo))))]
             for i, t in enumerate(todo): jobs[i % len(jobs)].append(t)
