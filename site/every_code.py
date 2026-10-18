@@ -64,6 +64,11 @@ TYPE = """case when billing_code_type ilike '%drg%' then 'MS-DRG' when billing_c
 files = sorted(ls(E.get('RATES', 'data/full/rates/')), key=lambda x: x[1])
 if E.get('AORDER') == 'desc': files = files[::-1]
 if E.get('ONLY'): files = [f for f in files if E['ONLY'] in f[0]]
+# Oct 18, 2026: ONLY_KEY = an R2 JSON list of table names (file names without .parquet): an "add" build of just those
+# tables, which merge_build.py then merges into the state's finished build instead of rebuilding every network
+if E.get('ONLY_KEY'):
+    only_ = set(json.loads(s3.get_object(Bucket=B, Key=E['ONLY_KEY'])['Body'].read()))
+    files = [f for f in files if f[0].rsplit('/', 1)[1].rsplit('.', 1)[0] in only_]
 if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_:] + files[:r_]   # machines start at different tables
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
@@ -313,6 +318,13 @@ def work(u):
         c.execute("create temp table nn as select unnest(?::varchar[]) ins, unnest(?::varchar[]) net, unnest(range(?::bigint))::int ni",
                   [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
     MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
+    # Oct 18, 2026: keep each code's median (the basis of the 'unusually low' / 'filler-looking' flags) so merge_build.py
+    # can judge networks added later against the same typical rate
+    try:
+        md_ = {}
+        for (cd, fe), (m, n) in MD.items(): md_.setdefault(cd, {})[str(fe)] = [float(m), int(n)]
+        s3.put_object(Bucket=B, Key=f'{TOUT}md/{u}.json', Body=json.dumps(md_, separators=(',', ':')).encode())
+    except Exception as e: log('median file not written:', repr(e)[:120])
     if SORTV == '3':
         return work3(u, c, src, MD)
     if SORTV == '2':

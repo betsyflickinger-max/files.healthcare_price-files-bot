@@ -9,7 +9,7 @@ site/builds/st-YYYY-MM/state.json. Stages:
            city_page.py --deploy per state (pages at /<state>/price-finder/, listed in the Area picker on every page)
 Nothing is averaged; every rate keeps its insurer file. Machines delete themselves when done.
 Env: as orchestrate.py, plus [ST_BUILD=YYYY-MM] [FORCE=1]."""
-import csv, io, os, sys, time
+import csv, io, json, os, sys, time
 
 MONTH = os.environ.get('ST_BUILD') or time.strftime('%Y-%m')
 # Oct 16, 2026: ST_SCOPE=nc builds North Carolina (its own insurer tables data/nc/, build id stnc-YYYY-MM); default s7.
@@ -86,6 +86,35 @@ def state_npis():
 
 
 def tout(slug): return f'site/every-st/{slug}/{MONTH}/'
+# Oct 18, 2026: "update" rebuilds (state_rebuild.json "mode": "update", "tables": R2 key of a JSON list of table names) build
+# ONLY those tables into an add folder outside site/every-st/ (so no page ever picks it up by mistake), then merge_build.py
+# merges it into the state's finished build ("from", default its newest) as a complete new build at tout(). The old way
+# rebuilt every network of the state (the paused Oct 16 Anthem rebuild).
+UPDATE = REBUILD.get('mode') == 'update'
+def tadd(slug): return f'site/every-st-add/{slug}/{MONTH}/'
+def tbuild(slug): return tadd(slug) if UPDATE else tout(slug)
+def update_tables():
+    return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read())) if UPDATE else None
+MERGE_SIZE = 's-4vcpu-8gb'
+RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
+def merge_step(st, left):
+    """update mode: one small machine per state whose add build is finished merges it into the state's finished build"""
+    def newest(slug):   # same rule as hosp_area.newest_build: the newest folder whose embed.json exists
+        best = None
+        for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'site/every-st/{slug}/', Delimiter='/'):
+            for c in pg.get('CommonPrefixes', []):
+                try: t = s3.head_object(Bucket=B, Key=c['Prefix'] + 'embed.json')['LastModified']
+                except Exception: continue
+                if best is None or t > best[0]: best = (t, c['Prefix'])
+        return best[1] if best else None
+    for slug in left:
+        if not exists(tadd(slug) + 'embed.json'): continue
+        base = st.setdefault('merge_from', {}).get(slug)
+        if not base:
+            base = f"site/every-st/{slug}/{REBUILD['from']}/" if REBUILD.get('from') else newest(slug)
+            if not base or base == tout(slug): st['problems'].append(f'{slug}: no finished build to merge into'); continue
+            st['merge_from'][slug] = base
+        ensure(st, f'{slug}-merge', MERGE_SIZE, RUN_MERGE, dict(BASE=base, ADD=tadd(slug), OUT=tout(slug), PROCS='6'), False)
 
 
 # Oct 14: while the state builds ran, the insurer queue was paused (hold.txt starting 'state-pages pause') so its machine
@@ -329,12 +358,17 @@ def main():
         if not busy:
             st['split_failed'] = todo
             st['providers'] = state_npis()
-            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(sizes(f'data/{SCOPE}/state/{s}/rates/').values()) // int(GB_PER_MACHINE * 1e9))))
+            only_ = update_tables()   # update mode: size the machines by the new tables only
+            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(v for t, v in sizes(f'data/{SCOPE}/state/{s}/rates/').items() if only_ is None or t in only_) // int(GB_PER_MACHINE * 1e9))))
                               for s in STATES.values()}
             st['stage'] = 'build'
             log('providers per state', st['providers'], 'machines', st['machines'])
     if st['stage'] == 'build':
         left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
+        final_left = left
+        if UPDATE:   # states whose add build is done move to the merge step; the batch machinery below sees the rest
+            merge_step(st, left)
+            left = [slug for slug in left if not exists(tadd(slug) + 'embed.json')]
         try:
             if left and cost_hold(st, left): return putj(SP + 'state.json', st)
         except Exception as e: log('price check failed (build goes on):', repr(e)[:200])
@@ -342,12 +376,13 @@ def main():
         # last (smallest first), and its last ~2 hours went to the two Blue Cross NC tables (75 and 95 pieces).
         def run(slug, i):
                 n = st['machines'][slug]
-                env = dict(RATES=f'data/{SCOPE}/state/{slug}/rates/', NPIS=f'data/{SCOPE}/state/{slug}/npis.parquet', TOUT=tout(slug),
+                env = dict(RATES=f'data/{SCOPE}/state/{slug}/rates/', NPIS=f'data/{SCOPE}/state/{slug}/npis.parquet', TOUT=tbuild(slug),
                            OUTP=f'{SP}{slug}-c{i + 1}/', WK=f"work/every-st/{slug}/v{MONTH.replace('-', '')}/",
                            ACACHE=f'work/every-st/{slug}/Acache/', NOXPART='1', ACLAIM='1', PIECE_GB='0.4', MAXPIECES='3', THREADS='6',
                            MEM='18GB', WORK='/d', AORDER='desc', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
+                if UPDATE: env['ONLY_KEY'] = REBUILD['tables']
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         release_finished(left)
         relaunch_old(left)
@@ -360,8 +395,8 @@ def main():
         rebalance(st, left, run, cap)
         try: announce(st, left)   # a failed notice must never stop the build from saving its state
         except Exception as e: log('notice failed:', repr(e)[:200])
-        log('states still building:', ', '.join(left) or 'none')
-        if not left: st['stage'] = 'hosp'; lift_pause()
+        log('states still building:', ', '.join(left) or 'none', '| merging:', ', '.join(x for x in final_left if x not in left) or 'none')
+        if not final_left: st['stage'] = 'hosp'; lift_pause()
     if st['stage'] == 'hosp':
         lift_pause()
         log('insurer builds done; the hospital step (hosp_area.py, HOSP_SCOPE=s7 or nc) builds hospitals and publishes the pages')
