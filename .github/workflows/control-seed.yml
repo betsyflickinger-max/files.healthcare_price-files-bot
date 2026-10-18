@@ -28,4 +28,4 @@ jobs:
           git clone -q --depth 1 "https://x-access-token:${DATA_TOKEN}@github.com/betsyflickinger-max/price-dashboard-data.git" /tmp/dd
           git clone -q --depth 1 -b board-status "https://x-access-token:${DATA_TOKEN}@github.com/betsyflickinger-max/price-dashboard-data.git" /tmp/bs
           python board/to_r2_control.py /tmp/dd '*.json'
-          python board/to_r2_control.py /tmp/bs 'ops_*.json' 'visitors_*.json'
+          python board/to_r2_control.py /tmp/bs 'ops_*.json' 'visitors_*.json' status.json

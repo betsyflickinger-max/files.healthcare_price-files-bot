@@ -43,7 +43,7 @@ jobs:
         run: python board/visitors.py
       - name: Copy bot health + visitors files to R2 for the private control center (files.healthcare/control)
         continue-on-error: true
-        run: python board/to_r2_control.py out/board 'ops_*.json' 'visitors_*.json'
+        run: python board/to_r2_control.py out/board 'ops_*.json' 'visitors_*.json' status.json
       - name: Publish to the private repo (branch board-status)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
