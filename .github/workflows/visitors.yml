@@ -1,0 +1,36 @@
+name: Visitors (every 15 min, control center)
+
+# Rebuilds only the Visitors tab files (board/visitors.py, about a minute) and copies them to R2 control/data/
+# for Betsy's private control center (files.healthcare/control). board-status.yml still builds them too, but only
+# after its ~25-minute status check, so on its own the Visitors tab ran 30-50 minutes behind.
+on:
+  schedule:
+    - cron: "2,17,32,47 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: visitors
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  visitors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: board
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36
+      - run: python board/visitors.py
+      - run: python board/to_r2_control.py out/board 'visitors_*.json'
