@@ -1,13 +1,26 @@
 {
  "st": {
   "base": "2026-10",
-  "build": "2026-10b",
+  "build": "2026-10c",
   "states": [
    "CO",
-   "GA",
    "MO"
   ],
-  "why": "Oct 16, 2026: new Anthem tables (78 network parts from Anthem's employer catalog) for Colorado, Georgia and Missouri",
-  "paused": "Oct 18, 2026 2:40pm CT (Betsy OK'd): paused. With the 78 Anthem parts the CO/GA/MO rebuild was ~20 days and ~$2,000 at full fleet, more than the credit left, and it held every machine. Finished batches stay in R2 (work/every-st/<state>/v202610b/B/). Anthem gets slimmed (store-once + most-used networks) and added as an update before this is tried again. Delete this line to resume."
+  "mode": "update",
+  "nets_from_label": true,
+  "tables": "site/builds/st-2026-10c/tables.json",
+  "why": "Oct 18, 2026 (Betsy approved anthem-pick-list.md): add Anthem's 3 most-used employer networks in Colorado (94% of employers) and Missouri (91%) to the live pages as an update, not a rebuild. Georgia is decided separately.",
+  "history": [
+   {
+    "build": "2026-10b",
+    "states": [
+     "CO",
+     "GA",
+     "MO"
+    ],
+    "why": "Oct 16, 2026: new Anthem tables (78 network parts from Anthem's employer catalog) for Colorado, Georgia and Missouri",
+    "paused": "Oct 18, 2026 2:40pm CT (Betsy OK'd): paused. With the 78 Anthem parts the CO/GA/MO rebuild was ~20 days and ~$2,000 at full fleet, more than the credit left, and it held every machine. Finished batches stay in R2 (work/every-st/<state>/v202610b/B/). Anthem gets slimmed (store-once + most-used networks) and added as an update before this is tried again. Delete this line to resume."
+   }
+  ]
  }
 }

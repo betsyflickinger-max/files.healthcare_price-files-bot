@@ -328,7 +328,11 @@ def main():
     if st['stage'] == 'wait':
         busy = s7_busy()
         if busy and not E.get('FORCE'): log(busy, SCOPE, 'insurer files still queued or being read; waiting'); return putj(SP + 'state.json', st)
-        if free_slots() < 2: log('not enough free machines; waiting'); return putj(SP + 'state.json', st)
+        if free_slots() < 2:
+            # Oct 18, 2026 (machine shares): tell the insurer reader a build is waiting, so it leaves ST_ROOM slots as its
+            # machines finish files (before, a build couldn't start while the reader held every slot)
+            putj('bot/fleet/build_wants_room.json', {'build': O.BID, 'at': time.time()})
+            log('not enough free machines; waiting (asked the insurer reader to leave room)'); return putj(SP + 'state.json', st)
         O.bundle()
         st.update(stage='split', started=time.strftime('%Y-%m-%d %H:%M'))
     if st['stage'] == 'split':
@@ -382,7 +386,9 @@ def main():
                            MEM='18GB', WORK='/d', AORDER='desc', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
-                if UPDATE: env['ONLY_KEY'] = REBUILD['tables']
+                if UPDATE:
+                    env['ONLY_KEY'] = REBUILD['tables']
+                    if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         release_finished(left)
         relaunch_old(left)

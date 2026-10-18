@@ -73,7 +73,8 @@ if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
-TAG = {key: 't' + hashlib.sha1(f'{key}|{size}'.encode()).hexdigest()[:12] for key, size in files}   # same table + size -> same results
+# same table + size -> same results; Oct 18, 2026: NETS_FROM_LABEL names networks differently, so it gets its own cache entries
+TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if E.get('NETS_FROM_LABEL') else '')).encode()).hexdigest()[:12] for key, size in files}
 TAGS = set(TAG.values())
 doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
 def isdone(tag): 
@@ -132,6 +133,10 @@ for ii, (key, size) in enumerate(files):
             s3.download_file(B, key, str(loc))
             try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
             except Exception: mj = False
+            # Oct 18, 2026: NETS_FROM_LABEL=1 (update builds of catalog networks, e.g. Anthem's employer networks): one
+            # network per file, named by its label. The membership file lists each provider's Anthem products ("Blue
+            # Connection | Blue Preferred HMO | Pathway"), which split one employer network into ~200 picker entries.
+            if E.get('NETS_FROM_LABEL'): mj = False
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"

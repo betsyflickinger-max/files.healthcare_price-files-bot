@@ -17,6 +17,7 @@ import io
 import json
 import re
 import sys
+import time
 import zlib
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -368,6 +369,14 @@ def fill(s3, b, now):
         return []
     if any(n.startswith("upfront-site-st-") for n in everyone):
         free -= ST_ROOM
+    else:   # Oct 18, 2026: a state build is waiting to start (orchestrate_states.py asks within the last 2 hours)
+        try:
+            w = json.loads(s3.get_object(Bucket=b, Key="bot/fleet/build_wants_room.json")["Body"].read())
+            if time.time() - float(w.get("at", 0)) < 2 * 3600:
+                free -= ST_ROOM
+                print(f"queue: leaving {ST_ROOM} slots for waiting website build {w.get('build')}")
+        except Exception:
+            pass
     qjobs, qclaims = fleet.jobs(s3, b), fleet.claims(s3, b)
     held = fleet.held_scopes(s3, b, qjobs, everyone)
     for sc, why in held.items():
