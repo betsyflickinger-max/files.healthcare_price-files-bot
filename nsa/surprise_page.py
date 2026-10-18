@@ -18,6 +18,9 @@ TYPE = {"Either partially or fully self-insured private (employment-based) group
         "Non-federal government plan (or state or local government plan)": "State or local government plan",
         "Federal Employees Health Benefits (FEHB) Carrier": "Federal employee plan (FEHB)",
         "No Plan/Issuer Response": "Plan didn't say", "Church Plan": "Church plan"}
+ER_LEVEL = {"99281": "Emergency room visit (may not need a doctor)", "99282": "Emergency room visit (straightforward)",
+            "99283": "Emergency room visit (low complexity)", "99284": "Emergency room visit (moderate complexity)",
+            "99285": "Emergency room visit (high complexity)"}
 VISITS = ("99281", "99282", "99283", "99284", "99285", "99291", "99292")
 
 
@@ -85,6 +88,9 @@ def main(texas, arb, plans, manifest, out):
     tx_share = pct(tot["tx_lines"], tot["us_lines"])
     na = tot["tx_lines"] - tot["tx_won"] - tot["tx_plan_won"]
     board = T["dfw_board"]
+    for b in board:                      # CPT's own wording for ER visit levels (2023 descriptors: medical decision making)
+        if b["code"] in ER_LEVEL:
+            b["name"] = ER_LEVEL[b["code"]]
     er = next((b for b in board if b["code"] == "99284"), board[0])
     self_funded = next((r for r in T["plan_types"] if r[0].startswith("Either partially")), [None, 0, 0])
 
@@ -162,7 +168,7 @@ FSER = """<section class="fser" id="freestanding-er">
 <p>A freestanding ER is an emergency room in its own building, away from a hospital. From the street it can look like an urgent care: a small building, often in a shopping center. But Texas law makes it tell you it charges rates comparable to a hospital emergency room and may charge a facility fee.</p>
 <p><b>{{FT}} Texas lines ({{FS}}) came from {{FN}} providers the federal NPI registry lists as emergency care centers, the type freestanding ERs use.</b> Some freestanding ERs list themselves as emergency medicine groups instead, so the real share may be higher.</p>
 <div class="two">
-<div><b>Freestanding ER</b><ul><li>Usually says "Emergency," "ER" or "Emergency Room" on the sign</li><li>Licensed by Texas as a freestanding emergency medical care facility</li><li>Must post a notice that it charges rates comparable to a hospital emergency room, may charge a facility fee, and that it or its doctors may be out of network</li><li>Its doctors may bill you separately from the facility</li></ul></div>
+<div><b>Freestanding ER</b><ul><li>Usually says "Emergency," "ER" or "Emergency Room" on the sign</li><li>Usually licensed by Texas as a freestanding emergency medical care facility (some are run as part of a hospital, under its license)</li><li>Must post a notice that it charges rates comparable to a hospital emergency room, may charge a facility fee, and that it or its doctors may be out of network</li><li>Its doctors may bill you separately from the facility</li></ul></div>
 <div><b>Urgent care</b><ul><li>Usually says "Urgent Care" on the sign</li><li>Not licensed as an emergency room</li><li>Doesn't have to post that notice</li></ul></div>
 </div>
 <p><b>What protects you.</b> Texas law requires every freestanding ER to post that notice at its entrance, in each treatment room and where you pay, and on its website under "Insurance Information" (<a href="https://texas.public.law/statutes/tex._health_and_safety_code_section_254.155" target="_blank" rel="noopener">Health and Safety Code §254.155</a>). For a real emergency, the federal No Surprises Act limits what you owe an out-of-network ER to your in-network share. The rest is fought out between the ER and your plan, and that fight is what the numbers on this page count. Your plan, and through it your premiums or your employer, pays the award.</p>
@@ -170,7 +176,7 @@ FSER = """<section class="fser" id="freestanding-er">
 <div class="tw"><table>
 <thead><tr><th>Freestanding ERs with the most Texas arbitration</th><th>Disputes</th><th>Lines</th></tr></thead>
 <tbody>{{FROWS}}</tbody></table></div>
-<p class="meta">Freestanding ER here means the provider's primary type in the CMS NPI registry (<a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">NPPES file</a>) is "Clinic/Center, Emergency Care." Names are the registry's legal names; many use a different brand on the sign. Texas only, {{PER}}.</p>
+<p class="meta">Freestanding ER here means the provider's primary type in the CMS NPI registry (<a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">NPPES file</a>) is "Clinic/Center, Emergency Care." Names are the registry's legal names; many use a different brand on the sign. Counts here are by registry match (each NPI), so they differ a little from the Largest provider groups table, which groups lines by the name as filed. Texas only, {{PER}}.</p>
 </section>"""
 
 TEMPLATE = r"""<!doctype html><html lang="en"><head><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f6f1e7"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:site_name" content="What It Costs"><meta property="og:type" content="website"><meta property="og:url" content="https://files.healthcare/surprise-bills/"><meta name="twitter:card" content="summary"><meta property="og:title" content="Surprise Bills · What It Costs"><meta name="description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta property="og:description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
@@ -260,12 +266,12 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 <header>
   <div class="eyebrow">No Surprises Act · Texas</div>
   <h1>Where surprise bills go to arbitration</h1>
-  <p class="lede">When an out-of-network doctor or hospital and a health plan can't agree on what a surprise bill is worth, either side can take it to federal arbitration. The arbitrator picks one side's number. The patient is protected: their share stays at the in-network amount. The plan, and the employer or members who fund it, pay the result. CMS publishes every case. We read all of them. These are the cases decided {{PER}}.</p>
+  <p class="lede">When an out-of-network doctor or hospital and a health plan can't agree on what a surprise bill is worth, either side can take it to arbitration. The arbitrator picks one side's number. For care the No Surprises Act covers, the patient is protected: their share stays at the in-network amount. In Texas, state-regulated insured plans and the ERS and TRS plans for state employees and teachers use Texas's own arbitration (<a href="https://www.tdi.texas.gov/medical-billing/faq.html" target="_blank" rel="noopener">Texas Department of Insurance</a>); this page counts the federal cases, which are mostly self-funded employer plans. The plan, and the employer or members who fund it, pay the result. CMS publishes every case. We read all of them. These are the cases decided {{PER}}.</p>
   <div class="tally"><span><b>{{TX_LINES}}</b>disputed lines in Texas</span><span><b>{{TX_SHARE}}</b>of the U.S. total</span><span><b>{{TX_WON}}</b>went the provider's way</span><span><b>{{DFW_LINES}}</b>in the Dallas–Fort Worth metro</span></div>
 </header>
 
 <h2>What arbitration paid in Dallas–Fort Worth</h2>
-<p class="sub">The most-disputed services in the Dallas–Fort Worth–Arlington metro area, by lines with dollar amounts. Each figure is the middle value of CMS's rows: the plan's offer, the plan's qualifying payment amount (QPA), the provider's offer, and the offer the arbitrator picked. CMS withholds dollar amounts where a code had fewer than 10 lines in an area; {{DFW_DOLLAR}} of the {{DFW_LINES}} metro lines show them.</p>
+<p class="sub">The most-disputed services in the Dallas–Fort Worth–Arlington metro area, by lines with dollar amounts. Each figure is the middle value of CMS's rows: the plan's offer, the plan's qualifying payment amount (QPA), the provider's offer, and the offer the arbitrator picked. CMS withholds dollar amounts where a code had fewer than 10 lines in an area (<a href="https://www.cms.gov/nosurprises/policies-and-resources/Reports" target="_blank" rel="noopener">CMS's notes on these files</a>); {{DFW_DOLLAR}} of the {{DFW_LINES}} metro lines show them.</p>
 <div class="finding">
   <div class="big">{{ER_RATIO}}×</div>
   <p>The most-disputed service, <b>{{ER_NAME}}</b> (CPT 99284): the middle award was <b>{{ER_AWARD}}</b>, {{ER_RATIO}} times the middle QPA of {{ER_QPA}}. The middle plan offer was {{ER_PLAN}}; the middle provider offer was {{ER_PROV}}. Based on {{ER_N}} lines with dollar amounts.</p>
@@ -305,7 +311,7 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 <h3>By the plan's email domain</h3>
 <p class="sub" style="margin-top:10px">The domain belongs to whoever answered for the plan: the insurer, the administrator, or a repricing company hired by the plan. The name in quotes is the plan name most often given on those disputes.</p>
 <div class="tw"><table>
-<thead><tr><th>Plan email domain</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th><th>Self-funded plans</th></tr></thead>
+<thead><tr><th>Plan email domain</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th><th>Share from self-funded plans</th></tr></thead>
 <tbody>{{INSURERS}}</tbody></table></div>
 
 <h3 id="search">Look up a plan or a provider</h3>
@@ -321,8 +327,8 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 <thead><tr><th>Service</th><th>Medicare</th><th>QPA</th><th>Same providers, in-network</th><th>All DFW providers, in-network</th><th>Award</th></tr></thead>
 <tbody>{{QROWS}}</tbody></table></div>
 <div class="finding">
-  <p>For a moderately severe ER visit, the providers who went to arbitration publish a middle in-network fee of <b>{{V84_ARB}}</b>. The middle QPA was <b>{{V84_QPA}}</b>, above what those same providers accept in-network, and Medicare pays {{V84_MED}}. The middle award was <b>{{V84_AWARD}}</b>.</p>
-  <p class="sub">Read with care. The QPA is the plan's median contracted rate from 2019, raised by inflation, for the specialty and area; the in-network rates are from insurers' October 2026 files (Price Finder build {{PF_BUILD}}). A listed rate means a contract exists, not that the provider bills that code often. Imaging and lab codes are left out because the files mix whole-service and reading-only fees.</p>
+  <p>For a moderate-complexity ER visit, the providers who went to arbitration publish a middle in-network fee of <b>{{V84_ARB}}</b>. The middle QPA was <b>{{V84_QPA}}</b>, above what those same providers accept in-network, and Medicare pays {{V84_MED}}. The middle award was <b>{{V84_AWARD}}</b>.</p>
+  <p class="sub">Read with care. The QPA (<a href="https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-149/subpart-B/section-149.140" target="_blank" rel="noopener">45 CFR 149.140</a>) is the plan's median contracted rate from 2019, raised by inflation, for the specialty and area; the in-network rates are from insurers' October 2026 files (Price Finder build {{PF_BUILD}}). A listed rate means a contract exists, not that the provider bills that code often. Imaging and lab codes are left out because the files mix whole-service and reading-only fees.</p>
 </div>
 
 <h2 id="providers">Providers in the Price Finder</h2>

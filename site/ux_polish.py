@@ -468,6 +468,89 @@ def patch_insurers(s):
     return s.replace(INS_OLD, INS_NEW).replace('  function drawPanel(){', INS_AKA, 1)
 
 
+# ---------------------------------------------------------------- Oct 18 fact-check fixes (independent review, scratch report factcheck-report.md)
+DOL_XII = 'https://www.dol.gov/sites/dolgov/files/EBSA/about-ebsa/our-activities/resource-center/faqs/aca-part-xii.pdf'
+ECFR_180_50 = 'https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-E/part-180/subpart-B/section-180.50'
+FACT = {
+    'index.html': [
+        ("Every hospital keeps a secret menu. It's called the <b>chargemaster</b>:", "Every hospital keeps a master price list. It's called the <b>chargemaster</b>:"),
+        ("Every hospital keeps a secret menu called the <b>chargemaster</b>:", "Every hospital keeps a master price list called the <b>chargemaster</b>:"),
+        ("Picture a diner where the prices are made up, the specials are whispered, and the check shows up six weeks later.",
+         "Picture a diner where almost nobody pays the menu price, every table has its own deal, and the check shows up six weeks later."),
+        ("A diner where the prices are made up, the specials are whispered, and the check shows up six weeks later.",
+         "A diner where almost nobody pays the menu price, every table has its own deal, and the check shows up six weeks later."),
+        ("They buried them in files too big to open.", "They're in files too big to open."),
+        ("401 of 886 hospital colonoscopy facility rates are more than double Medicare's, and 264 are more than triple.",
+         "401 of 886 hospital colonoscopy facility rates are more than double Medicare's national hospital outpatient rate (before local wage adjustment), and 264 are more than triple."),
+        ("The columns every hospital's file must now include, under federal rules.</figcaption>",
+         f'The columns every hospital\'s file must now include, under federal rules (<a href="{ECFR_180_50}" target="_blank" rel="noopener">45 CFR 180.50</a>).</figcaption>'),
+        ("We show when each file was checked and flag anything that's gone stale.", "We show the date on each file and flag anything over six months old."),
+    ],
+    'start-here/index.html': [
+        ("A screening that turns into a diagnostic procedure, such as a polyp removed during a colonoscopy, can also change both the billing code and what your plan covers.",
+         f'A screening that turns into a diagnostic procedure can change the billing code. Under federal rules, removing a polyp during a screening colonoscopy shouldn\'t add cost-sharing on most private plans (<a href="{DOL_XII}" target="_blank" rel="noopener">U.S. Department of Labor, ACA FAQs Part XII</a>); billing mistakes still happen, and Medicare\'s rules differ.'),
+        ("Until you meet your deductible, the negotiated rate is what you pay.", "Until you meet your deductible, you usually pay the negotiated rate."),
+        ("These are the only public source for what insurers pay", "These are the main public source for what insurers pay"),
+        ("A single insurer's files can run to hundreds of gigabytes.", "A single insurer's files are far too big to open on a normal computer."),
+        ("<li><b>Hospital Price Transparency</b> (in effect", '<li><b><a href="https://www.cms.gov/priorities/key-initiatives/hospital-price-transparency" target="_blank" rel="noopener">Hospital Price Transparency</a></b> (in effect'),
+        ("<li><b>Transparency in Coverage</b> (in effect", '<li><b><a href="https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-B/part-147/section-147.212" target="_blank" rel="noopener">Transparency in Coverage</a></b> (in effect'),
+        ('can ask for a written "good faith estimate" before scheduled care.</p>',
+         'can ask for a written "good faith estimate" before scheduled care (<a href="https://www.cms.gov/nosurprises" target="_blank" rel="noopener">CMS: No Surprises Act</a>).</p>'),
+    ],
+    'price-file-watch/index.html': [
+        ("<h3>The files are hard to read by design</h3>", "<h3>The files are hard to read as published</h3>"),
+        ("<h1>Who isn't publishing their prices</h1>", "<h1>Who isn't publishing usable price files</h1>"),
+        ("<h3>Fixed</h3>", "<h3>Now posted</h3>"),
+        ("more than twice what Medicare pays for the same procedure ($950.10)",
+         "more than twice Medicare's national hospital outpatient rate for the same procedure ($950.10, before local wage adjustment)"),
+        ('<div class="asof">Checked September 29, 2026</div>', '<div class="asof">Last checked October 13, 2026</div>'),
+    ],
+    'methodology/index.html': [
+        ("We don't estimate, average, round or fill in prices. If a price isn't published, we don't show it.</p>",
+         "We don't estimate, average, round or fill in prices. If a price isn't published, we don't show it. The one calculated figure is the Medicare benchmark for hospital stays, worked out from CMS's published formula (see below).</p>"),
+        ("CMS's separate charity-care subsidy (which at some safety-net hospitals is larger than the stay payment itself)", "CMS's separate uncompensated care payments"),
+        ("As of the October 2026 data, 68,644 of 74,532 providers are placed (92%)",
+         "In the provider list the map was last built from (October 2026, 74,532 providers), 68,644 are placed (92%)"),
+    ],
+}
+PF_FACT = [
+    ("It can become a billed procedure if the doctor removes a polyp or takes a biopsy, which is when the codes and prices below start to matter. Ask your insurer how your plan handles that before you schedule.",
+     f'Under federal rules, removing a polyp during a screening colonoscopy shouldn\'t add cost-sharing on most private plans (<a href="{DOL_XII}" target="_blank" rel="noopener">ACA FAQs Part XII</a>). A colonoscopy done to check symptoms is diagnostic, and that\'s when the codes and prices below matter. Ask your insurer how your plan handles it before you schedule.'),
+    ("Every DFW provider in the federal NPI Registry is included", "Every DFW provider that appears in the insurer files we read is included"),
+    ("are on the list of 70 that CMS requires every hospital to price.", "are on the list of 70 that CMS requires every hospital to price, if the hospital offers them."),
+    ("data through September 2026)", "CMS's release as of September 2026)"),
+    ("dated August to October 2026, read September 29, 2026:", "dated August to October 2026:"),
+    ("come from 79 DFW hospital price files", "come from 83 DFW hospital price files"),
+]
+PF_FACT_RE = [(re.compile(r'Every provider in the federal NPI Registry with a practice address (.*?) is included'),
+               r'Every provider with a practice address \1 that appears in the insurer files we read is included')]
+
+
+def fact(rel):
+    def fn(s):
+        for a, b in FACT.get(rel, []):
+            s = s.replace(a, b)
+        return s
+    return fn
+
+
+def fact_pf(s):
+    for a, b in PF_FACT:
+        s = s.replace(a, b)
+    for rx, b in PF_FACT_RE:
+        s = rx.sub(b, s)
+    return s
+
+
+def renumber_disclaimers(s):
+    """Sections were numbered 1-13, 15-18, 14: number them in page order."""
+    n = [0]
+    def f(m):
+        n[0] += 1
+        return f'<strong>{n[0]}. '
+    return re.sub(r'<strong>\d+\. ', f, s)
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -489,6 +572,10 @@ def run(d):
     edit('index.html', patch_home_hero)
     edit('disclaimers/index.html', patch_disclaimers)
     edit('methodology/index.html', patch_method)
+    for rel in FACT:
+        if os.path.isfile(os.path.join(site, rel)):
+            edit(rel, fact(rel))
+    edit('disclaimers/index.html', renumber_disclaimers)
     for rel in ('surprise-bills/index.html', 'employer-plans/index.html', 'insurers/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, add_trust)
@@ -504,7 +591,7 @@ def run(d):
             continue
         rel = os.path.relpath(os.path.join(root, 'index.html'), site)
         if root.endswith('price-finder'):
-            edit(rel, patch_pf)
+            edit(rel, lambda x: fact_pf(patch_pf(x)))
         elif rel not in ('index.html', 'start-here/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
             edit(rel, patch_nav)
     print(f'{len(done)} pages changed:', ', '.join(sorted(done)[:12]), '...' if len(done) > 12 else '')
@@ -521,7 +608,7 @@ def run_r2():
     n = 0
     for k in keys:
         s = s3.get_object(Bucket=B, Key=k)['Body'].read().decode('utf-8')
-        t = patch_pf(s)
+        t = fact_pf(patch_pf(s))
         if t != s:
             s3.put_object(Bucket=B, Key=k, Body=t.encode('utf-8'), ContentType='text/html; charset=utf-8')
             n += 1

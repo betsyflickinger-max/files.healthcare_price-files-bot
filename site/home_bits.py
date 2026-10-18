@@ -23,7 +23,7 @@ L.addEventListener('mousedown',function(e){var li=e.target.closest('li[data-i]')
 f.addEventListener('submit',function(e){e.preventDefault();var raw=q.value.trim(),hit=O.filter(function(o){return o.t.toLowerCase()===raw.toLowerCase()})[0];
 if(raw&&!hit){location.href='/price-finder/?q='+encodeURIComponent(raw);return}if(hit)S.value=hit.v;
 location.href='/costs/'+document.getElementById('natArea').value+'/'+S.value+'/'})})();</script>"""
-LEDE = '<p style="font-size:21px;color:var(--board-sub);max-width:44em">Hospitals and insurers have to publish their prices. They buried them in files too big to open. <b style="color:var(--board-ink)">We opened them.</b></p>'
+LEDE = '<p style="font-size:21px;color:var(--board-sub);max-width:44em">Hospitals and insurers have to publish their prices. They\'re in files too big to open. <b style="color:var(--board-ink)">We opened them.</b></p>'
 def qbox(opts, every):
     return ('<div class="nat-q"><input id="natQ" type="search" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="natList" '
             f'placeholder="Search {every} procedures, tests and services" value="Colonoscopy (diagnostic)"><ul id="natList" role="listbox" aria-label="Matching procedures" hidden></ul>'

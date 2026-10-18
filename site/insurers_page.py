@@ -232,7 +232,7 @@ svg text{font-family:var(--body)}
 </div>
 <div class="steps">
   <div class="step"><b>1 · Who pays</b><p>Most people with job-based coverage are in plans where the employer pays the claims itself and only hires an insurer to run it.</p></div>
-  <div class="step"><b>2 · Who runs it</b><p>The same brand can be the insurer (insured plans) or just the administrator (self-funded plans). Members usually can't tell which.</p></div>
+  <div class="step"><b>2 · Who runs it</b><p>The same brand can be the insurer (insured plans) or just the administrator (self-funded plans). It isn't always obvious from the ID card which kind of plan you're in.</p></div>
   <div class="step"><b>3 · Who owns it</b><p>Each state license is a separate company. The family tree below groups them under the parent that owns them.</p></div>
   <div class="step"><b>4–5 · Network and providers</b><p>The network sets the price a hospital or doctor gets. That negotiated rate is what the price files reveal.</p></div>
 </div>
@@ -240,8 +240,8 @@ svg text{font-family:var(--body)}
 <h2>The family tree, sized by members</h2>
 <p class="sub">Each block is a parent company. Bigger block, more people in its insured plans in 2024. Click a block to see the companies it owns and where they sell.</p>
 <div class="callout" id="counted">
-  <p><b>Read this first: these numbers count only part of each company.</b> They count people in <b>fully insured</b> plans, where the insurance company pays the claims and carries the risk. Most people with job-based coverage are in <b>self-funded</b> plans instead: the employer pays the claims and the insurance company only runs the plan. Those people aren't in these filings, and neither are Medicare Advantage or Medicaid.</p>
-  <p>So the same company can look much smaller here than it really is. HCSC (Blue Cross and Blue Shield of Texas) shows 6.3 million people here but <a href="https://www.beckerspayer.com/financial/health-care-service-corp-posts-1-9b-loss-in-2025/" target="_blank" rel="noopener">reported 27.3 million members</a> across all its business in 2025.</p>
+  <p><b>Read this first: these numbers count only part of each company.</b> They count people in <b>fully insured</b> plans, where the insurance company pays the claims and carries the risk. Most people with job-based coverage (<a href="https://www.kff.org/health-costs/report/2025-employer-health-benefits-survey/" target="_blank" rel="noopener">67% of covered workers in 2025, per KFF</a>) are in <b>self-funded</b> plans instead: the employer pays the claims and the insurance company only runs the plan. Those people aren't in these filings, and neither are Medicare Advantage or Medicaid.</p>
+  <p>So the same company can look much smaller here than it really is. HCSC, which runs the Blue Cross and Blue Shield plans in Texas, Illinois, Oklahoma, New Mexico and Montana, shows 6.3 million people here (2024 filings) but <a href="https://www.beckerspayer.com/financial/health-care-service-corp-posts-1-9b-loss-in-2025/" target="_blank" rel="noopener">reported 27.3 million members</a> across all its business in 2025.</p>
 </div>
 <div class="key" id="key">
   <button type="button" data-s="national" aria-pressed="true"><i style="background:var(--nat)"></i>20+ states</button>
@@ -262,7 +262,7 @@ svg text{font-family:var(--body)}
 
 <section class="notes">
   <p><b>Where this comes from.</b> CMS Medical Loss Ratio public use file, reporting year 2024 (the newest posted as of October 16, 2026): every insurance company's filing by state, with its holding company. "Members" means people in comprehensive medical plans (individual, small group and large group) on December 31, 2024. Parent companies follow each filing's NAIC group code; about 70 filings without one were matched by brand name.</p>
-  <p><b>What it leaves out.</b> Self-funded employer plans (insurers only administer those, so their members aren't counted here), Medicare Advantage, Medicaid and short-term plans. That is why UnitedHealth, Aetna, Cigna and the Blue plans look smaller here than their real reach, and why Humana, which left the employer market, barely shows. Blue Cross Blue Shield plans are separate companies that share a brand and the BlueCard network, so each appears as its own parent.</p>
+  <p><b>What it leaves out.</b> Self-funded employer plans (insurers only administer those, so their members aren't counted here), Medicare Advantage, Medicaid and short-term plans. That is why UnitedHealth, Aetna, Cigna and the Blue plans look smaller here than their real reach, and why Humana, which <a href="https://www.sec.gov/Archives/edgar/data/49071/000004907123000013/hum-20230223.htm" target="_blank" rel="noopener">announced in 2023</a> it was leaving the employer market, barely shows. Blue Cross Blue Shield companies share a brand and the BlueCard network but are licensed separately; each is grouped under the holding company that owns it, so some parents (HCSC, Elevance, Highmark) run several Blue plans.</p>
   <p><b>Price files.</b> Where a parent's public price-file page was found, its panel links to it. </p>
   <p>See which employers use each insurer on <a href="/employer-plans/">Employer Plans</a>, the rates their networks pay in the <a href="/price-finder/">Price Finder</a>, and who isn't publishing usable files in the <a href="/price-file-watch/">Price File Watch</a>.</p>
 </section>

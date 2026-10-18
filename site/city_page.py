@@ -235,8 +235,8 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     w.sub(r'<p><b>Quality ratings\.</b>.*?</p>', f'<p><b>Quality ratings.</b> {notyet("Public quality ratings")}</p>', regex=True)
     w.sub(r'<p><b>Map\.</b>.*?</p>', '', regex=True)
     w.sub('(October release, Dallas locality)', f'(October release, {locname} locality)')
-    w.sub('Every DFW provider in the federal NPI Registry is included',
-          f'Every provider in the federal NPI Registry with a practice address {where} is included')
+    w.sub('Every DFW provider that appears in the insurer files we read is included',
+          f'Every provider with a practice address {where} that appears in the insurer files we read is included')
     w.sub(' Fort Worth amounts differ by a few dollars.', '')
     w.sub("'Dallas area", f"'{locname} Medicare area", n=w.s.count("'Dallas area") or 1)
     w.sub('<button type="button" id="vMap" aria-pressed="false">Map</button>',

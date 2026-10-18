@@ -260,8 +260,11 @@ def looks_placeholder(v, median):
 
 
 NOT_HERE = re.compile(r'rehab|behavioral|psychiatr|hospice|nursing|long[- ]?term|\bltac\b|kindred|select specialty|\bopco\b|real estate|'
-                      r'skilled|senior living|assisted living|home health|dialysis|\bdental|\bdds\b|pharmacy')
-SPECIALTY = [(re.compile(r'\beye\b|vision|retina|ophthalm|lasik|cataract'), ('Eye',)),
+                      r'skilled|senior living|assisted living|home health|dialysis|\bdental|\bdds\b|pharmacy|'
+                      # long-term acute care hospitals (NPPES 282E00000X), named by chain (Oct 18 fact-check: LifeCare at the top of DFW ACL)
+                      r'lifecare|\bvibra\b|\bltach?\b|nexus specialty|acuity hospital|post[- ]?acute|cornerstone (?:hospital|specialty)|'
+                      r'texas health specialty hospital')
+SPECIALTY = [(re.compile(r'\beye\b|eyecare|surgeye|vision|retina|ophthalm|lasik|cataract'), ('Eye',)),
              (re.compile(r'cardiac|cardio|\bheart\b|\bcath\b|vascular'), ('Heart', 'Imaging', 'Inpatient stays')),
              (re.compile(r'nephrolog|kidney'), ('Lab tests',)),
              (re.compile(r'dermatolog|plastic surg|cosmetic|aesthetic'), ()),
@@ -298,6 +301,24 @@ def nice(t):
 CITY_FIX = {'Souhtlake': 'Southlake', 'Muesnter': 'Muenster'}   # spelling slips seen in the files (Oct 2026)
 
 
+def kind_of(x):
+    """A hospital's own outpatient-surgery NPI is often registered as a surgery center; a place named "... Hospital" is shown
+    as a hospital (Oct 18 fact-check: Texas Health Presbyterian Hospital Dallas was labeled "surgery center")."""
+    return 'H' if x[2] == 'A' and HOSP_NAME.search(x[0]) else x[2]
+
+
+HOSP_NAME = re.compile(r'\bhospital\b', re.I)
+PARPLAN = re.compile(r'par\s*plan', re.I)
+PUBLIC_PAYER = re.compile(r'^(?:medicare\b(?!.*advantage)|medicaid\b|tmhp\b|texas medicaid\b)', re.I)
+
+
+def file_date(e):
+    """The file's own date when its web address carries one (UnitedHealthcare's index dated Oct 1 lists the 2026-09-01 file);
+    otherwise the date the site has for it."""
+    m = re.search(r'(20\d\d)-(\d\d)-(\d\d)', e.get('url') or '')
+    return '-'.join(m.groups()) if m else e.get('date')
+
+
 def summarize(D, code, t, h):
     """Everything a procedure page shows, as plain data. Mirrors the Price Finder's own rules (see the page's main script):
     one line per provider per network = that provider's lowest standard rate (no modifier) in that network; $0 lines,
@@ -309,7 +330,7 @@ def summarize(D, code, t, h):
 
     def fac(i):
         x = D['fac'][int(i)]
-        return {'name': nice(x[0]), 'city': nice(x[1]), 'kind': x[2]}
+        return {'name': nice(x[0]), 'city': nice(x[1]), 'kind': kind_of(x)}
 
     def entry(fi, r):
         x = fac(fi)
@@ -332,7 +353,7 @@ def summarize(D, code, t, h):
     def fits(fi):
         x = fit_cache.get(fi)
         if x is None:
-            nm, kd = D['fac'][int(fi)][0].lower(), D['fac'][int(fi)][2]
+            nm, kd = D['fac'][int(fi)][0].lower(), kind_of(D['fac'][int(fi)])
             x = kd in fac_kinds and not NOT_HERE.search(nm) and not (FERTILITY.search(nm) and cat not in ('Imaging', 'Lab tests', 'Maternity'))
             # single-specialty places named for another specialty (an eye surgery center for a colonoscopy)
             for rx, ok in SPECIALTY:
@@ -376,6 +397,9 @@ def summarize(D, code, t, h):
                 flagged[k].add((fi, r[0]))
                 continue
             m_ = meds[1 if r[1] else 0]
+            if m_ and r[3] < 0.2 * m_:   # the Price Finder's "unusually low" rule: under 20% of the typical published rate
+                flagged[k].add((fi, r[0]))
+                continue
             if r[4] & 8 or (m_ and looks_placeholder(r[3], m_)):
                 high[k].add((fi, r[0]))
                 high_e[k].append(entry(fi, r))
@@ -385,12 +409,17 @@ def summarize(D, code, t, h):
                 per[k][key] = entry(fi, r)
     # what the page leads with: the clinician's fee for visits and therapy, otherwise the facility fee when there is one
     kind = 'doc' if (cat in ('Office visits', 'Behavioral health', 'Physical therapy', 'Maternity') or anes) and per['doc'] else ('fac' if per['fac'] else 'doc')
-    lines = sorted(per[kind].values(), key=lambda e: (e['v'], e['name']))
+    allines = sorted(per[kind].values(), key=lambda e: (e['v'], e['name']))
     by_net = {}
-    for e in lines:
+    for e in allines:
         by_net.setdefault(e['net'], []).append(e)
-    networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'n': len(es), 'lo': es[0], 'hi': es[-1],
-                 'flat': len(es) >= 5 and es[0]['v'] == es[-1]['v']} for n, es in by_net.items()]
+    # each provider counted once per network (a provider can have several NPIs), so a network never shows more than the page total
+    networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'n': len({(e['name'], e['city']) for e in es}), 'lo': es[0], 'hi': es[-1],
+                 'flat': len(es) >= 5 and es[0]['v'] == es[-1]['v'], 'par': bool(PARPLAN.search(nets[n][1] or ''))} for n, es in by_net.items()]
+    # BCBSTX ParPlan: listed in the networks table, labeled, but kept out of the headline figures (Oct 18: what it represents is
+    # under review; the same amount repeats across hospitals)
+    lines = [e for e in allines if not PARPLAN.search(e['plan'] or '')]
+    by_net = {n: es for n, es in by_net.items() if not PARPLAN.search(nets[n][1] or '')}
     networks.sort(key=lambda x: (x['lo']['v'], x['ins'], x['plan']))
     flat = {n for n, es in by_net.items() if len(es) >= 5 and es[0]['v'] == es[-1]['v']}
     # lowest 10 providers (each provider once, at its lowest network). Networks that pay every provider the same amount
@@ -456,13 +485,15 @@ def summarize(D, code, t, h):
         k = (r[0], r[1])
         if k not in hrate or r[6] < hrate[k]['v']:
             ins = H['ins'][r[1]]
+            if PUBLIC_PAYER.search(ins):   # traditional Medicare / Medicaid lines aren't insurer rates
+                continue
             hrate[k] = dict(hsrc(r[0]), v=r[6], row=r[7], ins=SHOWN.get(ins, ins), plan=plans[r[3]] if r[3] < len(plans) else '',
                             prod=PROD[r[2]] if r[2] < len(PROD) else '')
     hrate = sorted(hrate.values(), key=lambda e: e['v'])
     hfiles |= {r[0] for r in hc.get('c', [])}
 
     cash = sorted([c for c in D.get('cash', []) if c.get('code') == code], key=lambda c: c['v'])
-    dates = sorted({e['date'] for e in lines})
+    dates = sorted({file_date(e) for e in allines})
 
     # facts that make each page its own (all real published figures, nothing averaged)
     byp = {}
@@ -485,12 +516,12 @@ def summarize(D, code, t, h):
     h_stale = sum(1 for d in hdates.values() if is_stale(d) or not d)
     rows = None
     if len(lines) <= 5000:            # a downloadable copy of every figure behind the page (kept off very large lists)
-        rows = [['insurer rate', e['name'], e['city'], KIND.get(e['kind'], ''), e['ins'], e['plan'], e['v'], e['date'], e['url']] for e in lines]
+        rows = [['insurer rate', e['name'], e['city'], KIND.get(e['kind'], ''), e['ins'], e['plan'], e['v'], file_date(e), e['url']] for e in allines]
         rows += [['hospital cash price', e['name'], e['city'], 'hospital', '', '', e['v'], e['date'], e['url']] for e in hcash]
         rows += [['posted cash price', c['name'], c['city'], '', '', c.get('label', ''), c['v'], c.get('chk', ''), c['src']] for c in cash]
     return {
         'code': code, 'name': C['name'], 'common': SEARCH_NAMES.get(code, (None,))[0] or re.sub(r'\s*\([^)]*\)', '', C['name']).strip(), 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
-        'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in lines}), 'networks': networks,
+        'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in allines}), 'networks': networks,
         'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
         'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_high': len(high[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
         'fac_kinds': sorted(fac_kinds) if kind == 'fac' else [],
@@ -660,8 +691,9 @@ def shell(title, desc, canon, body, jsonld, noindex=False):
 
 
 def src_link(e, label=None):
-    stale = is_stale(e.get('date'))
-    text = label or ('file dated ' + e['date'] if e.get('date') else 'file has no date')
+    fd = file_date(e)
+    stale = is_stale(fd)
+    text = label or ('file dated ' + fd if fd else 'file has no date')
     return (f'<a class="src" href="{esc(e["url"])}" target="_blank" rel="noopener">{esc(text)} ↗</a>'
             + (' <span class="flag">over 6 months old</span>' if stale else ''))
 
@@ -868,6 +900,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         notes.append(f"Counting {kinds_words(S)} only. {S['n_other_kind']:,} more facility fees are listed for places unlikely to offer this "
                      "service (individual clinicians, rehab, psychiatric or nursing facilities, clinics that don't do it). Insurer files often list "
                      "rates for every contracted place, whether or not it does the procedure. They're all in the Price Finder.")
+    if any(n.get('par') for n in S['networks']):
+        notes.append("BCBSTX ParPlan rates are listed in the networks table but left out of this page's low and high figures while we confirm what they represent.")
     if any(n['flat'] for n in S['networks']):
         notes.append("Networks marked \"same rate everywhere\" pay every listed provider the same amount; they're left out of the lowest-10 list.")
     if S['n_pct']:
@@ -875,7 +909,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     # by network
     net_rows = ''.join(
-        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
+        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{' · <span class=flag>same rate everywhere</span>' if n['flat'] else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
         f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
@@ -1059,6 +1093,10 @@ def national_procedure(code, name, ps, per_area):
         lead = (f"Across the {len(same)} places we've read, insurers' negotiated {pl} for {lower_name(S0)} run from "
                 f"{money(lo[2]['lo']['v'])} ({lo[2]['lo']['name']}, {lo[0]['name']}) to {money(hi[2]['hi']['v'])} "
                 f"({hi[2]['hi']['name']}, {hi[0]['name']}).")
+    ext = ''
+    if same:
+        ext = (f" Lowest: {src_link(lo[2]['lo'])} ({esc(netname(lo[2]['lo']['ins'], lo[2]['lo']['plan']))}). "
+               f"Highest: {src_link(hi[2]['hi'])} ({esc(netname(hi[2]['hi']['ins'], hi[2]['hi']['plan']))}).")
     rows = ''.join(f"<tr><td><a href='/costs/{au}/{ps}/'><b>{esc(a['name'])}</b></a><div class='m'>{esc(area_group(a))}</div></td>"
                    f"<td class='num' data-l='Providers'>{(s['providers'] if s else 0):,}</td>{range_cell(s)}</tr>"
                    for a, au, s in sorted(per_area, key=lambda x: (not (x[2] and x[2]['lo']), x[2]['lo']['v'] if x[2] and x[2]['lo'] else 0)))
@@ -1067,7 +1105,7 @@ def national_procedure(code, name, ps, per_area):
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow"><a href="/costs/">All procedures</a> · {esc(S0['type'] if S0 else '')} {esc(code)}</p>
 <h1 class="letters">{esc(cm)} cost<em> place by place</em></h1><p class="lead">{esc(lead)}</p></div></section>
 <div class="wrap"><section class="sec"><div class="tbl"><table class="rates stack"><thead><tr><th>Place</th><th class="num">Providers</th><th class="num">Lowest</th><th class="num">Highest</th></tr></thead>
-<tbody>{rows}</tbody></table></div><p class="cap">Each place's figures are its own {esc(pl)}, lowest to highest, from the insurer files read for that place. Open a place for every source.</p></section></div></main>'''
+<tbody>{rows}</tbody></table></div><p class="cap">Each place's figures are its own {esc(pl)}, lowest to highest, from the insurer files read for that place. Rates a file marks as unusually low, or under 20% of the typical rate for this code, are left out. Open a place for every source.{ext}</p></section></div></main>'''
     jsonld = {'@context': 'https://schema.org', '@type': 'MedicalWebPage', 'name': title, 'description': lead,
               'url': SITE['origin'] + f'/costs/{ps}/', 'dateModified': TODAY.isoformat(),
               'about': {'@type': 'MedicalProcedure', 'name': name, 'code': {'@type': 'MedicalCode', 'code': code}}}

@@ -46,7 +46,13 @@ def main(src, out):
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
     c = M["counts"]
     dfw = [e for e in emp if e["dfw"]]
-    top = [e for e in dfw if e.get("active")][:25]
+    best = {}                            # one row per employer: its most recent Form 5500 filing (Oct 18: Aimbridge was listed twice)
+    for e in dfw:
+        if e.get("active"):
+            k = e.get("ein") or e["name"]
+            if k not in best or (e.get("year") or 0) > (best[k].get("year") or 0):
+                best[k] = e
+    top = sorted(best.values(), key=lambda e: -(e["active"] or 0))[:25]
     rows = "".join(
         f"<tr><td><b>{E(e['name'] or '')}</b><div class=\"meta\">{E((e['city'] or '').title())}</div></td>"
         f"<td>{', '.join(ilink(k) for k in e['ins'])}</td><td>{E(fund(e))}</td><td>{n(e['active'])}</td><td>{E(str(e['year'] or ''))}</td></tr>"
@@ -145,13 +151,13 @@ th.s[aria-sort=descending]::after{content:" ▼"}
 </style>
 
 <div class="wrap">
-<style>.sn{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:14px 0;border-bottom:1px solid var(--rule)}.sn-brand{font:600 20px var(--display);color:var(--ink)!important;text-decoration:none}.sn-links{display:flex;flex-wrap:wrap;gap:4px 16px;font:14px var(--body)}.sn-links a{color:var(--brick);text-decoration:none}.sn-links a:hover{text-decoration:underline}.sn-links a[aria-current]{color:var(--ink);font-weight:600}</style><nav class="sn" aria-label="Site"><a class="sn-brand" href="/">What It Costs</a><span class="sn-links"><a href="/start-here/">Start here</a><a href="/price-finder/">Price Finder</a><a href="/plan-calculator/">Plan Calculator</a><a href="/price-file-watch/">Price File Watch</a><a href="/surprise-bills/">Surprise Bills</a><a href="/employer-plans/" aria-current="page">Employer Plans</a></span></nav>
+<style>.sn{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:14px 0;border-bottom:1px solid var(--rule)}.sn-brand{font:600 20px var(--display);color:var(--ink)!important;text-decoration:none}.sn-links{display:flex;flex-wrap:wrap;gap:4px 16px;font:14px var(--body)}.sn-links a{color:var(--brick);text-decoration:none}.sn-links a:hover{text-decoration:underline}.sn-links a[aria-current]{color:var(--ink);font-weight:600}</style><nav class="sn" aria-label="Site"><a class="sn-brand" href="/">What It Costs</a><span class="sn-links"><a href="/start-here/">Start here</a><a href="/price-finder/">Price Finder</a><a href="/plan-calculator/">Plan Calculator</a><a href="/price-file-watch/">Price File Watch</a><a href="/surprise-bills/">Surprise Bills</a><a href="/employer-plans/" aria-current="page">Employer Plans</a><a href="/insurers/">Insurers</a></span></nav>
 <div class="asof" style="padding-top:8px">Insurer indexes and Form 5500 data read {{BUILT}}</div>
 
 <header>
   <div class="eyebrow">For HR teams and employers · Texas</div>
   <h1>Look up an employer's health plan</h1>
-  <p class="lede">Insurers and plan administrators must publish an index of every employer plan they run and the price files each plan uses. Employers that sponsor larger plans file a Form 5500 with the U.S. Department of Labor. We read both and matched them by the employer's tax ID. Search a Texas employer to see which insurer lists its plan, which networks the plan uses, and how the employer says the plan is funded.</p>
+  <p class="lede">Insurers and plan administrators publish a table-of-contents index listing the employer plans whose price files they host, and which files each plan uses. Employers that sponsor larger plans file a Form 5500 with the U.S. Department of Labor. We read both and matched them by the employer's tax ID. Search a Texas employer to see which insurer lists its plan, which networks the plan uses, and how the employer says the plan is funded.</p>
   <div class="tally"><span><b>{{N_TX}}</b>Texas employers</span><span><b>{{N_DFW}}</b>in Dallas–Fort Worth</span><span><b>{{N_DFW_SELF}}</b>DFW employers that file as self-funded</span></div>
 </header>
 
