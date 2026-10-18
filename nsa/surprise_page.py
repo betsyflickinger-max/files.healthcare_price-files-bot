@@ -25,6 +25,32 @@ def spec(x):
     return "specialty not reported" if str(x).strip() in ("N/R", "NR", "", "None", "N/A") else x
 
 
+SHORT = {"fser": "freestanding ERs", "hosp": "hospitals", "erdoc": "ER doctor groups", "rad": "radiology", "anes": "anesthesia",
+         "uc": "urgent care", "other": "other provider types"}
+
+
+UPPER = {"ER", "LLC", "USA", "PLLC", "PA", "LP", "LLP", "WRFER", "II", "III"}
+
+
+def tidy(x):
+    return " ".join(w.upper() if w.upper().strip(",.") in UPPER else w for w in str(x).title().split())
+
+
+def kind_tag(rows):
+    """What the NPI registry lists for this domain's lines (primary taxonomy of each line's NPI), as a short tag."""
+    tot = sum(c for _, c in rows)
+    known = [(k, c) for k, c in rows if k != "unk"]
+    kn = sum(c for _, c in known)
+    if not tot:
+        return ""
+    if kn < tot / 2:
+        return '<span class="ktag">most lines list no NPI</span>'
+    parts = [f"{round(100 * c / kn)}% {SHORT.get(k, k)}" for k, c in known[:2] if c / kn >= .15]
+    fser = known[0][0] == "fser"
+    return (f'<a class="ktag{" k-fser" if fser else ""}" href="#freestanding-er">' if fser else '<span class="ktag">') + \
+        "Registry: " + " · ".join(parts) + ("</a>" if fser else "</span>")
+
+
 def n(x):
     return f"{x:,}"
 
@@ -73,9 +99,16 @@ def main(texas, arb, plans, manifest, out):
         f"<i class=\"b\" style=\"width:{100 * (u - t) / trend_max:.2f}%\"></i></span><span class=\"tn\">{n(t)} <small>of {n(u)}</small></span></div>"
         for p, u, t in T["trend"])
     states = " · ".join(f"{E(s)} {n(c)}" for s, c in tot["states"])
+    FK = T.get("filer_kinds") or {}
     filers = "".join(
-        f"<tr><td><b>{E(d)}</b><div class=\"meta\">{E(spec(sp))}</div></td><td>{n(npis)}</td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
+        f"<tr><td><b>{E(d)}</b><div class=\"meta\">{E(spec(sp))}</div>{kind_tag(FK.get(d) or [])}</td><td>{n(npis)}</td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
         for d, lines, disp, won, npis, sp in T["filers"][:12])
+    fser = ""
+    if T.get("fser_top"):
+        ft, fn_ = T["fser_total"]
+        fser_rows = "".join(f"<tr><td><b>{E(tidy(nm))}</b><div class=\"meta\">{E(tidy(city))} · filed through {E(dom)}</div></td><td>{n(dp)}</td><td>{n(ln)}</td></tr>"
+                            for nm, city, ln, dp, dom in T["fser_top"])
+        fser = FSER.replace("{{FT}}", n(ft)).replace("{{FN}}", n(fn_)).replace("{{FS}}", pct(ft, tot["tx_lines"])).replace("{{FROWS}}", fser_rows).replace("{{PER}}", per)
     groups = "".join(
         f"<tr><td><b>{E(g)}</b><div class=\"meta\">{E(spec(sp))} · {E(dom)}</div></td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
         for g, lines, disp, won, dom, sp in T["groups"][:12])
@@ -111,7 +144,7 @@ def main(texas, arb, plans, manifest, out):
                      US_LINES=n(tot["us_lines"]), DFW_LINES=n(T["dfw_lines"]), DFW_DOLLAR=n(T["dfw_dollar_lines"]),
                      ER_NAME=E(er["name"]), ER_QPA=money(er["qpa"]), ER_AWARD=money(er["award"]), ER_PLAN=money(er["plan"]),
                      ER_PROV=money(er["prov"]), ER_N=n(er["d"]), ER_RATIO=f"{ratio:.1f}" if ratio else "—",
-                     ROWS_DFW=rows_dfw, TREND=trend, STATES=states, FILERS=filers, GROUPS=groups, SERVICES=services,
+                     ROWS_DFW=rows_dfw, TREND=trend, STATES=states, FILERS=filers, FSER=fser, GROUPS=groups, SERVICES=services,
                      INSURERS=insurers, PTYPES=ptypes, SF_LINES=n(self_funded[1]), SF_SHARE=pct(self_funded[1], tot["tx_lines"]),
                      QROWS=qrows, V84_ARB=money(v84["doc_arb"][0]) if v84 else "—", V84_QPA=money(v84["qpa"]) if v84 else "—",
                      V84_MED=money(v84["med"]) if v84 else "—", V84_AWARD=money(v84["award"]) if v84 else "—",
@@ -123,6 +156,22 @@ def main(texas, arb, plans, manifest, out):
     (out / "index.html").write_text(page, encoding="utf-8")
     print(f"wrote {out}/index.html ({len(page) / 1e3:.0f} KB), plans.json, providers.json")
 
+
+FSER = """<section class="fser" id="freestanding-er">
+<h3>Freestanding ERs: an emergency room that can look like an urgent care</h3>
+<p>A freestanding ER is a licensed emergency room that isn't attached to a hospital. From the street it can look like an urgent care: a small building in a shopping center, short waits, no ambulances out front. But it bills like a hospital emergency room, with an emergency facility fee, and many aren't in any insurance network.</p>
+<p><b>{{FT}} Texas lines ({{FS}}) came from {{FN}} providers the federal NPI registry lists as emergency care centers, the type freestanding ERs use.</b> Some freestanding ERs list themselves as emergency medicine groups instead, so the real share may be higher.</p>
+<div class="two">
+<div><b>Freestanding ER</b><ul><li>Says "Emergency," "ER" or "Emergency Room"</li><li>Open 24 hours</li><li>Must post a sign saying it charges rates like a hospital ER, may charge a facility fee, and may be out of network</li><li>Bill: ER visit plus a facility fee, often in the thousands</li></ul></div>
+<div><b>Urgent care</b><ul><li>Says "Urgent Care"</li><li>Set hours, usually closed overnight</li><li>More often in network</li><li>Bill: closer to a doctor's office visit</li></ul></div>
+</div>
+<p><b>What protects you.</b> Texas law requires every freestanding ER to post that notice at its entrance, in each treatment room and where you pay, and on its website under "Insurance Information" (<a href="https://texas.public.law/statutes/tex._health_and_safety_code_section_254.155" target="_blank" rel="noopener">Health and Safety Code §254.155</a>). For a real emergency, the federal No Surprises Act limits what you owe an out-of-network ER to your in-network share. The rest is fought out between the ER and your plan, and that fight is what the numbers on this page count. Your plan, and through it your premiums or your employer, pays the award.</p>
+<p><b>Not an emergency?</b> If it can wait for an urgent care or your doctor, ask at the front desk before you're seen: "Is this an emergency room? Are you in network with my plan?"</p>
+<div class="tw"><table>
+<thead><tr><th>Freestanding ERs with the most Texas arbitration</th><th>Disputes</th><th>Lines</th></tr></thead>
+<tbody>{{FROWS}}</tbody></table></div>
+<p class="meta">Freestanding ER here means the provider's primary type in the CMS NPI registry (<a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">NPPES file</a>) is "Clinic/Center, Emergency Care." Names are the registry's legal names; many use a different brand on the sign. Texas only, {{PER}}.</p>
+</section>"""
 
 TEMPLATE = r"""<!doctype html><html lang="en"><head><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f6f1e7"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:site_name" content="What It Costs"><meta property="og:type" content="website"><meta property="og:url" content="https://files.healthcare/surprise-bills/"><meta name="twitter:card" content="summary"><meta property="og:title" content="Surprise Bills · What It Costs"><meta name="description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta property="og:description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Surprise Bills · What It Costs</title>
@@ -177,6 +226,14 @@ td:first-child{font:15px/1.35 var(--body);white-space:normal;min-width:180px}
 td:first-child b{font-weight:600}
 td .meta{font-family:var(--body);white-space:normal}
 td.hi{color:var(--brick);font-weight:700}
+.ktag{display:inline-block;margin-top:4px;font:600 12px var(--body);padding:2px 8px;border:1.5px solid var(--rule);border-radius:999px;color:var(--ink-2);text-decoration:none}
+a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
+.fser{margin-top:40px;padding:20px;border:2px solid var(--ink);display:grid;gap:12px}
+.fser h3{margin:0}.fser p{margin:0;max-width:70ch}
+.fser .two{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.fser .two div{padding:12px 14px;border:1.5px solid var(--rule)}
+.fser .two b{display:block;margin-bottom:4px}
+.fser ul{margin:0;padding-left:18px}
 .trend{margin-top:10px;display:grid;gap:4px}
 .tr{display:grid;grid-template-columns:62px minmax(0,1fr) 200px;gap:10px;align-items:center;font:13px var(--type)}
 .tb{display:flex;height:12px;background:var(--paper-2);border:1px solid var(--rule)}
@@ -198,7 +255,7 @@ td.hi{color:var(--brick);font-weight:700}
 </style>
 
 <div class="wrap">
-<style>.sn{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:14px 0;border-bottom:1px solid var(--rule)}.sn-brand{font:600 20px var(--display);color:var(--ink)!important;text-decoration:none}.sn-links{display:flex;flex-wrap:wrap;gap:4px 16px;font:14px var(--body)}.sn-links a{color:var(--brick);text-decoration:none}.sn-links a:hover{text-decoration:underline}.sn-links a[aria-current]{color:var(--ink);font-weight:600}</style><nav class="sn" aria-label="Site"><a class="sn-brand" href="/">What It Costs</a><span class="sn-links"><a href="/start-here/">Start here</a><a href="/price-finder/">Price Finder</a><a href="/plan-calculator/">Plan Calculator</a><a href="/price-file-watch/">Price File Watch</a><a href="/surprise-bills/" aria-current="page">Surprise Bills</a></span></nav><div class="topbar" style="border-bottom:0;padding-block:8px 0"><div class="asof">CMS files read {{CHECKED}}</div></div>
+<style>.sn{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:14px 0;border-bottom:1px solid var(--rule)}.sn-brand{font:600 20px var(--display);color:var(--ink)!important;text-decoration:none}.sn-links{display:flex;flex-wrap:wrap;gap:4px 16px;font:14px var(--body)}.sn-links a{color:var(--brick);text-decoration:none}.sn-links a:hover{text-decoration:underline}.sn-links a[aria-current]{color:var(--ink);font-weight:600}</style><nav class="sn" aria-label="Site"><a class="sn-brand" href="/">What It Costs</a><span class="sn-links"><a href="/start-here/">Start here</a><a href="/price-finder/">Price Finder</a><a href="/plan-calculator/">Plan Calculator</a><a href="/price-file-watch/">Price File Watch</a><a href="/surprise-bills/" aria-current="page">Surprise Bills</a><a href="/employer-plans/">Employer Plans</a><a href="/insurers/">Insurers</a></span></nav><div class="topbar" style="border-bottom:0;padding-block:8px 0"><div class="asof">CMS files read {{CHECKED}}</div></div>
 
 <header>
   <div class="eyebrow">No Surprises Act · Texas</div>
@@ -239,6 +296,7 @@ td.hi{color:var(--brick);font-weight:700}
 <div class="tw"><table>
 <thead><tr><th>Service</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
 <tbody>{{SERVICES}}</tbody></table></div>
+{{FSER}}
 
 <h2 id="employers">For employers: which plans end up in arbitration</h2>
 <p class="sub">{{SF_LINES}} of Texas's {{TX_LINES}} lines ({{SF_SHARE}}) involved a self-funded employer plan. When a self-funded plan loses, the award and the arbitration fee come out of the employer's plan, usually through the insurer or administrator that runs it.</p>

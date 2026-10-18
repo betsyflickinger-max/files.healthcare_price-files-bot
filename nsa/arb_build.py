@@ -85,6 +85,35 @@ class Store:
         return sorted(out)
 
 
+NPI_KEY = "data/scope/tx_npis_all.parquet"   # Texas rows of the CMS NPPES file (see its .source.txt)
+KINDS = [("261QE0002X", "fser", "emergency care centers (freestanding ERs)"), ("282", "hosp", "hospitals"), ("283", "hosp", "hospitals"),
+         ("284", "hosp", "hospitals"), ("273", "hosp", "hospitals"), ("286", "hosp", "hospitals"), ("207P", "erdoc", "emergency medicine groups"),
+         ("2085", "rad", "radiology groups"), ("207U", "rad", "radiology groups"), ("261QR02", "rad", "radiology groups"), ("207L", "anes", "anesthesia groups"),
+         ("3675", "anes", "anesthesia groups"), ("261QU0200X", "uc", "urgent care centers")]
+
+
+def kind_sql():
+    w = " ".join(f"when taxonomy_1 like '{pre}%' then '{k}'" for pre, k, _ in KINDS)
+    return f"case when taxonomy_1 is null then 'unk' {w} else 'other' end"
+
+
+def filer_kinds(con, npi_file, domains):
+    """For each provider email domain: share of its Texas lines by the provider type the NPI registry lists (primary taxonomy).
+    Also the freestanding ERs (registry type 'Clinic/Center, Emergency Care') with the most Texas lines."""
+    con.execute(f"create or replace view nk as select npi, name, city, {kind_sql()} kind from read_parquet('{npi_file}')")
+    out = {}
+    for d in domains:
+        rows = con.execute("""select coalesce(nk.kind,'unk'), count(*) from tx left join nk on nk.npi = tx.provider_facility_npi_number
+                              where provider_email_domain = ? group by 1 order by 2 desc""", [d]).fetchall()
+        out[d] = rows
+    fser = con.execute("""select nk.name, nk.city, count(*), count(distinct dispute_number), mode(provider_email_domain)
+                          from tx join nk on nk.npi = tx.provider_facility_npi_number where nk.kind = 'fser'
+                          group by 1, 2 order by 3 desc limit 15""").fetchall()
+    tot = con.execute("""select count(*), count(distinct nk.npi) from tx join nk on nk.npi = tx.provider_facility_npi_number
+                         where nk.kind = 'fser'""").fetchone()
+    return out, fser, list(tot)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--local", action="store_true", help="read and write ./local/")
@@ -155,6 +184,15 @@ def main():
     T["filers"] = q(f"""select provider_email_domain, count(*), count(distinct dispute_number), count(*) filter (where {won}),
                               count(distinct provider_facility_npi_number), mode(practice_facility_specialty_or_type)
                        from tx group by 1 order by 2 desc limit 15""")
+    npi_file = W / NPI_KEY
+    if not npi_file.exists():
+        npi_file.parent.mkdir(parents=True, exist_ok=True)
+        b = st.get(NPI_KEY)
+        if b: npi_file.write_bytes(b)
+    if npi_file.exists():
+        T["filer_kinds"], T["fser_top"], T["fser_total"] = filer_kinds(con, npi_file, [r[0] for r in T["filers"]])
+        T["kind_labels"] = {k: lab for _, k, lab in KINDS}
+        T["npi_src"] = (st.get(NPI_KEY + ".source.txt") or b"").decode().strip()
     T["groups"] = q(f"""select case when provider_facility_group_name in ('N/R','NR','') then provider_facility_name else provider_facility_group_name end g,
                               count(*), count(distinct dispute_number), count(*) filter (where {won}), mode(provider_email_domain), mode(practice_facility_specialty_or_type)
                        from tx group by 1 order by 2 desc limit 15""")
