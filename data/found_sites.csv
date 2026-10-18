@@ -1,36 +1,33 @@
 ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
 010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
-043037,MERCY REHABILITATION HOSPITAL,FORT SMITH,AR,Inpatient Rehabilitation,mercy.net,sibling,95,Mercy Rehabilitation Hospital South,https://mercy.net/cms-hpt.txt,"no - same name in another state, check by hand"
-050191,ST MARY MEDICAL CENTER,LONG BEACH,CA,Acute Care Hospitals,providence.org,sibling,100,St Mary Medical Center,https://providence.org/cms-hpt.txt,"no - same name in another state, check by hand"
+012006,INFIRMARY LTAC HOSPITAL,MOBILE,AL,Long-term,infirmaryhealth.org,sibling,100,Infirmary LTAC Hospital,https://infirmaryhealth.org/cms-hpt.txt,yes
+040027,BAXTER HEALTH,MOUNTAIN HOME,AR,Acute Care Hospitals,baxterhealth.org,guess,100,Baxter Health,https://baxterhealth.org/cms-hpt.txt,yes
+050272,REDLANDS COMMUNITY HOSPITAL,REDLANDS,CA,Acute Care Hospitals,redlandshospital.org,guess,100,Redlands Community Hospital,https://redlandshospital.org/cms-hpt.txt,yes
 050557,MEMORIAL MEDICAL CENTER,MODESTO,CA,Acute Care Hospitals,adventisthealth.org,sibling,94,WHITE MEMORIAL MEDICAL CENTER,https://adventisthealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-054159,"SACRAMENTO BEHAVIORAL HEALTHCARE HOSPITAL, LLC",NORTH SACRAMENTO,CA,Psychiatric,aurorasantarosa.com,sibling,100,Sacramento Behavioral Healthcare Hospital,http://aurorasantarosa.com/cms-hpt.txt,yes
-092002,BRIDGEPOINT CONT CARE HOSPITAL - CAPITOL HILL,WASHINGTON,DC,Long-term,bridgepointhealthcare.com,osm,92,"BridgePoint Continuing Care Hospital - Capitol Hill, DC",https://bridgepointhealthcare.com/cms-hpt.txt,yes
-110101,"SOUTHWELL MEDICAL, A CAMPUS OF TRMC",ADEL,GA,Acute Care Hospitals,mysouthwell.com,osm,87,Southwell Medical,https://mysouthwell.com/cms-hpt.txt,yes
-160045,ST LUKES HOSPITAL,CEDAR RAPIDS,IA,Acute Care Hospitals,avera.org,sibling,92,Avera St. Luke's Hospital,https://avera.org/cms-hpt.txt,"no - same name in another state, check by hand"
-161323,MITCHELL COUNTY REGIONAL HEALTH,OSAGE,IA,Critical Access Hospitals,mcrhc.com,osm,95,Mitchell County Regional Health Center,https://mcrhc.com/cms-hpt.txt,yes
+050769,HOAG ORTHOPEDIC INSTITUTE,IRVINE,CA,Acute Care Hospitals,hoagorthopedicinstitute.com,guess,100,Hoag Orthopedic Institute,https://hoagorthopedicinstitute.com/cms-hpt.txt,yes
+051337,HAZEL HAWKINS MEMORIAL HOSPITAL,HOLLISTER,CA,Critical Access Hospitals,hazelhawkins.com,guess,100,HAZEL HAWKINS MEMORIAL HOSPITAL,https://hazelhawkins.com/cms-hpt.txt,yes
+161374,MYRTUE MEDICAL CENTER,HARLAN,IA,Critical Access Hospitals,myrtuemedical.org,guess,100,Myrtue Medical Center,https://myrtuemedical.org/cms-hpt.txt,yes
 130065,MOUNTAIN VIEW HOSPITAL,IDAHO FALLS,ID,Acute Care Hospitals,mountainviewhospital.org,sibling,100,Mountain View Hospital,https://mountainviewhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
+140083,LORETTO HOSPITAL,CHICAGO,IL,Acute Care Hospitals,lorettohospital.org,guess,100,Loretto Hospital,https://lorettohospital.org/cms-hpt.txt,yes
+140133,HOLY CROSS HOSPITAL,CHICAGO,IL,Acute Care Hospitals,sinaichicago.org,sibling,100,HOLY CROSS HOSPITAL,https://sinaichicago.org/cms-hpt.txt,"no - same name in another state, check by hand"
 140145,ST JOSEPHS HOSPITAL,BREESE,IL,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Joseph's Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
+141301,KIRBY MEDICAL CENTER,MONTICELLO,IL,Critical Access Hospitals,kirbyhealth.org,guess,100,Kirby Medical Center,https://kirbyhealth.org/cms-hpt.txt,yes
 141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,bjc.org,sibling,100,Memorial Hospital,https://bjc.org/cms-hpt.txt,"no - same name in another state, check by hand"
 171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,saintlukeskc.org,sibling,91,Wright Memorial Hospital,https://saintlukeskc.org/cms-hpt.txt,"no - same name in another state, check by hand"
 181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,waynecountyhospital.org,guess,100,WAYNE COUNTY HOSPITAL,https://waynecountyhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-261340,MOSAIC MEDICAL CENTER - MARYVILLE,MARYVILLE,MO,Critical Access Hospitals,mymosaiclifecare.org,osm,100,Mosaic Medical Center - Maryville,https://mymosaiclifecare.org/cms-hpt.txt,yes
-262017,"SELECT SPECIALTY HOSPITAL SPRINGFIELD, INC",SPRINGFIELD,MO,Long-term,springfieldhospital.org,osm,85,Springfield Hospital,https://springfieldhospital.org/cms-hpt.txt,yes
-264031,OSAGE BEACH CENTER FOR BEHAVIORAL HEALTH,OSAGE BEACH,MO,Psychiatric,osagebeachccd.com,osm,100,Osage Beach Center for Behavioral Health,http://osagebeachccd.com/cms-hpt.txt,yes
+181333,THE MEDICAL CENTER AT ALBANY,ALBANY,KY,Critical Access Hospitals,medcenterhealth.org,sibling,100,The Medical Center at Albany,https://medcenterhealth.org/cms-hpt.txt,yes
+192032,LOUISIANA EXTENDED CARE HOSPITAL OF LAFAYETTE,LAFAYETTE,LA,Long-term,lhcgroup.com,sibling,100,Louisiana Extended Care Hospital of Lafayette,https://lhcgroup.com/cms-hpt.txt,yes
 250782,GREENE COUNTY HOSPITAL,LEAKESVILLE,MS,Rural Emergency Hospital,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
+271317,LIVINGSTON HEALTHCARE,LIVINGSTON,MT,Critical Access Hospitals,livingstonhealthcare.org,guess,100,Livingston HealthCare,https://livingstonhealthcare.org/cms-hpt.txt,yes
 271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,trinityhealth.org,guess,97,Trinity Hospitals,https://trinityhealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-351302,MCKENZIE COUNTY HEALTHCARE SYSTEMS INC,WATFORD CITY,ND,Critical Access Hospitals,mckenziehealth.com,osm,65,McKenzie Health,https://mckenziehealth.com/cms-hpt.txt,yes
-351328,LINTON HOSPITAL - CAH,LINTON,ND,Critical Access Hospitals,lintonhospital.org,osm,47,Linton Regional Medical Center,https://lintonhospital.org/cms-hpt.txt,yes
-281314,ANNIE JEFFREY MEMORIAL COUNTY HEALTH CENTER,OSCEOLA,NE,Critical Access Hospitals,ajhc.org,osm,100,Annie Jeffrey Memorial County Health Center,http://ajhc.org/cms-hpt.txt,yes
 281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,mhcs.us,sibling,100,Memorial Hospital,https://mhcs.us/cms-hpt.txt,"no - same name in another state, check by hand"
-281334,BOONE COUNTY HEALTH CENTER,ALBION,NE,Critical Access Hospitals,boonecohealth.org,osm,100,Boone County Health Center,https://boonecohealth.org/cms-hpt.txt,yes
-322004,ADVANCED CARE HOSPITAL OF SOUTHERN NEW MEXICO LLC,LAS CRUCES,NM,Long-term,achsnm.ernesthealth.com,osm,73,"Rehabilitation Hospital of Southern New Mexico, Inc.",https://achsnm.ernesthealth.com/cms-hpt.txt,yes
+334068,CLAXTON-HEPBURN MEDICAL CENTER,OGDENSBURG,NY,Psychiatric,claxtonhepburn.org,guess,100,Claxton Hepburn Medical Center,https://claxtonhepburn.org/cms-hpt.txt,yes
 360156,MEMORIAL HOSPITAL,FREMONT,OH,Acute Care Hospitals,wvumedicine.org,sibling,92,Grant Memorial Hospital,https://wvumedicine.org/cms-hpt.txt,"no - same name in another state, check by hand"
 360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,mercyregionalmedical.com,guess,100,Mercy Regional Medical Center,https://mercyregionalmedical.com/cms-hpt.txt,"no - same name in another state, check by hand"
-373300,J D MCCARTY CENTER FOR CHILDREN,NORMAN,OK,Childrens,jdmc.org,osm,78,JD McCarty Center,https://jdmc.org/cms-hpt.txt,yes
-390009,SAINT VINCENT HOSPITAL,ERIE,PA,Acute Care Hospitals,ahn.org,sibling,100,SAINT VINCENT HOSPITAL,https://ahn.org/cms-hpt.txt,"no - same name in another state, check by hand"
-391309,BARNES-KASSON COUNTY HOSPITAL,SUSQUEHANNA,PA,Critical Access Hospitals,barnes-kasson.org,osm,100,Barnes-Kasson County Hospital,http://barnes-kasson.org/cms-hpt.txt,yes
+364052,CLEAR VISTA HEALTH & WELLNESS,LORAIN,OH,Psychiatric,newvistahealth.com,sibling,100,Clear Vista Health and Wellness,https://newvistahealth.com/cms-hpt.txt,yes
 431316,COMMUNITY MEMORIAL HOSPITAL,REDFIELD,SD,Critical Access Hospitals,avera.org,sibling,95,Community Memorial Hospital Avera,https://avera.org/cms-hpt.txt,"no - same name in another state, check by hand"
-450698,LAMB HEALTHCARE CENTER,LITTLEFIELD,TX,Acute Care Hospitals,lambhc.org,osm,100,Lamb Healthcare Center,https://www.lambhc.org/cms-hpt.txt,yes
-670266,TOWNSEN MEMORIAL HOSPITAL,HUMBLE,TX,Acute Care Hospitals,townsenmemorialhospital.com,guess,100,Townsen Memorial Hospital,https://townsenmemorialhospital.com/cms-hpt.txt,yes
-461310,BLUE MOUNTAIN HOSPITAL,BLANDING,UT,Critical Access Hospitals,bluemountainhospital.org,guess,92,Blue Mountain Hospital District,https://bluemountainhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
+452034,CORNERSTONE SPECIALTY HOSPITALS ROUND ROCK,AUSTIN,TX,Long-term,cornerstonehospitals.com,sibling,100,Cornerstone Specialty Hospitals Round Rock,https://cornerstonehospitals.com/cms-hpt.txt,yes
+461306,GUNNISON VALLEY HOSPITAL,GUNNISON,UT,Critical Access Hospitals,gunnisonvalleyhealth.org,guess,100,GUNNISON VALLEY HOSPITAL,https://gunnisonvalleyhealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
 520075,ST VINCENT HOSPITAL,GREEN BAY,WI,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Vincent Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
+510062,BECKLEY ARH HOSPITAL,BECKLEY,WV,Acute Care Hospitals,arh.org,sibling,100,Beckley ARH Hospital,https://arh.org/cms-hpt.txt,yes
+531312,CODY REGIONAL HEALTH,CODY,WY,Critical Access Hospitals,codyregionalhealth.org,guess,100,Cody Regional Health,https://codyregionalhealth.org/cms-hpt.txt,yes

@@ -108,7 +108,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 011308,CRENSHAW COMMUNITY HOSPITAL,LUVERNE,AL,Critical Access Hospitals,,https://crenshawcommunityhospital.com/wp-content/uploads/2025/10/000817582_crenshaw-community-hospital_standardcharges-2.csv,raw/hospitals/2026-10/AL/74191035a7db_000817582_crenshaw-community-hospital_standardcharges-2.csv.zst,74191035a7db6f4ae65ede98d3fb09801c45da8fa7069dd63f1ac0dcf331651d,4176920,2026-10-08/fill7,
 011309,WIREGRASS MEDICAL CENTER,GENEVA,AL,Critical Access Hospitals,wiregrassmedicalcenter.org,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbWMCGENEVAAL&type=CDMWithoutLabel&fileType=CSV,,,,,
 011311,LAKELAND COMMUNITY HOSPITAL,HALEYVILLE,AL,Critical Access Hospitals,,,,,,,
-012006,INFIRMARY LTAC HOSPITAL,MOBILE,AL,Long-term,,,,,,,
+012006,INFIRMARY LTAC HOSPITAL,MOBILE,AL,Long-term,infirmaryhealth.org,,,,,,sibling 2026-10-18
 012008,SELECT SPECIALTY HOSPITAL - BIRMINGHAM,BIRMINGHAM,AL,Long-term,,https://resources.selectmedical.com/Pricing-Transparency/critical-illness-recovery/25-1813128_Select_Specialty_Hospital-Birmingham_standardcharges.csv,,,,,web 2026-10-14
 012009,"NOLAND HOSPITAL BIRMINGHAM II, LLC",BIRMINGHAM,AL,Long-term,nolandhospitals.com,,,,,,osm 2026-10-10
 012010,"NOLAND HOSPITAL DOTHAN II, LLC",DOTHAN,AL,Long-term,nolandhospitals.com,,,,,,web 2026-10-14
@@ -147,7 +147,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 040020,ST BERNARDS MEDICAL CENTER,JONESBORO,AR,Acute Care Hospitals,,https://www.stbernards.info/app/files/public/fbd5b848-7d77-4957-a92e-11d22b425db5/710290019_st-bernards-hospital-inc_standardcharges.csv,,,,,web 2026-10-14
 040022,NORTHWEST MEDICAL CENTER-SPRINGDALE,SPRINGDALE,AR,Acute Care Hospitals,,https://www.mercy.net/content/dam/mercy/en/web-assets/charge-files/621684203_mercy-hospital-northwest-arkansas_standardcharges.zip,,,,,web 2026-10-14
 040026,CHI ST. VINCENT HOSPITAL HOT SPRINGS,HOT SPRINGS,AR,Acute Care Hospitals,commonspirit.org,https://www.commonspirit.org/content/dam/commonspiritorg/en/chisv/soar/finance/price-transparency/710236913-1689628232_chi-st-vincent-hospital-hot-springs_standardcharges.json,raw/hospitals/2026-10/AR/4917e5e7067e_710236913-1689628232_chi-st-vincent-hospital-hot-springs_standardcharges.json.zst,4917e5e7067e6b8ee5ba8a5f694ad416ccfccae9c9f71737223f56e420dc2467,41509239,2026-10-05/nat,
-040027,BAXTER HEALTH,MOUNTAIN HOME,AR,Acute Care Hospitals,,,,,,,
+040027,BAXTER HEALTH,MOUNTAIN HOME,AR,Acute Care Hospitals,baxterhealth.org,,,,,,guess 2026-10-18
 040029,"CONWAY REGIONAL MEDICAL CENTER, INC",CONWAY,AR,Acute Care Hospitals,,https://cullmanregional.com/wp-content/uploads/2025/01/631058174_cullman-regional-medical-center_standardcharges.csv,raw/hospitals/2026-10/AR/8c6de69bf3ca_631058174_cullman-regional-medical-center_standardcharges.csv.zst,8c6de69bf3ca1940bc3f8efdeee17497ffbcee258ec2758a4f784fe88496cd90,4960424,2026-10-05/nat,
 040036,BAPTIST HEALTH MEDICAL CENTER NORTH LITTLE ROCK,NORTH LITTLE ROCK,AR,Acute Care Hospitals,baptist-health.org,,,,,,osm 2026-10-10
 040039,ARKANSAS METHODIST MEDICAL CENTER,PARAGOULD,AR,Acute Care Hospitals,myammc.org,,,,,,osm 2026-10-10
@@ -480,7 +480,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 050257,"GOOD SAMARITAN HOSPITAL, LP",BAKERSFIELD,CA,Acute Care Hospitals,,https://apim.services.craneware.com/api-pricing-transparency/api/public/16df7438d261bee057acf7b94fcb0bbb/charges/mrf,raw/hospitals/2026-10/CA/b7fac6ed060c_mrf.zst,b7fac6ed060c643ee788c9472d2ad3dcf23577bfc5a329dfeaad2fe7c5fb0cd7,8624556,2026-10-09/find,
 050261,SIERRA VIEW MEDICAL CENTER,PORTERVILLE,CA,Acute Care Hospitals,,https://sierraview.pt.panaceainc.com/MRFDownload/sierraview/medicalcenter,,,,,web 2026-10-14
 050262,RONALD REAGAN UCLA MEDICAL CENTER,LOS ANGELES,CA,Acute Care Hospitals,uclahealth.org,,,,,,sibling 2026-10-11
-050272,REDLANDS COMMUNITY HOSPITAL,REDLANDS,CA,Acute Care Hospitals,,,,,,,
+050272,REDLANDS COMMUNITY HOSPITAL,REDLANDS,CA,Acute Care Hospitals,redlandshospital.org,,,,,,guess 2026-10-18
 050276,CONTRA COSTA REGIONAL MEDICAL CENTER,MARTINEZ,CA,Acute Care Hospitals,,,,,,,
 050278,PROVIDENCE HOLY CROSS MEDICAL CENTER,MISSION HILLS,CA,Acute Care Hospitals,providence.org,https://pricetransparency.providence.org/socal/live/954582647_providence-holy-cross-medical-center_standardcharges.json,raw/hospitals/2026-10/CA/621bd9927503_954582647_providence-holy-cross-medical-center_standardcharges.json.zst,621bd9927503ac7ffb05681b4d4869e1f486bb4b16ee708507f1ebf6e589e9bb,224921136,2026-10-05/nat,
 050279,HI-DESERT MEDICAL CENTER,JOSHUA TREE,CA,Acute Care Hospitals,,"https://mrfs.hyvehealthcare.com/TenetHealth/473550779_hdmc-holdings,-llc_standardcharges.json",,,,,web 2026-10-14
@@ -625,7 +625,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 050765,KAISER FOUNDATION HOSPITAL-MORENO VALLEY,MORENO VALLEY,CA,Acute Care Hospitals,,,,,,,
 050766,SUTTER SURGICAL HOSPITAL - NORTH VALLEY,YUBA CITY,CA,Acute Care Hospitals,,,,,,,
 050767,KAISER FOUNDATION HOSPITAL - VACAVILLE,VACAVILLE,CA,Acute Care Hospitals,,,,,,,
-050769,HOAG ORTHOPEDIC INSTITUTE,IRVINE,CA,Acute Care Hospitals,,,,,,,
+050769,HOAG ORTHOPEDIC INSTITUTE,IRVINE,CA,Acute Care Hospitals,hoagorthopedicinstitute.com,,,,,,guess 2026-10-18
 050770,LOMA LINDA UNIVERSITY MEDICAL CENTER-MURRIETA,MURRIETA,CA,Acute Care Hospitals,lluh.org,https://pricetransparency.healthcare/llu-murrieta/charges/export,raw/hospitals/2026-10/CA/8fb0a99c76a8_export.zst,8fb0a99c76a86e52bddac98ec39037f9eb5cc818ecea984c490db6597e0d9453,148288721,2026-10-05/nat,
 050771,COAST PLAZA HOSPITAL,NORWALK,CA,Acute Care Hospitals,,"https://sthpiprd.blob.core.windows.net/machine-readable-files/8428/760594558-1063412005_pipeline-health-system-holdings,-llc_standardcharges.csv",raw/hospitals/2026-10/CA/67daac80434d_760594558-1063412005_pipeline-health-system-holdings_-llc_standardcharges.csv.zst,67daac80434d0a5892f37a88333382dec081310a3a55d773a93a3b15207ceafb,318795446,2026-10-05/nat,
 050772,KAISER FOUNDATION HOSPITAL - ROSEVILLE,ROSEVILLE,CA,Acute Care Hospitals,,,,,,,
@@ -677,7 +677,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 051334,COMMUNITY MEMORIAL HOSPITAL - OJAI,OJAI,CA,Critical Access Hospitals,,https://www.mycmh.org/documents/951683892_community-memorial-healthcare-ojai_standardcharges.csv.csv,,,,,web 2026-10-14
 051335,BEAR VALLEY COMMUNITY HOSPITAL,BIG BEAR LAKE,CA,Critical Access Hospitals,,https://bvchd.com/wp-content/uploads/2024/09/330294751_BEAR-VALLEY-COMMUNITY-HOSPITAL_standardcharges.csv,raw/hospitals/2026-10/CA/02ea7090429a_330294751_BEAR-VALLEY-COMMUNITY-HOSPITAL_standardcharges.csv.zst,02ea7090429a2fa0aefef1add8fe7a4977930522697a41518c56cf9a84bb3a95,7090529,2026-10-09/find,
 051336,SOUTHERN MONTEREY COUNTY MEMORIAL HOSPITAL,KING CITY,CA,Critical Access Hospitals,,,,,,,
-051337,HAZEL HAWKINS MEMORIAL HOSPITAL,HOLLISTER,CA,Critical Access Hospitals,,,,,,,
+051337,HAZEL HAWKINS MEMORIAL HOSPITAL,HOLLISTER,CA,Critical Access Hospitals,hazelhawkins.com,,,,,,guess 2026-10-18
 051338,COALINGA REGIONAL MEDICAL CENTER,COALINGA,CA,Critical Access Hospitals,crmcmed.org,,,,,,osm 2026-10-10
 051339,PALO VERDE HOSPITAL,BLYTHE,CA,Critical Access Hospitals,paloverdehospital.org,https://hospitalpricedisclosure.com/Download.aspx?pxi=mFf*_*YSFqd65wsOm0aEz6fg*-*,raw/hospitals/2026-10/CA/839f00a1de42_Download.aspx.zst,839f00a1de42151e13d90fafd034ae16b39132281c12592d84e7d68c46f5598c,6769234,2026-10-08/fill11,
 052031,BARLOW RESPIRATORY HOSPITAL,LOS ANGELES,CA,Long-term,,https://www.barlowhospital.org/documents/951647809_barlow-respiratory-hospital_standardcharges.csv,,,,,web 2026-10-14
@@ -1510,7 +1510,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 161371,WINNMED,DECORAH,IA,Critical Access Hospitals,winnmed.org,,,,,,osm 2026-10-10
 161372,BOONE COUNTY HOSPITAL,BOONE,IA,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbBCHBOONEIA&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/IA/75eda3222824_Reports.aspx.zst,75eda3222824e9539ed91e23695fe42a43f6d1270a2447d484d716688230f588,75892350,2026-10-05/nat,
 161373,RINGGOLD COUNTY HOSPITAL,MOUNT AYR,IA,Critical Access Hospitals,rchmtayr.org,,,,,,osm 2026-10-10
-161374,MYRTUE MEDICAL CENTER,HARLAN,IA,Critical Access Hospitals,,,,,,,
+161374,MYRTUE MEDICAL CENTER,HARLAN,IA,Critical Access Hospitals,myrtuemedical.org,,,,,,guess 2026-10-18
 161375,BUENA VISTA REGIONAL MEDICAL CENTER,STORM LAKE,IA,Critical Access Hospitals,bvrmc.org,https://www.bvrmc.org/wp-content/uploads/2026/04/426037827_Buena-Vista-Regional-Medical-Center_StandardCharges.csv,,,,,
 161376,CASS COUNTY MEMORIAL HOSPITAL,ATLANTIC,IA,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbCassCountyMemorial%20&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/IA/e46f3238840c_Reports.aspx.zst,e46f3238840ca3f13df0c1f17d70e2c46c069fc717dbdb3324808da99cb7a858,52403259,2026-10-05/nat,
 161377,MERCYONE CENTERVILLE MEDICAL CENTER,CENTERVILLE,IA,Critical Access Hospitals,mercyone.org,https://hpt.trinity-health.org/420680308_st-josephs-mercy-hospital-centerville_standardcharges.zip,raw/hospitals/2026-10/IA/1549226ddd4a_420680308_st-josephs-mercy-hospital-centerville_standardcharges.zip.zst,1549226ddd4ab4ed51afef97ea441f072a3b92b124c84a281a9443ec7d4025b3,80749080,2026-10-05/nat,
@@ -1610,7 +1610,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 140077,TOUCHETTE REGIONAL HOSPITAL INC,CENTREVILLE,IL,Acute Care Hospitals,,https://touchette.org/media-library/documents/371305510_touchette-regional-hospital_standardcharges.csv,raw/hospitals/2026-10/IL/f7f0f71b2fc1_371305510_touchette-regional-hospital_standardcharges.csv.zst,f7f0f71b2fc1ccd470812a1dd3fe7783a3c59406590c39ae5a6feb2cb80ad2c9,12142562,2026-10-05/nat,
 140080,SAINT FRANCIS HOSPITAL-EVANSTON,EVANSTON,IL,Acute Care Hospitals,,https://saintfrancisevanston.org/wp-content/uploads/2026/09/0006470_SaintFrancisHospital_standardcharges.json,raw/hospitals/2026-10/IL/f0242d56979e_0006470_SaintFrancisHospital_standardcharges.json.zst,f0242d56979e1dab228df05ad2d4fb353e45f90fdea6d3ca0e3875b8ab0ea326,36771044,2026-10-09/find,
 140082,LOUIS A WEISS MEMORIAL HOSPITAL,CHICAGO,IL,Acute Care Hospitals,weisshospital.com,https://sthpiprd.blob.core.windows.net/machine-readable-files/12711/352637418_resilience-healthcare-weiss-memorial-hospital-llc_standardcharges.csv,raw/hospitals/2026-10/IL/7e133fe6ed0b_352637418_resilience-healthcare-weiss-memorial-hospital-llc_standardcharges.csv.zst,7e133fe6ed0b7be4a993a5e67eae78fc64fea18c4a198ab72299151b50aa3e8a,245979072,2026-10-05/nat,
-140083,LORETTO HOSPITAL,CHICAGO,IL,Acute Care Hospitals,,,,,,,
+140083,LORETTO HOSPITAL,CHICAGO,IL,Acute Care Hospitals,lorettohospital.org,,,,,,guess 2026-10-18
 140084,VISTA MEDICAL CENTER EAST,WAUKEGAN,IL,Acute Care Hospitals,,https://vistahealth.com//wp-content/uploads/2025/06/203978521_VISTA-MEDICAL-CENTER_standardcharges.csv,raw/hospitals/2026-10/IL/9dad673437db_203978521_VISTA-MEDICAL-CENTER_standardcharges.csv.zst,9dad673437db7995e1abd2df67c0d2e58b3a4236196e46ab01c3e4f42c4d2d41,4216696,2026-10-09/find,
 140088,THE UNIVERSITY OF CHICAGO MEDICAL CENTER,CHICAGO,IL,Acute Care Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbRUMCCHICAGOIL&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/IL/47f313959c96_Reports.aspx.zst,47f313959c969ca2b7a3c71eeb3fab76165a4c13b0346991337b60b6074f3b80,69013318,2026-10-09/find,
 140089,MC DONOUGH DISTRICT HOSPITAL,MACOMB,IL,Acute Care Hospitals,,https://www.mdh.org/documents/376016777_mcdonough-county-hospital-district_standardcharges.csv,,,,,web 2026-10-14
@@ -1694,7 +1694,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 140304,UCHICAGO MEDICINE ADVENTHEALTH BOLINGBROOK,BOLINGBROOK,IL,Acute Care Hospitals,uchicagomedicineadventhealth.org,https://hospitalpricedisclosure.com/Download.aspx?pxi=K1MLfPUji3qfpZEVcnmHMg*-*&f,raw/hospitals/2026-10/IL/9ed31cf593da_Download.aspx.zst,9ed31cf593da4218e2e83a06198872899beeb3bdb70366272923d19b312893c2,37710691,2026-10-05/nat,
 140308,MERCYHEALTH HOSPITAL & PHYSICIAN CLINIC-CRYSTAL LA,CRYSTAL LAKE,IL,Acute Care Hospitals,,,,,,,
 141300,THOMAS H BOYD MEMORIAL HOSPITAL,CARROLLTON,IL,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbTHBCCARROLLTONIL&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/IL/5faf29dfc2c9_Reports.aspx.zst,5faf29dfc2c95573dd77ada9c8b0cd532f7d3a8e90c95dd1107d14c5c48d68f4,53974518,2026-10-09/find,
-141301,KIRBY MEDICAL CENTER,MONTICELLO,IL,Critical Access Hospitals,,,,,,,
+141301,KIRBY MEDICAL CENTER,MONTICELLO,IL,Critical Access Hospitals,kirbyhealth.org,,,,,,guess 2026-10-18
 141302,MIDWEST MEDICAL CENTER,GALENA,IL,Critical Access Hospitals,,https://www.midwestmedicalcenter.org/content/pdfs/204560540_midwest-medical-center_standardcharges.csv,raw/hospitals/2026-10/IL/7c1c949629f7_204560540_midwest-medical-center_standardcharges.csv.zst,7c1c949629f78a951f85b0667c5ffb07651508b284aa21c6358863abba516d8e,13526487,2026-10-05/nat,
 141303,WARNER HOSPITAL AND HEALTH SERVICES,CLINTON,IL,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT//FinalLinks/Reports.aspx?dbName=dbDrJohnWarnerIL&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/IL/2a67e189dff0_Reports.aspx.zst,2a67e189dff0dd3f7934e5a5de2540afbd96a4cdcbc8d89706dc3b985cbc0dde,41504708,2026-10-09/find,
 141304,"GENESIS MEDICAL CENTER, ALEDO",ALEDO,IL,Critical Access Hospitals,,https://trinityhealth.pt.panaceainc.com/MRFDownload/trinityhealth/genesismedicalcenter,raw/hospitals/2026-10/IL/56e00793df62_genesismedicalcenter.zst,56e00793df62549915e1ccf13e37fc467d877ebd21f0f4bb0c4700e35f484c8d,4859250,2026-10-09/find,
@@ -2179,7 +2179,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 181329,CHI SAINT JOSEPH BEREA NF,BEREA,KY,Critical Access Hospitals,,https://www.commonspirit.org/content/dam/commonspiritorg/en/chisj/soky/finance/price-transparency/611334601-1740488386_saint-joseph-health-system-inc_standardcharges.json,raw/hospitals/2026-10/KY/55edb698ee82_611334601-1740488386_saint-joseph-health-system-inc_standardcharges.json.zst,55edb698ee825909b71e3aab951b03048239a671d5907c965b1ad0f0c36e890f,70308806,2026-10-09/find,
 181330,RUSSELL COUNTY HOSPITAL,RUSSELL SPRINGS,KY,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbRCHRUSSELLSPRINGSKY&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/KY/987081bcdd19_Reports.aspx.zst,987081bcdd193b44d31666aa5bdd4d88dc5706b7491ba60efe9a9b31a56b5b89,26081398,2026-10-09/find,
 181331,MCDOWELL ARH HOSPITAL,MC DOWELL,KY,Critical Access Hospitals,,https://www.arh.org/wp-content/uploads/2026/05/520795508_McDowell-ARH-Hospital_standardcharges.csv,raw/hospitals/2026-10/KY/2566406ba45c_520795508_McDowell-ARH-Hospital_standardcharges.csv.zst,2566406ba45cdaa3f86b39730e90ad296b2101f16ded8da08947906dd43187d2,9694437,2026-10-09/find,
-181333,THE MEDICAL CENTER AT ALBANY,ALBANY,KY,Critical Access Hospitals,,,,,,,
+181333,THE MEDICAL CENTER AT ALBANY,ALBANY,KY,Critical Access Hospitals,medcenterhealth.org,,,,,,sibling 2026-10-18
 181334,KENTUCKY RIVER MEDICAL CENTER,JACKSON,KY,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbKRMCJACKSONKY&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/KY/b7450bde07eb_Reports.aspx.zst,b7450bde07eb72f3c80e05c2617db548830d364e04fc9afad48bc1d546b60097,10543327,2026-10-05/nat,
 182001,KINDRED HOSPITAL LOUISVILLE,LOUISVILLE,KY,Long-term,kindredhospitals.com,,,,,,osm 2026-10-10
 182002,"CONTINUING CARE HOSPITAL, INC",LEXINGTON,KY,Long-term,chisaintjosephhealth.org,,,,,,sibling 2026-10-11
@@ -2330,7 +2330,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 192028,RIVERBRIDGE SPECIALTY HOSPITAL,VIDALIA,LA,Long-term,riverbridgela.com,,,,,,osm 2026-10-10
 192029,LAFAYETTE - A M G SPECIALTY HOSPITAL,LAFAYETTE,LA,Long-term,lafayettesurgical.com,,,,,,osm 2026-10-10
 192031,CORNERSTONE SPECIALTY HOSPITALS WEST MONROE,WEST MONROE,LA,Long-term,,,,,,,
-192032,LOUISIANA EXTENDED CARE HOSPITAL OF LAFAYETTE,LAFAYETTE,LA,Long-term,,,,,,,
+192032,LOUISIANA EXTENDED CARE HOSPITAL OF LAFAYETTE,LAFAYETTE,LA,Long-term,lhcgroup.com,,,,,,sibling 2026-10-18
 192035,LOUISIANA EXTENDED CARE HOSPITAL OF NATCHITOCHES,NATCHITOCHES,LA,Long-term,lhcgroup.com,,,,,,web 2026-10-14
 192036,P A M SPECIALTY HOSPITAL OF HAMMOND,HAMMOND,LA,Long-term,,https://sthpiprd.blob.core.windows.net/machine-readable-files/10978/300752846_post-acute-medical-at-hammond-llc_standardcharges.csv,,,,,web 2026-10-14
 192037,HOUMA - AMG SPECIALTY HOSPITAL,HOUMA,LA,Long-term,,https://amgihm.com/wp-content/uploads/2026/08/455174307_houma-amg-specialty-hospital-llc_standardcharges.csv,,,,,web 2026-10-14
@@ -3165,7 +3165,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 271314,DEER LODGE MEDICAL CENTER,DEER LODGE,MT,Critical Access Hospitals,dlmed.org,,,,,,osm 2026-10-10
 271315,P H S INDIAN HOSPITAL-FT BELKNAP AT HARLEM - CAH,HARLEM,MT,Critical Access Hospitals,,,,,,,
 271316,FRANCES MAHON DEACONESS HOSPITAL,GLASGOW,MT,Critical Access Hospitals,,,,,,,
-271317,LIVINGSTON HEALTHCARE,LIVINGSTON,MT,Critical Access Hospitals,,,,,,,
+271317,LIVINGSTON HEALTHCARE,LIVINGSTON,MT,Critical Access Hospitals,livingstonhealthcare.org,,,,,,guess 2026-10-18
 271318,BARRETT HOSPITAL & HEALTHCARE,DILLON,MT,Critical Access Hospitals,barretthospital.org,,,,,,osm 2026-10-10
 271319,RUBY VALLEY MEDICAL CENTER,SHERIDAN,MT,Critical Access Hospitals,rvmc.org,,,,,,guess 2026-10-10
 271320,CABINET PEAKS MEDICAL CENTER,LIBBY,MT,Critical Access Hospitals,,https://cabinetpeaks.pt.panaceainc.com/MRFDownload/cabinetpeaks/cabinetpeaks,raw/hospitals/2026-10/MT/4ae92ca47330_cabinetpeaks.zst,4ae92ca473301a59fad4f25f212a5592dece8e30b6a2bcd37874510065c65764,30277657,2026-10-05/nat,
@@ -3881,7 +3881,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 334065,WESTERN NY CHILDRENS PSYCHIATRIC CENTER,WEST SENECA,NY,Psychiatric,omh.ny.gov,,,,,,web 2026-10-14
 334066,ROCKLAND CHILDREN'S PSYCHIATRIC CENTER,ORANGEBURG,NY,Psychiatric,,,,,,,
 334067,NEW YORK CITY CHILDRENS PSYCH CENTER,BELLEROSE,NY,Psychiatric,omh.ny.gov,,,,,,osm 2026-10-10
-334068,CLAXTON-HEPBURN MEDICAL CENTER,OGDENSBURG,NY,Psychiatric,,,,,,,
+334068,CLAXTON-HEPBURN MEDICAL CENTER,OGDENSBURG,NY,Psychiatric,claxtonhepburn.org,,,,,,guess 2026-10-18
 360001,MERCY HEALTH-ANDERSON HOSPITAL,CINCINNATI,OH,Acute Care Hospitals,,https://www.mercy.com/-/media/mercy/patient-resources/hospital-pricing-transparency/310537085_mercy-health-anderson-hospital-llc_standardcharges.csv,,,,,web 2026-10-14
 360002,UNIVERSITY HOSPITALS SAMARITAN MEDICAL CENTER,ASHLAND,OH,Acute Care Hospitals,uhhospitals.org,https://sthpiprd.blob.core.windows.net/machine-readable-files/7892/340714535-1902882939_university-hospitals-health-system_standardcharges.csv,,,,,
 360003,"UNIVERSITY OF CINCINNATI MEDICAL CENTER, LLC",CINCINNATI,OH,Acute Care Hospitals,uchealth.com,https://www.uchealth.com/content/dam/uchealth/json-files/311479038_University-of-Cincinnati-Medical-Center_StandardCharges.json,,,,,
@@ -4087,7 +4087,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 364048,HAVEN BEHAVIORAL HOSPITAL OF DAYTON,DAYTON,OH,Psychiatric,oceanshealthcare.com,https://oceanshealthcare.com/wp-content/uploads/2026/08/352429122_Haven-Behavioral-Hospital-of-Dayton_standardcharges.csv,,,,,web 2026-10-14
 364049,DUBLIN SPRINGS,DUBLIN,OH,Psychiatric,columbussprings.com,,,,,,web 2026-10-14
 364051,BECKETT SPRINGS,WEST CHESTER,OH,Psychiatric,beckettsprings.com,,,,,,osm 2026-10-10
-364052,CLEAR VISTA HEALTH & WELLNESS,LORAIN,OH,Psychiatric,,,,,,,
+364052,CLEAR VISTA HEALTH & WELLNESS,LORAIN,OH,Psychiatric,newvistahealth.com,,,,,,sibling 2026-10-18
 364053,HIGHLAND SPRINGS,BEACHWOOD,OH,Psychiatric,,https://www.highlandspringshealth.com/docs/bhhighlandspringslibraries/3q26/611746887_highland-springs_standardcharges.csv,raw/hospitals/2026-10/OH/a8a10b4edb41_611746887_highland-springs_standardcharges.csv.zst,a8a10b4edb4159d61484a183cdd4af57881df85cccae7da0fe367d82d860edfd,248871,2026-10-05/nat,
 364054,GENERATIONS BEHAVIORAL HEALTH - GENEVA,GENEVA,OH,Psychiatric,generationsbehavioralhealth.com,,,,,,guess 2026-10-10
 364055,SOJOURN AT SENECA SENIOR BEHAVIORAL HEALTH HOSPITA,TIFFIN,OH,Psychiatric,,https://sojournseneca.com/wp-content/uploads/2026/08/sjourn_standard_charges.csv,,,,,web 2026-10-14
@@ -5183,7 +5183,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 452028,KINDRED HOSPITAL-TARRANT COUNTY,ARLINGTON,TX,Long-term,kindredhospitals.com,,,,,,osm 2026-10-10
 452029,CONTINUECARE HOSPITAL AT HENDRICK MEDICAL CENTER,ABILENE,TX,Long-term,,https://secure.claraprice.net/price-transparency/BGTD-1730316052922/machine-readable,,,,,web 2026-10-14
 452032,CLEAR LAKE-AMG SPECIALTY HOSPITAL,WEBSTER,TX,Long-term,amgihm.com,,,,,,web 2026-10-14
-452034,CORNERSTONE SPECIALTY HOSPITALS ROUND ROCK,AUSTIN,TX,Long-term,,,,,,,
+452034,CORNERSTONE SPECIALTY HOSPITALS ROUND ROCK,AUSTIN,TX,Long-term,cornerstonehospitals.com,,,,,,sibling 2026-10-18
 452038,TEXAS NEURO REHABILITATION CENTER,AUSTIN,TX,Long-term,,https://uhsfilecdn.eskycity.net/bh/562274069_texas-neuro-bh-medical_standardcharges.csv,,,,,web 2026-10-14
 452039,KINDRED HOSPITAL HOUSTON NW,HOUSTON,TX,Long-term,kindredhospitals.com,,,,,,chain 2026-10-10
 452041,CARRUS SPECIALTY HOSPITAL,SHERMAN,TX,Long-term,carrushealth.com,https://hospitalpricetransparencyfiles.com/carrus-specialty-hospital/331202676_Texoma-Hospital-Partners-LLC_standardcharges.csv,,,,,web 2026-10-14
@@ -5900,7 +5900,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 510050,"WHEELING HOSPITAL, INC",WHEELING,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/550357057_Wheeling-Hospital-Inc._standardcharges.csv,,,,,
 510055,"CABELL HUNTINGTON HOSPITAL, INC",HUNTINGTON,WV,Acute Care Hospitals,cabellhuntington.org,https://cabellhuntington.org/static/550675666_Cabell-Huntington-Hospital-Inc_standardcharges.csv,,,,,
 510058,CAMDEN CLARK MEDICAL CENTER,PARKERSBURG,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/311524546_Camden-Clark-Memorial-Hospital-Corporation_standardcharges.csv,raw/hospitals/2026-10/WV/7d1ad6b65407_311524546_Camden-Clark-Memorial-Hospital-Corporation_standardcharges.csv.zst,7d1ad6b654072ea9119a9c386fcd62e0ea6eae7bbea3cfa0bb9503c2dedfe7ab,144505691,2026-10-05/nat,
-510062,BECKLEY ARH HOSPITAL,BECKLEY,WV,Acute Care Hospitals,,,,,,,
+510062,BECKLEY ARH HOSPITAL,BECKLEY,WV,Acute Care Hospitals,arh.org,,,,,,sibling 2026-10-18
 510070,RALEIGH GENERAL HOSPITAL,BECKLEY,WV,Acute Care Hospitals,raleighgeneral.com,,,,,,osm 2026-10-10
 510072,WETZEL COUNTY HOSPITAL,NEW MARTINSVILLE,WV,Acute Care Hospitals,wvumedicine.org,https://wvumedicine.org/wp-content/uploads/2026/08/843480493_Wetzel-County-Hospital-Inc._standardcharges.csv,raw/hospitals/2026-10/WV/6dba5b27c865_843480493_Wetzel-County-Hospital-Inc._standardcharges.csv.zst,6dba5b27c865c0a73758e40da4b5ad5b36a0526f9a9150ace3869cac6a353e05,60105569,2026-10-05/nat,
 510086,WELCH COMMUNITY HOSPITAL,WELCH,WV,Acute Care Hospitals,,,,,,,
@@ -5962,7 +5962,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 531309,NORTH BIG HORN HOSPITAL DISTRICT,LOVELL,WY,Critical Access Hospitals,nbhh.com,,,,,,osm 2026-10-10
 531310,POWELL VALLEY HOSPITAL,POWELL,WY,Critical Access Hospitals,pvhc.org,,,,,,osm 2026-10-10
 531311,CROOK COUNTY HOSPITAL,SUNDANCE,WY,Critical Access Hospitals,,,,,,,
-531312,CODY REGIONAL HEALTH,CODY,WY,Critical Access Hospitals,,,,,,,
+531312,CODY REGIONAL HEALTH,CODY,WY,Critical Access Hospitals,codyregionalhealth.org,,,,,,guess 2026-10-18
 531313,STAR VALLEY MEDICAL CENTER,AFTON,WY,Critical Access Hospitals,,https://starvalleyhealth.org/wp-content/uploads/2024/06/83-0327251_starvalleyhealth_standardcharges.csv,,,,,web 2026-10-14
 531314,NIOBRARA COUNTY HOSPITAL DISTRICT,LUSK,WY,Critical Access Hospitals,,"https://linkprotect.cudasvc.com/url?a=https%3a%2f%2fniobrarahospital.slicedhealth.io%2fpricer%2f870725536_niobrara-county-hospital-district_standardcharges.csv&c=E,1,ct1mr8FoQEvcIT7YY8oLaastfaktCjRhJ1b6cIQhiQd5OuzG3EX2Jl6_ecq6mBNlnrbFXHBoS8RG0gVfMpVVZn4Hvr5XZm8gXdKC8Kor&typo=1",raw/hospitals/2026-10/WY/7104f3acd017_url.zst,7104f3acd017e1e8b3508beb409a6d12c79ba94a631cdc136b76782f85a7e564,5792434,2026-10-05/nat,
 531315,SOUTH LINCOLN MEDICAL CENTER - CAH,KEMMERER,WY,Critical Access Hospitals,southlincolnmedical.com,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbSouthLincolnKemmererWY&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/WY/c82981772218_Reports.aspx.zst,c829817722180b95a1c7d9f4d7459ddba90006539343b2ee0fb90c35976abb3f,21310726,2026-10-05/nat,
