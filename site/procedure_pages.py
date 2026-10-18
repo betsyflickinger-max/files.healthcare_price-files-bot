@@ -112,6 +112,25 @@ class Store:
         # the t/ function adds 't/' itself; the h/ function's prefix already ends in .../h/
         return p + 't/' if kind == 't' and "PREFIX + 't/'" in src else p
 
+    def local_medicare(self, area, n_fac):
+        """fac index -> [kind, wage index, CCN, CBSA] for this area's hospitals and surgery centers (site/med_local.py), or {}."""
+        if self.offline or not self.s3:
+            return {}
+        try:
+            if not hasattr(self, '_ml'):
+                self._ml = json.loads(self.s3.get_object(Bucket=self.B, Key='site/med_local/2026.json')['Body'].read())['npi']
+            pre = self.prefix(area, 't')
+            if not pre or not pre.endswith('t/'):
+                return {}
+            npis = json.loads(self.s3.get_object(Bucket=self.B, Key=pre[:-2] + 'npis.json')['Body'].read())
+        except Exception as e:
+            print(f"  {area['slug']}: no local Medicare figures ({type(e).__name__})", flush=True)
+            return {}
+        if len(npis) != n_fac:                 # the provider list must line up with the page's, or nothing is shown
+            print(f"  {area['slug']}: npis.json ({len(npis)}) and page providers ({n_fac}) differ; no local Medicare figures", flush=True)
+            return {}
+        return {i: self._ml[n] for i, n in enumerate(npis) if n in self._ml}
+
     def get(self, area, kind, code):
         if self.offline:
             p = os.path.join(self.offline, area['slug'], kind, code + '.txt')
@@ -355,7 +374,7 @@ def file_date(e):
     return '-'.join(m.groups()) if m else e.get('date')
 
 
-def summarize(D, code, t, h):
+def summarize(D, code, t, h, loc=None):
     """Everything a procedure page shows, as plain data. Mirrors the Price Finder's own rules (see the page's main script):
     one line per provider per network = that provider's lowest standard rate (no modifier) in that network; $0 lines,
     percent-of-charges lines and lines the file flags as unusually low are kept out of the low/high figures."""
@@ -366,7 +385,11 @@ def summarize(D, code, t, h):
 
     def fac(i):
         x = D['fac'][int(i)]
-        return {'name': nice(x[0]), 'city': nice(x[1]), 'kind': kind_of(x)}
+        o = {'name': nice(x[0]), 'city': nice(x[1]), 'kind': kind_of(x)}
+        m = (loc or {}).get(int(i))
+        if m and m[0] == o['kind']:           # [kind, wage index, CCN, CBSA] from site/med_local.py (hospitals, surgery centers)
+            o['ml'] = m
+        return o
 
     def entry(fi, r):
         x = fac(fi)
@@ -563,7 +586,17 @@ def summarize(D, code, t, h):
         rows = [['insurer rate', e['name'], e['city'], KIND.get(e['kind'], ''), e['ins'], e['plan'], e['v'], file_date(e), e['url']] for e in allines]
         rows += [['hospital cash price', e['name'], e['city'], 'hospital', '', '', e['v'], e['date'], e['url']] for e in hcash]
         rows += [['posted cash price', c['name'], c['city'], '', '', c.get('label', ''), c['v'], c.get('chk', ''), c['src']] for c in cash]
+    mlr = {}
+    if kind == 'fac' and loc:
+        for e in allines:
+            if e.get('ml'):
+                k_, w_ = e['ml'][0], e['ml'][1]
+                r_ = mlr.setdefault(k_, [w_, w_, set()])
+                r_[0], r_[1] = min(r_[0], w_), max(r_[1], w_)
+                r_[2].add((e['name'], e['city']))
+        mlr = {k_: [a_, b_, len(c_)] for k_, (a_, b_, c_) in mlr.items()}
     return {
+        'mlr': mlr,
         'code': code, 'name': C['name'], 'common': SEARCH_NAMES.get(code, (None,))[0] or re.sub(r'\s*\([^)]*\)', '', C['name']).strip(), 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
         'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in allines}), 'networks': networks,
         'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
@@ -778,6 +811,57 @@ def med_lines(S, med_area):
     return L
 
 
+LABOR = {'H': 0.60, 'A': 0.50}    # labor-related share: OPPS 60% (CY2026 OPPS final rule), ASC 50% (MedPAC ASC Payment Basics, Oct 2026)
+
+
+def med_here(S, e):
+    """Medicare's facility rate for this hospital or surgery center after CMS's local wage adjustment (our calculation), or None."""
+    m = S.get('med') or {}
+    ml = (e or {}).get('ml')
+    if S.get('drg') or S.get('kind') != 'fac' or not ml:
+        return None
+    nat = (m.get('opps') or [None])[0] if ml[0] == 'H' else (m.get('asc') or [None])[0] if ml[0] == 'A' else None
+    if not nat:
+        return None
+    return round(nat * (LABOR[ml[0]] * ml[1] + 1 - LABOR[ml[0]]), 2)
+
+
+def med_here_line(S, e, short=False):
+    m = S.get('med') or {}
+    if S.get('drg') or S.get('kind') != 'fac' or not e or e.get('kind') not in ('H', 'A'):
+        return ''
+    if not (m.get('opps') if e['kind'] == 'H' else m.get('asc')):
+        return ''
+    x = med_here(S, e)
+    place = 'hospital' if e['kind'] == 'H' else 'surgery center'
+    if x is None:
+        return '' if short else (f"<br><span class='m'>Medicare's rate for this {place}: not calculated (we couldn't match it to its Medicare record; "
+                                 f"national rate shown below)</span>")
+    if short:
+        return f" · Medicare here {money(x)}"
+    return (f"<br>Medicare's rate for this {place}: <b>{money(x)}</b> <span class='m'>(our calculation from CMS's national rate and "
+            f"its local wage index, CY2026 · <a href='/methodology/#medicare-local'>how</a>)</span>")
+
+
+def local_range(S):
+    """One line per facility type: Medicare's rate after the local wage adjustment, lowest and highest across places on this page."""
+    m, out = S.get('med') or {}, []
+    if S.get('drg') or S.get('kind') != 'fac':
+        return ''
+    for k, key, place in (('H', 'opps', 'hospitals'), ('A', 'asc', 'surgery centers')):
+        r = (S.get('mlr') or {}).get(k)
+        if not r or not m.get(key):
+            continue
+        nat, sh = m[key][0], LABOR[k]
+        lo, hi = round(nat * (sh * r[0] + 1 - sh), 2), round(nat * (sh * r[1] + 1 - sh), 2)
+        rng = money(lo) if lo == hi else f"{money(lo)} to {money(hi)}"
+        out.append(f"<p class='cap'>After CMS's local wage adjustment, Medicare's {'hospital outpatient' if k == 'H' else 'surgery center'} rate at the "
+                   f"{r[2]:,} {place if r[2] != 1 else place[:-1]} on this page we could match to their Medicare records is {rng} "
+                   f"(our calculation from the national rate and each place's FY2026 wage index; "
+                   f"<a href='/methodology/#medicare-local'>how</a>, <a href='https://www.cms.gov/files/zip/fy2026-ipps-fr-impact-file.zip'>CMS wage index file</a>).</p>")
+    return ''.join(out)
+
+
 def med_headline(S):
     m = S['med']
     if not m:
@@ -921,9 +1005,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     finder = f"{pf_path}?code={S['code']}"
     tiles = []
     if S['lo']:
-        tiles.append(tile(f'Lowest negotiated {sg}', money(S['lo']['v']), f"{esc(S['lo']['name'])}{', ' + ctag(S['lo']['city']) if S['lo'].get('city') else ''}<br>{esc(netname(S['lo']['ins'], S['lo']['plan']))} · {src_link(S['lo'])}"))
+        tiles.append(tile(f'Lowest negotiated {sg}', money(S['lo']['v']), f"{esc(S['lo']['name'])}{', ' + ctag(S['lo']['city']) if S['lo'].get('city') else ''}<br>{esc(netname(S['lo']['ins'], S['lo']['plan']))} · {src_link(S['lo'])}{med_here_line(S, S['lo'])}"))
         if S['lines'] > 1:
-            tiles.append(tile(f'Highest negotiated {sg}', money(S['hi']['v']), f"{esc(S['hi']['name'])}{', ' + ctag(S['hi']['city']) if S['hi'].get('city') else ''}<br>{esc(netname(S['hi']['ins'], S['hi']['plan']))} · {src_link(S['hi'])}"))
+            tiles.append(tile(f'Highest negotiated {sg}', money(S['hi']['v']), f"{esc(S['hi']['name'])}{', ' + ctag(S['hi']['city']) if S['hi'].get('city') else ''}<br>{esc(netname(S['hi']['ins'], S['hi']['plan']))} · {src_link(S['hi'])}{med_here_line(S, S['hi'])}"))
     cc = cheapest_cash(S)
     if cc:
         e, kind = cc
@@ -972,10 +1056,10 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
-                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
+                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
     low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol></div>") if low_li else ''
     hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
-                    f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>"
+                    f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>"
                     for e in (S.get('highest') or []))
     sv = savings(S)
     high_sec = (f"<div><p class='kicker'>Highest published</p><h3 class='h3'>The 10 highest {pl}</h3>"
@@ -1017,10 +1101,10 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     ml = med_lines(S, med_area)
     med_sec = (f"<section class='sec'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
-               f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare. Facility fees are shown at the national rate so places compare on the same footing; "
-               f"<a href='/methodology/#medicare-local'>how Medicare adjusts for local costs</a>.</p><ol class='word'>"
+               f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare. Facility fees are shown at the national rate so places compare on the same footing; next to each hospital and surgery center "
+               f"we also show Medicare's rate for that place after its local adjustment. <a href='/methodology/#medicare-local'>How Medicare adjusts for local costs</a>.</p><ol class='word'>"
                + ''.join(f"<li><span><b>{esc(a)}</b><span class='m'>{esc(b)} · {lk}</span></span><span class='n'>{money(v)}</span></li>" for a, b, v, lk in ml)
-               + "</ol></section>") if ml else ''
+               + "</ol>" + local_range(S) + "</section>") if ml else ''
 
     chips = lambda items: ''.join(f"<a class='chip' href='{esc(u)}'>{esc(t)}</a>" for t, u in items)
     links_sec = (f"<section class='sec split'><div><p class='kicker'>Same procedure, other places</p><div class='chips'>{chips(others)}</div></div>"
@@ -1491,9 +1575,10 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
         for a in todo:
             D = page_data(pages[a['slug']][0])[0]
             mine = [c for c in codes if c in has[a['slug']]]
+            loc = store.local_medicare(a, len(D['fac']))
             def one(c):
                 try:
-                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c))
+                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc)
                 except Exception as e:     # one bad file never stops the rest; that page keeps its last version
                     print(f"  {a['slug']} {c}: skipped ({type(e).__name__}: {e})", flush=True)
                     return None

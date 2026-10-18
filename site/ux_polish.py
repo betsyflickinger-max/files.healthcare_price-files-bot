@@ -16,6 +16,7 @@ What it does (every step checks a marker first, so running it twice changes noth
 The Price Finder additions are one added block between <!-- UX:START --> and <!-- UX:END --> and change no existing
 wording, so city_page.py's wording checks still pass.
 """
+import json
 import os
 import re
 import sys
@@ -730,6 +731,74 @@ def legal(rel):
     return f
 
 
+ML_JS = '\n/*uxML*/\nvar UXML = null;\ntry { fetch(\'ml.json\').then(function (r) { return r.ok ? r.json() : null; }).then(function (j) { UXML = j; var el = document.getElementById(\'uxML\'); if (el && el.dataset.code) el.innerHTML = mlHTML(el.dataset.code); }).catch(function () {}); } catch (e) {}\nfunction mlHTML(code) {\n  if (!UXML || !UXML.r) return \'\';\n  var m = D.med.codes[code]; if (!m) return \'\';\n  var out = [];\n  [[\'H\', \'opps\', 0.6, \'Hospital outpatient facility fee\', \'hospitals\'], [\'A\', \'asc\', 0.5, \'Surgery center facility fee\', \'surgery centers\']].forEach(function (x) {\n    var r = UXML.r[x[0]]; if (!r || !m[x[1]]) return;\n    var nat = m[x[1]][0], sh = x[2], lo = Math.round(nat * (sh * r[0] + 1 - sh) * 100) / 100, hi = Math.round(nat * (sh * r[1] + 1 - sh) * 100) / 100;\n    out.push(\'<div class="pline"><div class="who"><b>\' + x[3] + \', after local adjustment</b><div class="meta">at the \' + r[2] + \' \' + x[4] +\n      \' in this area we matched to their Medicare records · our calculation from the national rate and each place’s FY2026 wage index · <a href="/methodology/#medicare-local">how</a></div></div>\' +\n      \'<span class="lead"></span><div class="right"><span class="price">\' + (lo === hi ? money(lo) : money(lo) + \'–\' + money(hi)) + \'</span></div></div>\');\n  });\n  return out.join(\'\');\n}\nfunction mlLocal(code) { return \'<div id="uxML" data-code="\' + code + \'">\' + mlHTML(code) + \'</div>\'; }\n/*/uxML*/\n'
+
+
+def patch_pf_ml(s):
+    """Price Finder: Medicare's facility rate range after the local wage adjustment (site/med_local.py; ml.json next to the page)."""
+    if '/*uxML*/' in s or 'function medBlock(code) {' not in s:
+        return s
+    s = s.replace('function medBlock(code) {', ML_JS + 'function medBlock(code) {', 1)
+    return re.sub(r"(L\.map\(\(\[a, b, v, k\]\) => `<div class=\"pline\">.*?`\)\.join\(''\))(;\n\})", r"\1 + mlLocal(code)\2", s, count=1, flags=re.S)
+
+
+def write_ml(d):
+    """ml.json next to each Price Finder page: the range of local Medicare factors for the area's matched hospitals and surgery centers."""
+    E = {k: ''.join(os.environ.get(k, '').split()) for k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET')}
+    if not all(E.values()):
+        return 0
+    import boto3
+    s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    B = E['R2_BUCKET']
+    try:
+        ML = json.loads(s3.get_object(Bucket=B, Key='site/med_local/2026.json')['Body'].read())['npi']
+    except Exception:
+        return 0
+    site, n = os.path.join(d, 'site'), 0
+    for a in json.load(open(os.path.join(site, 'cities.json'), encoding='utf-8')):
+        page = os.path.join(site, a['path'].strip('/'), 'index.html')
+        if not os.path.isfile(page):
+            continue
+        try:
+            if a['slug'] == 'dfw':
+                root = 'site/every/' + s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip() + '/'
+            else:
+                fn = os.path.join(d, 'functions', a['slug'], 'price-finder', 'pf', 't', '[code].js')
+                root = re.search(r'PREFIX = "([^"]+)"', open(fn, encoding='utf-8').read()).group(1)
+                root = root[:-2] if root.endswith('t/') else root
+            npis = json.loads(s3.get_object(Bucket=B, Key=root + 'npis.json')['Body'].read())
+            t = open(page, encoding='utf-8').read()
+            i = t.find('id="data"')
+            fac = json.loads(t[t.find('>', i) + 1:t.find('</script>', i)])['fac']
+        except Exception:
+            continue
+        if len(fac) != len(npis):
+            continue
+        r = {}
+        for f, npi in zip(fac, npis):
+            m = ML.get(npi)
+            kd = 'H' if f[2] == 'A' and re.search(r'\bhospital\b', f[0], re.I) else f[2]
+            if m and m[0] == kd:
+                x = r.setdefault(kd, [m[1], m[1], 0])
+                x[0], x[1], x[2] = min(x[0], m[1]), max(x[1], m[1]), x[2] + 1
+        if r:
+            open(os.path.join(os.path.dirname(page), 'ml.json'), 'w').write(json.dumps({'r': r, 'src': 'site/med_local.py'}))
+            n += 1
+    return n
+
+
+METHOD_ML = '<h3 id="medicare-each-place">Medicare\'s rate for each hospital and surgery center</h3>\n<p>Next to each hospital and surgery center on our procedure pages, and as a range on each Price Finder, we show what Medicare\'s facility rate comes to for that place after this local adjustment. These are our calculations from CMS\'s own numbers, not amounts CMS publishes for each place:</p>\n<ul>\n<li><strong>Hospitals:</strong> national hospital outpatient rate × (0.60 × the hospital\'s wage index + 0.40). The calendar-2026 outpatient rule uses the fiscal-2026 inpatient wage index, including reclassifications, so we take each hospital\'s "FY 2026 Wage Index" from CMS\'s <a href="https://www.cms.gov/files/zip/fy2026-ipps-fr-impact-file.zip" target="_blank" rel="noopener">FY 2026 IPPS final rule impact file ↗</a>.</li>\n<li><strong>Surgery centers:</strong> national surgery-center rate × (0.50 × wage index + 0.50), using the hospital wage index for the metro area where the center is, before floors and reclassifications (<a href="https://www.cms.gov/files/zip/fy2026-ipps-fr-tables-2-3-4a-4b.zip" target="_blank" rel="noopener">FY 2026 IPPS Table 3 ↗</a>).</li>\n<li><strong>Matching a place to its Medicare record:</strong> the provider\'s practice address in the federal NPI registry and the facility\'s address in CMS\'s <a href="https://data.cms.gov/sites/default/files/2026-10/e5a8afbb-a1f4-4d3b-bdb9-3968e194da0e/Hospital_and_other.DATA.Q3_2026.csv" target="_blank" rel="noopener">Provider of Services file ↗</a> (Q3 2026) must share the ZIP code, street number and street name. When there\'s no match, or more than one facility at that address with different wage indexes, we show only the national rate. Critical access hospitals and others Medicare pays on their own costs have no figure.</li>\n<li><strong>Check:</strong> for six Dallas–Fort Worth hospitals (Baylor University Medical Center, Methodist Dallas, Baylor Grapevine, Granbury, PRHC Ennis, Nocona), the wage index we use matches CMS\'s separate Table 2 of the same rule, including Granbury\'s and Grapevine\'s out-migration adjustments.</li>\n<li>Doctor fees stay at the locality shown on each page (Dallas for Dallas–Fort Worth); we don\'t yet compute them doctor by doctor.</li>\n</ul>\n'
+
+
+def patch_method_ml(s):
+    if 'id="medicare-each-place"' in s or 'id="medicare-local"' not in s:
+        return s
+    i = s.find('id="medicare-local"')
+    j = s.find('</ul>', i)
+    return s[:j + 5] + '\n' + METHOD_ML + s[j + 5:] if j > 0 else s
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -751,6 +820,7 @@ def run(d):
     edit('index.html', patch_home_hero)
     edit('disclaimers/index.html', patch_disclaimers)
     edit('methodology/index.html', patch_method)
+    edit('methodology/index.html', patch_method_ml)
     for rel in FACT:
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, fact(rel))
@@ -781,9 +851,10 @@ def run(d):
             continue
         rel = os.path.relpath(os.path.join(root, 'index.html'), site)
         if root.endswith('price-finder'):
-            edit(rel, lambda x: er_names(fact_pf(patch_pf(x))))
+            edit(rel, lambda x: patch_pf_ml(er_names(fact_pf(patch_pf(x)))))
         elif rel not in ('index.html', 'start-here/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
             edit(rel, patch_nav)
+    print(f'local Medicare ranges written for {write_ml(d)} Price Finder pages')
     print(f'{len(done)} pages changed:', ', '.join(sorted(done)[:12]), '...' if len(done) > 12 else '')
 
 
@@ -798,7 +869,7 @@ def run_r2():
     n = 0
     for k in keys:
         s = s3.get_object(Bucket=B, Key=k)['Body'].read().decode('utf-8')
-        t = er_names(fact_pf(patch_pf(s)))
+        t = patch_pf_ml(er_names(fact_pf(patch_pf(s))))
         if t != s:
             s3.put_object(Bucket=B, Key=k, Body=t.encode('utf-8'), ContentType='text/html; charset=utf-8')
             n += 1
