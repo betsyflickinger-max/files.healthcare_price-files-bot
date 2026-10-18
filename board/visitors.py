@@ -7,6 +7,10 @@ R2 logs/preview-visits/<day>/*.json, plus the tester usernames from that same fi
   visitors_people.json  one row per tester, including testers who haven't visited yet
   visitors_pages.json   one row per page: views and how many people saw it
   visitors_log.json     every page view, newest first (last 3,000)
+  visitors_events.json  what testers did on a page, newest first (last 3,000): taps, searches, guesses, how long they stayed and
+                        how far they scrolled, and their answer to the homepage's one question (Oct 18: site/home_v2.py tracker)
+In-page views the server never sees (a receipt or the Chargemaster opened on the homepage) come from the tracker and are
+counted as page views, so a visit that never left the homepage no longer looks like it did nothing.
 A "visit" = page views by one person with no gap over 30 minutes. Betsy's own password is never logged.
 """
 import io
@@ -56,9 +60,30 @@ def views():
     return sorted(keep, key=lambda r: r["t"]), len(rows) - len(keep)
 
 
+def events():
+    """Tester actions from the tracker (R2 logs/preview-events/), oldest first."""
+    keys = []
+    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="logs/preview-events/"):
+        keys += [o["Key"] for o in pg.get("Contents", [])]
+    get = lambda k: json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read())
+    with ThreadPoolExecutor(16) as ex:
+        rows = list(ex.map(get, keys))
+    return sorted(rows, key=lambda r: r["t"])
+
+
+HASH = {"r": "Receipt", "chargemaster": "The Chargemaster", "rules": "House rules"}
+
+
 def label(path):
+    base, _, frag = path.partition("#")
+    if frag:
+        bits = [b for b in frag.strip("/").split("/") if b]
+        name = HASH.get(bits[0], bits[0].capitalize()) if bits else ""
+        return label(base) + " · " + name + (f" ({bits[1]})" if len(bits) > 1 else "")
     if path in ("", "/"):
         return "Homepage"
+    if path.strip("/") == "v2":
+        return "Homepage v2"
     parts = [p for p in path.strip("/").split("/") if p]
     return " · ".join(p.replace("-", " ").capitalize() for p in parts)
 
@@ -66,6 +91,10 @@ def label(path):
 def main():
     os.makedirs(OUT, exist_ok=True)
     names, (rows, skipped) = testers(), views()
+    evs = events()
+    # in-page views (homepage receipts, the Chargemaster) count as page views
+    rows = sorted(rows + [{"t": e["t"], "who": e["who"], "path": e.get("page", ""), "q": "", "from": "(opened on the page)", "device": e.get("device", ""), "in_page": True}
+                          for e in evs if e.get("ev") == "view"], key=lambda r: r["t"])
     now = datetime.now(timezone.utc)
     ts = lambda r: datetime.fromisoformat(r["t"].replace("Z", "+00:00"))
     by = defaultdict(list)
@@ -107,7 +136,18 @@ def main():
              "last_view_at": rows[-1]["t"] if rows else None, "last_view_by": rows[-1]["who"] if rows else None,
              "first_view_at": rows[0]["t"] if rows else None}]
 
-    for name, data in (("visitors_meta", meta), ("visitors_people", people), ("visitors_pages", page_rows), ("visitors_log", log)):
+    what = {"tap": "Tapped", "search": "Searched", "guess": "Guess game", "guess-skip": "Skipped the guess game", "answer": "Answered the question",
+            "leave": "Left the page"}
+    ev_rows = []
+    for e in reversed([e for e in evs if e.get("ev") != "view"]):
+        d = e.get("detail") or ""
+        if e.get("ev") == "leave":
+            d = f"after {e.get('secs', 0)} s, scrolled {e.get('depth', 0)}% of the page"
+        elif e.get("ev") == "tap" and e.get("to"):
+            d = f"{d} → {e['to']}"
+        ev_rows.append({"id": f"{e['t']}-{e['who']}", "t": e["t"], "tester": e["who"], "page": label(e.get("page", "")),
+                        "event": what.get(e.get("ev"), e.get("ev", "")), "detail": d, "device": e.get("device", "")})
+    for name, data in (("visitors_events", ev_rows[:3000]), ("visitors_meta", meta), ("visitors_people", people), ("visitors_pages", page_rows), ("visitors_log", log)):
         json.dump(data, open(f"{OUT}/{name}.json", "w"), separators=(",", ":"))
     print(f"visitors: {len(names)} testers, {meta[0]['visited']} visited, {len(rows)} page views ({skipped} test views left out)")
 

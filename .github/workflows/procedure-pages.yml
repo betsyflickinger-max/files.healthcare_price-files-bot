@@ -48,6 +48,9 @@ jobs:
       - run: pip install boto3==1.35.36
       - shell: bash
         run: python site/procedure_pages.py deploy $FORCE | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Homepage v2 (/v2/) and tester tracking, from the same figures (site/home_v2.py; skips if nothing changed)
+        shell: bash
+        run: python site/home_v2.py deploy | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Keep new procedure URLs (site/procedure_slugs.csv) so they never change
         shell: bash
         run: |
