@@ -34,7 +34,7 @@ PARENTS = ["Health Care Service Corp (HCSC)", "UnitedHealth Group", "Centene (Am
            "Baylor Scott & White Health Plan", "Cigna Group", "Oscar Health", "Community Health Choice, Inc.",
            "CHRISTUS HEALTH PLAN", "Curative Inc Grp", "US Health and Life Insurance Company", "Molina Healthcare",
            "Sendero Health Plans, inc.", "Memorial Hermann Commercial Health Plan", "Elevance Health (Anthem)"]
-SHORT = {"Health Care Service Corp (HCSC)": "HCSC (Blue Cross and Blue Shield of Texas)", "CHRISTUS HEALTH PLAN": "CHRISTUS Health Plan",
+SHORT = {"Health Care Service Corp (HCSC)": "Health Care Service Corp (HCSC)", "CHRISTUS HEALTH PLAN": "CHRISTUS Health Plan",
          "Curative Inc Grp": "Curative", "Sendero Health Plans, inc.": "Sendero Health Plans", "Community Health Choice, Inc.": "Community Health Choice"}
 
 MLR_PAGE = "https://www.cms.gov/marketplace/resources/data/medical-loss-ratio-data-systems-resources"
