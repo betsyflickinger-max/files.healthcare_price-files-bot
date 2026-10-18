@@ -485,7 +485,6 @@ def run(d):
     edit('looks/looks.css', patch_looks_css)
     edit('looks/looks.css', patch_units_css)
     edit('looks/looks.js', patch_looks_js)
-    edit('insurers/index.html', patch_insurers)
     edit('start-here/index.html', patch_start_band)
     edit('index.html', patch_home_hero)
     edit('disclaimers/index.html', patch_disclaimers)
