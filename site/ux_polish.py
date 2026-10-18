@@ -529,7 +529,8 @@ PF_FACT_RE = [(re.compile(r'Every provider in the federal NPI Registry with a pr
 def fact(rel):
     def fn(s):
         for a, b in FACT.get(rel, []):
-            s = s.replace(a, b)
+            if b not in s:
+                s = s.replace(a, b)
         return s
     return fn
 
@@ -636,7 +637,11 @@ ER_NAMES = [('Emergency room visit (minor)', 'Emergency room visit (straightforw
 def fact2(rel):
     def fn(s):
         for a, b in FACT2.get(rel, []):
-            s = s.replace(a, b)
+            ins = b.replace(a, '', 1) if a in b else ''
+            while ins and ins + ins in s:   # undo earlier double inserts (before Oct 18 this ran on every pass)
+                s = s.replace(ins + ins, ins)
+            if b not in s:          # idempotent: some replacements contain their own search text
+                s = s.replace(a, b)
         return s
     return fn
 
@@ -645,6 +650,84 @@ def er_names(s):
     for a, b in ER_NAMES:
         s = s.replace(a, b)
     return s
+
+# Oct 18: Betsy's Oct 16 drafted Price File Watch entries (project doc claude/price-file-watch-drafts-oct16.md) go into the
+# password-only notes (functions/api/watch-notes.js), outside the bot's PLACEHOLDERS block, until she approves the wording.
+DRAFTS_OCT16 = """
+<h3>Drafted October 16: waiting for your OK before they go public</h3>
+<p class="sub">Each finding was checked against the insurer's own file or link on October 16, 2026. Approve the wording and the entry moves to the public page.</p>
+<div class="item"><div>
+  <h4>Community Health Choice (Texas marketplace)</h4>
+  <div class="who">Files cut off partway</div>
+  <p>Six of its nine marketplace rate files stop at exactly 128,000 bytes, partway through the data, so no program can read them: Premier Bronze, Silver and Gold, and Limited Network Bronze, Silver and Gold. Our bot failed on all six, three tries each. The three Ultra Select files arrive whole but are only about 65 KB.</p>
+  <div class="ev">Source: na1.ai.dm-us.informaticacloud.com/active-bpel/public/rt/aFX3KczjLiVkdXv6DLHUy6/p_price_transparency_inr_premier_bronze (and the others in the same family). Checked October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+<div class="item"><div>
+  <h4>Molina (Texas marketplace)</h4>
+  <div class="who">Links lead to an error page (update to the public entry)</div>
+  <p>All 47 rate-file links Molina lists for Texas return a page titled "Error Page" instead of a file. Example: molinamarketplace.com/PricingTransparency/263574/TX/INN/innetwork-G-GMZCT24818.json</p>
+  <div class="ev">Checked again October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+<div class="item"><div>
+  <h4>Highmark Blue Cross Blue Shield of Western New York</h4>
+  <div class="who">Main PPO file is empty</div>
+  <p>Network 301_71A0, listed in Anthem's national index for about 132,000 employer plan groups, is under 1 KB. So are 301_71B0 and 301_71I0. The Highmark Blue Shield of Northeastern NY files 800_72A0 and 800_72B0 also show 0.0 GB and still need a direct check.</p>
+  <div class="ev">Anthem's October index, checked October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+<div class="item"><div>
+  <h4>Other empty files (under 1 KB, Anthem's October index)</h4>
+  <div class="who">Highmark BCBS Delaware · Highmark PA · Anthem California</div>
+  <p>Highmark BCBS Delaware Blue Classic (070_09D0), Highmark PA National Performance Blue (378_49T0), and Anthem California CA_ELRKMEDELRK and CA_ENKHMEDENKH.</p>
+  <div class="ev">Checked October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+<div class="item"><div>
+  <h4>Aetna: 13 self-funded employer files whose links don't answer</h4>
+  <div class="who">October list</div>
+  <p>For example pl-184-tr25, pl-1az-tr25 and pl-2t9-tr25. Details in the Aetna catalog's watch.csv in R2 (bot/catalog/aetna/2026-10/).</p>
+  <div class="ev">Checked October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+<div class="item"><div>
+  <h4>UnitedHealthcare: one listed file that doesn't answer</h4>
+  <div class="who">"uc", posted by Alliance Comprehensive Network</div>
+  <p>The full list will be in the UHC catalog's watch.csv once the full run finishes.</p>
+  <div class="ev">Checked October 16, 2026.</div>
+</div><span class="stamp s-note">Draft</span></div>
+"""
+
+
+def patch_watch_notes(s):
+    if 'Drafted October 16: waiting for your OK' in s or '<!-- PLACEHOLDERS:END -->' not in s:
+        return s
+    return s.replace('<!-- PLACEHOLDERS:END -->', '<!-- PLACEHOLDERS:END -->\n' + DRAFTS_OCT16, 1)
+
+
+# Oct 18: Betsy's answers. Contact address corrections@files.healthcare (Email Routing to be switched on in Cloudflare);
+# the Price File Watch right-of-reply promise made true (nobody has been emailed yet); filled placeholders she approved.
+MAIL = 'corrections@files.healthcare'
+LEGAL_DATE = 'October 18, 2026'
+LEGAL = {
+    'disclaimers/index.html': [('Last updated: [date]', 'Last updated: ' + LEGAL_DATE), ('[corrections@domain]', '<a href="mailto:' + MAIL + '">' + MAIL + '</a>'),
+                               ('usually within [X] business days', 'usually within 10 business days')],
+    'corrections/index.html': [('Last updated: October 12, 2026', 'Last updated: ' + LEGAL_DATE), ('[corrections@domain]', '<a href="mailto:' + MAIL + '">' + MAIL + '</a>'),
+                               ('usually within [5] business days', 'usually within 10 business days'),
+                               ("re-check it within [10] business days", "re-check it within 10 business days")],
+    'methodology/index.html': [('Before an entry goes up, we email the organization and give them [10] business days to respond, and we post their reply if they send one.',
+                                'Before this page goes public, we will email every organization named on it, give each one 10 business days to respond, '
+                                'and post any reply in full next to its entry. As of October 18, 2026, no organization has been contacted yet: '
+                                'the page is a private preview and not open to the public.')],
+    'accessibility/index.html': [('[accessibility@domain]', '<a href="mailto:' + MAIL + '">' + MAIL + '</a>')],
+    'privacy/index.html': [('[privacy@domain]', '<a href="mailto:' + MAIL + '">' + MAIL + '</a>')],
+    'terms/index.html': [('[legal@domain]', '<a href="mailto:' + MAIL + '">' + MAIL + '</a>'), ('use of [domain] and', 'use of files.healthcare and'),
+                         ('Our [Disclaimers] page', 'Our <a href="/disclaimers/">Disclaimers</a> page')],
+}
+
+
+def legal(rel):
+    def f(s):
+        for a, b in LEGAL[rel]:
+            s = s.replace(a, b)
+        return s
+    return f
 
 
 def run(d):
@@ -672,6 +755,9 @@ def run(d):
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, fact(rel))
     edit('disclaimers/index.html', renumber_disclaimers)
+    for rel in LEGAL:
+        if os.path.isfile(os.path.join(site, rel)):
+            edit(rel, legal(rel))
     for rel in FACT2:
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, fact2(rel))
@@ -681,6 +767,11 @@ def run(d):
     nf = os.path.join(site, '404.html')
     if not os.path.isfile(nf):
         open(nf, 'w', encoding='utf-8').write(NOT_FOUND); done.append('404.html')
+    wn = os.path.join(d, 'functions', 'api', 'watch-notes.js')
+    if os.path.isfile(wn):
+        t0 = open(wn, encoding='utf-8').read(); t1 = patch_watch_notes(t0)
+        if t1 != t0:
+            open(wn, 'w', encoding='utf-8').write(t1); done.append('functions/api/watch-notes.js')
     mw = os.path.join(d, 'functions', '_middleware.js')
     t0 = open(mw, encoding='utf-8').read(); t1 = patch_mw(t0)
     if t1 != t0:

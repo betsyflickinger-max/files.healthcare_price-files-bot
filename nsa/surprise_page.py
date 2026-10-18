@@ -1,4 +1,4 @@
-"""The Surprise Bills page (/surprise-bills/): Texas No Surprises Act arbitration, from nsa/arb_build.py output.
+"""The Surprise Bills page (/surprise-bills/): No Surprises Act arbitration for Dallas-Fort Worth, Texas and the U.S. (scope switch), from nsa/arb_build.py output.
 
   python nsa/surprise_page.py TEXAS_JSON ARB_TX_JSON PLANS_JSON MANIFEST_CSV OUT_DIR
 writes OUT_DIR/index.html, OUT_DIR/plans.json (employer / plan search), OUT_DIR/providers.json (provider search).
@@ -95,10 +95,36 @@ def main(texas, arb, plans, manifest, out):
     self_funded = next((r for r in T["plan_types"] if r[0].startswith("Either partially")), [None, 0, 0])
 
     # ---------------------------------------------------------------- sections
-    rows_dfw = "".join(
-        f"<tr><td><b>{E(b['name'])}</b><div class=\"meta\">CPT {E(b['code'])}</div></td><td>{n(b['n'])}</td>"
-        f"<td>{money(b['plan'])}</td><td>{money(b['qpa'])}</td><td>{money(b['prov'])}</td><td class=\"hi\">{money(b['award'])}</td>"
-        f"<td>{pct(b['won'], b['n'])}</td></tr>" for b in board[:15])
+    S = T.get("scopes")
+    if not S:
+        raise SystemExit("STOP: texas.json has no 'scopes' (run nsa/arb_build.py)")
+    CD = S.get("code_desc") or {}
+    pf_names = {b["code"]: b["name"] for b in board}
+    nm = lambda c: ER_LEVEL.get(c) or pf_names.get(c) or CD.get(c) or c
+    for sc in ("tx", "us"):
+        for b in S[sc]["board"]:
+            b["name"] = nm(b["code"])
+
+    def brows(bd):
+        return "".join(
+            f"<tr><td><b>{E(b['name'])}</b><div class=\"meta\">CPT {E(b['code'])}</div></td><td>{n(b['n'])}</td>"
+            f"<td>{money(b['plan'])}</td><td>{money(b['qpa'])}</td><td>{money(b['prov'])}</td><td class=\"hi\">{money(b['award'])}</td>"
+            f"<td>{pct(b['won'], b['n'])}</td></tr>" for b in bd[:15])
+
+    def finding(bd, where, nlines):
+        e = next((b for b in bd if b["code"] == "99284"), bd[0])
+        r = e["award"] / e["qpa"] if e.get("qpa") else None
+        return (f'<div class="finding"><div class="big">{r:.1f}×</div><p>The most-disputed service {where}, <b>{E(e["name"])}</b> '
+                f'(CPT {E(e["code"])}): the middle award was <b>{money(e["award"])}</b>, {r:.1f} times the middle QPA of {money(e["qpa"])}. '
+                f'The middle plan offer was {money(e["plan"])}; the middle provider offer was {money(e["prov"])}. Based on {n(e["d"])} lines with dollar amounts.</p></div>')
+
+    def srows(rows):   # [code, (desc,) lines, won]
+        out = []
+        for r in rows[:12]:
+            c, lines, w = r[0], r[-2], r[-1]
+            out.append(f"<tr><td><b>{E(nm(c) if c in ER_LEVEL or c in pf_names else (r[1] if len(r) == 4 else CD.get(c) or c))}</b><div class=\"meta\">CPT {E(c)}</div></td><td>{n(lines)}</td><td>{pct(w, lines)}</td></tr>")
+        return "".join(out)
+    rows_dfw = brows(board)
     trend_max = max(r[1] for r in T["trend"])
     trend = "".join(
         f"<div class=\"tr\"><span class=\"tq\">{qtr(p)}</span><span class=\"tb\"><i class=\"a\" style=\"width:{100 * t / trend_max:.2f}%\"></i>"
@@ -118,9 +144,21 @@ def main(texas, arb, plans, manifest, out):
     groups = "".join(
         f"<tr><td><b>{E(g)}</b><div class=\"meta\">{E(spec(sp))} · {E(dom)}</div></td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
         for g, lines, disp, won, dom, sp in T["groups"][:12])
-    services = "".join(
-        f"<tr><td><b>{E(desc)}</b><div class=\"meta\">CPT {E(c)}</div></td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
-        for c, desc, lines, won in T["services"][:12])
+    services = srows(T["services"])
+    D, X, U = S["dfw"], S["tx"], S["us"]
+    us_filers = "".join(
+        f"<tr><td><b>{E(d)}</b><div class=\"meta\">{E(spec(sp))}</div></td><td>{n(npis)}</td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
+        for d, lines, disp, won, npis, sp in U["filers"][:12])
+    us_groups = "".join(
+        f"<tr><td><b>{E(g)}</b><div class=\"meta\">{E(spec(sp))} · {E(dom)} · {E(st)}</div></td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td></tr>"
+        for g, lines, disp, won, dom, sp, st in U["groups"][:12])
+    us_ins = "".join(
+        f"<tr><td><b>{E(d)}</b><div class=\"meta\">most often named as “{E(nm_)}”</div></td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td><td>{pct(sf, lines)}</td></tr>"
+        for d, lines, disp, won, sf, nm_ in U["insurers"][:12])
+    us_pt = "".join(
+        f"<div class=\"pline\"><div class=\"who\"><b>{E(TYPE.get(t, t))}</b><div class=\"meta\">provider's offer picked on {pct(w, c)}</div></div>"
+        f"<span class=\"lead\"></span><span class=\"price\">{n(c)}</span></div>" for t, c, w in U["plan_types"])
+    us_sf = next((r for r in U["plan_types"] if r[0].startswith("Either partially")), [None, 0, 0])
     insurers = "".join(
         f"<tr><td><b>{E(d)}</b><div class=\"meta\">most often named as “{E(nm)}”</div></td><td>{n(disp)}</td><td>{n(lines)}</td><td>{pct(won, lines)}</td><td>{pct(sf, lines)}</td></tr>"
         for d, lines, disp, won, sf, nm in T["insurers"][:12])
@@ -155,7 +193,15 @@ def main(texas, arb, plans, manifest, out):
                      QROWS=qrows, V84_ARB=money(v84["doc_arb"][0]) if v84 else "—", V84_QPA=money(v84["qpa"]) if v84 else "—",
                      V84_MED=money(v84["med"]) if v84 else "—", V84_AWARD=money(v84["award"]) if v84 else "—",
                      ARB_PROVS=n(T["arb_on_page"][0]), SRC_LINKS=src_links, MED_SRC=E(med[0]), MED_URL=E(med[1]),
-                     PF_BUILD=E(T.get("price_finder_build", "")), N_PLANS=n(len(P["plans"])), N_PROVS=n(len(A["providers"]))).items():
+                     PF_BUILD=E(T.get("price_finder_build", "")), N_PLANS=n(len(P["plans"])), N_PROVS=n(len(A["providers"])),
+                     D_LINES=n(D["lines"]), D_DOLLAR=n(D["dollar_lines"]), D_WON=pct(D["won"], D["lines"]), D_SHARE_TX=pct(D["lines"], X["metro_lines"]),
+                     D_FIND=finding(board, "in the Dallas–Fort Worth metro", D["dollar_lines"]), D_SERVICES=srows(D["services"]),
+                     X_FIND=finding(X["board"], "in Texas metro areas", X["dollar_lines"]), X_ROWS=brows(X["board"]),
+                     X_METRO=n(X["metro_lines"]), X_DOLLAR=n(X["dollar_lines"]),
+                     U_LINES=n(U["lines"]), U_DISPUTES=n(U["disputes"]), U_WON=pct(U["won"], U["lines"]), U_PLAN_WON=pct(U["plan_won"], U["lines"]),
+                     U_FIND=finding(U["board"], "in the U.S.", U["dollar_lines"]), U_ROWS=brows(U["board"]), U_ROWS_N=n(U["dollar_rows"]),
+                     U_DOLLAR=n(U["dollar_lines"]), U_NOREG=n(U["no_region"]), U_SERVICES=srows(U["services"]), U_FILERS=us_filers,
+                     U_GROUPS=us_groups, U_INS=us_ins, U_PT=us_pt, U_SF=n(us_sf[1]), U_SF_SHARE=pct(us_sf[1], U["lines"])).items():
         page = page.replace("{{" + k + "}}", v)
     if "{{" in page:
         raise SystemExit("STOP: unfilled placeholder " + page[page.index("{{"):page.index("{{") + 40])
@@ -179,7 +225,7 @@ FSER = """<section class="fser" id="freestanding-er">
 <p class="meta">Freestanding ER here means the provider's primary type in the CMS NPI registry (<a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">NPPES file</a>) is "Clinic/Center, Emergency Care." Names are the registry's legal names; many use a different brand on the sign. Counts here are by registry match (each NPI), so they differ a little from the Largest provider groups table, which groups lines by the name as filed. Texas only, {{PER}}.</p>
 </section>"""
 
-TEMPLATE = r"""<!doctype html><html lang="en"><head><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f6f1e7"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:site_name" content="What It Costs"><meta property="og:type" content="website"><meta property="og:url" content="https://files.healthcare/surprise-bills/"><meta name="twitter:card" content="summary"><meta property="og:title" content="Surprise Bills · What It Costs"><meta name="description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta property="og:description" content="Every Texas surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}: who files, which plans, and what arbitrators award in Dallas–Fort Worth."><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+TEMPLATE = r"""<!doctype html><html lang="en"><head><meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#f6f1e7"><link rel="icon" href="/favicon-32.png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><link rel="manifest" href="/manifest.webmanifest"><meta property="og:site_name" content="What It Costs"><meta property="og:type" content="website"><meta property="og:url" content="https://files.healthcare/surprise-bills/"><meta name="twitter:card" content="summary"><meta property="og:title" content="Surprise Bills · What It Costs"><meta name="description" content="Every surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}, for Dallas–Fort Worth, Texas and the U.S.: who files, which plans, and what arbitrators award."><meta property="og:description" content="Every surprise-bill case decided in federal No Surprises Act arbitration, {{PER}}, for Dallas–Fort Worth, Texas and the U.S.: who files, which plans, and what arbitrators award."><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Surprise Bills · What It Costs</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Courier+Prime:wght@400;700&family=Public+Sans:wght@400;500;600&display=swap">
@@ -240,6 +286,11 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 .fser .two div{padding:12px 14px;border:1.5px solid var(--rule)}
 .fser .two b{display:block;margin-bottom:4px}
 .fser ul{margin:0;padding-left:18px}
+.scope{display:inline-flex;border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;justify-self:start;margin-top:4px}
+.scope button{font:700 14px var(--body);padding:8px 16px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.scope button+button{border-left:1.5px solid var(--ink)}
+.scope button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.scopenote{margin-top:28px;padding:10px 14px;border-left:4px solid var(--ink);background:var(--paper-2)}
 .trend{margin-top:10px;display:grid;gap:4px}
 .tr{display:grid;grid-template-columns:62px minmax(0,1fr) 200px;gap:10px;align-items:center;font:13px var(--type)}
 .tb{display:flex;height:12px;background:var(--paper-2);border:1px solid var(--rule)}
@@ -264,22 +315,50 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 <style>.sn{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px 16px;padding:14px 0;border-bottom:1px solid var(--rule)}.sn-brand{font:600 20px var(--display);color:var(--ink)!important;text-decoration:none}.sn-links{display:flex;flex-wrap:wrap;gap:4px 16px;font:14px var(--body)}.sn-links a{color:var(--brick);text-decoration:none}.sn-links a:hover{text-decoration:underline}.sn-links a[aria-current]{color:var(--ink);font-weight:600}</style><nav class="sn" aria-label="Site"><a class="sn-brand" href="/">What It Costs</a><span class="sn-links"><a href="/start-here/">Start here</a><a href="/price-finder/">Price Finder</a><a href="/plan-calculator/">Plan Calculator</a><a href="/price-file-watch/">Price File Watch</a><a href="/surprise-bills/" aria-current="page">Surprise Bills</a><a href="/employer-plans/">Employer Plans</a><a href="/insurers/">Insurers</a></span></nav><div class="topbar" style="border-bottom:0;padding-block:8px 0"><div class="asof">CMS files read {{CHECKED}}</div></div>
 
 <header>
-  <div class="eyebrow">No Surprises Act · Texas</div>
+  <div class="eyebrow">No Surprises Act · federal arbitration</div>
   <h1>Where surprise bills go to arbitration</h1>
-  <p class="lede">When an out-of-network doctor or hospital and a health plan can't agree on what a surprise bill is worth, either side can take it to arbitration. The arbitrator picks one side's number. For care the No Surprises Act covers, the patient is protected: their share stays at the in-network amount. In Texas, state-regulated insured plans and the ERS and TRS plans for state employees and teachers use Texas's own arbitration (<a href="https://www.tdi.texas.gov/medical-billing/faq.html" target="_blank" rel="noopener">Texas Department of Insurance</a>); this page counts the federal cases, which are mostly self-funded employer plans. The plan, and the employer or members who fund it, pay the result. CMS publishes every case. We read all of them. These are the cases decided {{PER}}.</p>
-  <div class="tally"><span><b>{{TX_LINES}}</b>disputed lines in Texas</span><span><b>{{TX_SHARE}}</b>of the U.S. total</span><span><b>{{TX_WON}}</b>went the provider's way</span><span><b>{{DFW_LINES}}</b>in the Dallas–Fort Worth metro</span></div>
+  <p class="lede">When an out-of-network doctor or hospital and a health plan can't agree on what a surprise bill is worth, either side can take it to federal arbitration. The arbitrator picks one side's number. For care the No Surprises Act covers, the patient is protected: their share stays at the in-network amount. The plan, and the employer or members who fund it, pay the result. CMS publishes every case. We read all of them. These are the cases decided {{PER}}.</p>
+  <div class="scope" role="group" aria-label="Show cases for">
+    <button type="button" data-s="dfw" aria-pressed="true">Dallas–Fort Worth</button><button type="button" data-s="tx" aria-pressed="false">Texas</button><button type="button" data-s="us" aria-pressed="false">U.S.</button>
+  </div>
+  <div class="tally" data-scope="dfw"><span><b>{{D_LINES}}</b>disputed lines in the Dallas–Fort Worth metro</span><span><b>{{D_SHARE_TX}}</b>of the lines in Texas metro areas</span><span><b>{{D_WON}}</b>went the provider's way</span></div>
+  <div class="tally" data-scope="tx" hidden><span><b>{{TX_LINES}}</b>disputed lines in Texas</span><span><b>{{TX_SHARE}}</b>of the U.S. total</span><span><b>{{TX_WON}}</b>went the provider's way</span></div>
+  <div class="tally" data-scope="us" hidden><span><b>{{U_LINES}}</b>disputed lines in the U.S.</span><span><b>{{U_DISPUTES}}</b>disputes</span><span><b>{{U_WON}}</b>went the provider's way</span></div>
+  <p class="sub" data-scope="dfw tx" style="margin:0">In Texas, state-regulated insured plans and the ERS and TRS plans for state employees and teachers use Texas's own arbitration (<a href="https://www.tdi.texas.gov/medical-billing/faq.html" target="_blank" rel="noopener">Texas Department of Insurance</a>). These are the federal cases, which are mostly self-funded employer plans.</p>
+  <p class="sub" data-scope="us" hidden style="margin:0">Some states, including Texas, run their own arbitration for the plans they regulate. These are the federal cases only.</p>
 </header>
 
+<div data-scope="dfw">
 <h2>What arbitration paid in Dallas–Fort Worth</h2>
 <p class="sub">The most-disputed services in the Dallas–Fort Worth–Arlington metro area, by lines with dollar amounts. Each figure is the middle value of CMS's rows: the plan's offer, the plan's qualifying payment amount (QPA), the provider's offer, and the offer the arbitrator picked. CMS withholds dollar amounts where a code had fewer than 10 lines in an area (<a href="https://www.cms.gov/nosurprises/policies-and-resources/Reports" target="_blank" rel="noopener">CMS's notes on these files</a>); {{DFW_DOLLAR}} of the {{DFW_LINES}} metro lines show them.</p>
-<div class="finding">
-  <div class="big">{{ER_RATIO}}×</div>
-  <p>The most-disputed service, <b>{{ER_NAME}}</b> (CPT 99284): the middle award was <b>{{ER_AWARD}}</b>, {{ER_RATIO}} times the middle QPA of {{ER_QPA}}. The middle plan offer was {{ER_PLAN}}; the middle provider offer was {{ER_PROV}}. Based on {{ER_N}} lines with dollar amounts.</p>
-</div>
+{{D_FIND}}
 <div class="tw"><table>
 <thead><tr><th>Service</th><th>Lines</th><th>Plan offered</th><th>QPA</th><th>Provider asked</th><th>Award</th><th>Provider's offer picked</th></tr></thead>
 <tbody>{{ROWS_DFW}}</tbody></table></div>
 <p class="sub" style="margin-top:12px">These same figures appear in the <a href="/price-finder/?code=99284">Price Finder</a> on each procedure that went to arbitration, under the Medicare benchmark, for Dallas–Fort Worth and each Texas metro area.</p>
+<h3>Most-disputed services in Dallas–Fort Worth</h3>
+<div class="tw"><table>
+<thead><tr><th>Service</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{D_SERVICES}}</tbody></table></div>
+</div>
+
+<div data-scope="tx" hidden>
+<h2>What arbitration paid in Texas</h2>
+<p class="sub">The most-disputed services across the Texas metro areas CMS names, by lines with dollar amounts; each figure is the middle value of CMS's rows. CMS's dollar table gives a metro area, not a state, and leaves the area blank on some rows, so this uses the {{X_METRO}} lines CMS places in a Texas metro area ({{X_DOLLAR}} with dollar amounts).</p>
+{{X_FIND}}
+<div class="tw"><table>
+<thead><tr><th>Service</th><th>Lines</th><th>Plan offered</th><th>QPA</th><th>Provider asked</th><th>Award</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{X_ROWS}}</tbody></table></div>
+</div>
+
+<div data-scope="us" hidden>
+<h2>What arbitration paid in the U.S.</h2>
+<p class="sub">The most-disputed services nationally, by lines with dollar amounts; each figure is the middle value of CMS's rows. {{U_DOLLAR}} of the {{U_ROWS_N}} lines in CMS's dollar table show dollar amounts.</p>
+{{U_FIND}}
+<div class="tw"><table>
+<thead><tr><th>Service</th><th>Lines</th><th>Plan offered</th><th>QPA</th><th>Provider asked</th><th>Award</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{U_ROWS}}</tbody></table></div>
+</div>
 
 <h2>Texas is where the disputes are</h2>
 <p class="sub">Disputed lines decided each quarter (emergency and non-emergency care; air ambulance is a separate CMS table). Texas in brick, the rest of the country in gray. One dispute can cover many lines.</p>
@@ -287,13 +366,15 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 <div class="key"><span style="--c:var(--brick)">Texas</span><span style="--c:var(--ink-2)">Rest of the U.S.</span></div>
 <p class="sub" style="margin-top:12px">States with the most lines, {{PER}}: {{STATES}}.</p>
 
-<h3>Who files</h3>
+<p class="sub scopenote" data-scope="dfw"><b>Texas-wide from here.</b> CMS reports who filed and which plan answered by state, not by metro area, so the tables below are for all of Texas.</p>
+<div data-scope="dfw tx">
+<h3>Who files in Texas</h3>
 <p class="sub" style="margin-top:10px">Texas lines by the provider's email domain as reported to CMS. A domain usually belongs to the practice or the billing company that files for it. The specialty is the one most often reported.</p>
 <div class="tw"><table>
 <thead><tr><th>Provider email domain</th><th>Providers (NPIs)</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
 <tbody>{{FILERS}}</tbody></table></div>
 
-<h3>Largest provider groups</h3>
+<h3>Largest provider groups in Texas</h3>
 <div class="tw"><table>
 <thead><tr><th>Group as named in the dispute</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
 <tbody>{{GROUPS}}</tbody></table></div>
@@ -306,15 +387,43 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 
 <h2 id="employers">For employers: which plans end up in arbitration</h2>
 <p class="sub">{{SF_LINES}} of Texas's {{TX_LINES}} lines ({{SF_SHARE}}) involved a self-funded employer plan. When a self-funded plan loses, the award and the arbitration fee come out of the employer's plan, usually through the insurer or administrator that runs it.</p>
-<h3>By type of plan</h3>
+<h3>By type of plan, Texas</h3>
 {{PTYPES}}
-<h3>By the plan's email domain</h3>
+<h3>By the plan's email domain, Texas</h3>
 <p class="sub" style="margin-top:10px">The domain belongs to whoever answered for the plan: the insurer, the administrator, or a repricing company hired by the plan. The name in quotes is the plan name most often given on those disputes.</p>
 <div class="tw"><table>
 <thead><tr><th>Plan email domain</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th><th>Share from self-funded plans</th></tr></thead>
 <tbody>{{INSURERS}}</tbody></table></div>
+</div>
 
-<h3 id="search">Look up a plan or a provider</h3>
+<div data-scope="us" hidden>
+<h3>Who files in the U.S.</h3>
+<p class="sub" style="margin-top:10px">U.S. lines by the provider's email domain as reported to CMS. A domain usually belongs to the practice or the billing company that files for it.</p>
+<div class="tw"><table>
+<thead><tr><th>Provider email domain</th><th>Providers (NPIs)</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{U_FILERS}}</tbody></table></div>
+
+<h3>Largest provider groups in the U.S.</h3>
+<div class="tw"><table>
+<thead><tr><th>Group as named in the dispute</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{U_GROUPS}}</tbody></table></div>
+
+<h3>Most-disputed services in the U.S.</h3>
+<div class="tw"><table>
+<thead><tr><th>Service</th><th>Lines</th><th>Provider's offer picked</th></tr></thead>
+<tbody>{{U_SERVICES}}</tbody></table></div>
+
+<h2 id="employers-us">For employers: which plans end up in arbitration</h2>
+<p class="sub">{{U_SF}} of the {{U_LINES}} U.S. lines ({{U_SF_SHARE}}) involved a self-funded employer plan. When a self-funded plan loses, the award and the arbitration fee come out of the employer's plan, usually through the insurer or administrator that runs it.</p>
+<h3>By type of plan, U.S.</h3>
+{{U_PT}}
+<h3>By the plan's email domain, U.S.</h3>
+<div class="tw"><table>
+<thead><tr><th>Plan email domain</th><th>Disputes</th><th>Lines</th><th>Provider's offer picked</th><th>Share from self-funded plans</th></tr></thead>
+<tbody>{{U_INS}}</tbody></table></div>
+</div>
+
+<h3 id="search">Look up a plan or a provider in the Texas cases</h3>
 <div class="search">
   <label for="q" class="sub" style="margin:0">Search {{N_PLANS}} plan names and {{N_PROVS}} Texas providers in the cases decided {{PER}}. Self-funded plans often appear under the employer's name.</label>
   <input id="q" type="search" placeholder="Employer, plan, insurer, provider or NPI" autocomplete="off">
@@ -336,13 +445,23 @@ a.ktag.k-fser{border-color:var(--brick);color:var(--brick)}
 
 <section class="notes">
   <p><b>Where this comes from.</b> CMS's Federal Independent Dispute Resolution public use files: {{SRC_LINKS}} (<a href="https://www.cms.gov/nosurprises/policies-and-resources/Reports" target="_blank" rel="noopener">all CMS reports</a>). We save every CMS file untouched and read every row. Medicare: {{MED_SRC}} (<a href="{{MED_URL}}" target="_blank" rel="noopener">CMS</a>), Dallas locality. In-network rates: insurers' Transparency in Coverage files, as in the Price Finder.</p>
-  <p><b>What the numbers are.</b> "Lines" are the line items CMS counts; one dispute can cover many. A "middle" value is CMS's own figure at the middle position when every line is sorted (for an even count, the lower of the two). Nothing is averaged or estimated. "Provider's offer picked" is the share of lines where the arbitrator chose the provider's offer; in Texas that was {{TX_WON}}, the plan's offer {{TX_PLAN_WON}}, and {{TX_NA}} had no offer chosen (CMS reports "N/A"). {{TX_DISPUTES}} Texas disputes in all; {{US_LINES}} lines nationally.</p>
+  <p><b>What the numbers are.</b> "Lines" are the line items CMS counts; one dispute can cover many. A "middle" value is CMS's own figure at the middle position when every line is sorted (for an even count, the lower of the two). Nothing is averaged or estimated. "Provider's offer picked" is the share of lines where the arbitrator chose the provider's offer; in Texas that was {{TX_WON}}, the plan's offer {{TX_PLAN_WON}}, and {{TX_NA}} had no offer chosen (CMS reports "N/A"). {{TX_DISPUTES}} Texas disputes in all. Nationally, {{U_LINES}} lines in {{U_DISPUTES}} disputes: provider's offer {{U_WON}}, plan's offer {{U_PLAN_WON}}. CMS publishes two tables: the dispute table names the provider and plan and gives only the state; the dollar table gives the metro area and the dollar figures but no names, and leaves the area blank on {{U_NOREG}} lines. So Dallas–Fort Worth figures come from the dollar table, and who-filed tables are by state.</p>
   <p><b>What the numbers leave out.</b> CMS doesn't link the dollar table to provider or plan names, so a dollar figure can't be tied to a specific provider or plan. An award is the offer chosen, not proof of payment. Cases are counted in the quarter CMS reports them; services may be from earlier years. Names and email domains are as the parties reported them.</p>
   <p><b>For patients.</b> The No Surprises Act limits what you owe for emergency care, and for out-of-network care at an in-network hospital or surgery center, to your in-network cost-sharing. Arbitration is between the provider and the plan. If you get a surprise bill, CMS's help desk is at <a href="https://www.cms.gov/nosurprises" target="_blank" rel="noopener">cms.gov/nosurprises</a>.</p>
   <p>See every published rate in the <a href="/price-finder/">Price Finder</a>, or who isn't publishing in the <a href="/price-file-watch/">Price File Watch</a>.</p>
 </section>
 </div>
 <script>
+(function(){
+  var btns=document.querySelectorAll('.scope button');
+  function set(v){
+    btns.forEach(function(b){b.setAttribute('aria-pressed',b.getAttribute('data-s')===v);});
+    document.querySelectorAll('[data-scope]').forEach(function(el){el.hidden=el.getAttribute('data-scope').split(' ').indexOf(v)<0;});
+    try{var u=new URL(location.href);if(v==='dfw')u.searchParams.delete('scope');else u.searchParams.set('scope',v);history.replaceState(null,'',u);}catch(_){}
+  }
+  btns.forEach(function(b){b.addEventListener('click',function(){set(b.getAttribute('data-s'));});});
+  try{var v0=new URLSearchParams(location.search).get('scope');if(v0==='tx'||v0==='us')set(v0);}catch(_){}
+})();
 (function(){
   var P=null,V=null,q=document.getElementById('q'),res=document.getElementById('res');
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};

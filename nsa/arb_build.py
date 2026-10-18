@@ -114,6 +114,64 @@ def filer_kinds(con, npi_file, domains):
     return out, fser, list(tot)
 
 
+TX_REG = "(geographical_region like '%, TX' or geographical_region like '%, TX-%')"
+
+
+def scope_board(q, where, n=15):
+    """Most-disputed codes (by lines with dollar amounts) in the qpa_offers rows matching `where`: lines, lines with $,
+    middle QPA / award / provider offer / plan offer (CMS values at the middle rank), provider's offer chosen."""
+    won = "offer_selected_from_provider_or_issuer like 'In Favor of Provider%'"
+    top = q(f"""select service_code, count(*), count(qpa_num), count(*) filter (where {won}), mode(place_of_service_code)
+                from ql where {where} group by 1 having count(qpa_num) >= 50 order by 3 desc limit {n}""")
+    out = []
+    for code, lines, d, w, pos in top:
+        vals = q(f"""select list(qpa_num), list(prevailing_offer_num), list(provider_facility_offer_num), list(health_plan_issuer_offer_num)
+                     from ql where {where} and service_code = '{code}' and qpa_num is not null""")[0]
+        out.append(dict(code=code, n=lines, d=d, won=w, pos=pos, qpa=mid(vals[0] or []), award=mid(vals[1] or []),
+                        prov=mid(vals[2] or []), plan=mid(vals[3] or [])))
+    return out
+
+
+def scopes(q, T, regions):
+    """Per-scope figures for the Surprise Bills switch (Dallas-Fort Worth, Texas, U.S.).
+    The dollar table (qpa_offers) has the metro area but no names; the dispute table (disputes) has names but only the state.
+    So: DFW = metro rows of the dollar table; Texas = disputes where the service was in Texas (+ Texas metro rows for dollars);
+    U.S. = every row."""
+    won = "offer_selected_from_provider_or_issuer like 'In Favor of Provider%'"
+    plan = "offer_selected_from_provider_or_issuer like 'In Favor of Plan%'"
+    S = {}
+    dfw = regions.get(DFW, {})
+    dq = q(f"""select count(*), count(qpa_num), count(*) filter (where {won}), count(*) filter (where {plan}) from ql
+               where geographical_region = '{DFW}'""")[0]
+    svc = lambda where: q(f"""select service_code, count(*), count(*) filter (where {won}) from ql where {where}
+                             group by 1 order by 2 desc limit 15""")
+    S["dfw"] = dict(lines=dq[0], dollar_lines=dq[1], won=dq[2], plan_won=dq[3], services=svc(f"geographical_region = '{DFW}'"))
+    tq = q(f"""select count(*), count(qpa_num) from ql where {TX_REG}""")[0]
+    S["tx"] = dict(lines=T["totals"]["tx_lines"], disputes=T["totals"]["tx_disputes"], won=T["totals"]["tx_won"],
+                   plan_won=T["totals"]["tx_plan_won"], metro_lines=tq[0], dollar_lines=tq[1], board=scope_board(q, TX_REG))
+    uq = q(f"""select count(*), count(distinct dispute_number), count(*) filter (where {won}), count(*) filter (where {plan}) from dl""")[0]
+    uqd = q("select count(*), count(qpa_num), count(*) filter (where geographical_region in ('N/R','') or geographical_region is null) from ql")[0]
+    S["us"] = dict(lines=uq[0], disputes=uq[1], won=uq[2], plan_won=uq[3], dollar_rows=uqd[0], dollar_lines=uqd[1], no_region=uqd[2],
+                   board=scope_board(q, "true"),
+                   services=q(f"""select service_code, mode(item_or_service_description), count(*), count(*) filter (where {won})
+                                  from dl group by 1 order by 3 desc limit 15"""),
+                   filers=q(f"""select provider_email_domain, count(*), count(distinct dispute_number), count(*) filter (where {won}),
+                                      count(distinct provider_facility_npi_number), mode(practice_facility_specialty_or_type)
+                               from dl group by 1 order by 2 desc limit 15"""),
+                   groups=q(f"""select case when provider_facility_group_name in ('N/R','NR','') then provider_facility_name else provider_facility_group_name end g,
+                                      count(*), count(distinct dispute_number), count(*) filter (where {won}), mode(provider_email_domain),
+                                      mode(practice_facility_specialty_or_type), mode(location_of_service)
+                               from dl group by 1 order by 2 desc limit 15"""),
+                   insurers=q(f"""select health_plan_issuer_email_domain, count(*), count(distinct dispute_number), count(*) filter (where {won}),
+                                        count(*) filter (where health_plan_type like 'Either partially or fully self-insured%'), mode(health_plan_issuer_name)
+                                 from dl group by 1 order by 2 desc limit 15"""),
+                   plan_types=q(f"select health_plan_type, count(*), count(*) filter (where {won}) from dl group by 1 order by 2 desc"))
+    names = dict(q("select service_code, mode(item_or_service_description) from dl group by 1"))
+    S["code_desc"] = {c: names.get(c) for s in ("dfw", "us") for c in [r[0] for r in S[s]["services"]] + [b["code"] for b in S[s].get("board", [])]}
+    S["code_desc"].update({b["code"]: names.get(b["code"]) for b in S["tx"]["board"]})
+    return S
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--local", action="store_true", help="read and write ./local/")
@@ -244,6 +302,7 @@ def main():
     T["dfw_dollar_lines"] = sum(v[1] for v in dfw.values())
     T["price_finder_build"] = cur
     T["medicare_src"] = (Dp or {}).get("med", {}).get("src", {}).get("pfs") if Dp else None
+    T["scopes"] = scopes(q, T, regions)
     st.put("data/idr/site/texas.json", json.dumps(T, separators=(",", ":"), default=str).encode())
 
     # ---------------------------------------------------------------- 3. employer / plan search (Texas)
