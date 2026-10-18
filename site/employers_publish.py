@@ -22,7 +22,7 @@ sys.path.insert(0, str(HERE.parent / "bot"))
 import store  # noqa: E402
 
 # links added to the site nav, in order, each after the one before it (or after Surprise Bills / Price File Watch)
-NAV = [("/employer-plans/", "Employer Plans"), ("/insurers/", "Insurers")]
+NAV = [("/employer-plans/", "Employer Plans"), ("/insurers/", "Insurers"), ("/hospitals/", "Hospitals")]
 
 
 def add_nav(html):
