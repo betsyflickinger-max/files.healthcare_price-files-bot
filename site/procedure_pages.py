@@ -29,6 +29,21 @@ from concurrent.futures import ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(HERE)
 TODAY = dt.date.today()
+# DFW cities outside the Census Dallas-Fort Worth-Arlington metro (site/dfw_metro.py). Kept on the pages, tagged.
+try:
+    _M = json.load(open(os.path.join(HERE, 'dfw_metro.json')))
+    OUTSIDE_DFW = set(_M['outside'])
+except Exception:
+    OUTSIDE_DFW = set()
+AREA_SLUG = ['']   # set per area while rendering
+
+
+def ctag(city):
+    """' · Gainesville (outside the DFW metro)' style city text for DFW pages."""
+    if not city:
+        return ''
+    out = AREA_SLUG[0] == 'dfw' and re.sub(r'[^a-z]+', ' ', city.lower()).strip() in OUTSIDE_DFW
+    return esc(city) + (" <span class='flag'>outside the DFW metro</span>" if out else '')
 STALE_DAYS = 183
 esc = lambda s: html.escape(str(s if s is not None else ''), quote=True)
 
@@ -716,9 +731,9 @@ def med_lines(S, med_area):
     L = []
     lk = lambda k: f'<a class="src" href="{esc(src[k][1])}" target="_blank" rel="noopener">CMS {esc(src[k][2])} ↗</a>' if k in src else ''
     if m.get('opps'):
-        L.append(('Hospital outpatient facility fee', 'national rate before local wage adjustment', m['opps'][0], lk('opps')))
+        L.append(('Hospital outpatient facility fee', 'national rate before local adjustment', m['opps'][0], lk('opps')))
     if m.get('asc'):
-        L.append(('Surgery center facility fee', 'national rate before local wage adjustment', m['asc'][0], lk('asc')))
+        L.append(('Surgery center facility fee', 'national rate before local adjustment', m['asc'][0], lk('asc')))
     if m.get('pfs'):
         d = m['pfs'].get('dal') or [None, None]
         if d[1] is not None:
@@ -739,7 +754,7 @@ def med_headline(S):
     if not m:
         return None
     if S['kind'] == 'fac' and m.get('opps'):
-        return m['opps'][0], 'hospital outpatient facility fee'
+        return m['opps'][0], 'hospital outpatient facility fee, national rate before local adjustment'
     if m.get('lab'):
         return m['lab'], 'lab payment limit'
     d = (m.get('pfs') or {}).get('dal') or [None, None]
@@ -857,6 +872,7 @@ def faq(S, area, med_area):
 
 
 def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
+    AREA_SLUG[0] = area['slug']
     pl, sg = fee_words(S)
     url = f'/costs/{au}/{ps}/'
     cm, yr = common(S), TODAY.year
@@ -876,19 +892,21 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     finder = f"{pf_path}?code={S['code']}"
     tiles = []
     if S['lo']:
-        tiles.append(tile(f'Lowest negotiated {sg}', money(S['lo']['v']), f"{esc(who(S['lo']))}<br>{esc(netname(S['lo']['ins'], S['lo']['plan']))} · {src_link(S['lo'])}"))
+        tiles.append(tile(f'Lowest negotiated {sg}', money(S['lo']['v']), f"{esc(S['lo']['name'])}{', ' + ctag(S['lo']['city']) if S['lo'].get('city') else ''}<br>{esc(netname(S['lo']['ins'], S['lo']['plan']))} · {src_link(S['lo'])}"))
         if S['lines'] > 1:
-            tiles.append(tile(f'Highest negotiated {sg}', money(S['hi']['v']), f"{esc(who(S['hi']))}<br>{esc(netname(S['hi']['ins'], S['hi']['plan']))} · {src_link(S['hi'])}"))
+            tiles.append(tile(f'Highest negotiated {sg}', money(S['hi']['v']), f"{esc(S['hi']['name'])}{', ' + ctag(S['hi']['city']) if S['hi'].get('city') else ''}<br>{esc(netname(S['hi']['ins'], S['hi']['plan']))} · {src_link(S['hi'])}"))
     cc = cheapest_cash(S)
     if cc:
         e, kind = cc
-        sub = (f"{esc(e['name'])}{', ' + esc(e['city']) if e.get('city') else ''}<br>"
+        sub = (f"{esc(e['name'])}{', ' + ctag(e['city']) if e.get('city') else ''}<br>"
                + (f"posted on its site, checked {esc(e['chk'])} · <a class='src' href='{esc(e['src'])}' target='_blank' rel='noopener'>source ↗</a>"
                   if kind == 'posted' else f"hospital's own fee only · {hosp_link(e)}"))
         tiles.append(tile('Lowest cash price', money(e['v']) + (('–' + money(e['hi'])) if kind == 'posted' and e.get('hi') else ''), sub))
     mh = med_headline(S)
     if mh:
-        tiles.append(tile('Medicare pays', money(mh[0]), f"{esc(mh[1])}, 2026 · a benchmark, not a price you can get"))
+        nat = 'national rate' in mh[1]
+        tiles.append(tile("Medicare's national rate" if nat else 'Medicare pays', money(mh[0]),
+                          f"{esc(mh[1])}, 2026 · a benchmark, not a price you can get" + (" · <a href='/methodology/#medicare-local'>how Medicare adjusts for local costs</a>" if nat else '')))
 
     notes = []
     if S['n_flag']:
@@ -901,7 +919,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                      "service (individual clinicians, rehab, psychiatric or nursing facilities, clinics that don't do it). Insurer files often list "
                      "rates for every contracted place, whether or not it does the procedure. They're all in the Price Finder.")
     if any(n.get('par') for n in S['networks']):
-        notes.append("BCBSTX ParPlan rates are listed in the networks table but left out of this page's low and high figures while we confirm what they represent.")
+        notes.append("BCBSTX ParPlan isn't a network a member picks. It's BCBSTX's contract with providers, in or out of its networks, who agree to accept "
+                     "BCBSTX's allowed amount, file the claim and not bill the member above it (BCBSTX: bcbstx.com/provider/network/parplan.html). "
+                     "ParPlan rates are listed in the networks table but left out of this page's low and high figures.")
     if any(n['flat'] for n in S['networks']):
         notes.append("Networks marked \"same rate everywhere\" pay every listed provider the same amount; they're left out of the lowest-10 list.")
     if S['n_pct']:
@@ -920,20 +940,20 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
-    low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
+    low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
                      f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
     low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol></div>") if low_li else ''
-    hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
+    hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}</span></span><span class='n'>{money(e['v'])}</span></li>"
                     for e in (S.get('highest') or []))
     sv = savings(S)
     high_sec = (f"<div><p class='kicker'>Highest published</p><h3 class='h3'>The 10 highest {pl}</h3>"
                 + (f"<p class='save'>{sv}</p>" if sv else '') + f"<ol class='word'>{hi_li}</ol></div>") if hi_li and S['lines'] >= 12 else ''
 
-    cash_items = [(c['v'], f"<li><span><b>{esc(c['name'])}</b> · {esc(c['city'])}<span class='m'>posted cash price{' · ' + esc(c['label']) if c.get('label') else ''}"
+    cash_items = [(c['v'], f"<li><span><b>{esc(c['name'])}</b> · {ctag(c['city'])}<span class='m'>posted cash price{' · ' + esc(c['label']) if c.get('label') else ''}"
                            f"{' · ' + esc(c['note']) if c.get('note') else ''} · checked {esc(c['chk'])} · <a class='src' href='{esc(c['src'])}' target='_blank' rel='noopener'>source ↗</a></span></span>"
                            f"<span class='n'>{money(c['v'])}{('–' + money(c['hi'])) if c.get('hi') else ''}</span></li>") for c in S['cash']]
-    cash_items += [(e['v'], f"<li><span><b>{esc(e['name'])}</b>{' · ' + esc(e['city']) if e['city'] else ''}<span class='m'>hospital price file, hospital fee only"
+    cash_items += [(e['v'], f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>hospital price file, hospital fee only"
                             f"{' · list price ' + money(e['list']) if e.get('list') else ''} · {hosp_link(e)}</span></span><span class='n'>{money(e['v'])}</span></li>")
                    for e in S['hcash'][:10]]
     cash_items.sort(key=lambda x: x[0])
@@ -966,7 +986,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     ml = med_lines(S, med_area)
     med_sec = (f"<section class='sec'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
-               f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare.</p><ol class='word'>"
+               f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare. Facility fees are shown at the national rate so places compare on the same footing; "
+               f"<a href='/methodology/#medicare-local'>how Medicare adjusts for local costs</a>.</p><ol class='word'>"
                + ''.join(f"<li><span><b>{esc(a)}</b><span class='m'>{esc(b)} · {lk}</span></span><span class='n'>{money(v)}</span></li>" for a, b, v, lk in ml)
                + "</ol></section>") if ml else ''
 

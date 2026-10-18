@@ -15,7 +15,7 @@
 81025	Urine pregnancy test
 99238	Hospital discharge day, 30 minutes or less
 99223	First hospital visit by doctor (high complexity)
-99284	Emergency room visit (moderately severe)
+99284	Emergency room visit (moderate complexity)
 83036	Hemoglobin A1C blood test (diabetes)
 99417	Extra time on an office visit, each 15 minutes
 87426	Rapid COVID-19 antigen test
@@ -52,13 +52,13 @@
 82306	Vitamin D blood test
 96136	Psychological testing given by the psychologist, first 30 min
 90460	Child vaccine with counseling, first part of the vaccine
-99283	Emergency room visit (low severity)
+99283	Emergency room visit (low complexity)
 80047	Basic metabolic panel with ionized calcium (blood test)
 99401	Preventive counseling, about 15 minutes
 73610	Ankle X-ray (3 or more views)
 97802	Nutrition counseling, first visit, each 15 min
 80050	General health panel (blood tests)
-99285	Emergency room visit (high severity)
+99285	Emergency room visit (high complexity)
 73030	Shoulder X-ray (2 or more views)
 73502	Hip X-ray, one side (2 to 3 views)
 96110	Child development screening
@@ -150,7 +150,7 @@
 99393	Annual checkup, returning patient, age 5 to 11
 72170	Pelvis X-ray (1 or 2 views)
 95117	Allergy shots, 2 or more injections
-99282	Emergency room visit (minor)
+99282	Emergency room visit (straightforward)
 36620	Placing an arterial line for monitoring
 73060	Upper arm X-ray (2 views)
 99394	Annual checkup, returning patient, age 12 to 17

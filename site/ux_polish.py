@@ -551,6 +551,102 @@ def renumber_disclaimers(s):
     return re.sub(r'<strong>\d+\. ', f, s)
 
 
+# ---------------------------------------------------------------- Oct 18 (later): leftover fact-check items
+AET = 'https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICFI/2026-09-05/inNetworkRates/2026-09-05_pl-5it-hr23_Aetna-Life-Insurance-Company.json.gz'
+BTX = 'https://app0004702110a5prdnc685.blob.core.windows.net/output/'
+BTX_HMO = BTX + '2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_MyBlue-Health-HMO_in-network-rates.json.gz'
+BTX_PPO = BTX + '2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz'
+BTX_PAR = BTX + '2026-09-14_Blue-Cross-and-Blue-Shield-of-Texas_ParPlan_in-network-rates.json.gz'
+UHC_CP = 'https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz'
+OPPS_B = 'https://www.cms.gov/medicare/payment/prospective-payment-systems/hospital-outpatient-pps/quarterly-addenda-updates/july-2026-addendum-b'
+PARPLAN_URL = 'https://bwww.bcbstx.com/provider/network/parplan.html'
+CENSUS_DELIN = 'https://www.census.gov/geographies/reference-files/time-series/demo/metro-micro/delineation-files.html'
+
+
+def _a(u, t):
+    return f'<a href="{u}" target="_blank" rel="noopener">{t} ↗</a>'
+
+
+COLON_ROWS = [
+    ('<div class="pline"><div class="who"><b>Aetna</b> · all 7 networks we read<div class="meta">Aetna files, September 5, 2026</div></div>',
+     f'<div class="pline"><div class="who"><b>Aetna</b> · the 5 Aetna networks that list this hospital<div class="meta">{_a(AET, "Aetna PPO file dated September 5, 2026")}, same rate in the other 4</div></div>'),
+    ('<div class="meta">CMS OPPS Addendum B, July 2026, national rate</div>',
+     f'<div class="meta">{_a(OPPS_B, "CMS OPPS Addendum B, July 2026")}, national rate before <a href="/methodology/#medicare-local">local adjustment</a></div>'),
+    ('<div class="meta">BCBSTX file, August 14, 2026</div>', f'<div class="meta">{_a(BTX_HMO, "BCBSTX file dated September 15, 2026")}</div>'),
+    ('<div class="meta">BCBSTX file, August 15, 2026</div>', f'<div class="meta">{_a(BTX_PPO, "BCBSTX file dated September 15, 2026")}</div>'),
+    ('<div class="meta">UHC file, September 1, 2026</div>', f'<div class="meta">{_a(UHC_CP, "UHC file dated September 1, 2026")}</div>'),
+    ('<div class="meta">BCBSTX\'s rate for plans where the hospital is not in the member\'s network</div>',
+     f'<div class="meta">Not a network a member picks: BCBSTX\'s contract with providers in or out of its networks, who accept its allowed amount '
+     f'and don\'t bill the member above it ({_a(PARPLAN_URL, "BCBSTX")}) · {_a(BTX_PAR, "file dated September 14, 2026")}</div>'),
+]
+FACT2 = {
+    'start-here/index.html': COLON_ROWS + [
+        ("at Texas Health Presbyterian Hospital Allen, from each insurer's own September 2026 file:",
+         "at Texas Health Presbyterian Hospital Allen, from each insurer's own rate file (files dated September 1 to 15, 2026):"),
+        ("Facility fee only; the doctor and anesthesia bill separately. Full list and sources on the",
+         "Facility fee only; the doctor and anesthesia bill separately. Each row links to its file. More on the"),
+    ],
+    'price-file-watch/index.html': COLON_ROWS + [
+        ("This is the hospital's standard rate for the full procedure, from each insurer's September 2026 file.",
+         "This is the hospital's standard rate for the full procedure, from each insurer's own rate file (dated September 1 to 15, 2026)."),
+        ('<div class="who">Gainesville, just north of the DFW metro</div>',
+         '<div class="who">Gainesville, outside the DFW metro (inside our DFW area, which goes by ZIP code)</div>'),
+    ],
+    'index.html': [
+        ("a.innerHTML='Word is, Blue Cross Blue Shield of Texas (ParPlan) pays the most: <b>$6,702.28</b>, which is 7.05× Medicare\\'s $950.10. Aetna pays the least: $771.06.<br><br>RECEIPT: Texas Health Presbyterian Allen price file, checked Sept 29, 2026.<br><br><i>This demo answers one question. The real Chargemaster will answer from all 33 million rates.</i>';",
+         "a.innerHTML='Word is, UnitedHealthcare (Choice Plus) pays the most: <b>$3,185.00</b>, which is 3.35× Medicare\\'s national rate of $950.10 (before local adjustment). Aetna pays the least: $771.06.<br><br>RECEIPT: each insurer\\'s own rate file for Texas Health Presbyterian Hospital Allen, dated September 1 to 15, 2026.<br><br><i>This demo answers one question. The real Chargemaster will answer from all 33 million rates.</i>';"),
+        ('"spread": 8.7, "hosp": "Texas Health Presbyterian Hospital Allen"', '"spread": 4.1, "hosp": "Texas Health Presbyterian Hospital Allen"'),
+        ('[["Aetna", "", 771.06, null], ["UnitedHealthcare", "Choice Plus", 3185.0, null], ["Blue Cross Blue Shield of Texas", "ParPlan", 6702.28, null]]',
+         '[["Aetna", "", 771.06, null], ["Blue Cross Blue Shield of Texas", "Blue Choice PPO", 2099.14, null], ["UnitedHealthcare", "Choice Plus", 3185.0, null]], '
+         f'"srcs": [["Aetna PPO file, Sept 5, 2026", "{AET}"], ["BCBSTX Blue Choice PPO file, Sept 15, 2026", "{BTX_PPO}"], ["UHC Choice Plus file, Sept 1, 2026", "{UHC_CP}"]]'),
+        ("straight from the hospital's own price file. Same hospital, same procedure.`",
+         "${r.srcs?'from each insurer’s own rate file':'straight from the hospital’s own price file'}. Same hospital, same procedure.`"),
+        ("document.getElementById('rs').innerHTML=`SOURCE: ${r.hosp}, federally required standard charges file",
+         "document.getElementById('rs').innerHTML=r.srcs?`SOURCE: each insurer’s own rate file: ${r.srcs.map(x=>`<a href=\"${x[1]}\" target=\"_blank\" rel=\"noopener\">${x[0]} ↗</a>`).join(' · ')}<br>MEDICARE: CMS hospital outpatient national rate, July 2026, before local adjustment`:`SOURCE: ${r.hosp}, federally required standard charges file"),
+    ],
+    'methodology/index.html': [
+        ("We save a copy of every original file we use and send copies to the Internet Archive, so any price can be traced back to the exact file it came from, even after the source changes.",
+         "We keep a copy of every original file we use, so any price can be traced back to the exact file it came from, even after the source changes. "
+         "Hospital price files also go to the Internet Archive, one collection per state per month "
+         "(<a href=\"https://archive.org/search?query=upfront-hospital-price-files\" target=\"_blank\" rel=\"noopener\">see them there</a>). "
+         "Insurer files are too large for that and stay in our own storage."),
+        ("<tr><td>El Paso</td><td>798–799</td></tr>\n</tbody></table></div>",
+         "<tr><td>El Paso</td><td>798–799</td></tr>\n</tbody></table></div>\n"
+         "<p>Our Dallas–Fort Worth area, drawn by ZIP code, is wider than the Census Bureau's Dallas–Fort Worth–Arlington metro area "
+         f"(11 counties: Collin, Dallas, Denton, Ellis, Hunt, Kaufman, Rockwall, Johnson, Parker, Tarrant and Wise; {_a(CENSUS_DELIN, 'Census delineation files')}). "
+         "Places outside those counties, such as Gainesville, Sherman, Corsicana or Granbury, stay on the DFW pages and are tagged “outside the DFW metro.”</p>"),
+        ("<h2>Hospital stays compared with Medicare</h2>", """<h2 id="medicare-local">How Medicare adjusts for local costs</h2>
+<p>Medicare sets one national rate for each service, then adjusts it for local costs, mostly wages. Our pages show facility fees at the national rate so every hospital and surgery center is compared on the same footing. The amount Medicare actually pays a given place can be a little higher or lower.</p>
+<ul>
+<li><strong>Hospital outpatient (most procedures, scans and tests at a hospital):</strong> 60% of the national rate is treated as labor cost and multiplied by the hospital's area wage index; the other 40% isn't adjusted (CMS, calendar year 2026 hospital outpatient rule; """ + _a('https://www.team-iha.org/getmedia/0ac1a3dd-fdba-4a75-b218-1801387c9720/CY-2026-Medicare-OPPS-FR-Rule-Summary.pdf?ext=.pdf', 'rule summary') + """; national rates: """ + _a(OPPS_B, 'Addendum B') + """).</li>
+<li><strong>Surgery centers:</strong> half of the payment is treated as labor cost and adjusted by the same wage index (""" + _a('https://www.medpac.gov/wp-content/uploads/2026/10/MedPAC_Payment_Basics_26_ASC_FINAL_SEC.pdf', 'MedPAC, Ambulatory surgical center payment basics') + """).</li>
+<li><strong>Doctors (Physician Fee Schedule):</strong> each part of a doctor's fee (the doctor's work, the practice's costs, malpractice insurance) is multiplied by its own local index for the Medicare payment locality. In Texas, Dallas County is the "Dallas" locality and Tarrant County is "Fort Worth"; every other county around them, including Collin and Denton, is "Rest of Texas." For 2026 the indexes are 1.009, 0.996 and 0.858 for Dallas, 1.009, 0.986 and 0.871 for Fort Worth, and 1.000, 0.949 and 0.903 for Rest of Texas (CMS 2026 fee schedule files, """ + _a('https://www.cms.gov/medicare/payment/fee-schedules/physician', 'RVU26D, Addendum E') + """). Our doctor-fee figures for Dallas–Fort Worth use the Dallas locality.</li>
+<li><strong>Hospital stays:</strong> 66% of the base rate is adjusted by the hospital's wage index when that index is above 1, and 62% when it isn't (CMS fiscal year 2027 inpatient rule, """ + _a('https://www.cms.gov/files/zip/fy2027-ipps-fr-table-1a-1e.zip', 'Tables 1A–1B') + """). Our hospital-stay comparison already uses each hospital's own amount, as described below.</li>
+<li><strong>Lab tests:</strong> Medicare's lab fee schedule is one national payment limit, with no local adjustment.</li>
+</ul>
+<h2>Hospital stays compared with Medicare</h2>"""),
+    ],
+}
+ER_NAMES = [('Emergency room visit (minor)', 'Emergency room visit (straightforward)'),
+            ('Emergency room visit (low severity)', 'Emergency room visit (low complexity)'),
+            ('Emergency room visit (moderately severe)', 'Emergency room visit (moderate complexity)'),
+            ('Emergency room visit (high severity)', 'Emergency room visit (high complexity)')]
+
+
+def fact2(rel):
+    def fn(s):
+        for a, b in FACT2.get(rel, []):
+            s = s.replace(a, b)
+        return s
+    return fn
+
+
+def er_names(s):
+    for a, b in ER_NAMES:
+        s = s.replace(a, b)
+    return s
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -576,6 +672,9 @@ def run(d):
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, fact(rel))
     edit('disclaimers/index.html', renumber_disclaimers)
+    for rel in FACT2:
+        if os.path.isfile(os.path.join(site, rel)):
+            edit(rel, fact2(rel))
     for rel in ('surprise-bills/index.html', 'employer-plans/index.html', 'insurers/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
         if os.path.isfile(os.path.join(site, rel)):
             edit(rel, add_trust)
@@ -591,7 +690,7 @@ def run(d):
             continue
         rel = os.path.relpath(os.path.join(root, 'index.html'), site)
         if root.endswith('price-finder'):
-            edit(rel, lambda x: fact_pf(patch_pf(x)))
+            edit(rel, lambda x: er_names(fact_pf(patch_pf(x))))
         elif rel not in ('index.html', 'start-here/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
             edit(rel, patch_nav)
     print(f'{len(done)} pages changed:', ', '.join(sorted(done)[:12]), '...' if len(done) > 12 else '')
@@ -608,7 +707,7 @@ def run_r2():
     n = 0
     for k in keys:
         s = s3.get_object(Bucket=B, Key=k)['Body'].read().decode('utf-8')
-        t = fact_pf(patch_pf(s))
+        t = er_names(fact_pf(patch_pf(s)))
         if t != s:
             s3.put_object(Bucket=B, Key=k, Body=t.encode('utf-8'), ContentType='text/html; charset=utf-8')
             n += 1

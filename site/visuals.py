@@ -44,7 +44,8 @@ def word_cards(S, sg, mh, cc):
         cards.append(('cash', 'Cash price', 'What a provider says it charges if you pay yourself, without insurance.',
                       f"Here: the lowest found is {_money(cc[0]['v'])}."))
     if mh:
-        cards.append(('medicare', 'Medicare rate', "What Medicare pays for the same service. A yardstick for judging a price, not a price you can get.",
+        cards.append(('medicare', 'Medicare rate', "What Medicare pays for the same service. A yardstick for judging a price, not a price you can get. "
+                      "Medicare adjusts its national rates for local wages and costs; facility fees here are shown at the national rate.",
                       f"Here: {_money(mh[0])} ({mh[1]})."))
     cards.append(('deductible', 'Deductible', 'What you pay each year before your plan starts sharing the cost. Until then, the negotiated rate is your bill.',
                   'Your plan documents or insurer app show yours.'))
@@ -79,9 +80,9 @@ def price_line(S, sg, mh, cc, med_asc):
     if mh:
         meds.append((mh[0], mh[1]))
     if med_asc and (not mh or abs(med_asc - mh[0]) > 0.01):
-        meds.append((med_asc, 'surgery center facility fee'))
+        meds.append((med_asc, 'surgery center facility fee, national rate before local adjustment'))
     for v, lab in meds:
-        pts.append((v, 'med', 'Medicare pays', f"{lab} · a yardstick, not a price you can get"))
+        pts.append((v, 'med', 'Medicare rate', f"{lab} · a yardstick, not a price you can get"))
     vals = [p[0] for p in pts if p[0] > 0]
     a, b = min(vals) * 0.8, max(vals) * 1.25
     la, lb = math.log10(a), math.log10(b)
@@ -190,6 +191,6 @@ if(L&&inp){const a=+L.dataset.a,b=+L.dataset.b,lo=+L.dataset.lo,med=+L.dataset.m
 const f=x=>x<10?x.toFixed(1):Math.round(x).toLocaleString('en-US');
 inp.addEventListener('input',()=>{const q=parseFloat(inp.value);if(!(q>0)){Q.hidden=true;say.textContent=first;return}
 const p=Math.max(0,Math.min(100,(Math.log10(q)-Math.log10(a))/(Math.log10(b)-Math.log10(a))*100));Q.style.left=p+'%';Q.hidden=false;
-say.textContent=q<=lo?'That is at or below the lowest negotiated rate published here.':'That is '+f(q/lo)+' times the lowest negotiated rate published here'+(med>0?', and '+f(q/med)+' times what Medicare pays ('+medl+').':'.')})}
+say.textContent=q<=lo?'That is at or below the lowest negotiated rate published here.':'That is '+f(q/lo)+' times the lowest negotiated rate published here'+(med>0?', and '+f(q/med)+' times Medicare’s rate ('+medl+').':'.')})}
 document.addEventListener('click',e=>{const o=e.target.closest('[data-wc]');if(o){const d=document.getElementById('wc-'+o.dataset.wc);if(d){const open=document.querySelector('dialog.wc[open]');if(open)open.close();d.showModal()}}
 if(e.target.closest('[data-close]'))e.target.closest('dialog').close();if(e.target.matches('dialog.wc'))e.target.close()})})();</script>'''
