@@ -216,7 +216,8 @@ if rb.get("base") == bm and rb.get("build"):
     rnames = {"TN": "Tennessee", "CO": "Colorado", "OK": "Oklahoma", "AL": "Alabama", "MS": "Mississippi", "MO": "Missouri", "GA": "Georgia"}
     rdone = [rnames[c] for c in rb["states"] if c in rnames and ls(f"site/every-st/{rnames[c].lower()}/{rb['build']}/embed.json")]
     s7_note += (f"; rebuild of {', '.join(rnames.get(c, c) for c in rb['states'])} with new insurer tables: "
-                f"stage {rst.get('stage', 'waiting for insurer files')}" + (f", built: {', '.join(rdone)}" if rdone else ""))
+                f"stage {rst.get('stage', 'waiting for insurer files')}" + (f", built: {', '.join(rdone)}" if rdone else "")
+                + (" (PAUSED Oct 18: too big; Anthem to be slimmed and added as an update)" if rb.get("paused") else ""))
 hosp = ST.get("hospitals", {}); names_ = ST.get("code_names", {})
 def tot(*scs, f): return sum(counts.get(s, {}).get(f, 0) for s in scs)
 BOTS = [

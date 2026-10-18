@@ -25,7 +25,9 @@ if not os.environ.get('ST_BUILD'):
     try:
         import json
         REBUILD = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state_rebuild.json'))).get(STB) or {}
-        if REBUILD.get('base') == MONTH and REBUILD.get('build') and REBUILD.get('states'): MONTH = REBUILD['build']
+        # Oct 18, 2026: a rebuild with "paused" set is skipped entirely (its finished batches stay in R2 for when it resumes)
+        if REBUILD.get('paused'): REBUILD = {}
+        elif REBUILD.get('base') == MONTH and REBUILD.get('build') and REBUILD.get('states'): MONTH = REBUILD['build']
         else: REBUILD = {}
     except Exception: REBUILD = {}
 os.environ['BUILD'] = STB + '-' + MONTH

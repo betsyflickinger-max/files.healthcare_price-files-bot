@@ -1,2 +1,13 @@
-{"st": {"base": "2026-10", "build": "2026-10b", "states": ["CO", "GA", "MO"],
-        "why": "Oct 16, 2026: new Anthem tables (78 network parts from Anthem's employer catalog) for Colorado, Georgia and Missouri"}}
+{
+ "st": {
+  "base": "2026-10",
+  "build": "2026-10b",
+  "states": [
+   "CO",
+   "GA",
+   "MO"
+  ],
+  "why": "Oct 16, 2026: new Anthem tables (78 network parts from Anthem's employer catalog) for Colorado, Georgia and Missouri",
+  "paused": "Oct 18, 2026 2:40pm CT (Betsy OK'd): paused. With the 78 Anthem parts the CO/GA/MO rebuild was ~20 days and ~$2,000 at full fleet, more than the credit left, and it held every machine. Finished batches stay in R2 (work/every-st/<state>/v202610b/B/). Anthem gets slimmed (store-once + most-used networks) and added as an update before this is tried again. Delete this line to resume."
+ }
+}
