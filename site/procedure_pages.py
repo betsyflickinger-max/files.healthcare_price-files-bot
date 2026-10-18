@@ -1477,6 +1477,8 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
         if rebuild:
             todo.append(a)
         else:
+            # an area left out by --areas keeps its last fingerprint, so the next daily run still sees its page as changed
+            fps[a['slug']] = (prev or {}).get('fp', {}).get(a['slug'], fp)
             for c in codes:
                 k = f"{a['slug']}|{c}"
                 if k in keep:
@@ -1623,7 +1625,10 @@ def label_high(text):
     return text.replace(PF_OLD, PF_NEW, 1) if PF_OLD in text else None
 
 
-def deploy(force=False):
+def deploy(force=False, only_areas=None):
+    """only_areas: rebuild just these areas (others keep last run's figures, so the indexes still cover every area); not with --force."""
+    if force and only_areas:
+        sys.exit('--areas needs the last run\'s figures for the other areas; leave out --force')
     import boto3
     E = {k: "".join(os.environ.get(k, "").split()) for k in
          ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "CLOUDFLARE_API_TOKEN")}
@@ -1664,7 +1669,7 @@ def deploy(force=False):
             except Exception as e:
                 print('layout not updated:', e)
         home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
-        st = build(d, Store(d), prev=prev, rerender=not first)
+        st = build(d, Store(d), only_areas, prev=prev, rerender=not first)
         changed = (not prev) or not first or st['pages'] > 0 or st.get('notes_changed') or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
         if not changed:
             print('no area page changed since the last run; nothing to deploy')
@@ -1701,6 +1706,6 @@ if __name__ == '__main__':
     ap.add_argument('--force', action='store_true')
     A = ap.parse_args()
     if A.cmd == 'deploy':
-        deploy(A.force)
+        deploy(A.force, set(A.areas.split(',')) if A.areas else None)
     else:
         build(A.site_dir, Store(A.site_dir, A.offline), set(A.areas.split(',')) if A.areas else None, set(A.codes.split(',')) if A.codes else None)
