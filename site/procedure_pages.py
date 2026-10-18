@@ -21,6 +21,7 @@ homepage says noindex, so do these pages.
 Deploy runs only when an area's Price Finder page changed since the last run (fingerprints in R2
 site/deploy/costs_state.json), so it is cheap to run daily. URLs never change once made: site/procedure_slugs.csv keeps them.
 """
+import home_bits   # homepage hero pieces shared with site/ux_polish.py
 import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -1254,7 +1255,7 @@ def national_section(areas, summaries, procs, n_rates_note):
 .chip-l{{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px;margin:0 8px 8px 0}}.chip-l:hover{{background:var(--hi)}}
 .nat-new{{margin:4px 0 0;font:700 17px var(--body)}}.nat-new a{{color:var(--hi);text-underline-offset:4px}}
 .nat-trust{{margin:0;font:14px/1.5 var(--mono);color:var(--board-sub);letter-spacing:.02em}}.nat-trust i{{font-style:normal;padding:0 6px}}
-.steps{{list-style:none;counter-reset:st;margin:18px 0 0;padding:0;display:grid;gap:0;border:2px solid var(--rule)}}@media(min-width:800px){{.steps{{grid-template-columns:repeat(3,1fr)}}}}
+{home_bits.HOME_CSS2}.steps{{list-style:none;counter-reset:st;margin:18px 0 0;padding:0;display:grid;gap:0;border:2px solid var(--rule)}}@media(min-width:800px){{.steps{{grid-template-columns:repeat(3,1fr)}}}}
 .steps li{{counter-increment:st;display:flex;flex-direction:column;gap:6px;padding:22px;background:var(--paper);border-bottom:2px solid var(--rule)}}.steps li:last-child{{border-bottom:0}}
 @media(min-width:800px){{.steps li{{border-bottom:0;border-right:2px solid var(--rule)}}.steps li:last-child{{border-right:0}}}}
 .steps li::before{{content:counter(st);font:900 44px/1 var(--display);color:var(--stamp)}}.steps b{{font-size:19px}}.steps span{{color:var(--muted)}}.steps a{{color:var(--stamp)}}.steps-more{{margin:18px 0 0}}
@@ -1264,15 +1265,14 @@ def national_section(areas, summaries, procs, n_rates_note):
 <div class="board"><div class="wrap">
 <p style="font:700 14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hi);margin:0">The receipt for the U.S. healthcare system</p>
 <h1 class="letters">What is this going to <em>cost me?</em></h1>
-<p style="font-size:21px;color:var(--board-ink)">Hospitals and insurers are required to publish their prices. They buried them in files too big to open. We opened them, and every price here links back to the file it came from.</p>
+{home_bits.LEDE}
 <form class="nat-search" id="natForm" action="/costs/" method="get">
-<label for="natProc">What do you need?</label>
-<div class="row"><select id="natProc" aria-label="Procedure">{opts_proc}</select>
+<label for="natQ">What do you need?</label>
+<div class="row">{home_bits.qbox(opts_proc, every_codes())}
 <select id="natArea" aria-label="Where">{opts_area}</select><button type="submit">Show me</button></div>
 <p class="nat-pop">Popular: {''.join(f"<a href='/costs/{pslug[c]}/'>{esc(t)}</a>" for c, t in pop if c in pslug)} · <a href="/price-finder/">every billing code</a></p>
 </form>
-<p class="nat-new"><a href="/start-here/">New here? See how it works <span aria-hidden="true">→</span></a></p>
-<p class="nat-trust">Free <i aria-hidden="true">·</i> No ads <i aria-hidden="true">·</i> Every price dated and linked to the file it came from</p>
+{home_bits.foot(every_codes())}
 <p class="msg" style="display:none" id="msg"></p><div id="homeChips" hidden></div><form id="searchForm" hidden><input id="q"></form>
 </div></div>
 <div class="wrap">
@@ -1307,8 +1307,7 @@ Outlined states have a Price Finder with insurers' negotiated rates. We're still
 <div class="door"><h3>Nothing is estimated</h3><span>No averages, no modeled prices. Lowest and highest are real published figures. <a href="/methodology/">How we read the files</a>.</span></div>
 </div></div>
 </div>
-<script>(function(){{var f=document.getElementById('natForm');if(!f)return;f.addEventListener('submit',function(e){{e.preventDefault();location.href='/costs/'+document.getElementById('natArea').value+'/'+document.getElementById('natProc').value+'/';}});
-}})();</script>
+{home_bits.HOME_JS.replace('__EVERY__', every_codes())}
 </section>
 <!-- NATIONAL:END -->'''
 

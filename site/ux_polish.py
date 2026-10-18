@@ -31,6 +31,7 @@ PF_BLOCK = r'''<!-- UX:START (site/ux_polish.py: pay prompt, list first, tidy na
 #pay.ux-ask{outline:3px solid var(--brick);outline-offset:3px}
 .ux-ctx{margin:26px 0 0}
 details.ux-ctx{border-top:1px solid var(--rule);padding-top:6px}
+.ux-hits{margin:18px 0;padding:16px 18px;border:2px solid var(--ink)}.ux-hits ul{list-style:none;margin:10px 0 0;padding:0;columns:2 320px;column-gap:24px}.ux-hits li{break-inside:avoid}.ux-hits button{display:block;width:100%;text-align:left;min-height:44px;padding:8px 0;border:0;border-bottom:1px solid var(--rule);background:none;color:var(--ink);font:inherit;cursor:pointer}.ux-hits button span{font:12px var(--type);opacity:.75}
 details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;display:flex;align-items:center}
 </style>
 <script id="uxJs">
@@ -96,6 +97,21 @@ details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;
       at.insertAdjacentElement('afterend', d); }
   };
   const after = () => { try { listFirst(); } catch (err) {} try { tidyIn(document.getElementById('patient')); tidyIn(document.getElementById('board')); tidyIn(document.getElementById('mapv')); } catch (err) {} };
+  // ?q=colon (from the homepage search): list every billing code whose name matches, pick one to load it
+  try {
+    const qq = window.__uxQ || new URLSearchParams(location.search).get('q');
+    if (qq && typeof D !== 'undefined' && D.codes) {
+      const t = qq.trim().toLowerCase();
+      const hits = Object.keys(D.codes).filter(c => c.toLowerCase() === t || String(D.codes[c].name || '').toLowerCase().includes(t)).slice(0, 60);
+      const box = document.createElement('div'); box.className = 'ux-hits';
+      box.innerHTML = `<p><b>${hits.length >= 60 ? '60+' : hits.length} billing code${hits.length === 1 ? '' : 's'} match “${h(qq)}”.</b> ${hits.length ? 'Pick one:' : 'Try a shorter word or a billing code.'}</p>`
+        + (hits.length ? '<ul>' + hits.map(c => `<li><button type="button" data-c="${h(c)}">${h(D.codes[c].name)} <span>${h(D.codes[c].type || 'CPT')} ${h(c)}</span></button></li>`).join('') + '</ul>' : '');
+      const q = document.querySelector('section.q'); (q || document.body).insertAdjacentElement(q ? 'afterend' : 'afterbegin', box);
+      box.addEventListener('click', e => { const b = e.target.closest('button[data-c]'); if (!b) return;
+        S.code = b.dataset.c; S.showAll = {}; const pr = document.getElementById('proc'); if (pr) pr.value = `${D.codes[S.code].name} · ${S.code}`;
+        box.remove(); render(); window.scrollTo(0, 0); });
+    }
+  } catch (err) {}
   const base = render;
   render = function () { const r = base.apply(this, arguments); after(); return r; };
   after();
@@ -118,7 +134,12 @@ def sub1(s, old, new, what):
     return s.replace(old, new)
 
 
+Q_EARLY = '<script id="uxQ">try{window.__uxQ=new URLSearchParams(location.search).get("q")}catch(e){}</script>'
+
+
 def patch_pf(s):
+    if 'id="uxQ"' not in s:
+        s = s.replace('<head>', '<head>' + Q_EARLY, 1)
     if MARK_PF in s:
         return re.sub(r'<!-- UX:START.*?<!-- UX:END -->\n', lambda m: PF_BLOCK, s, count=1, flags=re.S)
     i = s.rfind('</body>')
@@ -324,6 +345,70 @@ h1{font:600 40px/1.1 Georgia,serif;margin:0 0 12px}a{color:#9b3a2a}ul{padding-le
 '''
 
 
+# ------------------------------------------------------------------ Oct 18: Units as the site look, same opening on every page
+import home_bits
+
+UNITS_V1 = """
+/* ux: units v2 (Oct 18): every page opens on the same blue band; Start here stands out; labels readable on cream */
+html[data-look="units"]:not(#_) :is(.sn,.top){border-bottom:0!important;padding-block:16px!important;color:#fff;
+  border-image:linear-gradient(#2E5BE6 0 0) fill 0 / 0 / 0 100vmax}
+html[data-look="units"]:not(#_) :is(.sn-brand,.brand){color:#fff!important;font:800 26px/1 "Look Hanken",sans-serif!important;text-transform:uppercase;letter-spacing:-.01em}
+html[data-look="units"]:not(#_) :is(.sn-links,.toplinks){color:#fff}html[data-look="units"]:not(#_) :is(.sn-links,.toplinks) a{color:#fff!important}
+html[data-look="units"]:not(#_) :is(.sn-links,.toplinks) a[href="/start-here/"]{background:#F7C925!important;color:#151515!important;padding:4px 12px!important;font-weight:700}
+html[data-look="units"]:not(#_) .wrap>header,html[data-look="units"]:not(#_) main>header.ux-band,html[data-look="units"]:not(#_) section.q{color:#fff;padding-block:30px 36px!important;margin-top:0!important;border-bottom:0!important;
+  border-image:repeating-linear-gradient(#2E5BE6 0 26px,#3D69EC 26px 28px) fill 0 / 0 / 0 100vmax}
+html[data-look="units"]:not(#_) :is(.wrap>header,header.ux-band,section.q) h1{color:#fff!important;font-weight:800!important;text-transform:uppercase;letter-spacing:-.025em}
+html[data-look="units"]:not(#_) :is(.wrap>header,header.ux-band) .eyebrow{color:#F7C925!important}
+html[data-look="units"]:not(#_) :is(.wrap>header,header.ux-band) .lede{color:#DCE5FC!important;border-bottom:0!important}
+html[data-look="units"]:not(#_) :is(.wrap>header,header.ux-band) :is(a,.lede a){color:#fff!important}
+html[data-look="units"]:not(#_) .eyebrow{color:#2E5BE6}
+html[data-look="units"]:not(#_) .wrap>header .tally,html[data-look="units"]:not(#_) .wrap>header .tally *{color:#fff!important}
+html[data-look="units"]:not(#_) .wrap>header .tally span span,html[data-look="units"]:not(#_) .wrap>header .tally :is(small,i,em){color:#DCE5FC!important}
+html[data-look="units"]:not(#_) .wrap>:is(.asof,.topbar){color:#DCE5FC!important;margin:0!important;padding-block:6px 0!important;border-bottom:0!important;border-image:linear-gradient(#2E5BE6 0 0) fill 0 / 0 / 0 100vmax}
+html[data-look="units"]:not(#_) .wrap>:is(.asof,.topbar) *{color:#DCE5FC!important}
+html[data-look="units"]:not(#_) section.q :is(.sent,.sent label,.meta2,.code,#codeLine){color:#DCE5FC!important}
+html[data-look="units"]:not(#_) section.q select{color:#fff!important;background-color:transparent!important;border-color:#fff!important}
+html[data-look="units"]:not(#_) section.q select option{color:#151515;background:#fff}
+html[data-look="units"]:not(#_) section.q .hv{color:#F7C925!important}
+html[data-look="units"]:not(#_) section.q .sbtn{background:#fff!important;color:#151515!important}
+html[data-look="units"]:not(#_) section.q #spanel{background:#fff;color:#151515;padding:16px;margin-top:12px}
+html[data-look="units"]:not(#_) section.q .ux-pay{border-color:#F7C925;background:rgba(0,0,0,.14);color:#fff}
+html[data-look="units"]:not(#_) section.q .ux-pay button{background:#F7C925;color:#151515}
+html[data-look="units"]:not(#_) #pay.ux-ask{outline-color:#F7C925}
+html[data-look="units"]:not(#_) .nat-pop a{border:0!important;padding:0!important;min-height:0!important;color:#fff!important;text-decoration:underline;text-underline-offset:3px}
+html[data-look="units"]:not(#_) .nat-pop{gap:4px 14px;font-size:16px}
+"""
+
+
+def patch_units_css(s):
+    return s if '/* ux: units v2' in s else s.split('\n/* ux: units v1')[0] + UNITS_V1
+
+
+def patch_looks_js(s):
+    s = s.replace("var KEY = 'hcf-look-v2';", "var KEY = 'hcf-look-v3'; // v3 (Oct 18): default changed to Units")
+    return s.replace("if (!ok(v)) v = 'hotline';", "if (!ok(v)) v = 'units';")
+
+
+def patch_start_band(s):
+    if 'class="ux-band"' in s:
+        return s
+    m = re.search(r'(<main>\s*)(<p class="eyebrow">.*?</p>\s*<h1>.*?</h1>\s*<p class="lede">.*?</p>)', s, re.S)
+    return s[:m.start(2)] + '<header class="ux-band">' + m.group(2) + '</header>' + s[m.end(2):] if m else s
+
+
+def patch_home_hero(s):
+    if 'id="natQ"' in s or '<!-- NATIONAL:START' not in s:
+        return s
+    every = '21,000+'
+    s = s.replace('<p style="font-size:21px;color:var(--board-ink)">Hospitals and insurers are required to publish their prices. They buried them in files too big to open. We opened them, and every price here links back to the file it came from.</p>', home_bits.LEDE)
+    m = re.search(r'<label for="natProc">What do you need\?</label>\n<div class="row"><select id="natProc" aria-label="Procedure">(.*?)</select>', s, re.S)
+    s = s[:m.start()] + '<label for="natQ">What do you need?</label>\n<div class="row">' + home_bits.qbox(m.group(1), every) + s[m.end():]
+    s = re.sub(r'<p class="nat-new">.*?</p>\n<p class="nat-trust">.*?</p>\n', lambda _: home_bits.foot(every) + '\n', s, count=1, flags=re.S)
+    s = re.sub(r"<script>\(function\(\)\{var f=document.getElementById\('natForm'\).*?</script>", lambda _: home_bits.HOME_JS.replace('__EVERY__', every), s, count=1, flags=re.S)
+    i = s.index('.nat-trust{margin:0;font:14px/1.5 var(--mono)'); j = s.index('\n', i)
+    return s[:j + 1] + home_bits.HOME_CSS2 + s[j + 1:]
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -339,6 +424,10 @@ def run(d):
     edit('plan-calculator/index.html', patch_calc)
     edit('price-file-watch/index.html', patch_watch)
     edit('looks/looks.css', patch_looks_css)
+    edit('looks/looks.css', patch_units_css)
+    edit('looks/looks.js', patch_looks_js)
+    edit('start-here/index.html', patch_start_band)
+    edit('index.html', patch_home_hero)
     edit('disclaimers/index.html', patch_disclaimers)
     edit('methodology/index.html', patch_method)
     for rel in ('surprise-bills/index.html', 'employer-plans/index.html', 'insurers/index.html', 'plan-calculator/index.html', 'price-file-watch/index.html'):
