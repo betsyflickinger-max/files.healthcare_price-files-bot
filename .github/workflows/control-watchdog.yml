@@ -1,0 +1,44 @@
+name: Control center watchdog (every 3 hours)
+
+# Checks that every part of files.healthcare/control is being updated on time. If something is stale it opens
+# (or adds to) one GitHub issue titled "Control center: something stopped updating", which emails Betsy as the
+# repo owner; when everything is fresh again it closes that issue. Free (public repo), no Claude step.
+on:
+  schedule:
+    - cron: "41 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      GH_TOKEN: ${{ github.token }}
+      TITLE: "Control center: something stopped updating"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: board
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36
+      - run: python board/control_watchdog.py
+      - name: Open, update or close the alert issue
+        run: |
+          num=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          when=$(TZ=America/Chicago date '+%a %b %-d, %-I:%M %p Central')
+          if [ -s stale.txt ]; then
+            body=$(printf '%s\n\n%s\n\n%s\n' "Checked $when. These parts of your control center (https://files.healthcare/control) are not updating on time:" "$(cat stale.txt)" "Nothing is lost; the page just shows older numbers. Ask Claude to look at it, or check the Actions tab of this repo for a failed or missing run. This issue closes itself once everything is fresh again.")
+            if [ -n "$num" ]; then gh issue comment "$num" --repo "$GITHUB_REPOSITORY" --body "$body"; else gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body" --assignee betsyflickinger-max || gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body"; fi
+          elif [ -n "$num" ]; then
+            gh issue close "$num" --repo "$GITHUB_REPOSITORY" --comment "All parts are updating on time again ($when)."
+          fi
