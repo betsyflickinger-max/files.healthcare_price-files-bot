@@ -1,0 +1,243 @@
+ccn,hospital,npi,in_price_finder,evidence
+450015,PARKLAND HEALTH & HOSPITAL SYSTEM,1669477089,no,the hospital's own price file lists it
+450015,PARKLAND HEALTH & HOSPITAL SYSTEM,1861416307,no,the hospital's own price file lists it
+450015,PARKLAND HEALTH & HOSPITAL SYSTEM,1932123247,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450015,PARKLAND HEALTH & HOSPITAL SYSTEM,1992730857,no,the hospital's own price file lists it
+450021,BAYLOR UNIVERSITY MEDICAL CENTER,1447250253,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450021,BAYLOR UNIVERSITY MEDICAL CENTER,1447597240,yes,NPPES hospital-type organization record at the same street address
+450021,BAYLOR UNIVERSITY MEDICAL CENTER,1942348354,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1093088684,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1184619082,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1215248265,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1457509242,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1477799518,no,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1487054789,yes,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1538193073,yes,the hospital's own price file lists it
+450039,JPS HEALTH NETWORK,1649681412,no,NPPES hospital-type organization record at the same street address
+450039,JPS HEALTH NETWORK,1992753222,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450044,UT OF TEXAS  SOUTHWESTERN UNIVERSITY HOSPITAL - WILLIAM P. CLEMENTS JR.…,1285798918,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450051,METHODIST DALLAS MEDICAL CENTER,1013066851,yes,NPPES hospital-type organization record at the same street address
+450051,METHODIST DALLAS MEDICAL CENTER,1184911521,yes,NPPES hospital-type organization record at the same street address
+450051,METHODIST DALLAS MEDICAL CENTER,1225383524,no,NPPES hospital-type organization record at the same street address
+450051,METHODIST DALLAS MEDICAL CENTER,1528027786,yes,CMS Hospital Enrollments lists it for this CCN
+450051,METHODIST DALLAS MEDICAL CENTER,1881017531,no,NPPES hospital-type organization record at the same street address
+450064,TEXAS HEALTH ARLINGTON MEMORIAL HOSPITAL,1174533343,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450064,TEXAS HEALTH ARLINGTON MEMORIAL HOSPITAL,1922344167,yes,NPPES hospital-type organization record at the same street address
+450079,BAYLOR SCOTT & WHITE MEDICAL CENTER AT IRVING,1104822915,yes,the hospital's own price file lists it
+450079,BAYLOR SCOTT & WHITE MEDICAL CENTER AT IRVING,1992700983,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450087,MEDICAL CITY NORTH HILLS,1518911833,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450090,NORTH TEXAS MEDICAL CENTER,1922009331,yes,NPPES hospital-type organization record at the same street address
+450090,NORTH TEXAS MEDICAL CENTER,1972071991,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450135,TEXAS HEALTH HARRIS METHODIST FORT WORTH,1336172105,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450135,TEXAS HEALTH HARRIS METHODIST FORT WORTH,1447376892,yes,NPPES hospital-type organization record at the same street address
+450135,TEXAS HEALTH HARRIS METHODIST FORT WORTH,1699288571,yes,NPPES hospital-type organization record at the same street address
+450137,BAYLOR SCOTT AND WHITE ALL SAINTS MEDICAL CENTER,1669472387,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450137,BAYLOR SCOTT AND WHITE ALL SAINTS MEDICAL CENTER,1972640316,yes,NPPES hospital-type organization record at the same street address
+450148,TEXAS HEALTH HARRIS METHODIST HOSPITAL CLEBURNE,1396778064,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450203,MEDICAL CITY WEATHERFORD,1417471467,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450203,MEDICAL CITY WEATHERFORD,1982781852,no,NPPES hospital-type organization record at the same street address
+450292,TEXAS HEALTH PRESBYTERIAN HOSPITAL KAUFMAN,1104976703,yes,NPPES hospital-type organization record at the same street address
+450292,TEXAS HEALTH PRESBYTERIAN HOSPITAL KAUFMAN,1457382798,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450324,TEXOMA MEDICAL CENTER,1851390967,yes,CMS Hospital Enrollments lists it for this CCN
+450351,TEXAS HEALTH HARRIS METHODIST HOSPITAL STEPHENVILL…,1922031541,no,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450352,HUNT REGIONAL MEDICAL CENTER,1598750721,no,CMS Hospital Enrollments lists it for this CCN
+450372,BAYLOR SCOTT & WHITE MEDICAL CENTER- WAXAHACHIE,1265430177,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450379,DALLAS MEDICAL CENTER,1356538839,yes,the hospital's own price file lists it
+450379,DALLAS MEDICAL CENTER,1689606220,yes,NPPES hospital-type organization record at the same street address
+450379,DALLAS MEDICAL CENTER,1861690364,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450403,MEDICAL CENTER OF MCKINNEY,1437102639,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450403,MEDICAL CENTER OF MCKINNEY,1497708598,yes,NPPES hospital-type organization record at the same street address
+450419,TEXAS HEALTH HARRIS METHODIST HOSPITAL AZLE,1508899204,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450419,TEXAS HEALTH HARRIS METHODIST HOSPITAL AZLE,1740305119,yes,NPPES hospital-type organization record at the same street address
+450422,BAYLOR SCOTT AND WHITE MEDICAL CENTER UPTOWN,1386647717,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450447,NAVARRO REGIONAL HOSPITAL,1144274226,yes,CMS Hospital Enrollments lists it for this CCN
+450451,GLEN ROSE MEDICAL CENTER,1568574291,yes,NPPES hospital-type organization record at the same street address
+450451,GLEN ROSE MEDICAL CENTER,1700826575,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450462,TEXAS HEALTH PRESBYTERIAN HOSPITAL DALLAS,1245311695,yes,the hospital's own price file lists it
+450462,TEXAS HEALTH PRESBYTERIAN HOSPITAL DALLAS,1255412789,yes,the hospital's own price file lists it
+450462,TEXAS HEALTH PRESBYTERIAN HOSPITAL DALLAS,1326253923,yes,NPPES hospital-type organization record at the same street address
+450462,TEXAS HEALTH PRESBYTERIAN HOSPITAL DALLAS,1396779948,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450469,WILSON N JONES REGIONAL MEDICAL CENTER,1598545345,yes,CMS Hospital Enrollments lists it for this CCN
+450537,METHODIST RICHARDSON MEDICAL CENTER,1033165501,yes,CMS Hospital Enrollments lists it for this CCN
+450563,BAYLOR SCOTT & WHITE MEDICAL CENTER  GRAPEVINE,1073511762,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450565,PALO PINTO GENERAL HOSPITAL,1972590602,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450596,LAKE GRANBURY MEDICAL CENTER,1114998911,yes,CMS Hospital Enrollments lists it for this CCN
+450634,MEDICAL CITY DENTON,1306897277,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450639,TEXAS HEALTH HARRIS METHODIST HURST-EULESS-BEDFORD…,1104845015,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450639,TEXAS HEALTH HARRIS METHODIST HURST-EULESS-BEDFORD…,1467590851,no,NPPES hospital-type organization record at the same street address
+450639,TEXAS HEALTH HARRIS METHODIST HURST-EULESS-BEDFORD…,1750509998,no,NPPES hospital-type organization record at the same street address
+450639,TEXAS HEALTH HARRIS METHODIST HURST-EULESS-BEDFORD…,1790801140,no,NPPES hospital-type organization record at the same street address
+450641,NOCONA GENERAL HOSPITAL,1689655912,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450641,NOCONA GENERAL HOSPITAL,1700901998,yes,NPPES hospital-type organization record at the same street address
+450647,MEDICAL CITY DALLAS HOSPITAL,1023180502,no,NPPES hospital-type organization record at the same street address
+450647,MEDICAL CITY DALLAS HOSPITAL,1134596331,no,NPPES hospital-type organization record at the same street address
+450647,MEDICAL CITY DALLAS HOSPITAL,1689628984,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450647,MEDICAL CITY DALLAS HOSPITAL,1851599245,yes,NPPES hospital-type organization record at the same street address
+450651,MEDICAL CITY PLANO,1396798518,yes,NPPES hospital-type organization record at the same street address
+450651,MEDICAL CITY PLANO,1699726406,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450669,MEDICAL CITY LEWISVILLE,1255384533,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450672,MEDICAL CITY FORT WORTH,1427340728,no,NPPES hospital-type organization record at the same street address
+450672,MEDICAL CITY FORT WORTH,1659323772,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450675,MEDICAL CITY ARLINGTON,1134172406,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450677,TEXAS HEALTH HUGULEY HOSPITAL FORT WORTH SOUTH,1033120423,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450677,TEXAS HEALTH HUGULEY HOSPITAL FORT WORTH SOUTH,1366740177,no,NPPES hospital-type organization record at the same street address
+450678,WHITE ROCK MEDICAL CENTER,1083112023,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450678,WHITE ROCK MEDICAL CENTER,1598138919,yes,NPPES hospital-type organization record at the same street address
+450678,WHITE ROCK MEDICAL CENTER,1699705426,no,NPPES hospital-type organization record at the same street address
+450688,DALLAS REGIONAL MEDICAL CENTER,1154455657,no,NPPES hospital-type organization record at the same street address
+450688,DALLAS REGIONAL MEDICAL CENTER,1558303636,no,NPPES hospital-type organization record at the same street address
+450688,DALLAS REGIONAL MEDICAL CENTER,1790174860,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450688,DALLAS REGIONAL MEDICAL CENTER,1851347835,no,NPPES hospital-type organization record at the same street address
+450723,METHODIST CHARLTON MEDICAL CENTER,1275592131,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450730,CARROLLTON REGIONAL MEDICAL CENTER,1184262800,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450730,CARROLLTON REGIONAL MEDICAL CENTER,1902839707,yes,NPPES hospital-type organization record at the same street address
+450742,BAYLOR SCOTT AND WHITE MEDICAL CENTER LAKE POINTE,1205018439,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450742,BAYLOR SCOTT AND WHITE MEDICAL CENTER LAKE POINTE,1861423352,yes,NPPES hospital-type organization record at the same street address
+450743,TEXAS HEALTH PRESBYTERIAN HOSPITAL DENTON,1003883158,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450771,TEXAS HEALTH PRESBYTERIAN HOSPITAL PLANO,1093930083,yes,the hospital's own price file lists it
+450771,TEXAS HEALTH PRESBYTERIAN HOSPITAL PLANO,1497275853,yes,NPPES hospital-type organization record at the same street address
+450771,TEXAS HEALTH PRESBYTERIAN HOSPITAL PLANO,1609927748,yes,NPPES hospital-type organization record at the same street address
+450771,TEXAS HEALTH PRESBYTERIAN HOSPITAL PLANO,1770514077,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450779,TEXAS HEALTH HARRIS METHODIST HOSPITAL SOUTHWEST F…,1417980202,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450779,TEXAS HEALTH HARRIS METHODIST HOSPITAL SOUTHWEST F…,1598880940,yes,NPPES hospital-type organization record at the same street address
+450822,MEDICAL CITY LAS COLINAS,1619295508,no,NPPES hospital-type organization record at the same street address
+450822,MEDICAL CITY LAS COLINAS,1902857766,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450833,ENNIS REGIONAL MEDICAL CENTER,1700805678,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450840,TEXAS HEALTH PRESBYTERIAN HOSPITAL ALLEN,1548291883,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450851,BAYLOR SCOTT & WHITE HEART & VASCULAR HOSPITAL - DALLAS…,1609855139,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450853,BAYLOR SCOTT & WHITE MEDICAL CENTER - FRISCO,1922002674,yes,CMS Hospital Enrollments lists it for this CCN
+450872,USMD HOSPITAL AT ARLINGTON L P,1659352987,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450874,BAYLOR SURGICAL HOSPITAL AT LAS COLINAS,1669569984,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450880,BAYLOR SCOTT AND WHITE SURGICAL HOSPITAL FORTWORTH…,1871599183,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450883,BAYLOR MEDICAL CENTER AT TROPHY CLUB,1982609558,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450885,BAYLOR SCOTT &  WHITE MEDICAL CENTER - CENTENNIAL,1801826839,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450888,TEXAS HEALTH HARRIS METHODIST HOSPITAL SOUTHLAKE,1629064928,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450889,TEXAS INSTITUTE FOR SURGERY AT PRESBYTERIAN HOSPIT…,1245201656,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+450889,TEXAS INSTITUTE FOR SURGERY AT PRESBYTERIAN HOSPIT…,1770788168,yes,NPPES hospital-type organization record at the same street address
+450890,BAYLOR SCOTT & WHITE MEDICAL CENTER PLANO,1649273434,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450891,TEXAS HEALTH CENTER FOR DIAGNOSTICS & SURGERY PLAN…,1316933609,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+450891,TEXAS HEALTH CENTER FOR DIAGNOSTICS & SURGERY PLAN…,1982809257,yes,NPPES hospital-type organization record at the same street address
+450893,THE HEART HOSPITAL BAYLOR DENTON,1194753590,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+450893,THE HEART HOSPITAL BAYLOR DENTON,1841637253,no,NPPES hospital-type organization record at the same street address
+450895,BAYLOR SCOTT WHITE THE HEART HOSPITAL CORINTH,,,"no NPI found in CMS Hospital Enrollments, the hospital's own price file or NPPES at its address"
+451335,MUENSTER MEMORIAL HOSPITAL,1699770149,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+452018,TEXAS HEALTH SPECIALTY HOSPITAL FORT WORTH,1730278417,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+452022,SELECT SPECIALTY HOSPITAL-DALLAS,1063411239,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+452028,KINDRED HOSPITAL-TARRANT COUNTY,1174692156,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+452044,LIFECARE HOSPITALS OF NORTH TEXAS,1487204723,yes,CMS Hospital Enrollments lists it for this CCN
+452100,MESQUITE SPECIALTY HOSPITAL,1831146331,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+452108,KINDRED HOSPITAL DALLAS CENTRAL,1356559991,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+453036,BAYLOR SCOTT & WHITE INSTITUTE FOR REHABILITATION,1003813742,yes,NPPES hospital-type organization record at the same street address
+453036,BAYLOR SCOTT & WHITE INSTITUTE FOR REHABILITATION,1508154923,no,NPPES hospital-type organization record at the same street address
+453036,BAYLOR SCOTT & WHITE INSTITUTE FOR REHABILITATION,1538465901,yes,CMS Hospital Enrollments lists it for this CCN
+453040,ENCOMPASS HEALTH REHABILITATION HOSPITAL OF ARLINGTON LLC,1821062050,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+453042,ENCOMPASS HEALTH REHABILITATION HOSPITAL OF CITY,1699749341,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+453047,ENCOMPASS HEALTH REHABILITATION HOSPITAL OF PLANO,1144294893,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+453300,COOK CHILDRENS MEDICAL CENTER,1891765178,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1003912197,no,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1194743013,yes,CMS Hospital Enrollments lists it for this CCN
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1245592997,no,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1346306719,no,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1700183860,no,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1760681266,no,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1851458038,yes,NPPES hospital-type organization record at the same street address
+453302,CHILDRENS MEDICAL CTR OF DALLAS,1861683146,no,NPPES hospital-type organization record at the same street address
+453314,TEXAS SCOTTISH RITE HOSPITAL FOR CHILDREN,1760628184,yes,CMS Hospital Enrollments lists it for this CCN
+453316,CHILDRENS MEDICAL CENTER PLANO,1720480627,yes,CMS Hospital Enrollments lists it for this CCN
+453317,COOK CHILDRENS MEDICAL CENTER PROSPER,1215609896,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+453318,NEXUS CHILDRENS HOSPITAL DALLAS,1174240857,no,CMS Hospital Enrollments lists it for this CCN
+454006,TERRELL STATE HOSPITAL,1992713119,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454012,MILLWOOD HOSPITAL,1023015120,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454050,GLEN OAKS HOSPITAL,1922078815,no,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454065,HICKORY TRAIL HOSPITAL,1205999232,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454065,HICKORY TRAIL HOSPITAL,1902837156,no,NPPES hospital-type organization record at the same street address
+454079,MEDICAL CITY MENTAL HEALTH AND WELLNESS CENTER,1316775935,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+454079,MEDICAL CITY MENTAL HEALTH AND WELLNESS CENTER,1962245514,no,NPPES hospital-type organization record at the same street address
+454094,MEDICAL CITY GREEN OAKS HOSPITAL,1831140698,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+454094,MEDICAL CITY GREEN OAKS HOSPITAL,1861446825,yes,NPPES hospital-type organization record at the same street address
+454104,UNIVERSITY BEHAVIORAL HEALTH OF DENTON,1356663157,no,NPPES hospital-type organization record at the same street address
+454104,UNIVERSITY BEHAVIORAL HEALTH OF DENTON,1851346407,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454119,CARROLLTON SPRINGS,1134401466,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454124,MESA SPRINGS,1366880627,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454126,DALLAS BEHAVIORAL HEALTHCARE HOSPITAL LLC,1457791105,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454128,WELLBRIDGE HEALTHCARE FORT WORTH,1285258640,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454128,WELLBRIDGE HEALTHCARE FORT WORTH,1447672910,yes,NPPES hospital-type organization record at the same street address
+454148,PERIMETER BEHAVIORAL HOSPITAL OF ARLINGTON,1346805520,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454148,PERIMETER BEHAVIORAL HOSPITAL OF ARLINGTON,1578878245,no,NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1093979510,no,NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1174795207,no,NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1528081429,no,NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1700441086,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1710007927,no,NPPES hospital-type organization record at the same street address
+454149,PERIMETER BEHAVIORAL HOSPITAL OF DALLAS,1720411713,no,NPPES hospital-type organization record at the same street address
+454161,MEDICAL CITY MENTAL HEALTH AND WELLNESS CENTER,1780025148,yes,NPPES hospital-type organization record at the same street address
+454161,MEDICAL CITY MENTAL HEALTH AND WELLNESS CENTER,1811760879,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670010,MAYHILL HOSPITAL,1316242910,yes,"No CMS enrollment record for this CCN. NPPES: Mayhill Behavioral Health LLC, hospital taxonomy 273R00000X, at the hospital's CMS address 2809 S Mayhill Rd, Denton 76208"
+670010,MAYHILL HOSPITAL,1871898478,yes,"No CMS enrollment record for this CCN. NPPES: Mayhill Behavioral Health, LLC, taxonomy 284300000X, at the hospital's CMS address 2809 S Mayhill Rd, Denton 76208"
+670023,METHODIST MANSFIELD MEDICAL CENTER,1689629941,yes,CMS Hospital Enrollments lists it for this CCN
+670025,BAYLOR SCOTT & WHITE THE HEART HOSPITAL PLANO,1962504340,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+670044,TEXAS HEALTH PRESBYTERIAN HOSPITAL ROCKWALL,1629138029,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+670049,NORTH CENTRAL SURGICAL CENTER LLP,1548236524,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it; NPPES hospital-type organization record at the same street address
+670060,BAYLOR SCOTT AND WHITE MEDICAL CENTER SUNNYVALE,1255579389,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670062,BAYLOR SCOTT & WHITE EMERGENCY HOSPITAL,1407010622,yes,CMS Hospital Enrollments lists it for this CCN
+670067,BAYLOR SCOTT AND WHITE ORTHOPEDIC AND SPINE HOSPI,1346570710,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670068,TEXAS HEALTH PRESBYTERIAN HOSPITAL FLOWER MOUND,1902047376,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670069,METHODIST MCKINNEY HOSPITAL,1952538431,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670071,TEXAS HEALTH HEART & VASCULAR HOSPITAL ARLINGTON,1407169196,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670073,METHODIST HOSPITAL FOR SURGERY,1023338142,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670076,BAYLOR SCOTT AND WHITE SURGICAL HOSPITAL AT SHERMA…,1114236304,yes,NPPES hospital-type organization record at the same street address
+670076,BAYLOR SCOTT AND WHITE SURGICAL HOSPITAL AT SHERMA…,1134450489,no,NPPES hospital-type organization record at the same street address
+670076,BAYLOR SCOTT AND WHITE SURGICAL HOSPITAL AT SHERMA…,1235510090,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+670082,BAYLOR SCOTT AND WHITE  MEDICAL CENTER  MCKINNEY,1124305065,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670085,TEXAS HEALTH HARRIS METHODIST HOSPITAL ALLIANCE,1215296884,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670090,CRESCENT MEDICAL CENTER LANCASTER,1295736593,no,NPPES hospital-type organization record at the same street address
+670090,CRESCENT MEDICAL CENTER LANCASTER,1578851770,yes,NPPES hospital-type organization record at the same street address
+670090,CRESCENT MEDICAL CENTER LANCASTER,1851632616,yes,CMS Hospital Enrollments lists it for this CCN
+670103,MEDICAL CITY ALLIANCE,1871911016,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670107,BAYLOR SCOTT AND WHITE EMERGENCY HOSPITAL,1679903967,yes,CMS Hospital Enrollments lists it for this CCN
+670121,SAINT CAMILLUS MEDICAL CENTER,1750749313,yes,NPPES hospital-type organization record at the same street address
+670132,METHODIST SOUTHLAKE MEDICAL CENTER,1568818417,yes,CMS Hospital Enrollments lists it for this CCN
+670132,METHODIST SOUTHLAKE MEDICAL CENTER,1801134903,no,NPPES hospital-type organization record at the same street address
+670260,TEXAS HEALTH HOSPITAL FRISCO,1104381292,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670265,LEGENT ORTHOPEDIC HOSPITAL,1316505043,yes,CMS Hospital Enrollments lists it for this CCN
+670265,LEGENT ORTHOPEDIC HOSPITAL,1699976852,no,NPPES hospital-type organization record at the same street address
+670300,METHODIST MIDLOTHIAN MEDICAL CENTER,1487271375,yes,CMS Hospital Enrollments lists it for this CCN
+670309,TEXAS HEALTH HOSPITAL MANSFIELD,1356960132,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670309,TEXAS HEALTH HOSPITAL MANSFIELD,1588573729,no,NPPES hospital-type organization record at the same street address
+670321,ADVANCED DALLAS HOSPITALS AND CLINICS,1083056790,no,NPPES hospital-type organization record at the same street address
+670321,ADVANCED DALLAS HOSPITALS AND CLINICS,1235711748,yes,CMS Hospital Enrollments lists it for this CCN
+670322,LEGENT SURGICAL HOSPITAL PLANO,1184057309,yes,CMS Hospital Enrollments lists it for this CCN
+670340,METHODIST CELINA MEDICAL CENTER,1073294740,yes,CMS Hospital Enrollments lists it for this CCN
+670346,BAYLOR SCOTT AND WHITE MEDICAL CENTER FRISCO AT PG…,1851108765,yes,CMS Hospital Enrollments lists it for this CCN; the hospital's own price file lists it
+670347,BAYLOR SCOTT AND WHITE THE HEART HOSPITAL CORINTH,1669213831,yes,CMS Hospital Enrollments lists it for this CCN
+673025,PAM REHABILITATION HOSPITAL OF ALLEN,1043552177,yes,CMS Hospital Enrollments lists it for this CCN
+673025,PAM REHABILITATION HOSPITAL OF ALLEN,1265619068,yes,NPPES hospital-type organization record at the same street address
+673025,PAM REHABILITATION HOSPITAL OF ALLEN,1700080025,no,NPPES hospital-type organization record at the same street address
+673029,ENCOMPASS HEALTH REHABILITAITON HOSPITAL OF RICHAR…,1720279342,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673031,METHODIST REHABILITATION HOSPITAL,1487848941,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673035,BAYLOR INSTITUTE FOR REHABILITATION AT FORT WORTH,1396902540,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673036,SELECT REHABILITATION HOSPITAL OF DENTON,1598060287,no,NPPES hospital-type organization record at the same street address
+673036,SELECT REHABILITATION HOSPITAL OF DENTON,1679945893,no,NPPES hospital-type organization record at the same street address
+673036,SELECT REHABILITATION HOSPITAL OF DENTON,1770740359,yes,CMS Hospital Enrollments lists it for this CCN
+673041,CARRUS REHABILITATION HOSPITAL,1861710238,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673043,"ENCOMPASS HEALTH REHABILITATION HOSPITAL OF DALLAS, LLC",1982920773,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673044,"ENCOMPASS HEALTH REHABILITATION HOSPITAL OF THE MID-CITIES, LLC",1427374222,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673045,MESQUITE REHABILITATION INSTITUTE,1922321447,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673046,BAYLOR INSTITUTE FOR REHABILITATION AT FRISCO,1285930891,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673046,BAYLOR INSTITUTE FOR REHABILITATION AT FRISCO,1376788943,no,NPPES hospital-type organization record at the same street address
+673046,BAYLOR INSTITUTE FOR REHABILITATION AT FRISCO,1720210164,yes,NPPES hospital-type organization record at the same street address
+673048,TEXAS REHABILITATION HOSPITAL,1659688331,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673055,ACUTE REHABILITATION HOSPITAL OF PLANO,1427322163,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673055,ACUTE REHABILITATION HOSPITAL OF PLANO,1821163684,no,NPPES hospital-type organization record at the same street address
+673055,ACUTE REHABILITATION HOSPITAL OF PLANO,1831330984,no,NPPES hospital-type organization record at the same street address
+673060,TEXAS REHABILITATION HOSPITAL OF ARLINGTON,1962809541,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673062,CLEARSKY REHABILITATION HOSPITAL OF WEATHERFORD,1558758490,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673076,CLEARSKY REHABILITATION HOSPITAL OF FLOWER MOUND,1407467855,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673076,CLEARSKY REHABILITATION HOSPITAL OF FLOWER MOUND,1679881981,no,NPPES hospital-type organization record at the same street address
+673077,TEXAS REHABILITATION HOSPITAL OF KELLER,1033759832,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673080,REUNION REHABILITATION HOSPITAL PLANO,1215653811,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673081,ARLINGTON REGIONAL REHABILITATION HOSPITAL,1346965969,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673088,CLEARSKY REHABILITATION HOSPITAL OF MANSFIELD,1013665124,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+673096,"ENCOMPASS HEALTH REHABILITATION HOSPITAL OF PROSPER, LLC",1801507009,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+743031,HORIZON MEDICAL CENTER OF MCKINNEY LLC,1316702160,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address
+743032,CLEARSKY REHABILITATION HOSPITAL OF ROCKWALL COUNTY LLC,1104639558,yes,CMS Hospital Enrollments lists it for this CCN; NPPES hospital-type organization record at the same street address

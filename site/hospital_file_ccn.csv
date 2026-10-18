@@ -1,0 +1,10 @@
+url_contains,ccn,evidence
+MethodistMidlothianMe,670300,"File URL and its own header name Methodist Midlothian Medical Center; the shared index had it under Methodist Southlake (670132)"
+MethodistMansfieldMed,670023,"File URL and its own header name Methodist Mansfield Medical Center; the shared index had it under Methodist Richardson (450537)"
+MethodistSouthlakeMed,670132,"File URL and its own header name Methodist Southlake Medical Center; the shared index had it under Methodist Midlothian (670300)"
+MethodistRichardsonMe,450537,"File URL and its own header name Methodist Richardson Medical Center; the shared index had it under Methodist Mansfield (670023)"
+texas-health-specialty-hospital-fort-worth,452018,"File header: Texas Health Specialty Hospital Fort Worth, 1301 Pennsylvania Ave 4th floor; CMS lists CCN 452018 (same name) at 1300 Pennsylvania, 4th floor"
+irving-coppell-surgical-hospital-llp,450874,"File header: Baylor Surgical Hospital at Las Colinas, 400 I-635 #101B Irving; CMS CCN 450874, same name at 400 W LBJ Suite 101B"
+white-rock-medical-center,450678,"File header: Pipeline East Dallas LLC, 9440 Poppy Drive Dallas; CMS CCN 450678 White Rock Medical Center at 9440 Poppy Drive"
+north-central-surgical-center,670049,"File header: North Central Surgical Center, 9301 N Central Expy Ste 100 Dallas; CMS CCN 670049, same name and address"
+usmd-hospital-at-arlington,450872,"File header: USMD Hospital at Arlington LLC, 801 West I-20 Arlington; CMS CCN 450872 USMD Hospital at Arlington at 801 W Interstate 20"

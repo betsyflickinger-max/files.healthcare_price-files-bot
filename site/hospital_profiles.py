@@ -17,6 +17,10 @@ Inputs (all already used elsewhere on the site, except the three CMS lists, whic
   SITE_DIR/site/price-file-watch/index.html      the Price File Watch's hospital entries (quoted by heading)
   SITE_DIR/site/surprise-bills/providers.json    Texas No Surprises Act arbitration by NPI (CMS IDR files)
   R2 data/idr/site/texas.json                    the quarters those arbitration counts cover
+  CMS Hospital Enrollments + Hospital All Owners (data.cms.gov, newest monthly files): each hospital's enrolled NPI(s)
+                                                 and the organizations reported as its owners or operators
+  site/hospital_file_ccn.csv                     hand-checked corrections: which hospital a price file belongs to
+  site/hospital_npi_manual.csv                   hand-checked NPIs for hospitals with no CMS enrollment record
 DFW = the 11 counties of the Census Dallas-Fort Worth-Arlington metro (site/dfw_metro.json), plus hospitals the
 Price Finder already lists from nearby counties (tagged "outside the DFW metro").
 """
@@ -116,6 +120,9 @@ def own_group(o):
     return "Other or not stated"
 
 
+HV_CSS = ".hv{display:inline-flex;border:1.5px solid var(--ink);border-radius:2px;overflow:hidden;margin:6px 0 4px}.hv button{font:700 14px var(--body);padding:6px 14px;border:0;background:transparent;color:var(--ink);cursor:pointer}.hv button[aria-pressed=true]{background:var(--ink);color:var(--paper)}"
+
+
 def cms_list(ds, cache):
     p = cache / f"{ds}.csv"
     if not p.exists():
@@ -167,7 +174,10 @@ def load(site, cache):
     org = duckdb.connect().execute(f"""select npi, name, taxonomy_1, address, zip5, city from read_parquet('{nf}')
         where entity_type = '2' and deactivated is null and (taxonomy_1 like '28%' or taxonomy_1 like '27%')""").fetchall()
     fnames = json.loads(s3.get_object(Bucket=B, Key="reference/geo/names.json")["Body"].read())   # file:<id> -> [address, type_2_npi]
-    return dict(org=org, nppes_src=nsrc, fnames=fnames, D=D, Q=Q, npis=npis, T=T, H=H, gen=gen, ltch=ltch, irf=irf, mods=dict(gen=gen_mod, ltch=ltch_mod, irf=irf_mod),
+    en, own, own_meta = cms_owners(cache)
+    file_fix = list(csv.DictReader(open(ROOT / "site/hospital_file_ccn.csv", encoding="utf-8")))
+    npi_manual = list(csv.DictReader(open(ROOT / "site/hospital_npi_manual.csv", encoding="utf-8")))
+    return dict(en=en, own=own, own_meta=own_meta, file_fix=file_fix, npi_manual=npi_manual, org=org, nppes_src=nsrc, fnames=fnames, D=D, Q=Q, npis=npis, T=T, H=H, gen=gen, ltch=ltch, irf=irf, mods=dict(gen=gen_mod, ltch=ltch_mod, irf=irf_mod),
                 bot=bot, counties=counties, prov=prov, idr_q=idr_q, idr_read=idr_read, pfw=pfw, cur=cur)
 
 
@@ -233,9 +243,17 @@ def build(L):
     # builds). Providers: by NPI. A hospital's NPIs = NPPES organization records with a hospital taxonomy that fits its
     # CMS type, at the same ZIP and street number as Medicare's address for it (quality.txt's provider indexes are not
     # used: they can drift from the provider list's order between builds).
+    file_ccn = {int(s_): ccn for s_, ccn in Q.get("hs", {}).items()}
+    for i, x in enumerate(D["hosp"]["src"]):   # hand-checked corrections, matched by the file's own web address
+        for f in L["file_fix"]:
+            if f["url_contains"] in (x[4] or ""):
+                file_ccn[i] = f["ccn"]
     src_of = collections.defaultdict(list)
-    for s_, ccn in Q.get("hs", {}).items():
+    for s_, ccn in file_ccn.items():
         src_of[ccn].append(int(s_))
+    manual = collections.defaultdict(list)
+    for r in L["npi_manual"]:
+        manual[r["ccn"]].append(r)
     pos = {n: i for i, n in enumerate(L["npis"]) if n}
     TAX = {"Long-term care hospital": ("282E",), "Inpatient rehabilitation hospital": ("283X",),
            "Psychiatric": ("283Q", "282N"), "Childrens": ("282N",), "Acute Care Hospitals": ("282N",),
@@ -262,10 +280,30 @@ def build(L):
         for s_ in src_of.get(h["ccn"], []):   # NPIs the hospital's own price file lists (type_2_npi, required by CMS)
             v = L["fnames"].get(f'file:{D["hosp"]["src"][s_][5]}') or [None, None]
             own_file |= set(re.findall(r"\b\d{10}\b", str(v[1] or "")))
+        enrolled = {e["NPI"] for e in L["en"].get(h["ccn"], []) if e.get("NPI")}
+        hand = {r["npi"] for r in manual.get(h["ccn"], [])}
         h["npi_file"] = sorted(own_file)
-        h["npi_all"] = sorted({r[0] for r in m} | own_file)
+        h["npi_enrolled"] = sorted(enrolled)
+        h["npi_how"] = {}
+        for n in sorted({r[0] for r in m} | own_file | enrolled | hand):
+            how = []
+            if n in enrolled:
+                how.append("CMS Hospital Enrollments lists it for this CCN")
+            if n in own_file:
+                how.append("the hospital's own price file lists it")
+            if n in {r[0] for r in m}:
+                how.append("NPPES hospital-type organization record at the same street address")
+            if n in hand:
+                how.append(next(r["evidence"] for r in manual[h["ccn"]] if r["npi"] == n))
+            h["npi_how"][n] = how
+        h["npi_all"] = sorted(h["npi_how"])
         h["npi"] = [n for n in h["npi_all"] if n in pos]
-        h["fac"] = sorted(pos[n] for n in h["npi"] if D["fac"][pos[n]][2] == "H")   # hospital records only, not its clinics/ASCs
+        # the hospital's own NPIs: every Price Finder record for them except individual clinicians (the Price Finder
+        # sometimes files a hospital's NPI under "surgery center" or "group", by its NPPES taxonomy)
+        h["fac"] = sorted(pos[n] for n in h["npi"] if D["fac"][pos[n]][2] != "P")
+        h["owners"] = owners_of(h["ccn"], L["en"], L["own"])
+        sy = systems_of(h["owners"])
+        h["system"], h["jv"] = (sy[0], sy[1:]) if sy else (NO_SYSTEM, [])
         h["src"] = sorted(set(src_of.get(h["ccn"], [])))
         if len(h["name"]) >= 50:   # CMS cuts names at 50 characters; use the NPPES name when it starts the same way
             full = next((r[1] for r in m if re.sub(r"\W", "", r[1].upper()).startswith(re.sub(r"\W", "", h["name"].upper())[:40])), None)
@@ -334,13 +372,86 @@ CSS = """
 """
 
 
+CATALOG = "https://data.cms.gov/data.json"
+OWN_PAGE = {"Hospital Enrollments": "https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/hospital-enrollments",
+            "Hospital All Owners": "https://data.cms.gov/provider-characteristics/hospitals-and-other-facilities/hospital-all-owners"}
+# Health systems, recognized only by the owner and operator names hospitals report to Medicare (CMS Hospital All Owners).
+# Order matters: when a hospital reports owners from more than one listed system, the first one listed here is shown as
+# its system and the others as joint-venture partners.
+SYSTEMS = [("Baylor Scott & White Health", ("BAYLOR",)), ("Texas Health Resources", ("TEXAS HEALTH RESOURCES",)),
+           ("Methodist Health System", ("METHODIST HOSPITALS OF DALLAS",)), ("Children's Health", ("CHILDREN'S HEALTH SYSTEM OF TEXAS",)),
+           ("Cook Children's", ("COOK CHILDREN",)), ("UT Southwestern Medical Center", ("UNIVERSITY OF TEXAS SOUTHWESTERN",)),
+           ("Parkland (Dallas County Hospital District)", ("DALLAS COUNTY HOSPITAL DISTRICT",)),
+           ("JPS (Tarrant County Hospital District)", ("TARRANT COUNTY HOSPITAL DISTRICT",)),
+           ("HCA Healthcare (Medical City)", ("HCA HEALTHCARE", "HCA INC")), ("Tenet Healthcare (USPI)", ("TENET HEALTHCARE",)),
+           ("Community Health Systems", ("COMMUNITY HEALTH SYSTEMS",)), ("Universal Health Services", ("UNIVERSAL HEALTH SERVICES",)),
+           ("Prime Healthcare", ("PRIME HEALTHCARE",)), ("Select Medical", ("SELECT MEDICAL CORPORATION",)),
+           ("Encompass Health", ("ENCOMPASS HEALTH CORPORATION",)), ("Lifepoint Health", ("LIFEPOINT HEALTH", "LIFEPOINT BEHAVIORAL", "LIFEPOINT REHAB")),
+           ("Kindred Healthcare", ("KINDRED HEALTHCARE",)), ("Ernest Health", ("ERNEST HEALTH",)), ("Surgery Partners", ("SURGERY PARTNERS",)),
+           ("ClearSky Health", ("CLEARSKY",)), ("Emerus", ("EMERUS",)), ("Adventist Health System", ("ADVENTIST HEALTH SYSTEM",))]
+NO_SYSTEM = "Not part of a system listed here"
+
+
+def cms_owners(cache):
+    """Newest CMS Hospital Enrollments and Hospital All Owners files: {ccn: [enrollment rows]}, {enrollment id: [owner rows]}."""
+    meta, files = {}, {}
+    for key in OWN_PAGE:
+        p = cache / f"{key.replace(' ', '_')}.csv"
+        if not p.exists():
+            cat = requests.get(CATALOG, timeout=300).json()
+            best = max(((x.get("title", ""), x["downloadURL"]) for d in cat["dataset"] for x in d.get("distribution", [])
+                        if x.get("title", "").startswith(key + " :") and str(x.get("downloadURL", "")).endswith(".csv")))
+            r = requests.get(best[1], timeout=600)
+            r.raise_for_status()
+            p.write_bytes(r.content)
+            (cache / f"{p.stem}.title").write_text(best[0] + "\n" + best[1])
+        t = (cache / f"{p.stem}.title").read_text().split("\n") if (cache / f"{p.stem}.title").exists() else [key, ""]
+        u = t[1] if len(t) > 1 else ""
+        m = re.search(r"(\d{4})\.(\d{2})\.(\d{2})", u)   # the date in CMS's file name, e.g. Hospital_All_Owners_2026.07.31
+        meta[key] = dict(title=t[0], url=u, date=day(f"{m.group(1)}-{m.group(2)}-{m.group(3)}") if m else day(t[0].split(":")[-1].strip()))
+        files[key] = list(csv.DictReader(io.StringIO(p.read_bytes().decode("latin-1"))))
+    en, own = collections.defaultdict(list), collections.defaultdict(list)
+    for r in files["Hospital Enrollments"]:
+        en[r["CCN"]].append(r)
+    for r in files["Hospital All Owners"]:
+        own[r["ENROLLMENT ID"]].append(r)
+    return en, own, meta
+
+
+def owners_of(ccn, en, own):
+    """Organizations reported to Medicare as owning (5% or more, any role) or operating this hospital, largest share first."""
+    seen = {}
+    for e in en.get(ccn, []):
+        for o in own.get(e["ENROLLMENT ID"], []):
+            if o["TYPE - OWNER"] != "O" or not o["ORGANIZATION NAME - OWNER"].strip():
+                continue
+            nm = o["ORGANIZATION NAME - OWNER"].strip()
+            try:
+                pct = float(o["PERCENTAGE OWNERSHIP"] or 0)
+            except ValueError:
+                pct = 0
+            role = o["ROLE TEXT - OWNER"].strip().lower()
+            cur = seen.get(nm)
+            if not cur or pct > cur[1]:
+                seen[nm] = (nm, pct, role)
+    return sorted(seen.values(), key=lambda x: (-x[1], x[0]))
+
+
+def systems_of(owners):
+    found = []
+    for sysname, keys in SYSTEMS:
+        if any(any(k in nm.upper() for k in keys) for nm, _, _ in owners):
+            found.append(sysname)
+    return found
+
+
 def shell(title, desc, url, current_hospitals=True):
     head = insurers_page.TEMPLATE[:insurers_page.TEMPLATE.index("</nav>") + 6]
     head = (head.replace('content="https://files.healthcare/insurers/"', f'content="{url}"')
             .replace("Who Owns Your Health Plan · What It Costs", f"{E(title)} · What It Costs")
             .replace(head[head.index('<meta name="description" content="'):head.index('">', head.index('<meta name="description" content="')) + 2],
                      f'<meta name="description" content="{E(desc)}">')
-            .replace("</style>\n</head>", CSS + "</style>\n</head>", 1))
+            .replace("</style>\n</head>", CSS + HV_CSS + "</style>\n</head>", 1))
     # nav: Insurers is no longer current; Hospitals (added after it) is
     head = head.replace('<a href="/insurers/" aria-current="page">Insurers</a>', '<a href="/insurers/">Insurers</a>')
     if 'href="/hospitals/"' not in head:
@@ -369,13 +480,25 @@ def profile(h, L, watch):
              ("Phone", h["phone"])]
     if h["er"]:
         facts.append(("Emergency services", h["er"]))
+    if h["system"] != NO_SYSTEM:
+        facts.insert(1, ("Health system", h["system"] + (" · joint venture with " + " and ".join(h["jv"]) if h["jv"] else "")))
+    if h["owners"]:
+        facts.insert(3, ("Owners and operators reported to Medicare",
+                         "; ".join(f'{tidy(nm)}{f" ({pct:g}%)" if pct else ""}' for nm, pct, _ in h["owners"][:6])
+                         + (f"; and {len(h['owners']) - 6} more" if len(h["owners"]) > 6 else "")))
     facts.append(("CMS Certification Number (CCN)", h["ccn"]))
     if h["npi_all"]:
         facts.append(("NPI" + ("s" if len(h["npi_all"]) > 1 else ""), ", ".join(h["npi_all"])))
     body = '<dl class="facts">' + "".join(f"<dt>{E(k)}</dt><dd>{E(v)}</dd>" for k, v in facts) + "</dl>"
-    body += src(gen_src(h, L) + (f'; NPIs: <a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">CMS NPI Registry (NPPES)</a> '
-                                 "organization records with a hospital type at the same street address"
-                                 + (", and the NPIs its own price file lists" if h["npi_file"] else "") if h["npi_all"] else ""))
+    ways = sorted({w.split(":")[0] if "No CMS enrollment" not in w else "checked by hand against NPPES" for n in h["npi_all"] for w in h["npi_how"][n]})
+    body += src(gen_src(h, L) + ("; NPIs: " + "; ".join(ways).replace("NPPES", '<a href="https://download.cms.gov/nppes/NPI_Files.html" target="_blank" rel="noopener">NPPES</a>', 1)
+                                 if h["npi_all"] else ""))
+    om = L["own_meta"]
+    if h["owners"] or h["npi_enrolled"]:
+        body += src(f'<a href="{OWN_PAGE["Hospital All Owners"]}" target="_blank" rel="noopener">CMS Hospital All Owners</a> and '
+                    f'<a href="{OWN_PAGE["Hospital Enrollments"]}" target="_blank" rel="noopener">Hospital Enrollments</a> '
+                    f'(files dated {E(om["Hospital All Owners"]["date"])}) · read {day(TODAY)}. The health system is the listed system whose name '
+                    "appears among the owners and operators the hospital reports to Medicare; ownership percentages are as reported.")
     sec.append(("Who it is", body))
 
     # CMS star rating (hospital general information only)
@@ -485,21 +608,31 @@ def index(hosp, L):
     hs = sorted(hosp.values(), key=lambda h: (["Non-profit", "Government", "For-profit", "Other or not stated"].index(h["group"]), tidy(h["name"])))
     cnt = collections.Counter(h["group"] for h in hs)
     in_pf = sum(1 for h in hs if h["src"])
-    groups = ""
-    for g in ["Non-profit", "Government", "For-profit", "Other or not stated"]:
-        part = [h for h in hs if h["group"] == g]
-        if not part:
-            continue
-        groups += (f'<section class="hl" data-g="{E(g)}"><h3>{E(g)} <span class="muted">· {len(part)}</span></h3>'
-                   '<div class="tw"><table class="tbl"><thead><tr><th>Hospital</th><th>City</th><th>Type</th><th class="n">CMS stars</th>'
-                   '<th>Price file in the Price Finder</th></tr></thead><tbody>'
-                   + "".join(f'<tr data-q="{E((tidy(h["name"]) + " " + h["city"] + " " + h["own"]).lower())}" data-t="{E(TYPE_SHOW.get(h["type"], h["type"]))}">'
-                             f'<td><a href="/hospitals/{h["slug"]}/">{E(tidy(h["name"]))}</a><div class="muted">{E(h["own"])}'
-                             f'{" · outside the DFW metro" if not h["metro"] else ""}</div></td>'
-                             f'<td>{E(city(h["city"]))}</td><td>{E(TYPE_SHOW.get(h["type"], h["type"]))}</td>'
-                             f'<td class="n">{h["star"] if h["star"].isdigit() else "—"}</td><td>{"Yes" if h["src"] else "Not yet"}</td></tr>'
-                             for h in part)
-                   + "</tbody></table></div></section>")
+
+    def row(h, by_system):
+        sub = (h["own"] if not by_system else (" · ".join(filter(None, ["joint venture with " + " and ".join(h["jv"]) if h["jv"] else "", h["own"]]))))
+        return (f'<tr data-q="{E((tidy(h["name"]) + " " + h["city"] + " " + h["own"] + " " + h["system"] + " " + " ".join(n for n, _, _ in h["owners"])).lower())}" '
+                f'data-t="{E(TYPE_SHOW.get(h["type"], h["type"]))}">'
+                f'<td><a href="/hospitals/{h["slug"]}/">{E(tidy(h["name"]))}</a><div class="muted">{E(sub)}'
+                f'{" · outside the DFW metro" if not h["metro"] else ""}</div></td>'
+                f'<td>{E(city(h["city"]))}</td><td>{E(TYPE_SHOW.get(h["type"], h["type"]))}</td>'
+                f'<td class="n">{h["star"] if h["star"].isdigit() else "—"}</td><td>{"Yes" if h["src"] else "Not yet"}</td></tr>')
+
+    def table(title, part, by_system):
+        return (f'<section class="hl" data-g="{E(title)}"><h3>{E(title)} <span class="muted">· {len(part)} hospital{"s" if len(part) != 1 else ""}</span></h3>'
+                '<div class="tw"><table class="tbl"><thead><tr><th>Hospital</th><th>City</th><th>Type</th><th class="n">CMS stars</th>'
+                '<th>Price file in the Price Finder</th></tr></thead><tbody>' + "".join(row(h, by_system) for h in part) + "</tbody></table></div></section>")
+    groups = "".join(table(g, [h for h in hs if h["group"] == g], False)
+                     for g in ["Non-profit", "Government", "For-profit", "Other or not stated"] if any(h["group"] == g for h in hs))
+    order = [n for n, _ in SYSTEMS]
+    by_sys = collections.defaultdict(list)
+    for h in hs:
+        by_sys[h["system"]].append(h)
+    sys_names = sorted((k for k in by_sys if k != NO_SYSTEM), key=lambda k: (-len(by_sys[k]), order.index(k)))
+    systems = "".join(table(k, sorted(by_sys[k], key=lambda h: tidy(h["name"])), True) for k in sys_names)
+    if by_sys.get(NO_SYSTEM):
+        systems += table(NO_SYSTEM, sorted(by_sys[NO_SYSTEM], key=lambda h: tidy(h["name"])), True)
+    om = L["own_meta"]["Hospital All Owners"]
     types = sorted({TYPE_SHOW.get(h["type"], h["type"]) for h in hs})
     head = shell("Hospitals in Dallas–Fort Worth", "Every Dallas–Fort Worth hospital from Medicare's public lists: who owns it, its "
                  "price file, its prices and its Medicare rating, each with the source.", "https://files.healthcare/hospitals/")
@@ -516,18 +649,28 @@ def index(hosp, L):
   <select id="ht" aria-label="Type"><option value="">Every type</option>{"".join(f'<option>{E(t)}</option>' for t in types)}</select>
   <span class="muted" id="hc"></span>
 </div>
-<p class="muted">Grouped by ownership as CMS lists it (non-profit, government, for-profit). “Not yet” means we haven't matched a usable price file for that hospital in the DFW Price Finder; see the <a href="/price-file-watch/">Price File Watch</a>.</p>
+<div class="vt hv" role="group" aria-label="Group hospitals by"><button type="button" data-v="sys" aria-pressed="true">By health system</button><button type="button" data-v="own" aria-pressed="false">By ownership type</button></div>
+<div id="v-sys">
+<p class="muted">Grouped by health system: the system whose name appears among the owners and operators each hospital reports to Medicare (<a href="{OWN_PAGE['Hospital All Owners']}" target="_blank" rel="noopener">CMS Hospital All Owners</a>, file dated {E(om["date"])}). Many hospitals are joint ventures; the partner is shown under the name. Ownership changes after that file aren't reflected. “Not yet” means we haven't matched a usable price file for that hospital in the DFW Price Finder; see the <a href="/price-file-watch/">Price File Watch</a>.</p>
+{systems}
+</div>
+<div id="v-own" hidden>
+<p class="muted">Grouped by ownership type as CMS lists it (non-profit, government, for-profit). “Not yet” means we haven't matched a usable price file for that hospital in the DFW Price Finder; see the <a href="/price-file-watch/">Price File Watch</a>.</p>
 {groups}
+</div>
 <p class="src" style="margin-top:28px">Sources: <a href="{PAGE['xubh-q36u']}" target="_blank" rel="noopener">CMS Hospital General Information</a>, <a href="{PAGE['azum-44iv']}" target="_blank" rel="noopener">Long-Term Care Hospital</a> and <a href="{PAGE['7t8x-u3ir']}" target="_blank" rel="noopener">Inpatient Rehabilitation Facility</a> lists (VA and military hospitals left out: the federal price-file rule doesn't cover them); hospital price files and insurer rate files as read for the Price Finder. Read {day(TODAY)}. See something wrong? <a href="/corrections/">Report it</a>.</p>
 </main>
 </div>
 <script>
 (function(){{var q=document.getElementById('hq'),t=document.getElementById('ht'),c=document.getElementById('hc');
 function f(){{var s=q.value.trim().toLowerCase(),ty=t.value,n=0;
-document.querySelectorAll('tr[data-q]').forEach(function(r){{var ok=(!s||r.getAttribute('data-q').indexOf(s)>=0)&&(!ty||r.getAttribute('data-t')===ty);r.hidden=!ok;if(ok)n++;}});
+document.querySelectorAll('tr[data-q]').forEach(function(r){{var ok=(!s||r.getAttribute('data-q').indexOf(s)>=0)&&(!ty||r.getAttribute('data-t')===ty);r.hidden=!ok;if(ok&&!r.parentNode.closest('#v-sys[hidden],#v-own[hidden]'))n++;}});
 document.querySelectorAll('section.hl').forEach(function(x){{x.hidden=!x.querySelector('tr[data-q]:not([hidden])');}});
 c.textContent=n+' shown';}}
-q.addEventListener('input',f);t.addEventListener('change',f);f();}})();
+q.addEventListener('input',f);t.addEventListener('change',f);f();
+document.querySelectorAll('.hv button').forEach(function(b){{b.addEventListener('click',function(){{var v=b.getAttribute('data-v');
+document.querySelectorAll('.hv button').forEach(function(x){{x.setAttribute('aria-pressed',x===b);}});
+document.getElementById('v-sys').hidden=v!=='sys';document.getElementById('v-own').hidden=v!=='own';f();}});}});}})();
 </script>
 </body></html>
 """
@@ -544,6 +687,14 @@ def main(site_dir, cache=None):
         d = site / "hospitals" / h["slug"]
         d.mkdir(parents=True, exist_ok=True)
         (d / "index.html").write_text(profile(h, L, watch), encoding="utf-8")
+    with open(ROOT / "site/hospital_npi_matches.csv", "w", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow(["ccn", "hospital", "npi", "in_price_finder", "evidence"])
+        for h in sorted(hosp.values(), key=lambda x: x["ccn"]):
+            if not h["npi_all"]:
+                w.writerow([h["ccn"], h["name"], "", "", "no NPI found in CMS Hospital Enrollments, the hospital's own price file or NPPES at its address"])
+            for n in h["npi_all"]:
+                w.writerow([h["ccn"], h["name"], n, "yes" if n in h["npi"] else "no", "; ".join(h["npi_how"][n])])
     print(f"wrote /hospitals/ and {len(hosp)} hospital profiles ({sum(1 for h in hosp.values() if h['src'])} with a Price Finder file)")
 
 
