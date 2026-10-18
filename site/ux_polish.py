@@ -283,12 +283,15 @@ html[data-look="hotline"]:not(#_) :is(.doors,.door,.steps,.steps li,.tile,.recei
 html[data-look="hotline"]:not(#_) :is(.nat-search button,.btn,.btn.hi){background:#45F0AE!important;color:#050807!important;border:0}
 html[data-look="hotline"]:not(#_) .nat-search select{background:#07120D;color:#D5F7EA;border:2px solid #45F0AE}
 html[data-look="hotline"]:not(#_) .nat-trust{color:#8FCFB4}
+html[data-look="hotline"]:not(#_) .nat-pop a{border-color:#1E5C45}html[data-look="hotline"]:not(#_) .nat-pop a:hover{border-color:#45F0AE}
 """
 
 
 def patch_looks_css(s):
     if '/* ux: hotline v2' not in s:
         s += HOTLINE_V2
+    elif '.nat-pop a{border-color:#1E5C45}' not in s:
+        s += HOTLINE_V2.split('\n')[-2] + '\n'
     if '/* ux: start pill */' not in s:
         s += ('\n/* ux: start pill */html[data-look="hotline"]:not(#_) .start-pill{background:#45F0AE!important;color:#050807!important}\n')
     if '/* ux: phone */' in s:
