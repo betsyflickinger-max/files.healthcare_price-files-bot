@@ -12,7 +12,9 @@ from pathlib import Path
 def main(src, out):
     data = json.load(open(src))
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
-    page = TEMPLATE.replace("{{DATA}}", json.dumps(data, separators=(",", ":")).replace("</", "<\\/"))
+    from insurer_profiles import PARENTS  # parents with a profile page (/insurers/<slug>/)
+    page = TEMPLATE.replace("{{DATA}}", json.dumps(data, separators=(",", ":")).replace("</", "<\\/")) \
+        .replace("{{PROFILES}}", json.dumps({n: 1 for n in PARENTS}))
     (out / "index.html").write_text(page, encoding="utf-8")
     print(f"wrote {out}/index.html ({len(page) / 1e3:.0f} KB): {len(data)} parents, {sum(len(p['c']) for p in data)} companies")
 
@@ -339,6 +341,8 @@ var BLUE={'Health Care Service Corp (HCSC)':'Blue Cross and Blue Shield of Texas
     if(b) h+='<p class="ab"><span class="tag blue">Blue Cross Blue Shield</span>'+(b===1?'One':'Sells as <b>'+esc(b)+'</b>. It is one')+' of the separate local companies the <a href="'+BCBS+'" target="_blank" rel="noopener">Blue Cross Blue Shield Association</a> licenses to use the Blue name. Each Blue company is run separately; they share the name and let members use each other’s networks (BlueCard).</p>';
     if(mutual(p)) h+='<p class="ab"><span class="tag">Member-owned</span>Its filing names it a mutual company: owned by its policyholders, with no stockholders.</p>';
     return h;}
+  var PROF={{PROFILES}};
+  var plink=function(p){return PROF[p.n]?'<div><a href="/insurers/'+slug(p.n)+'/" style="font-weight:700">Full profile \u2192</a></div>':'';};
   var CNOTE='<p class="cnote">Counts people in fully insured plans only. <a href="#counted">Not counted</a>: self-funded employer plans it runs, Medicare Advantage and Medicaid.</p>';
   function toggle(){return '<div class="vt" role="group" aria-label="Show companies as"><button type="button" data-v="list" aria-pressed="'+(VIEW==='list')+'">List</button><button type="button" data-v="map" aria-pressed="'+(VIEW==='map')+'">Map</button></div>';}
   function tree(p){
@@ -354,13 +358,13 @@ var BLUE={'Health Care Service Corp (HCSC)':'Blue Cross and Blue Shield of Texas
   function body(p){return VIEW==='map'?tree(p):companies(p);}
   function drawPanel(){
     var p=byName(sel)||D[0];
-    panel.innerHTML='<div><span class="pill '+p.s+'">'+SC[p.s]+'</span></div><h3>'+esc(p.n)+'</h3>'+
+    panel.innerHTML='<div><span class="pill '+p.s+'">'+SC[p.s]+'</span></div><h3>'+esc(p.n)+'</h3>'+plink(p)+
       '<div class="mklab" style="font-size:14px"><span><b style="color:var(--ink)">'+num(p.l)+'</b> members</span><span><b style="color:var(--ink)">'+p.c.length+'</b> compan'+(p.c.length===1?'y':'ies')+'</span><span><b style="color:var(--ink)">'+p.st+'</b> state'+(p.st===1?'':'s')+' with members</span></div>'+CNOTE+about(p)+mix(p)+
       (p.u?'<div><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Its price-file page</a></div>':'<div class="mklab">No price-file page found for this parent yet.</div>')+toggle()+'<div class="vw" data-n="'+esc(p.n)+'">'+body(p)+'</div>';
   }
   function drawList(vis){
     list.innerHTML=D.filter(function(p){return vis[p.n];}).map(function(p){
-      return '<details data-n="'+esc(p.n)+'"><summary><i class="dot" style="background:var(--'+(p.s==='national'?'nat':p.s==='multi_state'?'multi':'single')+')"></i><span class="nm">'+esc(p.n)+'<small>'+p.c.length+' compan'+(p.c.length===1?'y':'ies')+' · '+SC[p.s]+(BLUE[p.n]?' · Blue Cross Blue Shield':'')+'</small></span><span class="lv">'+num(p.l)+'</span></summary><div class="body" style="display:grid;gap:10px">'+about(p)+mix(p)+(p.u?'<p style="margin:0"><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Price-file page</a></p>':'')+toggle()+'<div class="vw" data-n="'+esc(p.n)+'">'+body(p)+'</div></div></details>';}).join('');
+      return '<details data-n="'+esc(p.n)+'"><summary><i class="dot" style="background:var(--'+(p.s==='national'?'nat':p.s==='multi_state'?'multi':'single')+')"></i><span class="nm">'+esc(p.n)+'<small>'+p.c.length+' compan'+(p.c.length===1?'y':'ies')+' · '+SC[p.s]+(BLUE[p.n]?' · Blue Cross Blue Shield':'')+'</small></span><span class="lv">'+num(p.l)+'</span></summary><div class="body" style="display:grid;gap:10px">'+plink(p)+about(p)+mix(p)+(p.u?'<p style="margin:0"><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Price-file page</a></p>':'')+toggle()+'<div class="vw" data-n="'+esc(p.n)+'">'+body(p)+'</div></div></details>';}).join('');
   }
   document.addEventListener('click',function(e){var b=e.target.closest('.vt button');if(!b) return;VIEW=b.getAttribute('data-v');
     try{localStorage.setItem('ins-view',VIEW);}catch(_){}
