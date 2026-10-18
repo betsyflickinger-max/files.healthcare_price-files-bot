@@ -32,6 +32,7 @@ PF_BLOCK = r'''<!-- UX:START (site/ux_polish.py: pay prompt, list first, tidy na
 .ux-ctx{margin:26px 0 0}
 details.ux-ctx{border-top:1px solid var(--rule);padding-top:6px}
 .ux-hits{margin:18px 0;padding:16px 18px;border:2px solid var(--ink)}.ux-hits ul{list-style:none;margin:10px 0 0;padding:0;columns:2 320px;column-gap:24px}.ux-hits li{break-inside:avoid}.ux-hits button{display:block;width:100%;text-align:left;min-height:44px;padding:8px 0;border:0;border-bottom:1px solid var(--rule);background:none;color:var(--ink);font:inherit;cursor:pointer}.ux-hits button span{font:12px var(--type);opacity:.75}
+.ux-words{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:18px 0 6px;font-size:15px}.ux-words>span{font-weight:700;margin-right:4px}.ux-chip{min-height:40px;padding:0 12px;border:1px solid var(--ink);background:var(--paper);color:var(--ink);font:inherit;cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}dialog.ux-wc{max-width:420px;width:calc(100% - 32px);border:2px solid var(--ink);padding:20px 22px;background:var(--paper);color:var(--ink);box-shadow:8px 8px 0 var(--ink)}dialog.ux-wc::backdrop{background:rgba(0,0,0,.35)}.ux-wcn{margin:0 0 8px;font:700 12px var(--type);letter-spacing:.1em;text-transform:uppercase;opacity:.75}.ux-wch{display:flex;align-items:center;gap:14px;color:var(--brick)}.ux-wch h3{margin:0;color:var(--ink);font:700 28px/1.05 var(--display)}.ux-wcm{font-size:17px;line-height:1.5;margin:12px 0 0}.ux-wcb{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}.ux-wcb button{min-height:44px;padding:0 14px;border:2px solid var(--ink);background:var(--paper);color:var(--ink);font:700 15px var(--body);cursor:pointer}.ux-wcb button[data-uxwc]{background:var(--ink);color:var(--paper)}.ux-bills{margin:34px 0 10px}.ux-bills .ux-k{margin:0;font:700 13px var(--type);letter-spacing:.12em;text-transform:uppercase;color:var(--brick)}.ux-bills h2{margin:6px 0 6px}.ux-lede{margin:0 0 12px;max-width:62ch}.ux-slips{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));padding:6px 4px 10px}.ux-slip{background:var(--paper);color:var(--ink);font-family:var(--type);padding:14px 16px 16px;box-shadow:0 4px 0 -1px var(--rule);border:1px solid var(--rule);display:flex;flex-direction:column;gap:6px}.ux-slip:nth-child(odd){transform:rotate(-.8deg)}.ux-slip:nth-child(even){transform:rotate(.7deg);margin-top:8px}.ux-slip.maybe{background:transparent;border:2px dashed var(--ink);box-shadow:none}.ux-slip p{margin:0}.ux-slip .n{font-size:11px;letter-spacing:.12em;text-transform:uppercase;text-align:center;border-bottom:1px dashed var(--ink);padding-bottom:6px}.ux-slip .t{font-weight:700;font-size:16px;text-transform:uppercase}.ux-slip .w{font-size:13px}.ux-slip .v{display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--ink);padding-top:6px;font-weight:700}.ux-slip .s{font-size:12px;opacity:.8}.ux-slip .l a{font:700 13px var(--body);color:var(--brick)}@media(prefers-reduced-motion:reduce){.ux-slip{transform:none!important}}
 details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;display:flex;align-items:center}
 </style>
 <script id="uxJs">
@@ -96,7 +97,46 @@ details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;
       d.innerHTML = '<summary>When a surprise bill for this goes to federal arbitration</summary>'; arb.slice(1).forEach(e => d.appendChild(e)); arb[0].remove();
       at.insertAdjacentElement('afterend', d); }
   };
-  const after = () => { try { listFirst(); } catch (err) {} try { tidyIn(document.getElementById('patient')); tidyIn(document.getElementById('board')); tidyIn(document.getElementById('mapv')); } catch (err) {} };
+  // word cards (one at a time) and the separate bills to expect, for the procedure on screen (Oct 18)
+  const ICON = {neg:'<path d="M6 12h52v34H6z"/><path d="M6 22h52M14 32h18M14 39h10"/><path d="M38 52l6 6 12-12"/>',
+    fac:'<path d="M8 56V24l24-14 24 14v32z"/><path d="M26 56V40h12v16"/>', cash:'<path d="M6 18h52v30H6z"/><circle cx="32" cy="33" r="8"/>',
+    med:'<path d="M6 46h52"/><path d="M14 46V30M24 46V22M34 46V34M44 46V18"/>', ded:'<path d="M18 12h28v6l4 6v30H14V24l4-6z"/><path d="M14 40h36"/>',
+    pct:'<path d="M14 50L50 14"/><circle cx="18" cy="18" r="6"/><circle cx="46" cy="46" r="6"/>'};
+  const CARDS = [['neg','Negotiated rate','The total an insurer agreed to pay a place. Until you meet your deductible, you pay all of it.'],
+    ['fac','Facility fee',"What the hospital or surgery center charges for the room, staff, equipment and supplies. The doctor's fee is a separate bill."],
+    ['cash','Cash price','What a provider says it charges if you pay yourself, without insurance. Ask for a written Good Faith Estimate.'],
+    ['med','Medicare rate','What Medicare pays for the same service. A yardstick for judging a price, not a price you can get.'],
+    ['ded','Deductible','What you pay each year before your plan starts sharing the cost. Until then, the negotiated rate is your bill.'],
+    ['pct','Percent of billed charges',"Some contracts pay a share of the hospital's list price instead of a dollar amount, so the bill depends on that list price."]];
+  const words = document.createElement('div'); words.className = 'ux-words';
+  words.innerHTML = '<span>Words on this page:</span>' + CARDS.map(c => `<button type="button" class="ux-chip" data-uxwc="${c[0]}">${h(c[1])}</button>`).join('')
+    + CARDS.map((c, i) => `<dialog class="ux-wc" id="uxwc-${c[0]}" aria-labelledby="uxwct-${c[0]}"><p class="ux-wcn">Word card · ${i + 1} of ${CARDS.length}</p>`
+      + `<div class="ux-wch"><svg viewBox="0 0 64 64" width="60" height="60" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true">${ICON[c[0]]}</svg><h3 id="uxwct-${c[0]}">${h(c[1])}</h3></div>`
+      + `<p class="ux-wcm">${h(c[2])}</p><p class="ux-wcb">${i + 1 < CARDS.length ? `<button type="button" data-uxwc="${CARDS[i + 1][0]}">Next card: ${h(CARDS[i + 1][1].toLowerCase())} →</button>` : ''}<button type="button" data-uxclose>Close</button></p></dialog>`).join('');
+  const tabs = document.querySelector('nav.vtabs'); if (tabs) tabs.insertAdjacentElement('beforebegin', words);
+  document.addEventListener('click', e => { const o = e.target.closest('[data-uxwc]'); if (o) { const d = document.getElementById('uxwc-' + o.dataset.uxwc);
+      if (d) { const op = document.querySelector('dialog.ux-wc[open]'); if (op) op.close(); d.showModal(); } }
+    if (e.target.closest('[data-uxclose]')) e.target.closest('dialog').close(); if (e.target.matches && e.target.matches('dialog.ux-wc')) e.target.close(); });
+  const bills = document.createElement('section'); bills.className = 'ux-bills';
+  const pat = document.getElementById('patient'); if (pat) pat.insertAdjacentElement('afterend', bills);
+  const slipsFor = () => {
+    const C = (typeof D !== 'undefined' && D.codes && D.codes[S.code]) || {}; const cat = C.cat || '', code = S.code || '', drg = /DRG/.test(C.type || '');
+    const look = (w, t) => `<a href="?q=${encodeURIComponent(w)}">${h(t)} →</a>`;
+    const here = ['Shown above', 'pick your network'], ask = ['Ask for this one', ''];
+    let L;
+    if (code.startsWith('00')) L = [['The anesthesia team', 'this page', here], ['The place', 'facility fee, a separate bill', ask], ['The doctor', 'who does the procedure', ask]];
+    else if (drg) L = [['The hospital stay', 'this page', here], ['The doctors', 'who see you in the hospital', ask], ['Surgery and anesthesia', 'if you have an operation', ask]];
+    else if (cat === 'Imaging') L = [['The place', 'the scan itself', here], ['The radiologist', 'who reads the scan', ask]];
+    else if (/Lab/.test(cat)) L = [['The lab', 'this page', here], ['Drawing the blood, maybe', 'sometimes a small separate charge', ask]];
+    else if (/Office|Behavioral|therapy|Heart/i.test(cat)) L = [['The clinician', 'this page', here], ['A facility fee, maybe', 'only at clinics a hospital owns', ask]];
+    else L = [['The place', 'facility fee: room, staff, equipment', here], ['The doctor', 'who does the procedure', ask],
+      ['Anesthesia', 'often a separate company', ask.concat(look('anesthesia', 'Look up anesthesia prices'))],
+      ['Lab work, maybe', 'only if tissue is sent to a pathologist', ask.concat(look('pathologist', 'Look up pathology prices'))]];
+    bills.innerHTML = `<p class="ux-k">You'll likely get these bills</p><h2>Expect more than one bill</h2><p class="ux-lede">Each slip is a separate bill, often from a different company. This page prices one slip at a time.</p><div class="ux-slips">`
+      + L.map((x, i) => `<div class="ux-slip${/maybe/i.test(x[0]) ? ' maybe' : ''}"><p class="n">Bill ${i + 1} of ${L.length}</p><p class="t">${h(x[0])}</p><p class="w">${h(x[1])}</p>`
+        + `<p class="v"><span>${x[2][0].startsWith('$') ? 'TOTAL' : 'PRICE'}</span><b>${h(x[2][0])}</b></p>${x[2][1] ? `<p class="s">${h(x[2][1])}</p>` : ''}${x[2][2] ? `<p class="l">${x[2][2]}</p>` : ''}</div>`).join('') + '</div>';
+  };
+  const after = () => { try { slipsFor(); } catch (err) {} try { listFirst(); } catch (err) {} try { tidyIn(document.getElementById('patient')); tidyIn(document.getElementById('board')); tidyIn(document.getElementById('mapv')); } catch (err) {} };
   // ?q=colon (from the homepage search): list every billing code whose name matches, pick one to load it
   try {
     const qq = window.__uxQ || new URLSearchParams(location.search).get('q');
