@@ -28,7 +28,7 @@ permissions:
 jobs:
   pages:
     runs-on: ubuntu-latest
-    timeout-minutes: 180
+    timeout-minutes: 340   # Oct 18: a forced rebuild of every area takes over 2 hours
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
