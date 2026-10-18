@@ -100,17 +100,37 @@ def render(S, npis, fac):
     return Q
 
 
-def page_fac(page_html):
+def page_data(page_html):
     s = Path(page_html).read_text(encoding="utf-8")
     i = s.index('id="data"')
-    return json.loads(s[s.index(">", i) + 1:s.index("</script>", i)])["fac"]
+    return json.loads(s[s.index(">", i) + 1:s.index("</script>", i)])
+
+
+def page_fac(page_html):
+    return page_data(page_html)["fac"]
+
+
+def fix_files(Q, hosp_src):
+    """Hospital price files -> CCN ("hs"): apply the hand-checked corrections in site/hospital_file_ccn.csv, matched by the
+    file's own web address (Oct 18, 2026: four Methodist files were under the wrong hospital's CCN)."""
+    import csv
+    fixes = list(csv.DictReader(open(ROOT / "site/hospital_file_ccn.csv", encoding="utf-8")))
+    hs = dict(Q.get("hs", {}))
+    for i, x in enumerate(hosp_src):
+        url = (x[4] if len(x) > 4 else "") or ""
+        for f in fixes:
+            if f["url_contains"] in url:
+                hs[str(i)] = f["ccn"]
+    Q["hs"] = hs
+    return Q
 
 
 def render_files(npis_json, page_html, out_txt):
     """Never leaves positional ratings from another build: without the source or NPIs, provider ratings are left empty."""
     import store
     s3, B = store.r2()
-    fac = page_fac(page_html)
+    data = page_data(page_html)
+    fac = data["fac"]
     try:
         S = json.loads(s3.get_object(Bucket=B, Key=KEY)["Body"].read())
         npis = json.load(open(npis_json))
@@ -119,6 +139,7 @@ def render_files(npis_json, page_html, out_txt):
         print("quality ratings left empty for this build:", e)
         Q = dec(Path(out_txt).read_text()) if Path(out_txt).exists() else {}
         Q.update({k: {} for k in BY_POS})
+    Q = fix_files(Q, data.get("hosp", {}).get("src", []))
     Path(out_txt).write_text(enc(Q))
     print(f"quality.txt: {len(Q['h'])} hospitals, {len(Q['pm'])} rehab/long-term care, {len(Q['a'])} surgery centers, {len(Q['d'])} clinicians")
 
@@ -126,5 +147,9 @@ def render_files(npis_json, page_html, out_txt):
 if __name__ == "__main__":
     if sys.argv[1] == "source":
         source(sys.argv[2])
+    elif sys.argv[1] == "fixfiles":   # python site/quality_rekey.py fixfiles PAGE_HTML QUALITY_TXT  (in place)
+        Q = fix_files(dec(Path(sys.argv[3]).read_text()), page_data(sys.argv[2]).get("hosp", {}).get("src", []))
+        Path(sys.argv[3]).write_text(enc(Q))
+        print("hs:", {k: v for k, v in Q["hs"].items()})
     elif sys.argv[1] == "render":
         render_files(*sys.argv[2:5])

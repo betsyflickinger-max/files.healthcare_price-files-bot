@@ -333,11 +333,14 @@ def prices(h, L):
             for r in L["T"][c].get(str(fi), []):
                 if r[1] == 0 and r[2] == 0 and not (r[4] & (2 | 4)) and r[3]:
                     per.setdefault(r[0], []).append(r[3])
-        if per:
-            v = [min(x) for x in per.values()]
-            row["ins"] = (min(v), max(v), len(per))
-            for ni in per:
-                nets[D["nets"][ni]].add(c)
+        for ni in per:
+            nets[D["nets"][ni]].add(c)
+        # BCBSTX ParPlan is a provider contract, not a network a member picks (BCBSTX's own ParPlan page); until Betsy
+        # decides how to show it, it stays listed but out of the range and network count (same rule as procedure pages)
+        perx = {ni: x for ni, x in per.items() if "ParPlan" not in D["nets"][ni]}
+        if perx:
+            v = [min(x) for x in perx.values()]
+            row["ins"] = (min(v), max(v), len(perx))
         else:
             row["ins"] = None
         if row["cash"] or row["neg"] or row["ins"]:
@@ -549,7 +552,7 @@ def profile(h, L, watch):
                    f'{"<div class=muted>" + num(r["ins"][2]) + " network" + ("s" if r["ins"][2] > 1 else "") + "</div>" if r["ins"] else ""}</td></tr>')
         body = ("<p>Its facility fee for a few common services: the cash price and the employer and marketplace plan rates its own price file lists "
                 "(flat case rates, Medicare Advantage and Medicaid left out), and the lowest rate "
-                "each insurer network's file lists for it. Facility fee only; the doctor bills separately. Click a service for every place "
+                "each insurer network's file lists for it (BCBSTX ParPlan, a provider contract, left out). Facility fee only; the doctor bills separately. Click a service for every place "
                 "and every network.</p>"
                 '<div class="tw"><table class="tbl"><thead><tr><th>Service</th><th class="n">Cash price<br>(its file)</th>'
                 '<th class="n">Employer and marketplace<br>plan rates (its file)</th><th class="n">Insurer files<br>(lowest per network)</th></tr></thead><tbody>'
@@ -564,7 +567,10 @@ def profile(h, L, watch):
         lst = sorted(nets, key=lambda n: (n.split("|")[0], n))
         body = ("<p>Networks whose rate files list a dollar rate for this hospital for at least one of the services above. "
                 "A rate in a file shows a contract for that service; it is not a full list of the networks the hospital is in.</p><ul>"
-                + "".join(f"<li>{E(n.split('|')[0])}: {E(n.split('|', 1)[1])}</li>" for n in lst) + "</ul>")
+                + "".join(f"<li>{E(n.split('|')[0])}: {E(n.split('|', 1)[1])}"
+                          + (' <span class="muted">(a BCBSTX provider contract, not a network a member picks; left out of the ranges above. '
+                             '<a href="https://bwww.bcbstx.com/provider/network/parplan.html" target="_blank" rel="noopener">BCBSTX</a>)</span>'
+                             if "ParPlan" in n else "") + "</li>" for n in lst) + "</ul>")
         body += src("insurers' Transparency in Coverage in-network rate files read for the <a href=\"/price-finder/\">Price Finder</a>")
         sec.append(("Insurer networks with a published rate", body))
 
