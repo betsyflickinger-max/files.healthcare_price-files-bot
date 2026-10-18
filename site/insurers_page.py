@@ -336,7 +336,7 @@ var BLUE={'Health Care Service Corp (HCSC)':'Blue Cross and Blue Shield of Texas
   var VIEW='list'; try{VIEW=localStorage.getItem('ins-view')==='map'?'map':'list';}catch(_){}
   var byName=function(n){return D.find(function(x){return x.n===n;});};
   function about(p){var h='',b=BLUE[p.n];
-    if(b) h+='<p class="ab"><span class="tag blue">Blue Cross Blue Shield</span>'+(b===1?'One':'Sells as <b>'+esc(b)+'</b>. It is one')+' of the separate local companies the <a href="'+BCBS+'" target="_blank" rel="noopener">Blue Cross Blue Shield Association</a> licenses to use the Blue name. The Blue companies don’t own each other; they share the name and let members use each other’s networks (BlueCard).</p>';
+    if(b) h+='<p class="ab"><span class="tag blue">Blue Cross Blue Shield</span>'+(b===1?'One':'Sells as <b>'+esc(b)+'</b>. It is one')+' of the separate local companies the <a href="'+BCBS+'" target="_blank" rel="noopener">Blue Cross Blue Shield Association</a> licenses to use the Blue name. Each Blue company is run separately; they share the name and let members use each other’s networks (BlueCard).</p>';
     if(mutual(p)) h+='<p class="ab"><span class="tag">Member-owned</span>Its filing names it a mutual company: owned by its policyholders, with no stockholders.</p>';
     return h;}
   var CNOTE='<p class="cnote">Counts people in fully insured plans only. <a href="#counted">Not counted</a>: self-funded employer plans it runs, Medicare Advantage and Medicaid.</p>';
