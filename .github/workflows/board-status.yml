@@ -38,6 +38,9 @@ jobs:
       - name: Bot health data for the dashboard (ops_*.json, private copy only)
         continue-on-error: true   # a problem here must never stop the status snapshot
         run: python board/ops.py
+      - name: Visitors tab data (preview testers' page views; private copy only)
+        continue-on-error: true
+        run: python board/visitors.py
       - name: Publish to the private repo (branch board-status)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
