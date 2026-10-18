@@ -266,6 +266,10 @@ def publish(st):
     shutil.rmtree('/tmp/pub/deploy', ignore_errors=True)
     with tarfile.open('/tmp/pub/site.tgz') as t: t.extractall('/tmp/pub/deploy')
     shutil.copy('/tmp/pub/new.html', '/tmp/pub/deploy/site/price-finder/index.html')
+    # quality ratings are matched by provider position: re-place them for this build's provider order (Oct 18, 2026 fix;
+    # the old file kept last build's positions and showed ratings on the wrong providers)
+    subprocess.run([sys.executable, f'{HERE}/quality_rekey.py', 'render', '/tmp/pub/npis.json', '/tmp/pub/new.html',
+                    '/tmp/pub/deploy/site/price-finder/pf/q/quality.txt'], check=True)
     try: prev = s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip()
     except Exception: prev = '2026-10-08'
     s3.put_object(Bucket=B, Key='site/every/CURRENT', Body=BID.encode())
