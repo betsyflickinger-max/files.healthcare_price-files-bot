@@ -317,6 +317,7 @@ CSS = """
 .tag{display:inline-block;font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border:1.5px solid var(--ink);border-radius:999px}
 .facts{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:6px 18px;margin:10px 0;font-size:15px}
 .facts dt{color:var(--ink-2)}.facts dd{margin:0}
+@media(max-width:560px){.facts{grid-template-columns:1fr;gap:0}.facts dd{margin-bottom:8px}}
 .tbl{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:8px}
 .tbl th{text-align:left;font:700 12px var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);padding:6px 8px 6px 0;border-bottom:1.5px solid var(--ink)}
 .tbl td{padding:8px 8px 8px 0;border-bottom:1px solid var(--rule);vertical-align:top}
