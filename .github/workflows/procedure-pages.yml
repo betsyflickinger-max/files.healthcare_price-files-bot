@@ -19,7 +19,7 @@ on:
         default: false
 
 concurrency:
-  group: site-build-v2   # Oct 18: old name stuck; every queued run sat pending and got replaced
+  group: procedure-pages   # Oct 18: own queue; hourly state jobs kept bumping it from the shared one. deploy() re-checks the live site and rebuilds if it changed.
   cancel-in-progress: false
 
 permissions:
