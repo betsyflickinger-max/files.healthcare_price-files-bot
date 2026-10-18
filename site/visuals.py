@@ -47,7 +47,7 @@ def word_cards(S, sg, mh, cc):
         cards.append(('medicare', 'Medicare rate', "What Medicare pays for the same service. A yardstick for judging a price, not a price you can get. "
                       "Medicare adjusts its national rates for local wages and costs; facility fees here are shown at the national rate.",
                       f"Here: {_money(mh[0])} ({mh[1]})."))
-    cards.append(('deductible', 'Deductible', 'What you pay each year before your plan starts sharing the cost. Until then, the negotiated rate is your bill.',
+    cards.append(('deductible', 'Deductible', 'What you pay each year before your plan starts sharing the cost. Until then, you usually pay the negotiated rate (some care, like preventive screenings, is covered before the deductible).',
                   'Your plan documents or insurer app show yours.'))
     if any(n.get('flat') for n in S.get('networks') or []):
         cards.append(('flat', 'Flat rate', 'The same amount listed for many places in one network. It says little about what any one place charges.',

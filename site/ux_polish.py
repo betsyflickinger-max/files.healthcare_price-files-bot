@@ -108,7 +108,7 @@ details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;
     ['fac','Facility fee',"What the hospital or surgery center charges for the room, staff, equipment and supplies. The doctor's fee is a separate bill."],
     ['cash','Cash price','What a provider says it charges if you pay yourself, without insurance. Ask for a written Good Faith Estimate.'],
     ['med','Medicare rate','What Medicare pays for the same service. A yardstick for judging a price, not a price you can get.'],
-    ['ded','Deductible','What you pay each year before your plan starts sharing the cost. Until then, the negotiated rate is your bill.'],
+    ['ded','Deductible','What you pay each year before your plan starts sharing the cost. Until then, you usually pay the negotiated rate (some care, like preventive screenings, is covered before the deductible).'],
     ['pct','Percent of billed charges',"Some contracts pay a share of the hospital's list price instead of a dollar amount, so the bill depends on that list price."]];
   const words = document.createElement('div'); words.className = 'ux-words';
   words.innerHTML = '<span>Words on this page:</span>' + CARDS.map(c => `<button type="button" class="ux-chip" data-uxwc="${c[0]}">${h(c[1])}</button>`).join('')
@@ -423,8 +423,16 @@ html[data-look="units"]:not(#_) .nat-pop{gap:4px 14px;font-size:16px}
 """
 
 
+CONTRAST_OCT18 = """
+/* ux: contrast oct18 (pre-launch check): footer text on the blue band, source links on white tiles */
+html[data-look="units"]:not(#_) footer .wrap>span,html[data-look="units"]:not(#_) footer .wrap>span *{color:#fff!important}
+html[data-look="units"]:not(#_) .tile .src,html[data-look="units"]:not(#_) .tile a.src{color:#1F45C4!important}
+"""
+
+
 def patch_units_css(s):
-    return s if '/* ux: units v2' in s else s.split('\n/* ux: units v1')[0] + UNITS_V1
+    s = s if '/* ux: units v2' in s else s.split('\n/* ux: units v1')[0] + UNITS_V1
+    return s if '/* ux: contrast oct18' in s else s + CONTRAST_OCT18
 
 
 def patch_looks_js(s):
@@ -833,6 +841,43 @@ def unwrap_links(s):
     return WRAP.sub(rep, s)
 
 
+def misc_fixes(s):
+    """Oct 18 pre-launch fixes that apply to any page: unwrapped file links, full procedure footer, deductible wording,
+    a name for the phone search button."""
+    s = unwrap_links(s)
+    s = s.replace('<a href="/privacy/">Privacy</a></span></div></footer>',
+                  '<a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/accessibility/">Accessibility</a></span></div></footer>')
+    s = s.replace('Until then, the negotiated rate is your bill.',
+                  'Until then, you usually pay the negotiated rate (some care, like preventive screenings, is covered before the deductible).')
+    return s.replace('class="sbtn" aria-expanded', 'class="sbtn" aria-label="Search" aria-expanded')
+
+
+def write_sitemap(site):
+    """Oct 18 pre-launch: /sitemap.xml = index of /sitemap-pages.xml (every page outside /costs/) and /costs/sitemap.xml
+    (written by procedure_pages.py). robots.txt keeps blocking crawlers until launch."""
+    from datetime import date
+    urls = []
+    for root, _, fs in os.walk(site):
+        if 'index.html' not in fs:
+            continue
+        rel = os.path.relpath(root, site).replace(os.sep, '/')
+        if rel.split('/')[0] in ('costs', 'control', 'v2', 'looks') :
+            continue
+        urls.append('https://files.healthcare/' + ('' if rel == '.' else rel + '/'))
+    urls.sort(key=lambda u: (u.count('/'), u))
+    today = date.today().isoformat()
+    open(os.path.join(site, 'sitemap-pages.xml'), 'w', encoding='utf-8').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + ''.join(f'<url><loc>{u}</loc><lastmod>{today}</lastmod></url>\n' for u in urls) + '</urlset>\n')
+    idx = ['https://files.healthcare/sitemap-pages.xml']
+    if os.path.isfile(os.path.join(site, 'costs', 'sitemap.xml')):
+        idx.append('https://files.healthcare/costs/sitemap.xml')
+    open(os.path.join(site, 'sitemap.xml'), 'w', encoding='utf-8').write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        + ''.join(f'<sitemap><loc>{u}</loc><lastmod>{today}</lastmod></sitemap>\n' for u in idx) + '</sitemapindex>\n')
+    return len(urls)
+
+
 def run(d):
     site = os.path.join(d, 'site')
     done = []
@@ -896,9 +941,10 @@ def run(d):
         for f in fs:
             if f.endswith('.html'):
                 pth = os.path.join(root, f); t0 = open(pth, encoding='utf-8').read()
-                t1 = unwrap_links(t0).replace('<a href="/privacy/">Privacy</a></span></div></footer>', '<a href="/privacy/">Privacy</a> · <a href="/terms/">Terms</a> · <a href="/accessibility/">Accessibility</a></span></div></footer>')
+                t1 = misc_fixes(t0)
                 if t1 != t0:
                     open(pth, 'w', encoding='utf-8').write(t1); nw += 1
+    print(f'sitemap: {write_sitemap(site)} pages listed outside /costs/')
     print(f'{nw} pages had wrapped links or the old costs footer fixed; {page_meta.run(site, skip=("hospitals/",))} pages given missing page basics')
     print(f'{len(done)} pages changed:', ', '.join(sorted(done)[:12]), '...' if len(done) > 12 else '')
 
@@ -914,7 +960,7 @@ def run_r2():
     n = 0
     for k in keys:
         s = s3.get_object(Bucket=B, Key=k)['Body'].read().decode('utf-8')
-        t = page_meta.normalize(unwrap_links(patch_pf_ml(er_names(fact_pf(patch_pf(s))))), k.split('site/deploy/', 1)[-1].replace('price-finder.html', 'price-finder/index.html'))
+        t = page_meta.normalize(misc_fixes(patch_pf_ml(er_names(fact_pf(patch_pf(s))))), k.split('site/deploy/', 1)[-1].replace('price-finder.html', 'price-finder/index.html'))
         if t != s:
             s3.put_object(Bucket=B, Key=k, Body=t.encode('utf-8'), ContentType='text/html; charset=utf-8')
             n += 1
