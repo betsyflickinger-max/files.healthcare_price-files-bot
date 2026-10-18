@@ -166,6 +166,8 @@ NAT_STEPS = '''<div class="sec"><p class="kicker">How it works</p><h2>Three step
 
 
 def patch_home(s):
+    s = s.replace('What insurers actually pay hospitals, doctors and labs in Dallas–Fort Worth, from the price files',
+                  'What insurers actually pay hospitals, doctors and labs, place by place, from the price files')
     if 'class="start-pill"' not in s:
         s = sub1(s, '</style>\n\n<header class="bar">', HOME_CSS + '@media(min-width:1601px){.start-pill{display:none}}\n</style>\n\n<header class="bar">', 'home css')
         s = sub1(s, '<button class="menu-btn" id="menuBtn"', '<a class="start-pill" href="/start-here/">Start here</a>\n    <button class="menu-btn" id="menuBtn"', 'home menu')
@@ -272,7 +274,21 @@ def patch_mw(s):
     return sub1(s, old, new, 'middleware looks')
 
 
+HOTLINE_V2 = """
+/* ux: hotline v2 (Oct 17): match the original Hotline mockup: solid black, no scan lines or ruled stripes through text */
+html[data-look="hotline"]:not(#_) body{background:#050807!important}
+html[data-look="hotline"]:not(#_) .board{background-image:none!important;border-bottom:2px solid #45F0AE}
+html[data-look="hotline"]:not(#_) .board h1+p{font-family:"Look Archivo",sans-serif!important;font-weight:800;color:#C9CFCB!important;border-bottom:3px solid #E0301E;padding-bottom:12px;max-width:900px}
+html[data-look="hotline"]:not(#_) :is(.doors,.door,.steps,.steps li,.tile,.receiptish){border-color:#45F0AE!important}
+html[data-look="hotline"]:not(#_) :is(.nat-search button,.btn,.btn.hi){background:#45F0AE!important;color:#050807!important;border:0}
+html[data-look="hotline"]:not(#_) .nat-search select{background:#07120D;color:#D5F7EA;border:2px solid #45F0AE}
+html[data-look="hotline"]:not(#_) .nat-trust{color:#8FCFB4}
+"""
+
+
 def patch_looks_css(s):
+    if '/* ux: hotline v2' not in s:
+        s += HOTLINE_V2
     if '/* ux: start pill */' not in s:
         s += ('\n/* ux: start pill */html[data-look="hotline"]:not(#_) .start-pill{background:#45F0AE!important;color:#050807!important}\n')
     if '/* ux: phone */' in s:

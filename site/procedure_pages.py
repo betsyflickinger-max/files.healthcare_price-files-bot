@@ -1084,11 +1084,11 @@ def costs_index(areas, procs):
     plist = ''.join(f"<h3 class='h3 cat'>{esc(c)}</h3><div class='chips'>" + ''.join(
         f"<a class='chip' href='/costs/{ps}/'>{esc(n)}</a>" for code, n, ps in items) + "</div>" for c, items in cats.items())
     title = f"Healthcare Prices by Place and Procedure ({TODAY.year}) | {SITE['name']}"
-    desc = (f"{len(procs)} common procedures in {len(areas)} places, from the price files hospitals and insurers are required to publish. "
+    desc = (f"{len(procs)} common procedures in {len(areas)} places, with every billing code in the Price Finder, from the price files hospitals and insurers are required to publish. "
             f"Every price links to its source.")
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">Prices</p><h1 class="letters">Look up<em> a price</em></h1>
 <p class="lead">{esc(desc)}</p></div></section><div class="wrap"><section class="sec"><p class="kicker">Pick a place</p><h2>{len(areas)} places</h2>{places}</section>
-<section class="sec"><p class="kicker">Or a procedure</p><h2>{len(procs)} procedures</h2>{plist}</section></div></main>'''
+<section class="sec"><p class="kicker">Or a procedure</p><h2>{len(procs)} common procedures</h2><p class="lede">Looking for something else? The <a href="/price-finder/">Price Finder</a> searches every billing code in the files.</p>{plist}</section></div></main>'''
     return shell(title, desc, '/costs/', body, {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title,
                                                 'url': SITE['origin'] + '/costs/', 'dateModified': TODAY.isoformat()})
 
@@ -1176,6 +1176,14 @@ def hospital_counts():
         if r.get('mrf_url'):
             found[s] = found.get(s, 0) + 1
     return tot, found
+
+
+NCODES = [0]   # most billing codes on any area's Price Finder page (filled while reading pages)
+
+
+def every_codes():
+    n = NCODES[0]
+    return f"{n // 1000 * 1000:,}+" if n >= 2000 else (f"{n:,}" if n else 'every')
 
 
 def national_section(areas, summaries, procs, n_rates_note):
@@ -1288,8 +1296,8 @@ Outlined states have a Price Finder with insurers' negotiated rates. We're still
 <div class="nat-map"><svg viewBox="0 0 {W * 50} {Hh * 50}" role="group" aria-label="Map: share of hospitals whose price file we have found, by state">{''.join(cells)}</svg>
 <div class="nat-key"><span><i style="background:#D9CDB0"></i>none yet</span><span><i style="background:#B9A27E"></i>under half</span><span><i style="background:#8A6A4E"></i>half to 70%</span><span><i style="background:#4A1C1C"></i>70% or more</span><span><i style="outline:3px solid var(--stamp);outline-offset:-3px;background:none"></i>Price Finder live</span></div>
 <p class="cap">Source: CMS Hospital General Information list; files found by our bot, which keeps searching. "Not found yet" doesn't always mean a hospital isn't publishing.</p></div></div>
-<div><p class="kicker">Pick your place</p><h2>{len(areas)} places, {len(procs)} procedures</h2>
-<p class="lede">Every place has a page for each common procedure, with the lowest and highest published price and the source for each, plus a Price Finder for every billing code.</p>
+<div><p class="kicker">Pick your place</p><h2>{len(areas)} places, {every_codes()} billing codes</h2>
+<p class="lede">The Price Finder searches every billing code in the files, {every_codes()} procedures, tests and services. {len(procs)} of the most common also get their own easy-read page in every place, with the lowest and highest published price and the source for each.</p>
 <h3 id="tx-places">Texas</h3><div>{chips(tx)}</div><h3 style="margin-top:18px">States</h3><div>{chips(st_areas)}</div>
 <p style="margin-top:14px"><a class="btn" href="/costs/">Browse every price page</a></p></div>
 </div>
@@ -1368,6 +1376,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
         fps[a['slug']] = fp
         pages[a['slug']] = (p, med_area)
         has[a['slug']] = {c for c in codes if c in D['codes']}
+        NCODES[0] = max(NCODES[0], len(D['codes']))
         for c in has[a['slug']]:
             names.setdefault(c, D['codes'][c]['name'])
             cats.setdefault(c, D['codes'][c].get('cat', ''))
