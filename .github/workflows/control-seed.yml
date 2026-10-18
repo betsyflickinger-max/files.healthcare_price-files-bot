@@ -1,0 +1,31 @@
+name: Control center data copy (by hand)
+
+# Copies the latest dashboard data (price-dashboard-data, both branches) to R2 control/data/ for Betsy's private
+# control center at files.healthcare/control. Normally not needed: dashboard.yml and board-status.yml copy their
+# files there as they publish. Run this by hand to fill it in at once.
+on:
+  workflow_dispatch:
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: board
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36
+      - run: |
+          git clone -q --depth 1 "https://x-access-token:${DATA_TOKEN}@github.com/betsyflickinger-max/price-dashboard-data.git" /tmp/dd
+          git clone -q --depth 1 -b board-status "https://x-access-token:${DATA_TOKEN}@github.com/betsyflickinger-max/price-dashboard-data.git" /tmp/bs
+          python board/to_r2_control.py /tmp/dd '*.json'
+          python board/to_r2_control.py /tmp/bs 'ops_*.json' 'visitors_*.json'

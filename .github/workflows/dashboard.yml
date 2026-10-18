@@ -101,6 +101,11 @@ jobs:
     needs: [build, network]
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -111,6 +116,16 @@ jobs:
         with:
           name: network
           path: out/dashboard
+      - uses: actions/checkout@v4
+        with:
+          path: bot
+          sparse-checkout: board
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Copy the day's files to R2 for the private control center (files.healthcare/control)
+        continue-on-error: true
+        run: pip install -q boto3==1.35.36 && python bot/board/to_r2_control.py out/dashboard '*.json'
       - name: Publish (private repo when its token is set, else the public dashboard-data branch)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
