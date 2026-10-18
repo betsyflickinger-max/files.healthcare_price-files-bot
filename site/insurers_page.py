@@ -12,9 +12,7 @@ from pathlib import Path
 def main(src, out):
     data = json.load(open(src))
     out = Path(out); out.mkdir(parents=True, exist_ok=True)
-    from insurer_profiles import PARENTS  # parents with a profile page (/insurers/<slug>/)
-    page = TEMPLATE.replace("{{DATA}}", json.dumps(data, separators=(",", ":")).replace("</", "<\\/")) \
-        .replace("{{PROFILES}}", json.dumps({n: 1 for n in PARENTS}))
+    page = TEMPLATE.replace("{{DATA}}", json.dumps(data, separators=(",", ":")).replace("</", "<\\/"))
     (out / "index.html").write_text(page, encoding="utf-8")
     print(f"wrote {out}/index.html ({len(page) / 1e3:.0f} KB): {len(data)} parents, {sum(len(p['c']) for p in data)} companies")
 
@@ -66,7 +64,7 @@ h2{font:600 30px/1.15 var(--display);margin:56px 0 6px;text-wrap:balance}
 .tools input{font:16px var(--body);padding:9px 12px;border:1.5px solid var(--ink);border-radius:2px;background:transparent;color:var(--ink);width:100%;max-width:360px}
 .tools select{font:15px var(--body);padding:8px;border:1.5px solid var(--rule);border-radius:2px;background:var(--paper);color:var(--ink)}
 #tm{position:relative;width:100%;height:520px;margin-top:10px}
-.tile{position:absolute;border:1px solid var(--paper);padding:6px 8px;overflow:hidden;cursor:pointer;color:var(--ink);text-align:left;font:inherit;border-radius:0}
+.tile{position:absolute;display:block;text-decoration:none;border:1px solid var(--paper);padding:6px 8px;overflow:hidden;cursor:pointer;color:var(--ink);text-align:left;font:inherit;border-radius:0}
 .tile.sm{padding:0}
 .tile .tn{font:600 14px/1.15 var(--body);display:block}
 .tile .tl{font:12px var(--type);color:var(--ink-2)}
@@ -75,8 +73,6 @@ h2{font:600 30px/1.15 var(--display);margin:56px 0 6px;text-wrap:balance}
 .tile.single_state{background:var(--single-soft);box-shadow:inset 4px 0 0 var(--single)}
 .tile:hover,.tile.on{outline:2px solid var(--ink);outline-offset:-2px;z-index:2}
 .tile.dim{opacity:.18}
-.panel{margin-top:14px;padding:18px;border:2px solid var(--ink);border-radius:2px;display:grid;gap:10px}
-.panel h3{font:600 26px/1.1 var(--display);margin:0}
 .pill{display:inline-block;font:700 11px var(--body);letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px;color:var(--paper)}
 .pill.national{background:var(--nat)}.pill.multi_state{background:var(--multi)}.pill.single_state{background:var(--single)}
 .mk{display:flex;height:14px;border-radius:2px;overflow:hidden;background:var(--paper-2);max-width:520px}
@@ -89,6 +85,14 @@ h2{font:600 30px/1.15 var(--display);margin:56px 0 6px;text-wrap:balance}
 .sts{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:4px}
 .sts span{font:12px var(--type);padding:1px 6px;border:1px solid var(--rule);border-radius:2px}
 .list{margin-top:10px;border-top:2px solid var(--ink)}
+.row{display:grid;grid-template-columns:22px minmax(0,1fr) auto auto;gap:10px;align-items:baseline;padding:10px 0;border-bottom:1px solid var(--rule);color:var(--ink);text-decoration:none}
+.row .dot{width:12px;height:12px;border-radius:2px;align-self:center}
+.row .nm{font-weight:600;min-width:0}
+.row .nm small{font-weight:400;color:var(--ink-2);margin-left:6px}
+.row .nm em{display:block;font:400 13px var(--body);color:var(--brick);font-style:normal}
+.row .lv{font:14px var(--type);font-variant-numeric:tabular-nums;white-space:nowrap}
+.row .go{font-size:14px;color:var(--brick);white-space:nowrap}
+.row:hover .nm,.row:focus-visible .nm{color:var(--brick);text-decoration:underline}
 details{border-bottom:1px solid var(--rule)}
 summary{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:10px;align-items:baseline;padding:10px 0;cursor:pointer;list-style:none}
 summary::-webkit-details-marker{display:none}
@@ -238,7 +242,7 @@ svg text{font-family:var(--body)}
 </div>
 
 <h2>The family tree, sized by members</h2>
-<p class="sub">Each block is a parent company. Bigger block, more people in its insured plans in 2024. Click a block to see the companies it owns and where they sell.</p>
+<p class="sub">Each block is a parent company. Bigger block, more people in its insured plans in 2024. Click a block to open that parent's full profile: the companies it owns, where they sell, its price files and more.</p>
 <div class="callout" id="counted">
   <p><b>Read this first: these numbers count only part of each company.</b> They count people in <b>fully insured</b> plans, where the insurance company pays the claims and carries the risk. Most people with job-based coverage (<a href="https://www.kff.org/health-costs/report/2025-employer-health-benefits-survey/" target="_blank" rel="noopener">67% of covered workers in 2025, per KFF</a>) are in <b>self-funded</b> plans instead: the employer pays the claims and the insurance company only runs the plan. Those people aren't in these filings, and neither are Medicare Advantage or Medicaid.</p>
   <p>So the same company can look much smaller here than it really is. HCSC, which runs the Blue Cross and Blue Shield plans in Texas, Illinois, Oklahoma, New Mexico and Montana, shows 6.3 million people here (2024 filings) but <a href="https://www.beckerspayer.com/financial/health-care-service-corp-posts-1-9b-loss-in-2025/" target="_blank" rel="noopener">reported 27.3 million members</a> across all its business in 2025.</p>
@@ -254,16 +258,15 @@ svg text{font-family:var(--body)}
   <span class="count" id="cnt"></span>
 </div>
 <div id="tm" aria-label="Parent companies sized by insured members"></div>
-<div class="panel" id="panel"></div>
 
 <h2>Every parent and its companies</h2>
-<p class="sub">The same 200 parents as a list, largest first. Open one to see each company it owns, its members, and the states it files in.</p>
+<p class="sub">The same 200 parents as a list, largest first. Open one for its full profile: each company it owns, its members, and the states it files in.</p>
 <div class="list" id="list"></div>
 
 <section class="notes">
   <p><b>Where this comes from.</b> CMS Medical Loss Ratio public use file, reporting year 2024 (the newest posted as of October 16, 2026): every insurance company's filing by state, with its holding company. "Members" means people in comprehensive medical plans (individual, small group and large group) on December 31, 2024. Parent companies follow each filing's NAIC group code; about 70 filings without one were matched by brand name.</p>
   <p><b>What it leaves out.</b> Self-funded employer plans (insurers only administer those, so their members aren't counted here), Medicare Advantage, Medicaid and short-term plans. That is why UnitedHealth, Aetna, Cigna and the Blue plans look smaller here than their real reach, and why Humana, which <a href="https://www.sec.gov/Archives/edgar/data/49071/000004907123000013/hum-20230223.htm" target="_blank" rel="noopener">announced in 2023</a> it was leaving the employer market, barely shows. Blue Cross Blue Shield companies share a brand and the BlueCard network but are licensed separately; each is grouped under the holding company that owns it, so some parents (HCSC, Elevance, Highmark) run several Blue plans.</p>
-  <p><b>Price files.</b> Where a parent's public price-file page was found, its panel links to it. </p>
+  <p><b>Price files.</b> Where a parent's public price-file page was found, its profile links to it. </p>
   <p>See which employers use each insurer on <a href="/employer-plans/">Employer Plans</a>, the rates their networks pay in the <a href="/price-finder/">Price Finder</a>, and who isn't publishing usable files in the <a href="/price-file-watch/">Price File Watch</a>.</p>
 </section>
 </div>
@@ -276,11 +279,10 @@ svg text{font-family:var(--body)}
   var esc=function(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});};
   var num=function(x){return Number(x||0).toLocaleString('en-US');};
   var short=function(x){return x>=1e6?(x/1e6).toFixed(1).replace(/\.0$/,'')+'M':x>=1e3?Math.round(x/1e3)+'K':String(x);};
-  var q=document.getElementById('q'),stf=document.getElementById('stf'),tm=document.getElementById('tm'),panel=document.getElementById('panel'),cnt=document.getElementById('cnt'),list=document.getElementById('list');
+  var q=document.getElementById('q'),stf=document.getElementById('stf'),tm=document.getElementById('tm'),cnt=document.getElementById('cnt'),list=document.getElementById('list');
   var states={};D.forEach(function(p){p.c.forEach(function(c){c[2].forEach(function(s){states[s]=1;});});});
   Object.keys(states).sort().forEach(function(s){var o=document.createElement('option');o.value=s;o.textContent=s;stf.appendChild(o);});
   var slug=function(n){return String(n).toLowerCase().replace(/&/g,' and ').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');};
-  var sel=D[0].n;
   function fromHash(){var h=decodeURIComponent((location.hash||'').slice(1));var p=h&&D.find(function(x){return slug(x.n)===h;});return p?p.n:null;}
 
   function match(p){
@@ -308,16 +310,8 @@ svg text{font-family:var(--body)}
     var W=tm.clientWidth,H=tm.clientHeight,items=D.filter(function(p){return p.l>0;}).map(function(p){return {v:p.l,p:p};}),out=[];
     squarify(items,0,0,W,H,out);
     tm.innerHTML=out.map(function(r){var p=r.d.p,big=r.w>70&&r.h>34;
-      return '<button type="button" class="tile '+p.s+(big?'':' sm')+(vis[p.n]?'':' dim')+(p.n===sel?' on':'')+'" data-n="'+esc(p.n)+'" style="left:'+r.x.toFixed(1)+'px;top:'+r.y.toFixed(1)+'px;width:'+r.w.toFixed(1)+'px;height:'+r.h.toFixed(1)+'px" title="'+esc(p.n)+': '+num(p.l)+' members, '+p.c.length+' companies">'+(big?'<span class="tn">'+esc(p.n)+'</span><span class="tl">'+short(p.l)+' · '+p.c.length+' co.</span>':'')+'</button>';}).join('');
+      return '<a class="tile '+p.s+(big?'':' sm')+(vis[p.n]?'':' dim')+'" href="/insurers/'+slug(p.n)+'/" data-n="'+esc(p.n)+'" aria-label="'+esc(p.n)+': '+num(p.l)+' members. Open profile" style="left:'+r.x.toFixed(1)+'px;top:'+r.y.toFixed(1)+'px;width:'+r.w.toFixed(1)+'px;height:'+r.h.toFixed(1)+'px" title="'+esc(p.n)+': '+num(p.l)+' members, '+p.c.length+' companies">'+(big?'<span class="tn">'+esc(p.n)+'</span><span class="tl">'+short(p.l)+' · '+p.c.length+' co.</span>':'')+'</a>';}).join('');
   }
-  function companies(p){
-    var st=stf.value,t=q.value.trim().toLowerCase();
-    return '<ul class="cos">'+p.c.map(function(c){var hit=(t&&c[0].toLowerCase().indexOf(t)>=0)||(st&&c[2].indexOf(st)>=0);
-      return '<li><span class="cn"'+(hit?' style="color:var(--brick)"':'')+'>'+esc(c[0])+'</span><span class="cl">'+(c[1]?num(c[1]):'no members')+'</span><span class="sts">'+c[2].map(function(s){return '<span'+(s===st?' style="border-color:var(--brick);color:var(--brick)"':'')+'>'+esc(s)+'</span>';}).join('')+'</span></li>';}).join('')+'</ul>';
-  }
-  function mix(p){var t=p.i+p.sg+p.lg||1;
-    return '<div class="mk" aria-hidden="true"><i style="width:'+(100*p.i/t)+'%;background:var(--brick)"></i><i style="width:'+(100*p.sg/t)+'%;background:var(--multi)"></i><i style="width:'+(100*p.lg/t)+'%;background:var(--single)"></i></div>'+
-      '<div class="mklab"><span>Individual '+num(p.i)+'</span><span>Small employer '+num(p.sg)+'</span><span>Large employer '+num(p.lg)+'</span></div>';}
 var BLUE={'Health Care Service Corp (HCSC)':'Blue Cross and Blue Shield of Texas, Illinois, Oklahoma, New Mexico and Montana',
   'Elevance Health (Anthem)':'Anthem Blue Cross (California) and Anthem Blue Cross and Blue Shield in 13 more states, including New York, Ohio, Georgia, Indiana and Virginia',
   'Highmark Health':'Highmark Blue Cross Blue Shield (Pennsylvania, Delaware, West Virginia, Western New York) and Highmark Blue Shield',
@@ -333,59 +327,25 @@ var BLUE={'Health Care Service Corp (HCSC)':'Blue Cross and Blue Shield of Texas
   'BCBS of Massachusetts':1,'BCBS of South Carolina':1,'BCBS of Tennessee':1,'Blue Cross and Blue Shield of Arizona, Inc.':1,'BCBS of Minnesota':1,
   'BCBS of Kansas City':1,'BCBS of Mississippi (Mississippi Ins Grp)':1,'BCBS of Kansas':1,'Blue Cross and Blue Shield of Nebraska':1,
   'Blue Cross Blue Shield of North Dakota':1,'Blue Cross & Blue Shield of Rhode Island':1,'Blue Cross of Idaho Health Service, Inc.':1,'Blue Cross Blue Shield of Wyoming':1};
-  var BCBS='https://www.bcbs.com/bcbs-companies-and-licensees';
-  var mutual=function(p){return p.c.some(function(c){return /mutual/i.test(c[0]);});};
-  var VIEW='list'; try{VIEW=localStorage.getItem('ins-view')==='map'?'map':'list';}catch(_){}
-  var byName=function(n){return D.find(function(x){return x.n===n;});};
-  function about(p){var h='',b=BLUE[p.n];
-    if(b) h+='<p class="ab"><span class="tag blue">Blue Cross Blue Shield</span>'+(b===1?'One':'Sells as <b>'+esc(b)+'</b>. It is one')+' of the separate local companies the <a href="'+BCBS+'" target="_blank" rel="noopener">Blue Cross Blue Shield Association</a> licenses to use the Blue name. Each Blue company is run separately; they share the name and let members use each other’s networks (BlueCard).</p>';
-    if(mutual(p)) h+='<p class="ab"><span class="tag">Member-owned</span>Its filing names it a mutual company: owned by its policyholders, with no stockholders.</p>';
-    return h;}
-  var PROF={{PROFILES}};
-  var plink=function(p){return PROF[p.n]?'<div><a href="/insurers/'+slug(p.n)+'/" style="font-weight:700">Full profile \u2192</a></div>':'';};
-  var CNOTE='<p class="cnote">Counts people in fully insured plans only. <a href="#counted">Not counted</a>: self-funded employer plans it runs, Medicare Advantage and Medicaid.</p>';
-  function toggle(){return '<div class="vt" role="group" aria-label="Show companies as"><button type="button" data-v="list" aria-pressed="'+(VIEW==='list')+'">List</button><button type="button" data-v="map" aria-pressed="'+(VIEW==='map')+'">Map</button></div>';}
-  function tree(p){
-    var cs=p.c.slice().sort(function(a,b){return b[1]-a[1];}),max=(cs[0]&&cs[0][1])||1,show=cs.slice(0,12),more=cs.length-show.length;
-    var h='<div class="tree">';
-    if(BLUE[p.n]) h+='<div class="nd lic">Blue Cross Blue Shield Association<small>owns the Blue name and licenses it, one area at a time</small></div><div class="ar">licenses the Blue name to</div>';
-    h+='<div class="nd par">'+esc(p.n)+'<small>'+num(p.l)+' people in fully insured plans'+(mutual(p)?' · owned by its members':'')+'</small></div>';
-    h+='<div class="split"><div class="br"><div class="ar">owns these insurance companies, each licensed by a state</div><div class="cos2">'+show.map(function(c){
-      return '<div class="nd co"><span>'+esc(c[0])+'</span><i class="bar" style="width:'+Math.max(2,100*c[1]/max).toFixed(1)+'%" aria-hidden="true"></i><small>'+(c[1]?num(c[1])+' people':'no members reported')+'</small><span class="sts">'+c[2].map(function(st){return '<span>'+esc(st)+'</span>';}).join('')+'</span></div>';}).join('')+'</div>'+
-      (more>0?'<p class="more">+ '+more+' more companies in the List view</p>':'')+'</div>';
-    h+='<div class="br"><div class="ar out">may also run (not counted here)</div><div class="nd ghost">Self-funded employer plans<small>The employer pays the claims; the insurer runs the plan for a fee. See <a href="/employer-plans/">Employer Plans</a>.</small></div><div class="nd ghost">Medicare Advantage and Medicaid plans<small>Reported in other filings.</small></div></div></div></div>';
-    return h;}
-  function body(p){return VIEW==='map'?tree(p):companies(p);}
-  function drawPanel(){
-    var p=byName(sel)||D[0];
-    panel.innerHTML='<div><span class="pill '+p.s+'">'+SC[p.s]+'</span></div><h3>'+esc(p.n)+'</h3>'+plink(p)+
-      '<div class="mklab" style="font-size:14px"><span><b style="color:var(--ink)">'+num(p.l)+'</b> members</span><span><b style="color:var(--ink)">'+p.c.length+'</b> compan'+(p.c.length===1?'y':'ies')+'</span><span><b style="color:var(--ink)">'+p.st+'</b> state'+(p.st===1?'':'s')+' with members</span></div>'+CNOTE+about(p)+mix(p)+
-      (p.u?'<div><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Its price-file page</a></div>':'<div class="mklab">No price-file page found for this parent yet.</div>')+toggle()+'<div class="vw" data-n="'+esc(p.n)+'">'+body(p)+'</div>';
-  }
+  function hitCo(p){var t=q.value.trim().toLowerCase(),st=stf.value;if(!t&&!st) return '';
+    var c=p.c.find(function(c){return (!t||c[0].toLowerCase().indexOf(t)>=0)&&(!st||c[2].indexOf(st)>=0);});
+    return c&&t&&p.n.toLowerCase().indexOf(t)<0?'<em>Includes '+esc(c[0])+'</em>':'';}
   function drawList(vis){
     list.innerHTML=D.filter(function(p){return vis[p.n];}).map(function(p){
-      return '<details data-n="'+esc(p.n)+'"><summary><i class="dot" style="background:var(--'+(p.s==='national'?'nat':p.s==='multi_state'?'multi':'single')+')"></i><span class="nm">'+esc(p.n)+'<small>'+p.c.length+' compan'+(p.c.length===1?'y':'ies')+' · '+SC[p.s]+(BLUE[p.n]?' · Blue Cross Blue Shield':'')+'</small></span><span class="lv">'+num(p.l)+'</span></summary><div class="body" style="display:grid;gap:10px">'+plink(p)+about(p)+mix(p)+(p.u?'<p style="margin:0"><a href="'+esc(p.u)+'" target="_blank" rel="noopener">Price-file page</a></p>':'')+toggle()+'<div class="vw" data-n="'+esc(p.n)+'">'+body(p)+'</div></div></details>';}).join('');
+      return '<a class="row" href="/insurers/'+slug(p.n)+'/"><i class="dot" style="background:var(--'+(p.s==='national'?'nat':p.s==='multi_state'?'multi':'single')+')"></i><span class="nm">'+esc(p.n)+'<small>'+p.c.length+' compan'+(p.c.length===1?'y':'ies')+' · '+SC[p.s]+(BLUE[p.n]?' · Blue Cross Blue Shield':'')+'</small>'+hitCo(p)+'</span><span class="lv">'+num(p.l)+'</span><span class="go" aria-hidden="true">Profile \u2192</span></a>';}).join('');
   }
-  document.addEventListener('click',function(e){var b=e.target.closest('.vt button');if(!b) return;VIEW=b.getAttribute('data-v');
-    try{localStorage.setItem('ins-view',VIEW);}catch(_){}
-    document.querySelectorAll('.vt button').forEach(function(x){x.setAttribute('aria-pressed',x.getAttribute('data-v')===VIEW);});
-    document.querySelectorAll('.vw').forEach(function(el){var p=byName(el.getAttribute('data-n'));if(p) el.innerHTML=body(p);});});
   function render(){
     var vis={},n=0,co=0;D.forEach(function(p){if(match(p)){vis[p.n]=1;n++;co+=p.c.length;}});
-    if(!vis[sel]){var f=D.find(function(p){return vis[p.n];});if(f) sel=f.n;}
     cnt.textContent=n+' of '+D.length+' parents · '+num(co)+' companies';
-    drawMap(vis);drawPanel();drawList(vis);
+    drawMap(vis);drawList(vis);
   }
-  tm.addEventListener('click',function(e){var b=e.target.closest('.tile');if(!b) return;sel=b.getAttribute('data-n');
-    tm.querySelectorAll('.tile.on').forEach(function(x){x.classList.remove('on');});b.classList.add('on');drawPanel();
-    try{history.replaceState(null,'','#'+slug(sel));}catch(_){}});
   document.getElementById('key').addEventListener('click',function(e){var b=e.target.closest('button');if(!b) return;var s=b.getAttribute('data-s');on[s]=!on[s];b.setAttribute('aria-pressed',on[s]);render();});
   var t;q.addEventListener('input',function(){clearTimeout(t);t=setTimeout(render,150);});stf.addEventListener('change',render);
   var rt;window.addEventListener('resize',function(){clearTimeout(rt);rt=setTimeout(render,150);});
-  var h0=fromHash(); if(h0) sel=h0;
-  render();
-  if(h0) panel.scrollIntoView();
-  window.addEventListener('hashchange',function(){var h=fromHash();if(h){sel=h;render();panel.scrollIntoView({behavior:'smooth'});}});
+  // old #slug links now open the profile page
+  var go=function(){var h=fromHash();if(h){location.replace('/insurers/'+slug(h)+'/');return true;}return false;};
+  if(!go()) render();
+  window.addEventListener('hashchange',go);
 })();
 </script>
 </body></html>
