@@ -278,9 +278,22 @@ SHOWN = {'Superior/Ambetter/Wellcare (Centene)': 'Ambetter / Superior / Wellcare
 
 
 def nice(t):
-    if t and t == t.upper():
-        return re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), t.lower()).replace(' Er ', ' ER ')
-    return t
+    """Readable provider names: ALL-CAPS names to title case, then fix the usual title-case slips the files carry
+    ("Children'S", "West PArk", "Mckinney", "Medical Center At Dallas", "Llc")."""
+    if not t:
+        return t
+    if t == t.upper():
+        t = re.sub(r'\b([a-z])', lambda m: m.group(1).upper(), t.lower()).replace(' Er ', ' ER ')
+    t = re.sub(r"(?<=[A-Za-z])'S\b", "'s", t)
+    t = re.sub(r'\b([A-Z])([A-Z])([a-z]{2,})\b', lambda m: m.group(1) + m.group(2).lower() + m.group(3), t)
+    t = re.sub(r'\bMc([a-z])', lambda m: 'Mc' + m.group(1).upper(), t)
+    t = re.sub(r'(?<=\S )(Of|And|At|For|The)(?= \S)', lambda m: m.group(1).lower(), t)
+    t = re.sub(r'\b(Llc|Llp|Lp|Pllc|Pa|Pc|Vamc|Va|Uhs|Ii|Iii|Iv|Usmd|Jps|Hma|Fw|Mca|Chi|Utsw|Ut|Bsw|Hca|Ltac|Asc|Er)\b', lambda m: m.group(1).upper(), t)
+    t = re.sub(r'\.{2,}$', '.', t)
+    return CITY_FIX.get(t, t)
+
+
+CITY_FIX = {'Souhtlake': 'Southlake', 'Muesnter': 'Muenster'}   # spelling slips seen in the files (Oct 2026)
 
 
 def summarize(D, code, t, h):
@@ -294,7 +307,7 @@ def summarize(D, code, t, h):
 
     def fac(i):
         x = D['fac'][int(i)]
-        return {'name': x[0], 'city': x[1], 'kind': x[2]}
+        return {'name': nice(x[0]), 'city': nice(x[1]), 'kind': x[2]}
 
     def entry(fi, r):
         x = fac(fi)
@@ -635,7 +648,7 @@ def shell(title, desc, canon, body, jsonld, noindex=False):
 <script type="application/ld+json">{json.dumps(jsonld, ensure_ascii=False).replace('</', '<\\/')}</script>
 </head><body>
 <header class="bar"><div class="wrap"><a class="logo" href="/">{logo()}</a>
-<button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
+<a class="start-pill" href="/start-here/">Start here</a><button class="menu-btn" id="menuBtn" aria-expanded="false" aria-controls="nav">Menu</button>
 <nav class="nav" id="nav" aria-label="Main">{SITE['nav']}</nav></div></header>
 {body}
 <footer><div class="wrap"><span><b>{esc(SITE['name'])}</b><br>Every price links to the file it came from.</span>
@@ -708,8 +721,16 @@ def covers(S):
         return "Both are the hospital's payment for the whole stay; doctors bill separately."
     if S['code'].startswith('00'):
         return 'Both are the anesthesia rate as published.'
-    return ("Both are the facility fee only; the doctor and anesthesia bill separately." if S['kind'] == 'fac'
-            else "Both are the clinician's fee only; any facility fee is extra.")
+    if S['kind'] == 'fac':
+        cat = S.get('cat') or ''
+        if cat == 'Imaging':
+            return "Both are the facility fee only; the radiologist who reads the scan bills separately."
+        if cat == 'Lab tests':
+            return "Both are the lab's fee for the test; drawing the blood may be billed separately."
+        if cat in ('Office visits', 'Behavioral health', 'Physical therapy', 'Heart'):
+            return "Both are the facility fee only; the clinician's fee is billed separately."
+        return "Both are the facility fee only; the doctor and anesthesia bill separately."
+    return "Both are the clinician's fee only; any facility fee is extra."
 
 
 def savings(S):
@@ -747,10 +768,12 @@ def stands_out(S, area):
             out.append(f"Network matters: the lowest rate in {esc(netname(a['ins'], a['plan']))} is {money(a['lo']['v'])}; in "
                        f"{esc(netname(b['ins'], b['plan']))} even the lowest is {money(b['lo']['v'])}.")
     mh = med_headline(S)
+    if mh and S['lo'] and S['kind'] == 'fac' and S['lo'].get('kind') == 'A' and (S['med'] or {}).get('asc'):
+        mh = S['med']['asc'][0], 'surgery center facility fee'   # compare like with like: the lowest is at a surgery center
     if mh and S['lo'] and mh[0] > 0:
         x = S['lo']['v'] / mh[0]
         out.append(f"The lowest negotiated rate here is {x:.1f} times Medicare's {money(mh[0])} ({esc(mh[1])})."
-                   if x >= 1.05 else f"The lowest negotiated rate here, {money(S['lo']['v'])}, is at or below Medicare's {money(mh[0])}.")
+                   if x >= 1.05 else f"The lowest negotiated rate here, {money(S['lo']['v'])}, is {'about the same as' if x >= 0.95 else 'below'} Medicare's {money(mh[0])} ({esc(mh[1])}).")
     if S.get('h_total'):
         out.append(f"{S['h_stale']} of the {S['h_total']} hospital price files that list this code are over six months old or undated."
                    if S['h_stale'] else f"All {S['h_total']} hospital price files that list this code are dated within the last six months.")
@@ -1079,6 +1102,9 @@ CSS = r'''/* What It Costs: shared stylesheet for /costs/ pages (written by pric
 .bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px;position:relative}
 .logo{font:900 30px/1 var(--display);letter-spacing:.02em;text-transform:uppercase;color:var(--board-ink);text-decoration:none;white-space:nowrap}.logo span{color:var(--hi)}
 .nav{display:flex;align-items:center;gap:4px;flex-wrap:wrap}.nav a{color:var(--board-ink);text-decoration:none;padding:10px 10px;font-weight:600;font-size:15px;white-space:nowrap}.nav a:hover{color:var(--hi)}
+.start-pill{margin-left:auto;display:inline-flex;align-items:center;min-height:44px;padding:0 14px;background:var(--hi);color:var(--ink)!important;font:800 15px var(--body);text-decoration:none;white-space:nowrap}.start-pill:hover{filter:brightness(.93)}
+@media(max-width:420px){.logo{font-size:24px}.start-pill{padding:0 10px;font-size:14px}.bar .wrap{gap:10px}}
+@media(min-width:1601px){.start-pill{display:none}}
 .menu-btn{display:none;background:none;border:2px solid var(--board-ink);color:var(--board-ink);min-height:44px;padding:0 14px;font:700 15px var(--body);cursor:pointer}
 @media(max-width:1600px){.menu-btn{display:inline-block}.nav{display:none;position:absolute;left:0;right:0;top:100%;background:var(--board);flex-direction:column;align-items:stretch;padding:8px 16px 16px;border-bottom:3px solid var(--stamp)}.nav.open{display:flex}.nav a{padding:14px 4px;border-bottom:1px solid #6b3a3a}}
 .board{background:var(--board);color:var(--board-ink);background-image:repeating-linear-gradient(var(--board) 0 26px,var(--board-line) 26px 28px)}
@@ -1218,6 +1244,12 @@ def national_section(areas, summaries, procs, n_rates_note):
 .nat-map .b0+text,.nat-map .b0+text+text,.nat-map .b1+text,.nat-map .b1+text+text{{fill:var(--ink)}}.nat-map .b2+text,.nat-map .b2+text+text,.nat-map .b3+text,.nat-map .b3+text+text{{fill:#FBF6EA}}
 .nat-map a:hover rect{{filter:brightness(1.15)}}.nat-key{{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px;color:var(--muted);margin-top:10px}}.nat-key i{{display:inline-block;width:14px;height:14px;vertical-align:-2px;margin-right:6px}}
 .chip-l{{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px;margin:0 8px 8px 0}}.chip-l:hover{{background:var(--hi)}}
+.nat-new{{margin:4px 0 0;font:700 17px var(--body)}}.nat-new a{{color:var(--hi);text-underline-offset:4px}}
+.nat-trust{{margin:0;font:14px/1.5 var(--mono);color:var(--board-sub);letter-spacing:.02em}}.nat-trust i{{font-style:normal;padding:0 6px}}
+.steps{{list-style:none;counter-reset:st;margin:18px 0 0;padding:0;display:grid;gap:0;border:2px solid var(--rule)}}@media(min-width:800px){{.steps{{grid-template-columns:repeat(3,1fr)}}}}
+.steps li{{counter-increment:st;display:flex;flex-direction:column;gap:6px;padding:22px;background:var(--paper);border-bottom:2px solid var(--rule)}}.steps li:last-child{{border-bottom:0}}
+@media(min-width:800px){{.steps li{{border-bottom:0;border-right:2px solid var(--rule)}}.steps li:last-child{{border-right:0}}}}
+.steps li::before{{content:counter(st);font:900 44px/1 var(--display);color:var(--stamp)}}.steps b{{font-size:19px}}.steps span{{color:var(--muted)}}.steps a{{color:var(--stamp)}}.steps-more{{margin:18px 0 0}}
 @media(max-width:1600px){{.menu-btn{{display:inline-block}}.nav{{display:none;position:absolute;left:0;right:0;top:100%;background:var(--board);flex-direction:column;align-items:stretch;padding:8px 16px 16px;border-bottom:3px solid var(--stamp)}}.nav.open{{display:flex}}.nav a{{padding:14px 4px;border-bottom:1px solid #6b3a3a}}.nav .ask{{margin-top:10px}}}}
 </style>
 <section data-view="home">
@@ -1231,9 +1263,24 @@ def national_section(areas, summaries, procs, n_rates_note):
 <select id="natArea" aria-label="Where">{opts_area}</select><button type="submit">Show me</button></div>
 <p class="nat-pop">Popular: {''.join(f"<a href='/costs/{pslug[c]}/'>{esc(t)}</a>" for c, t in pop if c in pslug)} · <a href="/price-finder/">every billing code</a></p>
 </form>
+<p class="nat-new"><a href="/start-here/">New here? See how it works <span aria-hidden="true">→</span></a></p>
+<p class="nat-trust">Free <i aria-hidden="true">·</i> No ads <i aria-hidden="true">·</i> Every price dated and linked to the file it came from</p>
 <p class="msg" style="display:none" id="msg"></p><div id="homeChips" hidden></div><form id="searchForm" hidden><input id="q"></form>
 </div></div>
 <div class="wrap">
+<div class="sec"><p class="kicker">How it works</p><h2>Three steps to a real price</h2>
+<ol class="steps">
+<li><b>Pick a procedure and a place.</b><span>Start with a common one, like a colonoscopy or a knee MRI, or look up any billing code in the <a href="/price-finder/">Price Finder</a>.</span></li>
+<li><b>See the real range.</b><span>The lowest and highest prices published in your area, from hospitals' and insurers' own files, plus cash prices where they're posted.</span></li>
+<li><b>Check your plan.</b><span>Pick your insurer's network to see what it pays each place. On a HealthCare.gov plan in DFW? The <a href="/plan-calculator/">Plan Calculator</a> shows what you'd owe.</span></li>
+</ol>
+<p class="steps-more"><a class="btn" href="/start-here/">Read the 2-minute guide</a></p></div>
+{('<div class="sec">' + ex + '</div>') if ex else ''}
+<div class="sec"><p class="kicker">Who it's for</p><h2>Start where you are</h2><div class="doors">
+<a class="door" href="/costs/"><h3>Patients</h3><span>Look up a procedure where you live, see what your insurer has agreed to pay, and find the lowest cash price.</span><span class="go">Look up a price →</span></a>
+<a class="door" href="/employer-plans/"><h3>Employers and HR</h3><span>See which networks your plan uses and what those networks actually pay, provider by provider.</span><span class="go">Employer plans →</span></a>
+<a class="door" href="/price-file-watch/"><h3>Reporters and lawmakers</h3><span>Who isn't publishing usable price files, with the date we checked and the rule they're under.</span><span class="go">Price File Watch →</span></a>
+</div></div>
 <div class="sec split">
 <div><p class="kicker">Where the files are</p><h2>{F:,} of {T:,} hospitals</h2>
 <p class="lede">That's how many hospital price files we've found so far, out of every hospital on Medicare's list, state by state. The rule has applied since 2021.
@@ -1246,12 +1293,6 @@ Outlined states have a Price Finder with insurers' negotiated rates. We're still
 <h3 id="tx-places">Texas</h3><div>{chips(tx)}</div><h3 style="margin-top:18px">States</h3><div>{chips(st_areas)}</div>
 <p style="margin-top:14px"><a class="btn" href="/costs/">Browse every price page</a></p></div>
 </div>
-{('<div class="sec">' + ex + '</div>') if ex else ''}
-<div class="sec"><p class="kicker">Three ways in</p><h2>Who this is for</h2><div class="doors">
-<a class="door" href="/costs/"><h3>Patients</h3><span>Look up a procedure where you live, see what your insurer has agreed to pay, and find the lowest cash price.</span><span class="go">Look up a price →</span></a>
-<a class="door" href="/employer-plans/"><h3>Employers and HR</h3><span>See which networks your plan uses and what those networks actually pay, provider by provider.</span><span class="go">Employer plans →</span></a>
-<a class="door" href="/price-file-watch/"><h3>Reporters and lawmakers</h3><span>Who isn't publishing usable price files, with the date we checked and the rule they're under.</span><span class="go">Price File Watch →</span></a>
-</div></div>
 <div class="sec"><p class="kicker">House rules</p><h2>How we keep receipts</h2><div class="doors">
 <div class="door"><h3>Every price has a source</h3><span>Each figure links to the hospital, insurer or provider file it came from.</span></div>
 <div class="door"><h3>Every price has a date</h3><span>We show the date on each file and flag anything over six months old.</span></div>

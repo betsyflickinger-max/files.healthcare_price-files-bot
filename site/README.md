@@ -78,3 +78,11 @@ colonoscopy; scans and labs count clinics only when the name says imaging or lab
 Placeholder-looking rates (over 20x the median) are listed by insurer network, with example lines and file links, in the
 Price File Watch private notes (functions/api/watch-notes.js, between PLACEHOLDERS markers), rebuilt each run, for review
 before anything is made public.
+
+## Guidance and polish pass (Oct 17, 2026)
+
+`site/ux_polish.py DIR` (after `site_files.py pull DIR`, then `push DIR`) re-applies the hand-made guidance layer: the always-visible
+"Start here" button, how-it-works steps on the homepage, the Start here paths, and on every Price Finder page an added
+`<!-- UX:START/END -->` block (asks how you're paying and remembers it, puts the price list ahead of the Medicare and arbitration
+context, tidies provider-name capitalization, trust links). `--r2` patches the Price Finder layouts the monthly builds start from,
+so new city pages keep it. Every step is idempotent; the Price Finder block changes no existing wording (city_page.py checks pass).
