@@ -97,6 +97,27 @@ def update_tables():
     return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read())) if UPDATE else None
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
+def label_tables(st):
+    """Oct 18, 2026: the scope's catalog networks (insurers/networks_<scope>.csv finder "catalog": one network per file, e.g.
+    Anthem's and Blue Cross's employer networks) are named by their file label, not split by each provider's product list.
+    Table names come from the scope's manifest (they change with each month's file). Written once per build."""
+    key = SP + 'label_tables.json'
+    if st.get('label_tables_done'): return key
+    try:
+        here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        nets = os.path.join(here, 'insurers', f'networks_{SCOPE}.csv')
+        import re as re_
+        blue = re_.compile(r'anthem|blue|bcbs|highmark|premera|regence|wellmark|excellus|carefirst|horizon|hcsc', re_.I)
+        # only Blue plans' catalog files: their membership lists each provider's products (UnitedHealthcare's, Cigna's and
+        # Aetna's already give one name per network, so they keep their saved stage-A work)
+        slots = {r['slot'] for r in csv.DictReader(open(nets)) if r.get('finder') == 'catalog' and blue.search(r.get('insurer', ''))}
+        man = s3.get_object(Bucket=B, Key=f'bot/insurers/{SCOPE}/manifest.csv')['Body'].read().decode()
+        tabs = sorted({m['table'] for m in csv.DictReader(io.StringIO(man)) if m['slot'] in slots and m.get('table')})
+        putj(key, tabs); st['label_tables_done'] = True; log(len(tabs), 'catalog tables named by their file label')
+    except Exception as e: log('label table list not written:', repr(e)[:150]); putj(key, [])
+    return key
+
+
 def merge_step(st, left):
     """update mode: one small machine per state whose add build is finished merges it into the state's finished build"""
     def newest(slug):   # same rule as hosp_area.newest_build: the newest folder whose embed.json exists
@@ -415,6 +436,7 @@ def main():
                            MEM='18GB', WORK='/d', AORDER='desc', ASTART=str(i * 5), BSTART=str(i * NB // n), STALL_MIN='120', BCLAIM='1', BCLAIM_H='1.5',   # Oct 15 6am: pieces take 20-50 min, so 120 min / 1.5 h catch lost work (360 left 28 pieces waiting)
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
+                env['LABEL_TABLES_KEY'] = label_tables(st)
                 if UPDATE:
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'

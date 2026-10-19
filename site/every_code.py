@@ -73,8 +73,21 @@ if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
-# same table + size -> same results; Oct 18, 2026: NETS_FROM_LABEL names networks differently, so it gets its own cache entries
-TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if E.get('NETS_FROM_LABEL') else '')).encode()).hexdigest()[:12] for key, size in files}
+# Oct 18, 2026: tables named by their file label (one network per file): every table with NETS_FROM_LABEL=1, or the
+# tables listed in LABEL_TABLES_KEY (an R2 JSON list of table names: the catalog networks, e.g. Anthem's and Blue Cross's
+# employer networks, whose membership files list each provider's products and so split one network into many entries)
+LABEL_TABLES = set()
+if E.get('LABEL_TABLES_KEY'):
+    try: LABEL_TABLES = set(json.loads(s3.get_object(Bucket=B, Key=E['LABEL_TABLES_KEY'])['Body'].read()))
+    except Exception as e_: print('label table list not read:', e_, flush=True)
+def _has_membership(key):
+    try: s3.head_object(Bucket=B, Key=key.replace('/rates/', '/membership/')); return True
+    except Exception: return False
+# only tables that HAVE a membership file are named differently, so the others keep their saved stage-A work
+LABEL_KEYS = {k for k, _ in files if k.rsplit('/', 1)[1].rsplit('.', 1)[0] in LABEL_TABLES and _has_membership(k)} if LABEL_TABLES else set()
+def by_label(key): return bool(E.get('NETS_FROM_LABEL')) or key in LABEL_KEYS
+# same table + size -> same results; label-named tables get their own cache entries
+TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if by_label(key) else '')).encode()).hexdigest()[:12] for key, size in files}
 TAGS = set(TAG.values())
 doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
 def isdone(tag): 
@@ -136,7 +149,7 @@ for ii, (key, size) in enumerate(files):
             # Oct 18, 2026: NETS_FROM_LABEL=1 (update builds of catalog networks, e.g. Anthem's employer networks): one
             # network per file, named by its label. The membership file lists each provider's Anthem products ("Blue
             # Connection | Blue Preferred HMO | Pathway"), which split one employer network into ~200 picker entries.
-            if E.get('NETS_FROM_LABEL'): mj = False
+            if by_label(key): mj = False
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
