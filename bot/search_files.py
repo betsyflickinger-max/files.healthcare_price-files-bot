@@ -319,6 +319,11 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
         return "yes", f"file names '{bname[:60]}' ({round(best)}){via}"
     if best >= 70 or words:
         return "held", f"file names '{bname[:60]}' ({round(best)}); city {'found' if city_ok else 'not found'}"
+    # Oct 19, 2026 (Betsy): a CMS file whose own address is this hospital's (Medicare's city, same state, the identity
+    # check above passed) but whose name is a parent company's ("Yukon Kuskokwim Health Corp" for Yukon Kuskokwim Delta
+    # Regional Hospital) goes to the hand-check pile instead of being dropped
+    if addr and city_ok and identity.places(addr) and (re.search(rf"\b{h['state']}\b", addr) or (st_name and st_name.lower() in addr.lower())):
+        return "held", f"file's address is this hospital's ({h['city'].title()} {h['state']}) but it names '{bname[:60]}'"
     return None, f"file is for '{bname[:60]}', not this hospital"
 
 
