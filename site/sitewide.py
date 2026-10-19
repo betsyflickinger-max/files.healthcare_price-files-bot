@@ -120,6 +120,11 @@ def apply(d):
         t0 = open(mw, encoding='utf-8').read()
         if MW_FROM in t0:
             open(mw, 'w', encoding='utf-8').write(t0.replace(MW_FROM, MW_TO)); changed += 1
+    try:   # Price File Watch: "Report it to CMS yourself" + private notes (Oct 19)
+        import watch_extras
+        changed += watch_extras.apply(d)
+    except Exception as e:
+        print(f'sitewide: Price File Watch additions not applied ({type(e).__name__}: {e})')
     try:   # Price Finder "Compare" view (Oct 19): its two files, the page tags, and ml.json where a rebuild made it stale
         import pf_table
         changed += pf_table.apply(d)
