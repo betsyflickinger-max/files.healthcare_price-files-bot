@@ -1450,7 +1450,7 @@ def national_section(areas, summaries, procs, n_rates_note):
 </style>
 <section data-view="home">
 <div class="board"><div class="wrap">
-<p class="hcf-tagline" style="font-size:18px;font-weight:600;line-height:1.4;color:var(--hi);margin:0;max-width:40em">What care really costs, from the price files hospitals and insurers have to publish.</p>
+<p class="hcf-tagline" style="font-size:18px;font-weight:600;line-height:1.4;color:var(--hi);margin:0;max-width:40em">The receipt for the U.S. healthcare system.</p>
 <h1 class="letters">What is this going to <em>cost me?</em></h1>
 {home_bits.LEDE}
 <form class="nat-search" id="natForm" action="/costs/" method="get">

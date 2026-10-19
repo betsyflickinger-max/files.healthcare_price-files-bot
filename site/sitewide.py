@@ -8,7 +8,8 @@
 2. Units look, built in: /units.css (the Units rules from /looks/looks.css, with their fonts) is linked from every
    page, and every page's <html> carries data-look="units" data-theme="light". The preview's look switcher
    (functions/_middleware.js, /looks/) is optional now: turning it off (LOOKS_OFF) or removing the password keeps Units.
-3. Share image: site/assets/og.jpg (made from site/assets/og-source.html) is copied to /og.jpg.
+3. Tagline (Oct 19): "The receipt for the U.S. healthcare system." replaces the older line on every page (OLD_TAGLINES).
+4. Share image: site/assets/og.jpg (made from site/assets/og-source.html) is copied to /og.jpg.
 Idempotent; only files that change are rewritten.
 """
 import os
@@ -19,7 +20,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 NAME = 'The Healthcare Files'
-TAGLINE = 'What care really costs, from the price files hospitals and insurers have to publish.'
+OLD_TAGLINES = ['What care really costs, from the price files hospitals and insurers have to publish.']
+TAGLINE = 'The receipt for the U.S. healthcare system.'   # Betsy, Oct 19: her Sept 30 framing, "the receipt for the U.S. healthcare system"
 RENAME = [('What It <span>Costs</span>', 'The Healthcare <span>Files</span>'), ('What It Costs', NAME), ('WHAT IT COSTS', NAME.upper())]
 LINK = '<link rel="stylesheet" href="/units.css">'
 SRCJS = '<script src="/hcf-src.js" defer></script>'   # warns before a source link starts a giant file download (Oct 19)
@@ -109,6 +111,9 @@ def apply(d):
                 if 'What It' in t or 'WHAT IT COSTS' in t:
                     for a, b in RENAME:
                         t = t.replace(a, b)
+                for old in OLD_TAGLINES:   # tagline swap (Oct 19) reaches pages built before the change
+                    if old in t:
+                        t = t.replace(old, TAGLINE)
                 if 'The Healthcare Files</a>' in t:
                     t = BRAND_RX.sub(BRAND_TO, t)
                 if f.endswith(('.html', '.htm')):
