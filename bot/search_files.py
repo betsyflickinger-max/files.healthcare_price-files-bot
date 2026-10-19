@@ -763,7 +763,12 @@ def main():
 
     left = 0
     with ThreadPoolExecutor(a.workers) as ex:
-        for i, (h, res) in enumerate(ex.map(one, todo), 1):
+        def safe_one(h):   # Oct 19: one bad file (a damaged zip) must not stop the run and lose every result
+            try:
+                return one(h)
+            except Exception as e:  # noqa: BLE001
+                return h, ("error", "", "", "", f"{type(e).__name__}: {str(e)[:120]}", {}, 0)
+        for i, (h, res) in enumerate(ex.map(safe_one, todo), 1):
             if res is None:
                 left += 1   # out of time: the workflow starts a fresh run for these
                 continue

@@ -185,6 +185,8 @@ def browser_head(url, limit=1_000_000):
         with open(out, "rb") as f:
             start = f.read(4)
         if start[:2] == b"PK":
+            if not zipfile.is_zipfile(out):   # Oct 19: a damaged zip crashed a whole search run
+                return "", "zip file (damaged; can't be opened)"
             with zipfile.ZipFile(out) as z:
                 ms = [i for i in z.infolist() if re.search(r"\.(json|csv)$", i.filename, re.I)]
                 if not ms:
