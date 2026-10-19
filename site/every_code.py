@@ -335,7 +335,10 @@ def work(u):
         s3.put_object(Bucket=B, Key=f'{TOUT}md/{u}.json', Body=json.dumps(md_, separators=(',', ':')).encode())
     except Exception as e: log('median file not written:', repr(e)[:120])
     if PRACTICE:
-        return workP(u, c, src, MD)
+        try: return workP(u, c, src, MD)
+        except Exception:
+            import traceback
+            s3.put_object(Bucket=B, Key=f'{OUTP}errors/{u}.txt', Body=traceback.format_exc().encode()); raise
     if SORTV == '3':
         return work3(u, c, src, MD)
     if SORTV == '2':
