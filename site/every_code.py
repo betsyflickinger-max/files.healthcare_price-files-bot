@@ -91,12 +91,16 @@ _LA = None
 def restore_a(i):
     global _LA
     if _LA is None: _LA = [x for sub in ('aux/', 'flat/', 'names/') for x in ls(AC + sub)] if E.get('NOXPART') else ls(AC)
-    for k, _ in _LA:
+    todo_ = []
+    for k, sz_ in _LA:
         rel = k[len(AC):]
         fn = rel.rsplit('/', 1)[-1][:-8] if rel.endswith('.parquet') else None
         if E.get('NOXPART') and rel.startswith('xpart/'): continue
         if fn is not None and (fn == str(i) or ('_' not in str(i) and fn.startswith(f'{i}_'))):
-            dest = D / rel; dest.parent.mkdir(parents=True, exist_ok=True); s3.download_file(B, k, str(dest))
+            dest = D / rel; dest.parent.mkdir(parents=True, exist_ok=True)
+            # Oct 18, 2026: skip a file already here at the same size (a restarted run), and download in parallel
+            if not (dest.exists() and dest.stat().st_size == sz_): todo_.append((k, str(dest)))
+    with ThreadPoolExecutor(8) as P_: list(P_.map(lambda kd: s3.download_file(B, kd[0], kd[1]), todo_))
 NEWP = [0]
 def LOGFLUSH(): s3.put_object(Bucket=B, Key=OUTP + 'log.txt', Body='\n'.join(LOG).encode())
 PIECE_GB = float(E.get('PIECE_GB', '0.4'))
@@ -330,6 +334,8 @@ def work(u):
         for (cd, fe), (m, n) in MD.items(): md_.setdefault(cd, {})[str(fe)] = [float(m), int(n)]
         s3.put_object(Bucket=B, Key=f'{TOUT}md/{u}.json', Body=json.dumps(md_, separators=(',', ':')).encode())
     except Exception as e: log('median file not written:', repr(e)[:120])
+    if PRACTICE:
+        return workP(u, c, src, MD)
     if SORTV == '3':
         return work3(u, c, src, MD)
     if SORTV == '2':
@@ -393,6 +399,115 @@ def work(u):
             grp.append((v, tin, modi or '', st or '', nt or '', dt, url))
     if g0: emit(f, g0, grp)
     if curcode: put(curcode, f)
+    for fu in futs: fu.result()
+    c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+    res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+    s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
+    return res
+PRACTICE = E.get('PRACTICE') == '1'
+import hmac as _hmac
+_PID = {}
+def pid_of(tin):
+    """Oct 18, 2026 practice view: a practice is the tax ID (TIN) a group of doctors bills under. Pages never show the tax
+    ID itself (a solo doctor's can be a personal number): only a keyed hash of it."""
+    p = _PID.get(tin)
+    if p is None:
+        p = _PID[tin] = _hmac.new(E['R2_SECRET_ACCESS_KEY'].encode(), (tin or '').encode(), 'sha1').hexdigest()[:10]
+    return p
+def workP(u, c, src, MD):
+    """Stage B, PRACTICE=1 (Oct 18, 2026, Betsy OK'd the practice view): doctors (individual NPIs) are grouped by the tax-ID
+    practice they bill under. Each practice row lists its distinct prices, each with the doctors who have it, so 14 doctors with
+    one price become one entry instead of 14 rows. Prices per doctor follow the same rules as today, within one practice:
+    headline = lowest positive rate with no modifier, else lowest positive; $0-only shows as $0. Hospitals, surgery centers
+    and other organizations stay exactly as today (one row per provider). Page file: {'f': {provider: rows}, 'p': {practice:
+    [[row, [doctor ids]], ...]}}; a row has the same 11 fields as today's provider rows."""
+    c.execute("create temp table pk as select unnest(range(?::bigint))::int pi, unnest(?::varchar[]) kind", [len(KIND), KIND])
+    c.execute(f"""create temp table x as select distinct q.*, pk.kind = 'P' doc from
+      (select x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, coalesce(x.modi, '') modi, coalesce(x.st, '') st, coalesce(x.nt, '') nt, dn.di, un.ui from {src} x
+         left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
+         left join dn on dn.dt = x.dt left join un on un.url = x.url) q join pk using (pi)""")
+    nx = c.execute("select count(*) from x").fetchone()[0]
+    t0_ = time.time(); log(f'P {u}: {nx:,} rows', 'doctors', c.execute("select count(*) from x where doc").fetchone()[0])
+    c.execute(f"""create temp table fl2 as select distinct pn.pi, nn.ni, f.v from read_parquet('{D}/flat/*.parquet') f
+                  join pn on pn.npi = f.npi join nn on nn.ins = f.ins and nn.net = f.net""")
+    summ, scp = {}, {}
+    pool = ThreadPoolExecutor(8); futs = []
+    D0 = didx.get('', 0); U0 = uidx.get('', 0)
+    def flags(code, fee, t, v, isflat):
+        m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
+        ishigh = bool(m and m[1] >= 5 and t == 0 and looks_placeholder(v, m[0]))
+        return (1 if isflat else 0) | (2 if islow else 0) | (8 if ishigh else 0)
+    # organizations (hospitals, surgery centers, labs, group NPIs): the same walk as SORTV=2, one row per provider
+    def fac():
+        cur = c.execute("""select code, pi, ni, fee, t, v, tin, modi, st, nt, di, ui from x where not doc
+                           order by code, pi, ni, fee, t, v, modi, tin, st, nt, di, ui""")
+        curcode, f, g0, grp = None, {}, None, []
+        def emit(g, rows):
+            code, pi, ni, fee, t = g
+            ins, net = NETS2[ni]; nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
+            zeros = sum(1 for r in rows if r[0] == 0); pos = [r for r in rows if r[0] > 0]
+            if pos:
+                h = next((r for r in pos if not r[2]), pos[0]); v, tin, modi, st, nt, dt, url = h
+                isflat = fee == 0 and t == 0 and not modi and (npis[pi], ins, net, v) in FLAT
+                rest = [r for r in pos[:9] if r is not h]
+                others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
+                row = [n, fee, t, float(v), flags(code, fee, t, v, isflat), D0 if dt is None else dt, U0 if url is None else url, len(pos) - 1, others[:4], zeros, lab(modi, st, nt, tin, tin)]
+            else:
+                r0 = rows[0]; row = [n, fee, t, 0, 4, D0 if r0[5] is None else r0[5], U0 if r0[6] is None else r0[6], 0, [], zeros, -1]
+            f.setdefault(str(pi), []).append(row)
+        while True:
+            batch = cur.fetchmany(200000)
+            if not batch: break
+            for code, pi, ni, fee, t, v, tin, modi, st, nt, di, ui in batch:
+                g = (code, pi, ni, fee, t)
+                if g != g0:
+                    if g0: emit(g0, grp)
+                    if code != curcode:
+                        if curcode: yield curcode, f
+                        curcode, f = code, {}
+                    g0, grp = g, []
+                grp.append((v, tin, modi, st, nt, di, ui))
+        if g0: emit(g0, grp)
+        if curcode: yield curcode, f
+    FACS = dict(fac()); log(f'P {u}: organizations done', round(time.time() - t0_), 's', sum(len(r) for f_ in FACS.values() for r in f_.values()), 'rows')   # organizations are a small share of rows, so they are held in memory while doctors stream
+    # doctors: one result per doctor per practice (same headline rule), then doctors with identical results are grouped
+    cur = c.execute("""
+      with d as (select code, tin, ni, fee, t, pi, count(*) filter (where v = 0) zeros, count(*) filter (where v > 0) npos,
+                   arg_min(struct_pack(v := v, modi := modi, st := st, nt := nt, di := di, ui := ui),
+                           struct_pack(c := case when v > 0 and modi = '' then 0 when v > 0 then 1 else 2 end, v := v, modi := modi, st := st, nt := nt, di := di, ui := ui)) h
+                 from x where doc group by code, tin, ni, fee, t, pi),
+           p as (select d.*, fl2.pi is not null and d.fee = 0 and d.t = 0 and d.h.modi = '' and d.npos > 0 isflat
+                 from d left join fl2 on fl2.pi = d.pi and fl2.ni = d.ni and fl2.v = d.h.v)
+      select code, tin, ni, fee, t, h, npos, zeros, isflat, list(pi order by pi) docs from p
+      group by code, tin, ni, fee, t, h, npos, zeros, isflat order by code, tin, ni, fee, t, h.v""")
+    def put(code, f, p):
+        summ[code] = sum(len(v) for v in f.values()) + sum(len(v) for v in p.values())
+        body = base64.b64encode(gzip.compress(json.dumps({'f': f, 'p': p}, separators=(',', ':')).encode(), 6))
+        futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{TOUT}t/{code}.txt', Body=body, ContentType='text/plain'))
+    curcode, p = None, {}
+    while True:
+        batch = cur.fetchmany(100000)
+        if not batch: break
+        for code, tin, ni, fee, t, h, npos, zeros, isflat, docs in batch:
+            if code != curcode:
+                if curcode: put(curcode, FACS.pop(curcode, {}), p)
+                curcode, p = code, {}
+            ins, net = NETS2[ni]; nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
+            di_, ui_ = (D0 if h['di'] is None else h['di']), (U0 if h['ui'] is None else h['ui'])
+            if npos:
+                row = [n, fee, t, float(h['v']), flags(code, fee, t, h['v'], isflat), di_, ui_, npos - 1, [], zeros, lab(h['modi'], h['st'], h['nt'], tin, tin)]
+            else:
+                row = [n, fee, t, 0, 4, di_, ui_, 0, [], zeros, -1]
+            p.setdefault(pid_of(tin), []).append([row, docs])
+    if curcode: put(curcode, FACS.pop(curcode, {}), p)
+    log(f'P {u}: doctors done', round(time.time() - t0_), 's')
+    for code, f in FACS.items(): put(code, f, {})   # codes only organizations have
+    # who is in each practice (doctors) and which organization NPIs bill under the same tax ID (used to name the practice)
+    mem = {}
+    for tin, docs, orgs in c.execute("""select tin, list(distinct pi) filter (where doc), list(distinct pi) filter (where pk.kind = 'G')
+                                        from x join pk using (pi) group by tin""").fetchall():
+        if docs: mem[pid_of(tin)] = [sorted(docs), sorted(orgs or [])]
+    futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{WK}P/{u}.json', Body=json.dumps(mem, separators=(',', ':')).encode()))
     for fu in futs: fu.result()
     c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
     res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
@@ -537,6 +652,28 @@ for c_, n_ in summary.items():
     else: codes[c_] = {'name': (nm or f'{t_} {c_}').strip(), 'cat': 'description as written in the insurer file', 'type': t_, 'n': n_, 'f': None, 'd': 1}
 embed = {'codes': codes, 'fac': ptab, 'nets': nets, 'dates': dates, 'urls': urls, 'labs': labs,
          'scope': {k_: sorted(v) for k_, v in scope.items() if len(v) < len(codes) - 20}}
+if PRACTICE:
+    # practice table: {practice id: [name, city, how named, doctor ids]}. Named after the organization NPI that bills under
+    # the same tax ID (the one seen in the most batches); a one-doctor practice is that doctor; otherwise the name is blank and
+    # the page says "Group of N doctors". 'o' = organization name, 's' = solo doctor, 'n' = no public name.
+    from collections import Counter
+    docs_, orgs_ = {}, {}
+    def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
+    with ThreadPoolExecutor(16) as P_:
+        for m_ in P_.map(_rd, [k_ for k_, _ in ls(WK + 'P/')]):
+            for pid_, (d_, o_) in m_.items():
+                docs_.setdefault(pid_, set()).update(d_); orgs_.setdefault(pid_, Counter()).update(o_)
+    prac = {}
+    for pid_, d_ in docs_.items():
+        d_ = sorted(d_); cities = Counter(ptab[i_][1] for i_ in d_ if ptab[i_][1])
+        city = cities.most_common(1)[0][0] if cities else ''
+        if orgs_[pid_]: o_ = orgs_[pid_].most_common(1)[0][0]; prac[pid_] = [ptab[o_][0], ptab[o_][1] or city, 'o', d_]
+        elif len(d_) == 1: prac[pid_] = [ptab[d_[0]][0], ptab[d_[0]][1], 's', d_]
+        else: prac[pid_] = ['', city, 'n', d_]
+    embed['prac'] = prac
+    how = Counter(v_[2] for v_ in prac.values())
+    log('practices', len(prac), 'named after an organization', how['o'], 'solo', how['s'], 'no public name', how['n'],
+        'doctors in a no-name group', sum(len(v_[3]) for v_ in prac.values() if v_[2] == 'n'))
 s3.put_object(Bucket=B, Key=TOUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'npis.json', Body=json.dumps(npis).encode())
 log('DONE', len(codes), 'codes', len(ptab), 'providers', len(nets), 'networks', sum(summary.values()), 'lines')
