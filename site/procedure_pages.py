@@ -1342,7 +1342,7 @@ def range_cell(s):
     return f"<td class='num' data-l='Lowest'>{money(s['lo']['v'])}</td><td class='num' data-l='Highest'>{money(s['hi']['v'])}</td>"
 
 
-def area_index(area, rows, au, pf_path):
+def area_index(area, rows, au, pf_path, more=0):
     """rows: [(slug, summary)] in display order."""
     cats = {}
     for ps, s in rows:
@@ -1366,7 +1366,7 @@ def area_index(area, rows, au, pf_path):
 <h1 class="letters">What care costs<em> in {esc(area['name'])}</em></h1><p class="lead">{esc(desc)} {n} of {len(rows)} have at least one published insurer rate here so far.</p>
 <p class="byline">By <a href="/about/">{esc(AUTHOR['name'])}</a>, {esc(AUTHOR['role'])} · Updated {updated()}</p>
 {f'<p class="aka">Includes providers in {esc(", ".join(cities))}{" and more" if len(cities) == 20 else ""}.</p>' if len(cities) > 1 else ''}
-<p class="ctas"><a class="btn hi" href="{esc(pf_path)}">Search every billing code in the Price Finder</a></p></div></section>
+<p class="ctas">{f'<a class="btn hi" href="/costs/{au}/all/">See all {more + len(rows):,} procedures priced here</a> ' if more else ''}<a class="btn{'' if more else ' hi'}" href="{esc(pf_path)}">Search every billing code in the Price Finder</a></p></div></section>
 <div class="wrap"><section class="sec">{tbl}<p class="cap">Lowest and highest are real published figures, not averages: one line per provider per network, that provider's standard rate. Open a procedure for the sources.</p></section></div></main>'''
     jsonld = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title, 'description': desc,
               'url': SITE['origin'] + f'/costs/{au}/', 'dateModified': TODAY.isoformat()}
@@ -1712,6 +1712,19 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
         codes = [c for c in codes if c in only_codes]
     out = os.path.join(site, 'costs')
     os.makedirs(out, exist_ok=True)
+    import more_pages   # pages beyond the featured ones live in R2 (site/more/); this Function serves them (Oct 19)
+    fdir = os.path.join(site_dir, 'functions', 'costs')
+    if os.path.isdir(os.path.join(site_dir, 'functions')):
+        os.makedirs(fdir, exist_ok=True)
+        open(os.path.join(fdir, '[[path]].js'), 'w').write(more_pages.FUNCTION_JS)
+
+    def more_n(au):
+        if not getattr(store, 's3', None):
+            return 0
+        try:
+            return len(json.loads(store.s3.get_object(Bucket=store.B, Key=f'{more_pages.PFX}{au}/manifest.json')['Body'].read())['pages'])
+        except Exception:
+            return 0
     open(os.path.join(out, 'costs.css'), 'w').write(CSS)
     # summaries of areas not rebuilt this run are kept from the last run, so the indexes always cover every area
     keep = prev.get('summaries', {}) if prev else {}
@@ -1796,7 +1809,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
                         w.writerows(rows)
                 n_written += 1
         os.makedirs(os.path.join(out, au), exist_ok=True)
-        open(os.path.join(out, au, 'index.html'), 'w', encoding='utf-8').write(area_index(a, mine, au, a['path']))
+        open(os.path.join(out, au, 'index.html'), 'w', encoding='utf-8').write(area_index(a, mine, au, a['path'], more_n(au)))
         sitemap.append(f'/costs/{au}/')
         sitemap += [f'/costs/{au}/{ps}/' for ps, s in mine if s.get('index', s['any'])]
     for c, n, cat, ps in procs:
