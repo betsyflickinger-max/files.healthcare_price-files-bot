@@ -72,11 +72,22 @@ def main():
     try:
         toc = find_links._toc_url(NC_TOC, today)
         text = find_links._get(toc)
-        for u in sorted(set(re.findall(r'"location"\s*:\s*"([^"]+)"', text))):
-            u = u.replace("\\/", "/")
-            if "local" in u.split("?")[0].rsplit("/", 1)[-1].lower():
-                p = peek(u)
-                local.append(dict(file=u.split("?")[0].rsplit("/", 1)[-1], **p))
+        import json
+        plans = {}
+        for rs in json.loads(text).get("reporting_structure", []):
+            for f in rs.get("in_network_files", []):
+                u = f["location"]
+                if "local" in u.split("?")[0].rsplit("/", 1)[-1].lower():
+                    d = plans.setdefault(u, {})
+                    for pl in rs.get("reporting_plans", []):
+                        d[(pl.get("plan_id"), pl.get("plan_name"))] = pl.get("plan_market_type", "")
+        for u, d in sorted(plans.items()):
+            p = peek(u)
+            mk = {}
+            for v in d.values():
+                mk[v] = mk.get(v, 0) + 1
+            p["inside"] = f"{p['inside']}; plans pointing to it: {len(d)} {mk}; e.g. {[n for _, n in list(d)[:3]]}"
+            local.append(dict(file=u.split("?")[0].rsplit("/", 1)[-1], **p))
         toc_name = toc.rsplit("/", 1)[-1]
     except Exception as e:  # noqa: BLE001
         toc_name = f"could not open: {type(e).__name__}: {str(e)[:120]}"
