@@ -2,6 +2,7 @@
 
   python site/sitewide.py DIR     (DIR holds site/ and functions/, like every deploy step)
 
+0. Wordmark (Oct 19): "Files" is yellow on every page and the wordmark is lighter than the headings (BRAND_RX, EXTRA_CSS).
 1. Name: the site is "The Healthcare Files" (Betsy, Oct 18). Any page or data file a builder made from an older
    template that still says "What It Costs" is renamed here, so no deploy path can bring the old name back.
 2. Units look, built in: /units.css (the Units rules from /looks/looks.css, with their fonts) is linked from every
@@ -20,6 +21,18 @@ NAME = 'The Healthcare Files'
 TAGLINE = 'What care really costs, from the price files hospitals and insurers have to publish.'
 RENAME = [('What It <span>Costs</span>', 'The Healthcare <span>Files</span>'), ('What It Costs', NAME), ('WHAT IT COSTS', NAME.upper())]
 LINK = '<link rel="stylesheet" href="/units.css">'
+# One wordmark on every page (Betsy, Oct 19): "Files" always yellow (tool pages, profiles and Price Finders had it plain),
+# and lighter than the page headings so the name doesn't read as one more headline.
+BRAND_RX = re.compile(r'(<a class="(?:sn-brand|brand)"[^>]*>)The Healthcare Files</a>')
+BRAND_TO = r'\1The Healthcare <span>Files</span></a>'
+EXTRA_CSS = '''
+/* Oct 19, 2026 (Betsy): one wordmark everywhere, FILES in yellow, set apart from the page headings */
+html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand){font:500 22px/1 "Look Hanken",sans-serif!important;text-transform:none!important;letter-spacing:0!important;color:#fff!important;white-space:nowrap;text-decoration:none}
+html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand) span{font-weight:800;text-transform:uppercase;letter-spacing:.02em;color:#F7C925!important}
+@media (max-width:480px){html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand){font-size:19px!important}}
+/* Oct 19, 2026 (Betsy): prices stand out from the text around them (deep Units blue, 7:1 on the page ground) */
+html[data-look="units"]:not(#_) :is(.price,.n,.tv,td.num[data-l="Lowest"],td.num[data-l="Highest"]){color:#1F45C4}
+'''
 TEXT = ('.html', '.htm', '.webmanifest', '.xml', '.js', '.css', '.csv')   # not .txt/.json (price data); .csv only gets the name
 
 
@@ -38,7 +51,7 @@ def units_css(looks_css):
     fams = set(re.findall(r'"(Look [^"]+)"', ' '.join(keep)))
     faces = [st for st in out if st.startswith('@font-face') and any(f'"{f}"' in st for f in fams)]
     return ('/* The Healthcare Files: Units look, built into every page (made by site/sitewide.py from /looks/looks.css). */\n'
-            + '\n'.join(faces + keep) + '\n')
+            + '\n'.join(faces + keep) + '\n' + EXTRA_CSS)
 
 
 def bake(s):
@@ -84,6 +97,8 @@ def apply(d):
                 if 'What It' in t or 'WHAT IT COSTS' in t:
                     for a, b in RENAME:
                         t = t.replace(a, b)
+                if 'The Healthcare Files</a>' in t:
+                    t = BRAND_RX.sub(BRAND_TO, t)
                 if f.endswith(('.html', '.htm')):
                     t = bake(t)
                 if t != s:
