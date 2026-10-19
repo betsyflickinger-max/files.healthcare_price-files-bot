@@ -106,6 +106,14 @@ def update_tables():
     return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read())) if UPDATE else None
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
+CODE_OF = {v: k for k, v in STATES.items()}
+def common_first():
+    """Oct 18, 2026: scopes listed in site/common_first.json build their state's 2,000 priority codes (+ every MS-DRG) first;
+    every other code is listed on the page as coming and built on request or by the background fill."""
+    try: return SCOPE in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'common_first.json')))['scopes']
+    except Exception: return False
+
+
 def label_tables(st):
     """Oct 18, 2026: the scope's catalog networks (insurers/networks_<scope>.csv finder "catalog": one network per file, e.g.
     Anthem's and Blue Cross's employer networks) are named by their file label, not split by each provider's product list.
@@ -449,6 +457,8 @@ def main():
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
                 env['LABEL_TABLES_KEY'] = label_tables(st)
+                if common_first() and not UPDATE:   # Oct 18: common codes first (priority list + DRGs, the rest listed as coming)
+                    env.update(PHASE='1', PRIORITY_KEY=f'site/priority/{CODE_OF[slug]}.json')
                 if UPDATE:
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
