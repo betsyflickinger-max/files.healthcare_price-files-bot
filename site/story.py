@@ -23,7 +23,7 @@ import visuals
 esc = lambda s: html.escape(str(s if s is not None else ''), quote=True)
 money = lambda v: '$' + f'{v:,.2f}'
 short = lambda v: '$' + (f'{v:,.0f}' if v >= 100 else f'{v:,.2f}')
-STEPS = ['Same plan, two hospitals', 'Every price, on one line', 'Your insurance changes it too', "It's not one bill",
+STEPS = ['Same plan, two hospitals', 'Line up every price', 'Your insurance changes it too', "It's not one bill",
          'What would you pay?', "Who's still hiding prices?", 'Now look up yours']
 
 
@@ -85,43 +85,37 @@ def ch1(S):
     return chapter(0, '', 'Same plan. Two hospitals.', body)
 
 
+def ladder(items, top):
+    """Rows read top to bottom, cheapest first: a plain label, the price, who it is (with its source), and a dot on a
+    $0-to-highest track. kind: 'ins' (insurer price, round dot) or 'med' (Medicare yardstick, grey diamond)."""
+    out = ''
+    for lab, v, who, kind in items:
+        x = max(0.0, min(100.0, v / top * 100))
+        out += (f'<li class="lr lr-{kind}"><div class="lr-t"><span class="lr-lab">{esc(lab)}</span><b class="lr-p">{money(v)}</b></div>'
+                f'<p class="lr-who">{who}</p><span class="lr-track" aria-hidden="true"><i style="left:{x:.1f}%"></i></span></li>')
+    return (f'<ol class="lr-list">{out}</ol><p class="lr-scale" aria-hidden="true"><span>$0</span>'
+            f'<span>the dot shows where each price falls, from $0 to {short(top)}</span><span>{short(top)}</span></p>')
+
+
 def ch2(S, rows, med):
-    ins = [r for r in rows if r['type'] == 'insurer rate']
     flat = {(n['ins'], n['plan']) for n in S['networks'] if n.get('flat') or n.get('par')}
-    ins = [r for r in ins if (r['insurer'], r['network or label']) not in flat]
-    cash = [r for r in rows if r['type'] != 'insurer rate']
-    vs = sorted(float(r['price']) for r in ins)
-    if not vs:
+    ins = sorted((r for r in rows if r['type'] == 'insurer rate' and (r['insurer'], r['network or label']) not in flat),
+                 key=lambda r: (float(r['price']), r['provider']))
+    if not ins:
         return ''
-    step = 500 if vs[-1] > 4000 else 250
-    top = max(vs[-1], max((float(r['price']) for r in cash), default=0)) + step
-    nb = int(top // step) + 1
-    bins = [[] for _ in range(nb)]
-    for r in ins:
-        bins[int(float(r['price']) // step)].append(r)
-    mx = max(len(b) for b in bins)
-    W, Hh = 400, 200
-    bw = W / nb
-    bars = ''
-    for k, b in enumerate(bins):
-        if not b:
-            continue
-        h = max(2, len(b) / mx * Hh)
-        lo_b = min(b, key=lambda r: float(r['price']))
-        hi_b = max(b, key=lambda r: float(r['price']))
-        lab = (f"{len(b):,} prices from ${k * step:,} to ${(k + 1) * step:,}. Lowest: {lo_b['provider']}, {money(float(lo_b['price']))} "
-               f"({lo_b['insurer']} {lo_b['network or label']}). Highest: {hi_b['provider']}, {money(float(hi_b['price']))}.")
-        bars += (f'<rect class="st-bin" tabindex="0" x="{k * bw + 1:.1f}" y="{Hh - h:.1f}" width="{bw - 2:.1f}" height="{h:.1f}" '
-                 f'data-say="{esc(lab)}" data-lo="{esc(lo_b["source"])}" data-hi="{esc(hi_b["source"])}"><title>{esc(lab)}</title></rect>')
-    ticks = ''.join(f'<text x="{(v / step) * bw:.1f}" y="{Hh + 18}" class="st-ax">${v // 1000}k</text>' for v in range(0, int(top), 1000))
-    cash_marks = ''.join(f'<rect class="st-cash" x="{float(r["price"]) / step * bw - 4:.1f}" y="{Hh + 26 + (i % 3) * 9}" width="8" height="8">'
-                         f'<title>Cash price {money(float(r["price"]))}: {esc(r["provider"])}</title></rect>' for i, r in enumerate(cash))
-    meds = ''
+    n = len(ins)
+    who = lambda r: (f'{esc(r["provider"])} · {esc(r["city"])} · {esc(r["insurer"])} {esc(r["network or label"])} · '
+                     f'{src(r["source"], r["file date"])}')
+    picks = [('Lowest price', 0), ('1 in 4 prices are below this', n // 4), ('Half are below this, half above', n // 2),
+             ('3 in 4 prices are below this', (3 * n) // 4), ('Highest price', n - 1)]
+    items = [(lab, float(ins[k]['price']), who(ins[k]), 'ins') for lab, k in picks]
+    msrc = (S.get('med_src') or {})
     for v, lab in med:
-        x = v / step * bw
-        meds += (f'<g class="st-med"><line x1="{x:.1f}" x2="{x:.1f}" y1="0" y2="{Hh}"/><rect x="{x - 5:.1f}" y="-6" width="10" height="10" '
-                 f'transform="rotate(45 {x:.1f} -1)"><title>Medicare, {esc(lab)}: {money(v)}</title></rect></g>')
-    # like with like: hospital lines vs Medicare's hospital rate, surgery-center lines vs its surgery-center rate
+        sk = 'opps' if lab == 'hospital' else 'asc'
+        sl = msrc.get(sk)
+        items.append((f'Medicare pays a {lab} (a yardstick, not a price you can get)', v,
+                      'National rate, before local wage adjustment' + (f' · {src(sl[1], None, sl[0])}' if sl else ''), 'med'))
+    items.sort(key=lambda t: t[1])
     mm = dict((lab, v) for v, lab in med)
     over = tot = 0
     for r in ins:
@@ -129,23 +123,16 @@ def ch2(S, rows, med):
         if m:
             tot += 1
             over += float(r['price']) > 2 * m
-    stat = (f'<p><b>{over:,} of {tot:,}</b> are more than double what Medicare pays the same kind of place.</p>' if tot else '')
-    svg = (f'<svg class="st-hist" viewBox="-4 -14 {W + 8} {Hh + 60}" role="group" aria-label="{len(vs):,} insurer prices for a colonoscopy '
-           f'in Dallas–Fort Worth, from {money(vs[0])} to {money(vs[-1])}, in ${step} steps. Tap a bar for details.">{bars}{meds}'
-           f'<line x1="0" x2="{W}" y1="{Hh}" y2="{Hh}" class="st-axis"/>{ticks}{cash_marks}</svg>')
-    tb = [[f'${k * step:,}–${(k + 1) * step:,}', f'{len(b):,}'] for k, b in enumerate(bins) if b]
-    cc = (S['hcash'][0], 'hospital') if S.get('hcash') else None
-    mh = (med[0][0], 'hospital outpatient, national rate') if med else None
-    body = (f'<div class="st-say st-wide"><p>Each bar is a group of prices insurers agreed to pay DFW hospitals and surgery centers: '
-            f'<b>{len(vs):,} prices</b>, from <b>{short(vs[0])}</b> to <b>{short(vs[-1])}</b>.</p>{stat}</div>'
-            f'<div class="st-pic">{svg}<p class="st-tap" aria-live="polite">Tap a bar to see who is in it.</p>'
-            f'<p class="st-keyrow"><span><i class="k-ins"></i>Insurer price</span><span><i class="k-cash"></i>Cash price (hospital files)</span>'
-            f'<span><i class="k-med"></i>Medicare: ' + ' · '.join(f'{esc(l)} {short(v)}' for v, l in med) + ' (a yardstick, not a price you can get)</span></p></div>'
-            f'<p class="st-fine">Every line behind this picture: <a href="/costs/dallas-fort-worth/colonoscopy/prices.csv">download all {len(vs):,} prices (CSV)</a>, each with its source file. '
-            f'Networks that list the same amount at most places are left out of the picture.</p>'
-            + visuals.word_cards(S, 'facility fee', mh, cc)
-            + table(['Price range', 'How many prices'], tb, 'Colonoscopy facility fees in Dallas–Fort Worth, grouped'))
-    return chapter(1, '', 'Every price, on one line', body)
+    stat = (f'<p>And <b>{over:,} of those {tot:,} prices</b> are more than double what Medicare pays the same kind of place.</p>' if tot else '')
+    body = (f'<div class="st-say st-wide"><p>Insurers have agreed to <b>{n:,} different prices</b> for a colonoscopy at DFW hospitals and '
+            f'surgery centers. Line them all up from cheapest to most expensive, and here\'s who sits at each point along the way.</p>{stat}</div>'
+            + ladder(items, float(ins[-1]['price']))
+            + f'<p class="st-fine">These are facility fees (the room, staff and equipment). Want every one? '
+            f'<a href="/costs/dallas-fort-worth/colonoscopy/prices.csv">Download all {n:,} prices (CSV)</a>, each with its source file. '
+            f'Networks that list the same amount at most places are left out.</p>'
+            + visuals.word_cards(S, 'facility fee', ((med[0][0], 'hospital outpatient, national rate') if med else None),
+                                 ((S['hcash'][0], 'hospital') if S.get('hcash') else None)))
+    return chapter(1, '', 'Line up every price', body)
 
 
 def ch3(S, rows):
@@ -162,15 +149,11 @@ def ch3(S, rows):
     nets = sorted(best.values(), key=lambda r: float(r['price']))
     if len(nets) < 3:
         return ''
-    mx = float(nets[-1]['price'])
-    bars = ''.join(f'<li><span class="st-n">{esc(r["insurer"])} <small>{esc(r["network or label"])}</small></span>'
-                   f'<span class="st-bar"><i style="width:{float(r["price"]) / mx * 100:.1f}%"></i></span><b>{short(float(r["price"]))}</b></li>' for r in nets)
+    items = [(f'{r["insurer"]} {r["network or label"]}', float(r['price']), src(r['source'], r['file date']), 'ins') for r in nets]
     x = float(nets[-1]['price']) / float(nets[0]['price'])
-    body = (f'<div class="st-say st-wide"><p>At <b>{esc(sp["name"])}</b> in {esc(sp["city"])}, the colonoscopy facility fee depends on who is paying. '
-            f'<b>{len(nets)} insurance networks</b>, from {short(float(nets[0]["price"]))} to {short(float(nets[-1]["price"]))}: '
-            f'{x:.1f} times as much, in the same building.</p></div><ol class="st-bars">{bars}</ol>'
-            + table(['Insurer', 'Network', 'Facility fee', 'Source'], [[esc(r['insurer']), esc(r['network or label']), money(float(r['price'])),
-                     src(r['source'], r['file date'])] for r in nets], f'{sp["name"]}: colonoscopy facility fee by network'))
+    body = (f'<div class="st-say st-wide"><p>Now stay in one place: <b>{esc(sp["name"])}</b> in {esc(sp["city"])}. Here is what each insurance '
+            f'pays it for the same colonoscopy, cheapest first. The top one gets <b>{x:.1f} times</b> what the first one gets, in the same building.</p></div>'
+            + ladder(items, float(nets[-1]['price'])))
     return chapter(2, '', 'Your insurance changes it too', body)
 
 
@@ -264,6 +247,15 @@ CSS = r'''
 .st-axis{stroke:var(--ink);stroke-width:2}.st-ax{font:12px var(--mono);fill:var(--ink);text-anchor:middle}
 .st-cash{fill:#C2571A}.st-med line{stroke:var(--muted);stroke-width:2;stroke-dasharray:5 4}.st-med rect{fill:var(--paper);stroke:var(--muted);stroke-width:2}
 .st-med text{font:700 12px var(--mono);fill:var(--muted)}
+.lr-list{list-style:none;margin:18px 0 0;padding:0;max-width:760px;border-top:2px solid var(--rule)}
+.lr{padding:12px 0 14px;border-bottom:1px solid var(--rule)}
+.lr-t{display:flex;justify-content:space-between;align-items:baseline;gap:14px}.lr-lab{font-weight:700;font-size:17px}
+.lr-p{font:700 clamp(19px,2.6vw,24px) var(--mono);white-space:nowrap}.lr-med .lr-lab,.lr-med .lr-p{color:var(--muted)}
+.lr-who{margin:2px 0 8px;font-size:14px;line-height:1.45;opacity:.85}.lr-who .st-src{white-space:normal}
+.lr-track{display:block;position:relative;height:14px;border-bottom:2px solid var(--rule)}
+.lr-track i{position:absolute;bottom:-7px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--stamp)}
+.lr-med .lr-track{border-bottom-style:dashed;border-color:var(--muted)}.lr-med .lr-track i{border-radius:0;width:10px;height:10px;margin-left:-5px;bottom:-6px;background:var(--paper);border:2px solid var(--muted);transform:rotate(45deg)}
+.lr-scale{display:flex;justify-content:space-between;gap:10px;max-width:760px;font:12px var(--mono);color:var(--muted);margin:6px 0 0}.lr-scale span:nth-child(2){text-align:center}
 .st-tap{min-height:3em;margin:8px 0 0;font-size:15px}
 .st-keyrow{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;margin:4px 0 0}.st-keyrow i{display:inline-block;width:12px;height:12px;margin-right:6px;vertical-align:-1px}
 .k-ins{background:var(--stamp);border-radius:50%}.k-cash{background:#C2571A}.k-med{border:2px solid var(--muted);transform:rotate(45deg);width:9px!important;height:9px!important}
