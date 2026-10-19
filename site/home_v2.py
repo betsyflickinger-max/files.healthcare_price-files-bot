@@ -15,6 +15,7 @@ searches, how far people scroll, one optional "what were you hoping to find?" qu
 Safe to run again: every step checks a marker first. The procedure-pages workflow runs `deploy` after its own deploy,
 so /v2/ always shows the same figures as the price pages.
 """
+import csv
 import hashlib
 import html
 import json
@@ -298,7 +299,13 @@ def build(d):
                '<p style="margin:18px 0 0;font-weight:800"><a href="/story/">New here? See the whole story in 7 steps →</a></p></div>\n')
         open(hp, 'w', encoding='utf-8').write(home.replace('<!-- NATIONAL:END -->', add + '<!-- NATIONAL:END -->', 1))
         changed = True
-    return patch_price_pages(site) or changed
+    # networks each price page leaves out of its figures (same rate at most places, BCBSTX ParPlan), by page
+    fbp = {}
+    for k, v in st['summaries'].items():
+        a_, c_ = k.split('|', 1)
+        if c_ in slugs:
+            fbp[(pp.area_url_slug(a_), slugs[c_])] = {(n['ins'], n['plan']) for n in v.get('networks') or [] if n.get('flat') or n.get('par')}
+    return patch_price_pages(site, fbp) or changed
 
 
 def write_page(site, name, home, sec, title_prefix):
@@ -359,12 +366,51 @@ def signup_block(proc_opts='', area_opts='', fixed=''):
             'While the site is a private preview we\'re only collecting sign-ups; the emails start when it goes public.</p></div>' + SU_JS)
 
 
-def patch_price_pages(site):
-    """Add the sign-up card (alert fixed to that page's procedure and place) to every /costs/<area>/<procedure>/ page."""
-    n = 0
+GA_MARK = '<!-- GAUGE (site/home_v2.py) -->'
+GAUGE_JS = r"""/* Quote gauge on price pages (site/home_v2.py, Oct 19, 2026). Reads the page's own "Got a quote?" box (#vrq) and the
+   page's published prices (embedded from its prices.csv). Worked out in the browser; nothing is saved or sent. */
+(function(){var B=document.querySelector('.hcf-g');if(!B)return;var a=JSON.parse(B.querySelector('.hcf-gd').textContent),n=a.length,M=+B.dataset.med,ML=B.dataset.medl,
+G=B.querySelector('svg'),say=B.querySelector('.hcf-gsay'),q=document.getElementById('vrq'),NS='http://www.w3.org/2000/svg',cx=170,cy=170,R=130;
+function pt(f,r){var t=Math.PI*(1-f);return [cx+r*Math.cos(t),cy-r*Math.sin(t)]}
+function mk(t,at){var e=document.createElementNS(NS,t);for(var k in at)e.setAttribute(k,at[k]);G.appendChild(e);return e}
+function arc(f0,f1,c){if(f1-f0<.001)return;var p=pt(f0,R),r=pt(f1,R);mk('path',{d:'M'+p[0]+' '+p[1]+' A'+R+' '+R+' 0 0 1 '+r[0]+' '+r[1],fill:'none',stroke:c,'stroke-width':26})}
+function below(v){var lo=0,hi=n;while(lo<hi){var m=(lo+hi)>>1;if(a[m]<v)lo=m+1;else hi=m}return lo}
+function txt(x,y,s,an){var e=mk('text',{x:x,y:y,'font-size':12,'font-family':'monospace','text-anchor':an||'middle',fill:'currentColor'});e.textContent=s}
+var $=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})},r$=function(v){return '$'+Math.round(v).toLocaleString('en-US')};
+function draw(){G.innerHTML='';if(M>0){var f1=below(M+.005)/n,f2=below(2*M+.005)/n;arc(0,f1,'#3D8B5A');arc(f1,f2,'#9DB6F5');arc(f2,1,'#E6402E');var mp=pt(f1,R+24);txt(mp[0],mp[1],'Medicare '+r$(M))}else arc(0,1,'#9DB6F5');
+txt(14,192,r$(a[0])+' lowest','start');txt(326,192,r$(a[n-1])+' highest','end');
+var v=parseFloat(q&&q.value);if(!(v>0)){say.textContent='Type your quote in the box above and the needle shows where it lands among the '+n.toLocaleString('en-US')+' prices published here.';return}
+var b=below(v),p=pt(Math.min(1,Math.max(0,b/n)),R-30);mk('line',{x1:cx,y1:cy,x2:p[0],y2:p[1],stroke:'currentColor','stroke-width':6,'stroke-linecap':'round'});mk('circle',{cx:cx,cy:cy,r:10,fill:'currentColor'});
+say.textContent=$(v)+' is higher than '+b.toLocaleString('en-US')+' of the '+n.toLocaleString('en-US')+' prices insurers published here'+(b===0?' (lower than all of them)':b===n?' (higher than all of them)':'')+(M>0?', and '+(v/M).toFixed(1)+'× Medicare’s rate ('+ML+').':'.')}
+if(q){q.addEventListener('input',draw);q.addEventListener('change',function(){try{window.hcfTrack&&window.hcfTrack({ev:'tap',detail:'price-page gauge quote entered'})}catch(e){}})}draw()})();
+"""
+GA_CSS = ('<style>.hcf-g{margin:14px 0 0;max-width:640px;padding:14px 16px;border:2px solid var(--ink);background:var(--paper);color:var(--ink)}'
+          '.hcf-g p.hcf-gk{margin:0 0 4px;font:700 13px var(--mono);letter-spacing:.1em;text-transform:uppercase}.hcf-g svg{width:100%;max-width:400px;height:auto;display:block}'
+          '.hcf-gsay{margin:6px 0 0;font-size:16px;line-height:1.5}.hcf-gkey{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;margin:6px 0 0}'
+          '.hcf-gkey i{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px}</style>')
+
+
+def gauge_block(prices, med, medl):
+    key = ('<p class="hcf-gkey"><span><i style="background:#3D8B5A"></i>at or below Medicare</span><span><i style="background:#9DB6F5"></i>up to double</span>'
+           '<span><i style="background:#E6402E"></i>more than double</span></p>') if med > 0 else ''
+    return (f'{GA_MARK}{GA_CSS}<div class="hcf-g" data-med="{med:.2f}" data-medl="{esc(medl)}"><p class="hcf-gk">Where your quote lands</p>'
+            f'<svg viewBox="0 0 340 200" aria-hidden="true"></svg><p class="hcf-gsay" aria-live="polite"></p>{key}'
+            f'<script type="application/json" class="hcf-gd">{json.dumps(prices, separators=(",", ":"))}</script></div>'
+            '<script src="/hcf-gauge.js" defer></script>')
+
+
+def patch_price_pages(site, flat_by_page=None):
+    """Every /costs/<area>/<procedure>/ page gets the sign-up card (alert fixed to that page) and, where the page has its
+    prices.csv and a "Got a quote?" box, the quote gauge under that box. Both re-added after each daily rebuild."""
+    n_su = n_ga = 0
     base = os.path.join(site, 'costs')
     if not os.path.isdir(base):
         return False
+    gj = os.path.join(site, 'hcf-gauge.js')
+    changed = False
+    if not os.path.isfile(gj) or open(gj, encoding='utf-8').read() != GAUGE_JS:
+        open(gj, 'w', encoding='utf-8').write(GAUGE_JS)
+        changed = True
     for area in os.listdir(base):
         ad = os.path.join(base, area)
         if not os.path.isdir(ad):
@@ -373,17 +419,31 @@ def patch_price_pages(site):
             p = os.path.join(ad, proc, 'index.html')
             if not os.path.isfile(p):
                 continue
-            s = open(p, encoding='utf-8').read()
-            if SU_MARK in s or '<footer' not in s:
-                continue
-            h1 = re.search(r'<h1[^>]*>(.*?)</h1>', s, re.S)
-            label = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', h1.group(1))).strip() if h1 else proc.replace('-', ' ')
-            block = f'<div class="wrap" style="margin:28px auto">{signup_block(fixed=label)}</div>\n'
-            open(p, 'w', encoding='utf-8').write(s.replace('<footer', block + '<footer', 1))
-            n += 1
-    if n:
-        print(f'sign-up card added to {n} price pages')
-    return n > 0
+            s0 = s = open(p, encoding='utf-8').read()
+            if SU_MARK not in s and '<footer' in s:
+                h1 = re.search(r'<h1[^>]*>(.*?)</h1>', s, re.S)
+                label = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', h1.group(1))).strip() if h1 else proc.replace('-', ' ')
+                s = s.replace('<footer', f'<div class="wrap" style="margin:28px auto">{signup_block(fixed=label)}</div>\n<footer', 1)
+                n_su += 1
+            pc = os.path.join(ad, proc, 'prices.csv')
+            if GA_MARK not in s and '<form class="vr-quote"' in s and os.path.isfile(pc):
+                rows = list(csv.reader(open(pc, encoding='utf-8')))
+                if len(rows) > 2:
+                    h = rows[1]
+                    flat = (flat_by_page or {}).get((area, proc), set())   # same-amount-everywhere networks: left out of the page's figures, so out of the gauge too
+                    vals = sorted(float(r[h.index('price')]) for r in rows[2:] if len(r) == len(h) and r[0] == 'insurer rate' and r[h.index('price')]
+                                  and (r[h.index('insurer')], r[h.index('network or label')]) not in flat)
+                    m = re.search(r'class="vr-line"[^>]*data-med="([\d.]+)" data-medl="([^"]*)"', s)
+                    if vals:
+                        i = s.index('<form class="vr-quote"')
+                        k = s.index('</form>', i) + len('</form>')
+                        s = s[:k] + gauge_block(vals, float(m.group(1)) if m else 0.0, html.unescape(m.group(2)) if m else '') + s[k:]
+                        n_ga += 1
+            if s != s0:
+                open(p, 'w', encoding='utf-8').write(s)
+    if n_su or n_ga:
+        print(f'price pages: sign-up card added to {n_su}, quote gauge added to {n_ga}')
+    return changed or n_su > 0 or n_ga > 0
 
 
 # ---------------------------------------------------------------- tester tracking

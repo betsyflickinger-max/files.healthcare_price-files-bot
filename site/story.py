@@ -211,9 +211,10 @@ def ch_map(md):
     opts = ''.join(f'<option value="{i}">{esc(k)} ({len(v)} places)</option>' for i, (k, v) in enumerate(md['N']))
     data = json.dumps(md, separators=(',', ':')).replace('</', '<\\/')
     body = ('<div class="st-say st-wide"><p>Same colonoscopy, same insurance, all around the metroplex. Each dot is a hospital or surgery center. '
-            '<b>The bigger and redder the dot, the more that place is paid.</b> Tap a dot to see who it is.</p></div>'
+            '<b>The bigger and redder the dot, the more that place is paid.</b> The 5 cheapest and 3 most expensive are labeled; tap any dot to see who it is.</p></div>'
             f'<div class="st-mapctl"><label for="stNet">Your insurance</label><select id="stNet">{opts}</select>'
-            '<label for="stZip">Your ZIP code (optional)</label><input id="stZip" inputmode="numeric" maxlength="5" placeholder="75201" autocomplete="postal-code"></div>'
+            '<label for="stZip">Your ZIP code (optional)</label><input id="stZip" inputmode="numeric" maxlength="5" placeholder="75201" autocomplete="postal-code">'
+            '<label class="st-chk"><input type="checkbox" id="stAllL"> Show every price on the map (where they fit)</label></div>'
             '<div class="st-map"><svg id="stMap" viewBox="0 0 600 520" role="group" aria-label="Map of Dallas–Fort Worth with colonoscopy prices"></svg></div>'
             '<p class="st-keyrow"><span><i class="k-b0"></i>At or below Medicare</span><span><i class="k-b1"></i>Up to double Medicare</span>'
             '<span><i class="k-b2"></i>More than double Medicare</span></p>'
@@ -302,7 +303,9 @@ def ch7(qbox, area_opts, chips, signup):
     return chapter(6, '', 'Now look up yours', body)
 
 
-CSS = r'''
+CSS = r'''.st-map .lbl{stroke:#151515;stroke-width:1}.st-map .lb0{fill:#E3F1E7}.st-map .lb1{fill:#fff}.st-map .lb2{fill:#E6402E}
+.st-map .lbt{font-family:var(--mono);font-weight:700;fill:#151515}.st-map .lbw{fill:#fff}.st-chk{display:flex;gap:8px;align-items:center;font-weight:400!important;min-height:44px}
+
 .mn{background:#151515;color:#F4F1EA;border:6px double #F7C925;padding:22px clamp(14px,3vw,28px);max-width:720px;margin-top:16px}
 .mn-h{margin:0;text-align:center;font:700 clamp(22px,3.4vw,30px) Georgia,"Times New Roman",serif;letter-spacing:.08em;text-transform:uppercase;color:#F4F1EA}
 .mn-s{margin:4px 0 16px;text-align:center;font:italic 14px Georgia,serif;color:#bdb6a8}
@@ -320,7 +323,7 @@ CSS = r'''
 .st-mapctl input{max-width:160px;font-family:var(--mono)}
 .st-map{max-width:760px;border:2px solid var(--rule);background:#EDEAE2;overflow:hidden}.st-map svg{display:block;width:100%;height:auto}
 .st-map .cty{fill:none;stroke:#cfc8b8;stroke-width:1}.st-map .wat{fill:#c9dcef;stroke:none}.st-map .rd{fill:none;stroke:#fff;stroke-width:3}
-.st-map .pl{font:700 12px var(--body);fill:#6b665c;text-anchor:middle;text-transform:uppercase;letter-spacing:.06em}
+.st-map .pl{font-family:var(--body);font-weight:700;fill:#6b665c;text-anchor:middle;text-transform:uppercase;letter-spacing:.06em}
 .st-map .dot{stroke:#151515;stroke-width:1.2;cursor:pointer}.st-map .dot:focus,.st-map .dot.on{stroke-width:3.5;outline:none}
 .st-map .you{fill:#F7C925;stroke:#151515;stroke-width:2}.st-map .youl{font:800 12px var(--body)}
 .k-b0{background:#3D8B5A}.k-b1{background:#9DB6F5}.k-b2{background:#E6402E}
@@ -429,12 +432,12 @@ var MD=document.getElementById('stMapData');if(MD){(function(){var d=JSON.parse(
 var b=d.box,W=600,H=520,k=Math.cos((b[1]+b[3])/2*Math.PI/180),sx=W/((b[2]-b[0])*k),sy=H/(b[3]-b[1]),sc=Math.min(sx,sy),ox=(W-(b[2]-b[0])*k*sc)/2,oy=(H-(b[3]-b[1])*sc)/2;
 function X(lon){return ox+(lon-b[0])*k*sc}function Y(lat){return oy+(b[3]-lat)*sc}
 var NS='http://www.w3.org/2000/svg';function el(t,a,p){var e=document.createElementNS(NS,t);for(var x in a)e.setAttribute(x,a[x]);(p||svg).appendChild(e);return e}
-var bg=el('g',{}),gd=el('g',{}),gy=el('g',{});
+var bg=el('g',{}),gd=el('g',{}),gl=el('g',{}),gy=el('g',{});var allL=document.getElementById('stAllL');
 function path(rings){return rings.map(function(r){return 'M'+r.map(function(p){return X(p[0]).toFixed(1)+' '+Y(p[1]).toFixed(1)}).join('L')}).join('')}
 fetch('/price-finder/basemap.json',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(m){
 (m.water||[]).forEach(function(w){el('path',{d:path(w.g)+'Z','class':'wat'},bg)});(m.counties||[]).forEach(function(c){el('path',{d:path(c.g),'class':'cty'},bg)});
 (m.roads||[]).forEach(function(r){if(r.c==='p')el('path',{d:path(r.t==='LineString'?[r.g]:r.g),'class':'rd'},bg)});
-(m.places||[]).slice(0,9).forEach(function(p){var x=X(p.lon),y=Y(p.lat);if(x>20&&x<W-20&&y>14&&y<H-6){var t=el('text',{x:x,y:y,'class':'pl'},bg);t.textContent=p.name}})}).catch(function(){});
+var kp=Math.max(1,Math.min(1.8,600/(svg.getBoundingClientRect().width||600)));(m.places||[]).slice(0,9).forEach(function(p){var x=X(p.lon),y=Y(p.lat);if(x>20&&x<W-20&&y>14&&y<H-6){var t=el('text',{x:x,y:y,'class':'pl','font-size':(11*kp).toFixed(1)},bg);t.textContent=p.name}})}).catch(function(){});
 var m$=function(v){return '$'+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})};
 function band(pl,v){var m=d.M[pl[2]];return !m?1:v<=m?0:v<=2*m?1:2}var COL=['#3D8B5A','#9DB6F5','#E6402E'];
 var you=null;function mi(a,b2){var R=3959,t=Math.PI/180,dl=(b2[0]-a[0])*t,dn=(b2[1]-a[1])*t,h=Math.sin(dl/2)*Math.sin(dl/2)+Math.cos(a[0]*t)*Math.cos(b2[0]*t)*Math.sin(dn/2)*Math.sin(dn/2);return 2*R*Math.asin(Math.sqrt(h))}
@@ -442,14 +445,19 @@ function show(e){var pl=d.P[e[0]],u=d.U[e[2]],m=d.M[pl[2]],net=d.N[+sel.value][0
 info.innerHTML='';var b1=document.createElement('b');b1.textContent=pl[0]+', '+pl[1];info.appendChild(b1);
 info.appendChild(document.createTextNode(': '+m$(e[1])+' from '+net+(m?' ('+(e[1]/m).toFixed(1)+'× what Medicare pays a '+(pl[2]==='H'?'hospital':'surgery center')+')':'')+(you?', '+mi(you,[pl[3],pl[4]]).toFixed(1)+' miles from your ZIP':'')+'. '));
 var a=document.createElement('a');a.href=u[0];a.target='_blank';a.rel='noopener';a.textContent='file dated '+(u[1]||'(no date)')+' ↗';info.appendChild(a);ev({ev:'tap',detail:'map dot: '+pl[0]})}
-function draw(){gd.innerHTML='';var es=d.N[+sel.value][1],mx=es[es.length-1][1];
-es.slice().sort(function(a,c){return c[1]-a[1]}).forEach(function(e){var pl=d.P[e[0]],c=el('circle',{cx:X(pl[4]).toFixed(1),cy:Y(pl[3]).toFixed(1),r:(4+11*Math.sqrt(e[1]/mx)).toFixed(1),fill:COL[band(pl,e[1])],'class':'dot',tabindex:'0'},gd);
+function draw(){gd.innerHTML='';var es=d.N[+sel.value][1],mx=es[es.length-1][1],kk=Math.max(1,Math.min(1.8,600/(svg.getBoundingClientRect().width||600))),fs=12*kk;
+es.slice().sort(function(a,c){return c[1]-a[1]}).forEach(function(e){var pl=d.P[e[0]],c=el('circle',{cx:X(pl[4]).toFixed(1),cy:Y(pl[3]).toFixed(1),r:((4+11*Math.sqrt(e[1]/mx))*Math.sqrt(kk)).toFixed(1),fill:COL[band(pl,e[1])],'class':'dot',tabindex:'0'},gd);
 var t=el('title',{},c);t.textContent=pl[0]+', '+pl[1]+': '+m$(e[1]);c.addEventListener('click',function(){[].forEach.call(gd.querySelectorAll('.on'),function(o){o.classList.remove('on')});c.classList.add('on');show(e)});
 c.addEventListener('keydown',function(k){if(k.key==='Enter'||k.key===' '){k.preventDefault();show(e)}})});
 var rows=es.map(function(e){var pl=d.P[e[0]];return {e:e,pl:pl,dist:you?mi(you,[pl[3],pl[4]]):null}});if(you)rows=rows.filter(function(r){return r.dist<=10});
+gl.innerHTML='';var boxes=[],cand=[];if(you)rows.slice(0,3).forEach(function(r){cand.push(r.e)});es.slice(0,5).forEach(function(e){cand.push(e)});es.slice(-3).reverse().forEach(function(e){cand.push(e)});
+if(allL&&allL.checked)es.forEach(function(e){cand.push(e)});var done={};
+cand.forEach(function(e){if(done[e[0]])return;var pl=d.P[e[0]],x=X(pl[4]),y=Y(pl[3]),txt='$'+Math.round(e[1]).toLocaleString('en-US'),w=txt.length*fs*.62+8,h=fs*1.4,bx=x+9*kk,by=y-h/2;
+if(bx+w>W)bx=x-9*kk-w;if(bx<0||by<0||by+h>H)return;for(var i=0;i<boxes.length;i++){var o=boxes[i];if(bx<o[0]+o[2]&&bx+w>o[0]&&by<o[1]+o[3]&&by+h>o[1])return}
+boxes.push([bx,by,w,h]);done[e[0]]=1;var bnd=band(pl,e[1]);el('rect',{x:bx.toFixed(1),y:by.toFixed(1),width:w.toFixed(1),height:h,'class':'lbl lb'+bnd},gl);var t=el('text',{x:(bx+4).toFixed(1),y:(by+h*.74).toFixed(1),'font-size':fs.toFixed(1),'class':'lbt'+(bnd===2?' lbw':'')},gl);t.textContent=txt});
 list.innerHTML='';rows.forEach(function(r){var li=document.createElement('li');li.textContent=r.pl[0]+', '+r.pl[1]+' — '+m$(r.e[1])+(r.dist!=null?' · '+r.dist.toFixed(1)+' mi':'');list.appendChild(li)});
 if(you){var near=rows.slice(0,3);info.textContent=near.length?'Cheapest within 10 miles on this insurance: '+near.map(function(r){return r.pl[0]+' ('+m$(r.e[1])+', '+r.dist.toFixed(1)+' mi)'}).join('; ')+'. Tap a dot for its source.':'No places on this insurance within 10 miles of that ZIP. Try another insurance.'}}
-sel.addEventListener('change',function(){draw();ev({ev:'tap',detail:'map insurance: '+d.N[+sel.value][0]})});
+if(allL)allL.addEventListener('change',draw);sel.addEventListener('change',function(){draw();ev({ev:'tap',detail:'map insurance: '+d.N[+sel.value][0]})});
 zi.addEventListener('input',function(){var z=zi.value.replace(/\D/g,'');gy.innerHTML='';you=null;if(z.length===5&&d.Z[z]){you=d.Z[z];el('circle',{cx:X(you[1]),cy:Y(you[0]),r:9,'class':'you'},gy);var t=el('text',{x:X(you[1])+12,y:Y(you[0])+4,'class':'youl'},gy);t.textContent='You';ev({ev:'tap',detail:'map ZIP entered'})}else if(z.length===5){info.textContent='That ZIP is outside the map area.'}draw()});
 draw()})()}
 var GD=document.getElementById('stGData');if(GD){(function(){var d=JSON.parse(GD.textContent),q=document.getElementById('stQ'),G=document.getElementById('stG'),say=document.getElementById('stGSay');
