@@ -220,7 +220,26 @@ def reap(s3, b, all_jobs, all_claims, alive, results):
     return notes
 
 
-def plan(all_jobs, all_claims, held, machines, free):
+D = "bot/fleet/dedicated/"     # Oct 18, 2026: always-on servers (Hetzner) write <name>.json {mem, at, busy} every minute
+
+
+def idle_dedicated(s3, b, all_claims):
+    """Memory (GB) of each always-on worker that checked in during the last 5 minutes and holds no claim: the launcher
+    leaves it a waiting job instead of renting a machine for it."""
+    busy = {c.get("name") for c in all_claims.values()}
+    out = []
+    try:
+        for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=D):
+            for o in pg.get("Contents", []):
+                w = json.loads(s3.get_object(Bucket=b, Key=o["Key"])["Body"].read())
+                if age_mins(w.get("at", "")) < 5 and w.get("name") not in busy:
+                    out.append(int(w.get("mem", 0)))
+    except Exception:
+        pass
+    return sorted(out, reverse=True)
+
+
+def plan(all_jobs, all_claims, held, machines, free, dedicated=()):
     """Which machines to rent. `machines` = this queue's machines that exist now: [(id, name, created_at, size)].
     Machines still starting up (no claim yet, younger than BOOT_MINS) count as already covering a job, so the same
     job never gets two new machines. Returns a list of (size, job) - one machine per unclaimed job, biggest first,
@@ -235,6 +254,11 @@ def plan(all_jobs, all_claims, held, machines, free):
     for m in booting:  # each starting machine will take the biggest waiting job it can
         for j in waiting:
             if j.get("mem", 8) <= mem_gb(m[3]):
+                waiting.remove(j)
+                break
+    for mem in dedicated:  # an idle always-on server takes the biggest waiting job it can, within a couple of minutes
+        for j in waiting:
+            if j.get("mem", 8) <= mem:
                 waiting.remove(j)
                 break
     return [(j["size"], j) for j in waiting[:max(free, 0)]]

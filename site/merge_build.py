@@ -166,6 +166,12 @@ def main():
         key = be['nets'][i]
         touched |= set(be['scope'][key]) if key in be['scope'] else set(be['codes'])
     allc = set(be['codes']) | set(ae['codes'])
+    # Oct 18, 2026: a code BASE lists as coming (common codes first, not built yet) stays coming: merging only ADD's rows
+    # would show it with just the added networks. ADD is recorded so the code's later build (on request or by the
+    # background fill) adds ADD's rows for it too.
+    held = (set(be.get('coming', {})) - set(be['codes'])) & set(ae['codes'])
+    touched -= held; allc -= held
+    if held: log(len(held), 'codes ADD has are still coming in BASE: left coming, ADD noted in coming_adds')
     if E.get('CODES'):
         only = set(E['CODES'].split(',')); allc &= only; touched &= only
     copy = sorted(allc - touched)
@@ -203,6 +209,7 @@ def main():
         e = dict(be['codes'].get(c) or ae['codes'][c]); e['n'] = n; e['f'] = None; codes[c] = e
     embed = {**be, 'codes': codes, 'fac': P['fac'], 'nets': P['nets'], 'dates': P['dates'], 'urls': P['urls'], 'labs': P['labs'],
              'scope': {k: sorted(v) for k, v in scope.items() if len(v) < len(codes) - 20}}
+    if held: embed['coming_adds'] = be.get('coming_adds', []) + [ADD]
     info = dict(at=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), base=BASE, add=ADD, out=OUT, replaced=rep_names,
                 added_networks=[k for k in ae['nets'] if k not in be['nets']], merged=len(touched), copied=len(copy),
                 codes=len(codes), new_codes=len(set(ae['codes']) - set(be['codes'])), providers=len(P['npis']),
@@ -211,6 +218,9 @@ def main():
     if E.get('CODES') and not E.get('FULL'):
         log('test run (CODES set): embed.json not written', info); return info
     s3.put_object(Bucket=Bk, Key=OUT + 'npis.json', Body=json.dumps(P['npis']).encode())
+    if BASE != OUT and be.get('coming'):   # requested codes are built with BASE's tables (the merged lists start with BASE's)
+        try: s3.copy_object(Bucket=Bk, Key=OUT + 'build_env.json', CopySource={'Bucket': Bk, 'Key': BASE + 'build_env.json'})
+        except Exception as e_: log('build_env.json not copied:', repr(e_)[:100])
     s3.put_object(Bucket=Bk, Key=OUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())   # last: marks it finished
     log('DONE', info)
     return info
@@ -256,6 +266,9 @@ def carry_main():
                 seconds=round(time.time() - t0))
     s3.put_object(Bucket=Bk, Key=OUT + 'merge.json', Body=json.dumps(info, indent=1).encode())
     s3.put_object(Bucket=Bk, Key=OUT + 'npis.json', Body=json.dumps(P['npis']).encode())
+    if BASE != OUT:   # requested codes are built with BASE's tables and lookup lists (the merged lists start with them)
+        try: s3.copy_object(Bucket=Bk, Key=OUT + 'build_env.json', CopySource={'Bucket': Bk, 'Key': BASE + 'build_env.json'})
+        except Exception as e_: log('build_env.json not copied:', repr(e_)[:100])
     s3.put_object(Bucket=Bk, Key=OUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
     log('DONE', info)
     return info

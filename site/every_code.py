@@ -24,9 +24,10 @@ def looks_placeholder(v, median):
     nines = '9999' in t or bool(re.fullmatch(r'\d*999(\.99?)?', t))
     return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 E = os.environ
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
-B = E['R2_BUCKET']; OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); SPLIT = int(E.get('SPLIT', '1')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
+_g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks
+s3 = boto3.client('s3', endpoint_url=f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
+                  aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name='auto')
+B = _g('R2_BUCKET'); OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); SPLIT = int(E.get('SPLIT', '1')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
 LOG = []
 def log(*a):
     m = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a); print(m, flush=True); LOG.append(m)
@@ -70,6 +71,11 @@ if E.get('ONLY_KEY'):
     only_ = set(json.loads(s3.get_object(Bucket=B, Key=E['ONLY_KEY'])['Body'].read()))
     files = [f for f in files if f[0].rsplit('/', 1)[1].rsplit('.', 1)[0] in only_]
 if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_:] + files[:r_]   # machines start at different tables
+# Oct 18, 2026: FILES_KEY = a finished build's build_env.json (written next to its embed.json): use exactly the insurer
+# tables that build used, so a later run (a requested code, the background fill) fits that build's lookup lists even
+# after next month's tables have replaced these in RATES; their stage-A work is still in ACACHE (kept, never deleted)
+BENV = json.loads(s3.get_object(Bucket=B, Key=E['FILES_KEY'])['Body'].read()) if E.get('FILES_KEY') else None
+if BENV: files = [tuple(x) for x in BENV['files']]
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
@@ -96,6 +102,7 @@ def _has_membership(key):
     except Exception: return False
 # only tables that HAVE a membership file are named differently, so the others keep their saved stage-A work
 LABEL_KEYS = {k for k, _ in files if k.rsplit('/', 1)[1].rsplit('.', 1)[0] in LABEL_TABLES and _has_membership(k)} if LABEL_TABLES else set()
+if BENV: LABEL_KEYS = set(BENV.get('label_keys', []))
 def by_label(key): return bool(E.get('NETS_FROM_LABEL')) or key in LABEL_KEYS
 # same table + size -> same results; label-named tables get their own cache entries
 TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if by_label(key) else '')).encode()).hexdigest()[:12] for key, size in files}
@@ -142,6 +149,8 @@ for ii, (key, size) in enumerate(files):
     if E.get('ONLYIDX') and ii != int(E['ONLYIDX']): continue
     if str(i) in doneA or isdone(i):
         restore_a(i); log(f'A {ii+1}/{len(files)} restored from saved work', key.rsplit('/', 1)[1]); continue
+    if PHASE == 'codes':   # a requested code never reads insurer files: the build's stage-A work must all be saved
+        log('ERROR stage-A work missing for', key, '(requested codes need a finished build)'); LOGFLUSH(); sys.exit(6)
     K = max(1, math.ceil(size / (PIECE_GB * 1e9))) if size > float(E.get('MINSPLIT', '0.8e9')) else 1
     if K == 1 and E.get('ACLAIM') and not claim(i):   # big tables are shared piece by piece instead
         waiting.append((ii, key, i, K)); continue
@@ -264,6 +273,12 @@ FP = hashlib.sha1(json.dumps([nets, dates, urls, npis, labs]).encode()).hexdiges
 try: FP0 = s3.get_object(Bucket=B, Key=WK + 'index.fp')['Body'].read().decode()
 except Exception: FP0 = None; s3.put_object(Bucket=B, Key=WK + 'index.fp', Body=FP.encode())
 if FP0 and FP0 != FP: log('ERROR lookup lists differ from the other machines', FP, FP0); LOGFLUSH(); sys.exit(5)
+# Oct 18, 2026: a later phase (requested codes, the background fill) writes files into an earlier phase's build, so its
+# lookup lists must be that build's exactly; FP_WK / ALSO_WK name the earlier phases' work folders
+for wk_ in [w_ for w_ in [E.get('FP_WK', '')] + E.get('ALSO_WK', '').split(',') if w_]:
+    try: FPx = s3.get_object(Bucket=B, Key=wk_ + 'index.fp')['Body'].read().decode()
+    except Exception: log('ERROR no lookup fingerprint in', wk_); LOGFLUSH(); sys.exit(5)
+    if FPx != FP: log('ERROR lookup lists differ from the build being added to', wk_, FP, FPx); LOGFLUSH(); sys.exit(5)
 nidx = {k_: i_ for i_, k_ in enumerate(nets)}; didx = {k_: i_ for i_, k_ in enumerate(dates)}; uidx = {k_: i_ for i_, k_ in enumerate(urls)}
 pidx = {k_: i_ for i_, k_ in enumerate(npis)}; lidx = {k_: i_ for i_, k_ in enumerate(labs)}; KIND = [p_[2] for p_ in ptab]
 def lab(modi, st, nt, tin, tin0):
@@ -359,6 +374,9 @@ def work(u):
     try:
         md_ = {}
         for (cd, fe), (m, n) in MD.items(): md_.setdefault(cd, {})[str(fe)] = [float(m), int(n)]
+        if PHASE in ('2', 'codes'):   # the earlier phase's medians for this bucket's other codes stay
+            try: md_ = {**json.loads(s3.get_object(Bucket=B, Key=f'{TOUT}md/{u}.json')['Body'].read()), **md_}
+            except Exception: pass
         s3.put_object(Bucket=B, Key=f'{TOUT}md/{u}.json', Body=json.dumps(md_, separators=(',', ':')).encode())
     except Exception as e: log('median file not written:', repr(e)[:120])
     if SORTV == '3':
@@ -515,6 +533,10 @@ def covered(done_units, nb, split):
     return sum(1 for b in range(nb) if str(b) in done_units or (split > 1 and all(f'{b}_{s_}' in done_units for s_ in range(split))))
 buckets = plan_units(buckets, done_units, SPLIT)
 if E.get('BONLY'): buckets = [b for b in buckets if str(b) in E['BONLY'].split(',')]   # testing: just these buckets
+if PHASE == 'codes':   # requested codes: only the buckets they fall in (same hash as stage A, same DuckDB version)
+    mine_b = {r_[0] for r_ in con.execute(f"select distinct (hash(c) % {NB})::int from unnest(?::varchar[]) t(c)", [PRI]).fetchall()}
+    buckets = [b for b in buckets if unit_parts(b)[0] in mine_b]
+    log('requested codes', ','.join(PRI), 'in buckets', sorted(mine_b))
 if E.get('BORDER') == 'desc': buckets = buckets[::-1]
 h_ = len(buckets) // 2   # 3rd/4th machines start in the middle and work outward; done buckets are skipped in work()
 if E.get('BORDER') == 'mid': buckets = buckets[h_:] + buckets[:h_]
@@ -541,6 +563,26 @@ with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=in
         summary.update(summ)
         for kk, v in scp.items(): scope.setdefault(kk, set()).update(v)
         log(f'B {done}/{len(buckets)}', f'bucket {k}', f'{nx:,} rows', len(summary), 'codes so far')
+# Oct 18, 2026: requested codes go straight into the build they were asked from: their t/<code>.txt is already in TOUT
+# (served as soon as it's written), and embed.json moves them from "coming" (or "carried") to built codes. One run per
+# build at a time (the request workflow's concurrency group), so nothing else is writing this embed.json meanwhile.
+if PHASE == 'codes':
+    ek = TOUT + 'embed.json'
+    emb = json.loads(s3.get_object(Bucket=B, Key=ek)['Body'].read())
+    got = {c_: n_ for c_, n_ in summary.items() if c_ in set(PRI)}
+    when = time.strftime('%Y-%m-%d')
+    for c_, n_ in got.items():
+        t_, nm = NAMES.get(c_, ('CPT', ''))
+        if c_ in FEAT: e_ = {'name': FEAT[c_]['plain_name'], 'cat': FEAT[c_]['category'], 'type': FEAT[c_]['code_type'], 'n': n_, 'f': None}
+        else: e_ = {'name': (nm or f'{t_} {c_}').strip(), 'cat': 'description as written in the insurer file', 'type': t_, 'n': n_, 'f': None, 'd': 1}
+        e_['req'] = when
+        emb['codes'][c_] = e_; emb.get('coming', {}).pop(c_, None)
+    for kk, v in scope.items():   # networks listed with only some codes get the new ones they have
+        if kk in emb.get('scope', {}): emb['scope'][kk] = sorted(set(emb['scope'][kk]) | (set(v) & set(got)))
+    if 'coming' in emb and not emb['coming']: emb.pop('coming')
+    s3.put_object(Bucket=B, Key=ek, Body=json.dumps(emb, separators=(',', ':')).encode())
+    log('DONE requested codes', {c_: got.get(c_, 0) for c_ in PRI}, len(emb.get('coming', {})), 'still coming')
+    LOGFLUSH(); sys.exit(0)
 # Oct 15 (BCLAIM): when this machine's list is done but units other machines claimed aren't finished yet, wait and take
 # over any whose claim went stale (machine died) instead of exiting, so the last pieces are never left behind.
 if E.get('BCLAIM'):
@@ -586,6 +628,12 @@ if COMING: log(len(COMING), 'codes listed as coming (built on request or by the 
 embed = {'codes': codes, 'fac': ptab, 'nets': nets, 'dates': dates, 'urls': urls, 'labs': labs,
          'scope': {k_: sorted(v) for k_, v in scope.items() if len(v) < len(codes) - 20}}
 if COMING: embed['coming'] = COMING
+# Oct 18, 2026: what a later run needs to add codes to this build (site/request_codes.py; the background fill): the exact
+# insurer tables and settings, so its files fit this embed.json's lookup lists. Written before embed.json.
+KEEP = ('RATES', 'NPIS', 'ACACHE', 'NB', 'NOXPART', 'LABEL_TABLES_KEY', 'NETS_FROM_LABEL', 'SORTV', 'PRIORITY_KEY', 'PHASE', 'ALSO_WK')
+s3.put_object(Bucket=B, Key=TOUT + 'build_env.json', Body=json.dumps(dict(
+    made=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), wk=WK, fp=FP, files=[list(f_) for f_ in files],
+    label_keys=sorted(LABEL_KEYS), env={k_: E[k_] for k_ in KEEP if E.get(k_)}), indent=1).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'npis.json', Body=json.dumps(npis).encode())
 log('DONE', len(codes), 'codes', len(ptab), 'providers', len(nets), 'networks', sum(summary.values()), 'lines')

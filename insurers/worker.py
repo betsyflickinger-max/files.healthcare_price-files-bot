@@ -250,6 +250,9 @@ def me():
     if os.environ.get("GHA_WORKER"):   # Oct 18, 2026: a free GitHub Actions machine (gha-fleet.yml) takes only small files
         tag = f"gha-{os.environ.get('GITHUB_RUN_ID', '0')}-{os.environ.get('GHA_INDEX', '1')}"
         return dict(droplet_id=tag, name="upfront-fleet-" + tag, mem=int(os.environ.get("WORKER_MEM", "8")))
+    if os.environ.get("WORKER_NAME"):   # Oct 18, 2026: an always-on server (dedicated/setup.sh), one worker per slot
+        n = os.environ["WORKER_NAME"]
+        return dict(droplet_id=n, name="upfront-fleet-" + n, mem=int(os.environ.get("WORKER_MEM", "16")))
     meta = "http://169.254.169.254/metadata/v1/"
     did = requests.get(meta + "id", timeout=5).text.strip()
     name = requests.get(meta + "hostname", timeout=5).text.strip()
