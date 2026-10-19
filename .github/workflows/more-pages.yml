@@ -62,15 +62,16 @@ jobs:
     timeout-minutes: 340
     strategy:
       fail-fast: false
-      max-parallel: 16
+      max-parallel: 14   # leaves GitHub job slots for the other bots
       matrix:
         area: ${{ fromJson(needs.plan.outputs.areas) }}
+        shard: [0, 1, 2, 3]   # each place split into 4 jobs that run side by side
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install boto3==1.35.36
-      - run: python site/site_files.py pull w && python site/more_pages.py build w --area "${{ matrix.area }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: python site/site_files.py pull w && python site/more_pages.py build w --area "${{ matrix.area }}" --shard ${{ matrix.shard }} --of 4 | tee -a "$GITHUB_STEP_SUMMARY"
 
   index:
     needs: [plan, build]

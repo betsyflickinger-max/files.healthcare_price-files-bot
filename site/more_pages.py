@@ -6,7 +6,7 @@ as the featured pages (procedure_pages.summarize / procedure_page: nothing estim
 under site/more/, and served by the Pages Function functions/costs/[[path]].js (written into the deploy by procedure_pages.py).
 
   python site/more_pages.py plan DIR [--n 2000]      # once: pick each place's codes, fix their URLs -> R2 site/more/plan.json
-  python site/more_pages.py build DIR --area SLUG    # one place (run as a matrix): pages + prices.csv + manifest -> R2
+  python site/more_pages.py build DIR --area SLUG [--shard I --of K]   # one place, or its I-th of K parts (matrix) -> R2
   python site/more_pages.py index DIR                # after all places: "every procedure" list per place + sitemap -> R2
 
 DIR holds the pulled live site (python site/site_files.py pull DIR). Featured codes (codes89.csv) keep their static pages.
@@ -94,7 +94,7 @@ def load_slugs_fast(codes, names):
     return out
 
 
-def build_area(site_dir, store, slug, threads=16):
+def build_area(site_dir, store, slug, threads=16, shard=0, of=1):
     site = os.path.join(site_dir, 'site')
     pp.site_settings(site)
     P = get_json(store, 'plan.json')
@@ -106,6 +106,7 @@ def build_area(site_dir, store, slug, threads=16):
     D, med_area, _ = pp.page_data(page_path(site, a))
     loc = store.local_medicare(a, len(D['fac']))
     codes = [c for c in P['areas'][slug] if c in D['codes']]
+    mine = codes[shard::of]   # this job's share (jobs for one place run side by side)
     slugs, live = P['slugs'], {s: set(v) for s, v in P['areas'].items()}
     others_by = {x['slug']: (x['name'], pp.area_url_slug(x['slug'])) for x in areas}
 
@@ -137,14 +138,14 @@ def build_area(site_dir, store, slug, threads=16):
 
     done = []
     with ThreadPoolExecutor(threads) as ex:
-        for i, r in enumerate(ex.map(one, codes)):
+        for i, r in enumerate(ex.map(one, mine)):
             if r:
                 done.append(r)
             if (i + 1) % 200 == 0:
-                print(f'  {slug}: {i + 1} of {len(codes)}', flush=True)
-    put(store, f'{au}/manifest.json', json.dumps({'area': slug, 'name': a['name'], 'built': pp.TODAY.isoformat(), 'pages': done},
+                print(f'  {slug} part {shard + 1}/{of}: {i + 1} of {len(mine)}', flush=True)
+    put(store, f'{au}/manifest-{shard}-of-{of}.json', json.dumps({'area': slug, 'name': a['name'], 'built': pp.TODAY.isoformat(), 'pages': done},
                                                  separators=(',', ':')), 'application/json')
-    print(f'{slug}: {len(done)} pages ({sum(1 for d in done if d["index"])} indexable) of {len(codes)} codes')
+    print(f'{slug} part {shard + 1}/{of}: {len(done)} pages ({sum(1 for d in done if d["index"])} indexable) of {len(mine)} codes')
 
 
 def index(site_dir, store):
@@ -154,7 +155,14 @@ def index(site_dir, store):
     urls = []
     for a in areas_of(site):
         au = pp.area_url_slug(a['slug'])
-        M = get_json(store, f'{au}/manifest.json')
+        parts = [o['Key'] for o in store.s3.list_objects_v2(Bucket=store.B, Prefix=f'{PFX}{au}/manifest-').get('Contents', [])]
+        if parts:   # merge the side-by-side jobs' lists (only the newest split, in case the number of parts changed)
+            of = max(int(k.rsplit('-of-', 1)[1].split('.')[0]) for k in parts)
+            got = [get_json(store, k[len(PFX):]) for k in parts if k.endswith(f'-of-{of}.json')]
+            M = {'area': a['slug'], 'name': a['name'], 'built': pp.TODAY.isoformat(), 'pages': [r for g in got if g for r in g['pages']]}
+            put(store, f'{au}/manifest.json', json.dumps(M, separators=(',', ':')), 'application/json')
+        else:
+            M = get_json(store, f'{au}/manifest.json')
         if not M:
             continue
         cats = {}
@@ -211,12 +219,14 @@ def main():
     ap.add_argument('dir')
     ap.add_argument('--area')
     ap.add_argument('--n', type=int, default=2000)
+    ap.add_argument('--shard', type=int, default=0)
+    ap.add_argument('--of', type=int, default=1)
     x = ap.parse_args()
     store = pp.Store(x.dir)
     if x.cmd == 'plan':
         plan(x.dir, store, x.n)
     elif x.cmd == 'build':
-        build_area(x.dir, store, x.area)
+        build_area(x.dir, store, x.area, shard=x.shard, of=x.of)
     else:
         index(x.dir, store)
 
