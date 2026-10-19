@@ -85,10 +85,22 @@ def price_line(S, sg, mh, cc, med_asc):
     la, lb = math.log10(a), math.log10(b)
     pos = lambda v: max(0.0, min(100.0, (math.log10(v) - la) / (lb - la) * 100))
     marks = ''.join(f'<span class="vr-m vr-{c}" style="left:{pos(v):.2f}%" title="{esc(_money(v))} {esc(t)}"></span>' for v, c, t, _ in pts if v > 0)
-    key = ''.join(f'<li><span class="vr-k vr-{c}" aria-hidden="true"></span><b>{_money(v)}</b> {esc(t)}<span class="m">{esc(s)}</span></li>'
+    mv = meds[0][0] if meds else 0
+    xm = lambda v, c: (f' <i class="vr-xm">{_times(v / mv)}× Medicare</i>' if mv > 0 and c != 'med' else '')
+    key = ''.join(f'<li><span class="vr-k vr-{c}" aria-hidden="true"></span><b>{_money(v)}</b> {esc(t)}{xm(v, c)}<span class="m">{esc(s)}</span></li>'
                   for v, c, t, s in sorted(pts, key=lambda p: p[0]))
     big = ''
-    if hi and S.get('lines', 0) > 1 and hi['v'] / lo['v'] >= 1.5:
+    medv0 = meds[0][0] if meds else 0
+    if medv0 > 0:
+        # Medicare first (Betsy, Oct 19): the yardstick people can judge by, right beside the lowest and highest.
+        top = hi if hi and S.get('lines', 0) > 1 and hi['v'] > lo['v'] else lo
+        rx = lambda v: (f"{_times(v / medv0)} times Medicare's rate" if v >= medv0 * 1.05 else
+                        "about the same as Medicare's rate" if v >= medv0 * 0.95 else f"below Medicare's rate ({_times(v / medv0 * 100)}% of it)")
+        big = (f'<div class="vr-big"><span class="vr-x">{_times(top["v"] / medv0)}×<small class="vr-xl"> Medicare</small></span><span>The highest negotiated {esc(sg)} here is '
+               f'{rx(top["v"])} ({_money(medv0)}). The lowest is {rx(lo["v"])}.'
+               + (f' Highest to lowest: about {_times(hi["v"] / lo["v"])} times.' if top is hi and hi['v'] / lo['v'] >= 1.5 else '')
+               + '</span></div>')
+    elif hi and S.get('lines', 0) > 1 and hi['v'] / lo['v'] >= 1.5:
         big = (f'<div class="vr-big"><span class="vr-x">{_times(hi["v"] / lo["v"])}×</span><span>The highest negotiated {esc(sg)} here is about '
                f'{_times(hi["v"] / lo["v"])} times the lowest, for the same service in the same area.</span></div>')
     medv = meds[0][0] if meds else 0
@@ -203,6 +215,7 @@ CSS = r'''
 .vr-line{overflow:visible}.vr-key li{min-width:0}.vr-key .m{overflow-wrap:anywhere}
 .vr-key{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:8px 28px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .vr-key li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:15px}.vr-key b{font:700 17px var(--mono)}.vr-key .m{flex-basis:100%;padding-left:24px}
+.vr-xl{font-size:.32em;letter-spacing:0}.vr-xm{font:700 13px var(--mono);font-style:normal;padding:1px 6px;border:1px solid currentColor;white-space:nowrap}
 .vr-k{display:inline-block;width:13px;height:13px;flex:none}.vr-k.vr-ins{border-radius:50%}.vr-k.vr-med{width:9px;height:9px}
 .vr-quote{margin:22px 0 0;padding:16px 18px;background:var(--paper);border:2px solid var(--ink);display:grid;gap:8px;max-width:640px}
 .vr-quote label{font:700 13px var(--mono);letter-spacing:.1em;text-transform:uppercase}.vr-in{display:flex;align-items:center;gap:8px;font:700 22px var(--mono)}
