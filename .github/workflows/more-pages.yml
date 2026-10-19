@@ -1,0 +1,85 @@
+name: More price pages (top procedures per place, kept in R2)
+
+# Betsy, Oct 19, 2026: the top ~2,000 procedures in every place, beyond the 89 featured ones. Rendered with the same code and
+# rules as the featured pages and saved to R2 site/more/ (Cloudflare Pages caps a deploy at ~20,000 files), served by the
+# Pages Function functions/costs/[[path]].js that procedure_pages.py writes into every deploy. Writes only to R2; deploys nothing.
+# Monthly after the price data refresh, or by hand. See site/more_pages.py.
+
+on:
+  schedule:
+    - cron: "40 9 12 * *"
+  workflow_dispatch:
+    inputs:
+      n:
+        description: "Procedures per place (beyond the 89 featured)"
+        default: "2000"
+      areas:
+        description: "Only these places (space-separated slugs); blank = every place in the plan"
+        default: ""
+
+concurrency:
+  group: more-pages
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+  R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+  R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+  R2_BUCKET: ${{ secrets.R2_BUCKET }}
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      areas: ${{ steps.p.outputs.areas }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install boto3==1.35.36
+      - run: python site/site_files.py pull w && python site/more_pages.py plan w --n "${{ inputs.n || '2000' }}"
+      - id: p
+        shell: bash
+        run: |
+          python - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os, boto3
+          E = {k: os.environ[k].strip() for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
+          s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
+                            aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+          P = json.loads(s3.get_object(Bucket=E["R2_BUCKET"], Key="site/more/plan.json")["Body"].read())
+          only = "${{ inputs.areas }}".split()
+          print("areas=" + json.dumps([a for a in P["areas"] if not only or a in only]))
+          EOF
+
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      max-parallel: 16
+      matrix:
+        area: ${{ fromJson(needs.plan.outputs.areas) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install boto3==1.35.36
+      - run: python site/site_files.py pull w && python site/more_pages.py build w --area "${{ matrix.area }}" | tee -a "$GITHUB_STEP_SUMMARY"
+
+  index:
+    needs: [plan, build]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install boto3==1.35.36
+      - run: python site/site_files.py pull w && python site/more_pages.py index w | tee -a "$GITHUB_STEP_SUMMARY"
