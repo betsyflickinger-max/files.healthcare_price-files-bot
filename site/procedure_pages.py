@@ -1049,9 +1049,10 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
         for n in S['networks'])
-    net_sec = (f"<section class='sec'><p class='kicker'>By insurer network</p><h2>Who pays what</h2>"
+    net_sec = (f"<section class='sec'><p class='kicker'>What it costs, by insurer network</p><h2>Who pays what</h2>"
                f"<p class='lede'>Each line counts the providers with a published {sg} in that network and shows the lowest and highest. "
-               f"Your plan's network decides which line applies to you.</p>"
+               f"Your plan's network decides which line applies to you. <a href='{esc(finder)}'>See every place and every insurer side by side, "
+               f"with Medicare beside each place →</a></p>"
                f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 

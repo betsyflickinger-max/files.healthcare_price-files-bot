@@ -17,6 +17,7 @@ import shutil
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
 NAME = 'The Healthcare Files'
 TAGLINE = 'What care really costs, from the price files hospitals and insurers have to publish.'
 RENAME = [('What It <span>Costs</span>', 'The Healthcare <span>Files</span>'), ('What It Costs', NAME), ('WHAT IT COSTS', NAME.upper())]
@@ -103,6 +104,13 @@ def apply(d):
                     t = bake(t)
                 if t != s:
                     open(p, 'w', encoding='utf-8').write(t); changed += 1
+    try:   # Price Finder "Compare" view (Oct 19): its two files, the page tags, and ml.json where a rebuild made it stale
+        import pf_table
+        changed += pf_table.apply(d)
+        if os.environ.get('R2_ACCESS_KEY_ID'):
+            pf_table.write_ml(d, only_stale=True)
+    except Exception as e:
+        print(f'sitewide: Price Finder compare view not applied ({type(e).__name__}: {e})')
     print(f'sitewide: {changed} files updated (name, Units look, share image)')
     return changed
 

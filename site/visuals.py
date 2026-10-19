@@ -141,9 +141,50 @@ def bill_slips(S, sg, pf_path):
         out.append(f'<div class="slip{" maybe" if maybe else ""}"><p class="slip-n">Bill {i + 1} of {n}</p><p class="slip-t">{esc(title)}</p>'
                    f'<p class="slip-w">{esc(what)}</p><p class="slip-v"><span>{"TOTAL" if val[0].startswith("$") else "PRICE"}</span><b>{esc(val[0])}</b></p>'
                    + (f'<p class="slip-s">{esc(val[1])}</p>' if val[1] else '') + (f'<p class="slip-l">{link}</p>' if link else '') + '</div>')
-    return (f'<section class="sec vis-bills"><p class="kicker">You\'ll likely get these bills</p><h2>Expect more than one bill</h2>'
+    return (f'<section class="sec vis-bills"><p class="kicker">What it costs, all in</p><h2>Expect more than one bill</h2>'
             f'<p class="lede">Each slip is a separate bill, often from a different company. Prices on this site are one slip at a time.</p>'
-            f'<div class="slips">{"".join(out)}</div></section>')
+            f'<div class="slips">{"".join(out)}</div>{when_more(S, pf_path)}</section>')
+
+
+COL = {'45378', '45380', '45384', '45385', 'G0105', 'G0121', '45391', '45388'}
+NSA = ('At an in-network hospital or surgery center, the No Surprises Act stops an out-of-network anesthesiologist from billing you '
+       'more than your in-network share.')
+
+
+def when_more(S, pf_path):
+    """What makes this bill bigger (Betsy, Oct 19): the same cards as the Price Finder's Compare view (site/assets/pf-table.js)."""
+    code, cat = S.get('code') or '', S.get('cat') or ''
+    q = lambda c: f'<a href="{esc(pf_path)}?code={c}">{c}</a>'
+    if code in COL:
+        L = [('It started as a screening', 'Screening or diagnostic changes who pays',
+              "Most plans cover a routine screening colonoscopy at no cost to you under the Affordable Care Act. If it's done to check "
+              "symptoms, or as a follow-up, it's billed as diagnostic and you pay toward your deductible. Ask how it will be billed before you schedule."),
+             ('They find a polyp', 'A different code, plus a lab bill',
+              f'Removing a polyp is billed under a different code ({q("45385")} by snare, {q("45380")} by biopsy), and the tissue goes to a lab, '
+              "which bills separately. On a screening, federal rules say removing a polyp shouldn't add cost-sharing on most private plans "
+              '(<a href="https://www.dol.gov/sites/dolgov/files/EBSA/about-ebsa/our-activities/resource-center/faqs/aca-part-xii.pdf">ACA FAQs Part XII</a>).'),
+             ("You're sedated", 'Anesthesia is its own company', 'Sedation is usually billed by a separate anesthesia group, by the minute. ' + NSA)]
+    elif cat == 'Imaging':
+        L = [('With or without contrast', 'Contrast is a different code',
+              'A scan "with contrast" (dye) is billed under its own code and usually costs more. Check which one your order says.'),
+             ('Someone reads it', 'The radiologist bills separately',
+              'The doctor who reads the scan sends their own bill. At an in-network place, the No Surprises Act limits what an out-of-network radiologist can charge you.'),
+             ('Where you go', 'Hospital or imaging center',
+              'The same scan often costs several times more at a hospital than at a stand-alone imaging center in the same network.')]
+    elif S.get('drg'):
+        L = [('Complications', 'The group can change',
+              "Hospital stays are paid by group. If there's a complication (CC) or a major one (MCC), the stay moves to a higher-paid group."),
+             ('Doctors in the hospital', 'Their bills are separate',
+              'Surgeons, anesthesiologists and hospitalists usually bill on their own. At an in-network hospital, the No Surprises Act protects '
+              'you from out-of-network bills from them.')]
+    elif S.get('kind') == 'fac' and cat not in ('Lab tests', 'Office visits', 'Behavioral health', 'Physical therapy') and not code.startswith('00'):
+        L = [("You're sedated", 'Anesthesia is its own company', 'Anesthesia is usually billed by a separate group, by the minute. ' + NSA),
+             ('Something more is done', 'Another code, another price',
+              'If the doctor does more than planned, it can be billed under an added or different code. Ask what codes they expect to bill before you schedule.')]
+    else:
+        return ''
+    return ('<div class="when"><p class="kicker">When this costs more</p><div class="when-g">'
+            + ''.join(f'<div><span class="when-t">{esc(a)}</span><h3>{esc(b)}</h3><p>{c}</p></div>' for a, b, c in L) + '</div></div>')
 
 
 def sections(S, sg, pf_path, mh, cc):
@@ -184,6 +225,10 @@ dialog.wc::backdrop{background:rgba(0,0,0,.35)}.wc-n{margin:0 0 8px;font:700 12p
 .slip-t{font-weight:700;font-size:16px;text-transform:uppercase}.slip-w{font-size:13px}.slip-v{display:flex;justify-content:space-between;gap:8px;border-top:1px dashed var(--ink);padding-top:6px;font-weight:700}
 .slip-s{font-size:12px;opacity:.8}.slip-l a{font:700 13px var(--body);color:var(--stamp)}
 @media(prefers-reduced-motion:reduce){.slip{transform:none!important}}
+.when{margin-top:26px}.when-g{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+.when-g>div{background:var(--paper);color:var(--ink);border-left:6px solid var(--hi);padding:12px 14px}
+.when-g h3{font:700 17px/1.25 var(--body);margin:4px 0;text-transform:none}.when-g p{margin:0;font-size:15px;line-height:1.5}
+.when-t{font:700 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--hi);color:var(--ink);padding:1px 6px;display:inline-block}
 '''
 
 JS = r'''<script>(()=>{const L=document.querySelector('.vr-line'),inp=document.getElementById('vrq');

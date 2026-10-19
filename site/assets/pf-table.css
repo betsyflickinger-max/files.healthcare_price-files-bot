@@ -1,0 +1,67 @@
+/* Price Finder "Compare" view (site/assets/pf-table.js), Units colors. Oct 19, 2026. */
+.pt{--pt-ink:#151515;--pt-mute:#4A4A4A;--pt-hair:#d9d3c5;--pt-money:#1F45C4;--pt-blue:#2E5BE6;--pt-blue-soft:#DCE5FC;--pt-yel:#F7C925;
+  --pt-b1:#E3F4E9;--pt-b2:#FDF3CF;--pt-b3:#FCE3CC;--pt-b4:#FADAD5;padding-top:8px}
+.pt-k{font:500 13px/1.2 "Look DM Mono",ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#2E5BE6;margin:18px 0 6px}
+.pt h2{margin:0 0 8px}
+.pt-lede{max-width:72ch;color:#4A4A4A;margin:0 0 14px}
+.pt-link{background:none;border:0;padding:0;font:inherit;color:#1F45C4;text-decoration:underline;cursor:pointer}
+.pt-tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;margin:0 0 10px}
+.pt-tools input[type=search]{font:500 15px "Look Hanken",system-ui,sans-serif;padding:8px 10px;border:2px solid #151515;background:#fff;color:#151515;min-width:min(260px,100%);max-width:100%;border-radius:0}
+.pt-seg{display:inline-flex;flex-wrap:wrap;border:2px solid #151515}
+.pt-seg button{font:600 14px "Look Hanken",system-ui,sans-serif;background:#fff;color:#151515;border:0;padding:7px 12px;cursor:pointer}
+.pt-seg button+button{border-left:2px solid #151515}
+.pt-seg button[aria-pressed=true]{background:#151515;color:#fff}
+.pt-legend{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13.5px;color:#4A4A4A;margin:0 0 10px}
+.pt-sw{display:inline-block;width:16px;height:16px;vertical-align:-3px;margin-right:5px;border:1px solid rgba(0,0,0,.15)}
+.pt-wrap{overflow-x:auto;border:2px solid #151515;background:#fff;-webkit-overflow-scrolling:touch;max-width:100%}
+.pt-t{border-collapse:separate;border-spacing:0;width:100%;font-size:14px;background:#fff;color:#151515}
+.pt-t th,.pt-t td{padding:8px 10px;border-bottom:1px solid #d9d3c5;text-align:right;white-space:nowrap;vertical-align:top}
+.pt-t thead th{position:sticky;top:0;background:#fff;z-index:2;border-bottom:2px solid #151515;font:600 13px "Look Hanken",system-ui,sans-serif;vertical-align:bottom}
+.pt-t thead th.pt-mine{background:#FDF3CF}
+.pt-ins{display:block;font-weight:800;font-size:14px}
+.pt-t thead select{font:500 12px "Look Hanken",system-ui,sans-serif;max-width:160px;margin-top:4px;border:1px solid #d9d3c5;background:#fff;color:#151515;padding:2px}
+.pt-t .pt-pl{position:sticky;left:0;background:#fff;text-align:left;white-space:normal;min-width:210px;max-width:280px;z-index:1;border-right:2px solid #151515}
+.pt-t thead .pt-pl{z-index:3}
+.pt-pl label{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.pt-pl input{margin-top:4px;flex:none}
+.pt-pl b{font-weight:700}
+.pt-m{display:block;font-size:12.5px;color:#4A4A4A}
+.pt-kind{font:500 10px "Look DM Mono",ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;padding:0 4px;border:1px solid currentColor;margin-left:2px;white-space:nowrap}
+.pt-v{font:600 15px "Look DM Mono",ui-monospace,monospace;color:#1F45C4;font-variant-numeric:tabular-nums;text-decoration:none;display:inline-block}
+a.pt-v:hover{text-decoration:underline}
+.pt-v.pt-ink{color:#151515}
+.pt-v.pt-big{font-size:17px}
+.pt-x{display:block;font:500 11px "Look DM Mono",ui-monospace,monospace;color:#4A4A4A;font-weight:400}
+.pt-none{color:#9a9488;font:400 14px "Look DM Mono",ui-monospace,monospace}
+.pt-flat{display:inline-block;margin-top:4px;background:#F7C925;color:#151515;font:500 10.5px "Look DM Mono",ui-monospace,monospace;padding:0 4px;white-space:normal}
+.pt-b1,td.pt-b1{background:#E3F4E9}.pt-b2,td.pt-b2{background:#FDF3CF}.pt-b3,td.pt-b3{background:#FCE3CC}.pt-b4,td.pt-b4{background:#FADAD5}
+.pt-t td.pt-med{background:#F7F5EF}
+.pt-t tr.pt-doc td,.pt-t tr.pt-doc td.pt-pl{background:#DCE5FC;border-bottom:2px solid #151515;font-size:13px}
+.pt-t tr.pt-sel td{box-shadow:inset 0 2px 0 #F7C925,inset 0 -2px 0 #F7C925}
+.pt-t td.pt-win{background:#E3F4E9}
+.pt-bar{min-width:170px;text-align:left!important}
+.pt-track{position:relative;height:14px;background:#EEE9DD;margin-top:4px}
+.pt-fill{position:absolute;left:0;top:0;bottom:0;background:#2E5BE6}
+.pt-mline{position:absolute;top:-3px;bottom:-3px;width:2px;background:#151515}
+.pt-more{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0 0;font-size:14px;color:#4A4A4A}
+.pt-fine{font-size:13px;color:#4A4A4A;max-width:84ch;margin:12px 0 0}
+.pt-when{margin:26px 0 8px}
+.pt-when>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.pt-when>div>div{background:#fff;border-left:6px solid #F7C925;padding:12px 14px;color:#151515}
+.pt-when h3{font:700 16px "Look Hanken",system-ui,sans-serif;margin:0 0 4px;text-transform:none}
+.pt-when p{margin:0;font-size:14.5px;color:#4A4A4A}
+.pt-tag{font:500 11px "Look DM Mono",ui-monospace,monospace;letter-spacing:.1em;text-transform:uppercase;background:#F7C925;color:#151515;padding:1px 6px;display:inline-block;margin-bottom:6px}
+.pt-tray{position:sticky;bottom:0;z-index:5;background:#151515;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.pt-tray[hidden]{display:none}
+.pt-tray .pt-link{color:#fff}
+.pt-dlg{border:2px solid #151515;padding:0;max-width:min(1100px,96vw);width:100%;background:#F4F1EA;color:#151515}
+.pt-dlg::backdrop{background:rgba(21,21,21,.55)}
+.pt-dh{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#2E5BE6;color:#fff}
+.pt-dh h3{margin:0;font:800 20px "Look Hanken",system-ui,sans-serif;text-transform:uppercase;color:#fff}
+.pt-dh button{background:#fff;color:#151515;border:0;font:700 14px "Look Hanken",system-ui,sans-serif;padding:6px 12px;cursor:pointer}
+.pt-cmp{overflow-x:auto;padding:16px}
+.pt-cmp .pt-t{border:2px solid #151515}
+.pt-cmp .pt-t th{white-space:normal;min-width:140px}
+.pt-cmp .pt-t td:first-child{text-align:left;white-space:normal;min-width:190px}
+@media (max-width:640px){.pt-t .pt-pl{min-width:150px;max-width:170px}.pt-tools input[type=search]{width:100%}}
+.pt-kick{font:500 13px/1.2 "Look DM Mono",ui-monospace,monospace;letter-spacing:.12em;text-transform:uppercase;color:#F7C925;margin:0 0 8px}
