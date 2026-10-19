@@ -25,6 +25,20 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import procedure_pages as pp   # noqa: E402
+import sitewide as sw          # noqa: E402
+
+
+def finish(t):
+    """The same site-wide rules sitewide.py applies to every deployed page (name, tagline, wordmark, Units look), which never
+    reach pages kept in R2. Without this, R2 pages would show the old look and line (caught Oct 19)."""
+    if 'What It' in t or 'WHAT IT COSTS' in t:
+        for x, y in sw.RENAME:
+            t = t.replace(x, y)
+    for old in sw.OLD_TAGLINES:
+        t = t.replace(old, sw.TAGLINE)
+    if 'The Healthcare Files</a>' in t:
+        t = sw.BRAND_RX.sub(sw.BRAND_TO, t)
+    return sw.bake(t)
 
 PFX = 'site/more/'
 _W, _STORES = {}, {}
@@ -59,6 +73,8 @@ def page_path(site, a):
 
 
 def put(store, key, body, ctype):
+    if ctype.startswith('text/html') and isinstance(body, str):
+        body = finish(body)
     store.s3.put_object(Bucket=store.B, Key=PFX + key, Body=body.encode('utf-8') if isinstance(body, str) else body,
                         ContentType=ctype, CacheControl='public, max-age=3600')
 
@@ -216,6 +232,31 @@ def index(site_dir, store):
     print(f'index: {len(urls)} URLs in the sitemap')
 
 
+def rebake(store, threads=64):
+    keys, tok = [], None
+    while True:
+        kw = {'Bucket': store.B, 'Prefix': PFX, 'MaxKeys': 1000}
+        if tok:
+            kw['ContinuationToken'] = tok
+        r = store.s3.list_objects_v2(**kw)
+        keys += [o['Key'] for o in r.get('Contents', []) if o['Key'].endswith('.html')]
+        if not r.get('IsTruncated'):
+            break
+        tok = r['NextContinuationToken']
+
+    def one(k):
+        t = store.s3.get_object(Bucket=store.B, Key=k)['Body'].read().decode('utf-8')
+        u = finish(t)
+        if u != t:
+            store.s3.put_object(Bucket=store.B, Key=k, Body=u.encode('utf-8'), ContentType='text/html; charset=utf-8',
+                                CacheControl='public, max-age=3600')
+            return 1
+        return 0
+    with ThreadPoolExecutor(threads) as ex:
+        n = sum(ex.map(one, keys))
+    print(f'rebake: {n} of {len(keys)} pages updated')
+
+
 # The Pages Function, written into the deploy by procedure_pages.py (keep in sync with PFX above).
 FUNCTION_JS = r'''// /costs/* : pages kept in R2 (site/more/) by site/more_pages.py, for procedures beyond the featured ones.
 // Written by price-files-bot site/procedure_pages.py; edits here are replaced on the next run.
@@ -239,7 +280,7 @@ export async function onRequest(ctx) {
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('cmd', choices=['plan', 'build', 'index'])
+    ap.add_argument('cmd', choices=['plan', 'build', 'index', 'rebake'])
     ap.add_argument('dir')
     ap.add_argument('--area')
     ap.add_argument('--n', type=int, default=2000)
@@ -251,6 +292,8 @@ def main():
         plan(x.dir, store, x.n)
     elif x.cmd == 'build':
         build_area(x.dir, store, x.area, shard=x.shard, of=x.of)
+    elif x.cmd == 'rebake':
+        rebake(store)
     else:
         index(x.dir, store)
 
