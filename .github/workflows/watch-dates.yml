@@ -1,0 +1,40 @@
+name: "Watch: check file dates"
+
+# Oct 19, 2026. One-off check for the Price File Watch: the dates inside BCBS Alabama, BCBS Mississippi and
+# BCBS North Carolina files (insurers/watch_dates.py). Reads only the top of each file; changes no data.
+# Runs when the script changes, or by hand. Report: reports/watch/file-dates-<date>.md
+on:
+  push:
+    branches: [main]
+    paths: [insurers/watch_dates.py, .github/workflows/watch-dates.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Check file dates
+        run: python insurers/watch_dates.py | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save report to main
+        if: always()
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "price-files-bot@users.noreply.github.com"
+          git add reports/watch/ || exit 0
+          git commit -m "Watch: file dates $(date -u +%F)" || exit 0
+          for i in 1 2 3; do git pull --rebase -q origin main && git push origin HEAD:main && break; sleep 5; done
