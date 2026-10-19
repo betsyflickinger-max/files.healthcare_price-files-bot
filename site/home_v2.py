@@ -78,6 +78,28 @@ def what_word(S):
     return 'the facility fee', "The doctor's fee and anesthesia are billed separately."
 
 
+# Familiar procedures the hero can rotate through (only ones with a real same-plan gap are shown; widest first).
+HERO_POOL = ['70551', '73721', '74177', '72148', '77067', '76700', '71046', '43239', '66984', '27447', '27130', '29881', '47562',
+             '64721', '42820', '49505', '59400', '80053', '80061', '85025', '93000', '95810']
+HERO_MAX = 6
+
+
+def hero_html(S, slugs, code):
+    """One hero spread: same procedure, same plan, lowest vs highest place in DFW, with both sources and a link to dig in."""
+    g = S['gap']
+    lo, hi = g['lo'], g['hi']
+    fee, extra = what_word(S)
+    common = low(S['common'])
+    kinds = {lo.get('kind'), hi.get('kind')}
+    where = 'hospitals' if kinds == {'H'} else 'surgery centers' if kinds == {'A'} else 'places'
+    return (f'<p class="v2-set">Same {esc(common)}. Same {esc(plan_name(lo))} plan. Two Dallas&ndash;Fort Worth {where}.</p>'
+            f'<h1 class="letters"><span>{pp.short_money(lo["v"])}</span> <em class="or">or</em> <em>{pp.short_money(hi["v"])}</em></h1>'
+            f'<p class="v2-why">That\'s {esc(lo["name"])} and {esc(hi["name"])}: <b>{hi["v"] / lo["v"]:.1f} times as much</b> for the same procedure on the same insurance.\n'
+            'Hospitals and insurers have to publish these prices, in files too big to open. <b>We opened them.</b></p>'
+            f'<p class="v2-fine">Exactly {money(lo["v"])} and {money(hi["v"])}, {fee}. {esc(extra)} Sources: {src(lo)} · {src(hi)}</p>'
+            f'<p class="v2-dig"><a href="{proc_url(slugs, code)}">Dig into this one: every {esc(common)} price in Dallas&ndash;Fort Worth →</a></p>')
+
+
 def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, signup=''):
     S = summ[HERO]
     g = S['gap']
@@ -103,6 +125,22 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, 
                        'fee': f_, 'extra': ex_, 'url': proc_url(slugs, c)})
         if len(rounds) == 4:
             break
+
+    # hero spreads (Betsy, Oct 19): colonoscopy first, then the widest same-plan gaps among familiar procedures, with a
+    # "Show me another" button. Same "biggest gap inside one network" figure as the pages (filler and flagged rates and
+    # same-rate-everywhere networks already left out). Procedures the guess game uses are skipped so it doesn't give away answers.
+    used = {r['code'] for r in rounds}
+    pool = []
+    for c in HERO_POOL:
+        s = summ.get(c)
+        gg = (s or {}).get('gap')
+        if c == HERO or c in used or c not in slugs or not gg or gg['lo']['v'] < 20 or not 3 <= gg['hi']['v'] / gg['lo']['v'] <= 60:
+            continue
+        pool.append((gg['hi']['v'] / gg['lo']['v'], c))
+    heroes = [hero_html(S, slugs, HERO)] + [hero_html(summ[c], slugs, c) for _, c in sorted(pool, reverse=True)[:HERO_MAX - 1]]
+    hdata = json.dumps(heroes, ensure_ascii=False).replace('</', '<\\/')
+    nav = ('<p class="v2-hnav"><button type="button" class="v2-chip" id="v2next">Show me another</button>'
+           f'<span class="v2-count" id="v2hcount">1 of {len(heroes)}</span></p>') if len(heroes) > 1 else ''
 
     # a slice of the real price board: three lowest and three highest places, each once
     low3, high3 = S['lowest'][:3], list(reversed(S['highest'][:3]))
@@ -187,6 +225,8 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, 
 .v2-door:hover,.v2-door:focus-visible{{background:var(--ground)}}.v2-door h3{{margin:0;font-size:22px}}.v2-door .go{{margin-top:auto;font-weight:800;color:var(--stamp)}}
 .v2-who-built{{display:grid;gap:18px}}@media(min-width:800px){{.v2-who-built{{grid-template-columns:3fr 2fr}}}}
 .v2-rules{{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:16px}}.v2-rules li::before{{content:"\\2713";font-weight:800;margin-right:8px;color:var(--stamp)}}
+.v2-hnav{{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin:16px 0 0}}.v2-hnav button{{cursor:pointer;font-family:inherit}}
+.v2-hnav .v2-count{{color:var(--board-sub)}}.v2-dig{{margin:10px 0 0;font-weight:800}}.v2-dig a{{color:var(--hi)!important;text-underline-offset:4px}}
 .v2-storylink{{margin:16px 0 0;font-weight:800}}.v2-storylink a{{color:var(--hi)!important;text-underline-offset:4px}}
 .v2-more{{display:flex;flex-wrap:wrap;gap:10px 24px;margin:0;padding:24px 0 8px;font-weight:700}}
 @media(max-width:600px){{.v2-board li{{flex-direction:column;gap:4px}}.v2-opts{{grid-template-columns:1fr}}}}
@@ -194,11 +234,8 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, 
 <section data-view="home" class="v2">
 <div class="board"><div class="wrap"><div class="v2-hero">
 <p class="v2-eyebrow">What is this going to cost me?</p>
-<p class="v2-set">Same {esc(common)}. Same {esc(plan_name(lo))} plan. Two Dallas&ndash;Fort Worth hospitals.</p>
-<h1 class="letters"><span>{pp.short_money(lo['v'])}</span> <em class="or">or</em> <em>{pp.short_money(hi['v'])}</em></h1>
-<p class="v2-why">That's {esc(lo['name'])} and {esc(hi['name'])}: <b>{x:.1f} times as much</b> for the same procedure on the same insurance.
-Hospitals and insurers have to publish these prices, in files too big to open. <b>We opened them.</b></p>
-<p class="v2-fine">Exactly {money(lo['v'])} and {money(hi['v'])}, {fee}. {esc(extra)} Sources: {src(lo)} · {src(hi)}</p>
+<div id="v2hero" aria-live="polite">{heroes[0]}</div>
+{nav}
 <form class="v2-find" id="natForm" action="/costs/" method="get">
 <label for="natQ">Look up yours</label>
 <div class="row">{qbox}
@@ -234,6 +271,10 @@ f.addEventListener('submit',function(e){{if(!q.value.trim()){{e.preventDefault()
 function chipHrefs(){{[].forEach.call(document.querySelectorAll('.v2-chip'),function(a){{a.href='/costs/'+A.value+'/'+a.dataset.slug+'/'}})}}
 A.addEventListener('change',chipHrefs);chipHrefs();
 var pill=document.querySelector('.bar .start-pill');if(pill){{pill.textContent='Find a price';pill.setAttribute('href','/v2/');pill.addEventListener('click',function(e){{e.preventDefault();location.hash='';q.scrollIntoView({{block:'center'}});q.focus()}})}}
+var HS={hdata},hb=document.getElementById('v2next'),hj=0;
+if(hb)hb.onclick=function(){{hj=(hj+1)%HS.length;document.getElementById('v2hero').innerHTML=HS[hj];
+document.getElementById('v2hcount').textContent=(hj+1)+' of '+HS.length;hb.textContent=hj+1<HS.length?'Show me another':'Back to the first one';
+try{{window.hcfTrack&&window.hcfTrack({{ev:'hero-next',detail:String(hj+1)}})}}catch(e){{}}}};
 var R={data},el=document.getElementById('v2game');if(!el||!R.length)return;var i=0;
 function h(s){{return String(s).replace(/[&<>"]/g,function(c){{return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}}[c]}})}}
 function src(u,d){{return '<a class="v2-src" href="'+h(u)+'" target="_blank" rel="noopener">file dated '+h(d)+' \\u2197</a>'}}
