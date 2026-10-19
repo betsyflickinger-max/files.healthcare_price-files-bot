@@ -351,6 +351,7 @@ def work(u):
         return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{u}.json')['Body'].read()))
     except Exception: pass
     if sp is not None and bucket_done(k): return (u, 0, {}, {})   # an older machine finished the whole bucket meanwhile
+    if PRACTICE and not E.get('BIG') and exists_key(f'{WK}Bbig/{u}'): return (u, 0, {}, {})   # left for the big-memory machine
     if E.get('BCLAIM') and not bclaim(u): return (u, 0, {}, {})   # another machine is on it (not written: it isn't done)
     global FLAT
     if E.get('NOXPART'):
@@ -396,6 +397,16 @@ def work(u):
     except Exception as e: log('median file not written:', repr(e)[:120])
     if PRACTICE:
         try: return workP(u, c, src, MD)
+        except duckdb.OutOfMemoryException:
+            # Oct 19, 2026: a batch too big even in slices (one huge code) is left for the big-memory machine (BIG=1):
+            # mark it and move on instead of crashing, which restarted the machine into the same batch forever
+            import traceback
+            s3.put_object(Bucket=B, Key=f'{OUTP}errors/{u}.txt', Body=traceback.format_exc().encode())
+            s3.put_object(Bucket=B, Key=f'{WK}Bbig/{u}', Body=ROLE.encode()); log(f'P {u}: too big for this machine; left for the big-memory machine')
+            try: c.close()
+            except Exception: pass
+            finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+            return (u, 0, {}, {})
         except Exception:
             import traceback
             s3.put_object(Bucket=B, Key=f'{OUTP}errors/{u}.txt', Body=traceback.format_exc().encode()); raise
@@ -691,6 +702,17 @@ def covered(done_units, nb, split):
     """Buckets fully done: whole, or all `split` pieces present."""
     return sum(1 for b in range(nb) if str(b) in done_units or (split > 1 and all(f'{b}_{s_}' in done_units for s_ in range(split))))
 buckets = plan_units(buckets, done_units, SPLIT)
+if E.get('BIG'):
+    # Oct 19, 2026: BIG=1 (one worker, most of the machine's memory): only the batches other machines marked too big
+    log('big-memory machine: waiting for batches marked too big')
+    while True:
+        marked = [k_.rsplit('/', 1)[1] for k_, _ in ls(WK + 'Bbig/')]
+        for u_ in [x for x in marked if not exists_key(f'{WK}B/{x}.json')]:
+            r_ = work(u_); log('big batch done', u_, f'{r_[1]:,} rows')
+        doneu = {k_.rsplit('/', 1)[1][:-5] for k_, _ in ls(WK + 'B/') if k_.endswith('.json')}
+        if not plan_units(list(range(NB)), doneu, SPLIT): break
+        time.sleep(120)
+    buckets = []
 if E.get('BONLY'): buckets = [b for b in buckets if str(b) in E['BONLY'].split(',')]   # testing: just these buckets
 if PHASE == 'codes':   # requested codes: only the buckets they fall in (same hash as stage A, same DuckDB version)
     mine_b = {r_[0] for r_ in con.execute(f"select distinct (hash(c) % {NB})::int from unnest(?::varchar[]) t(c)", [PRI]).fetchall()}
@@ -749,6 +771,8 @@ if E.get('BCLAIM'):
     while True:
         left_ = plan_units(base_, {k_.rsplit('/', 1)[1][:-5] for k_, _ in ls(WK + 'B/') if k_.endswith('.json')}, SPLIT)
         if not left_: break
+        if PRACTICE and set(str(x) for x in left_) <= {k_.rsplit('/', 1)[1] for k_, _ in ls(WK + 'Bbig/')}:
+            log('only batches for the big-memory machine are left; it writes embed.json'); LOGFLUSH(); sys.exit(0)
         log(f'{len(left_)} units not finished yet (claimed by other machines); checking again in 5 min'); LOGFLUSH(); time.sleep(300)
         with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=int(E.get('MAXTASKS', '4'))) as P2:
             for r_ in P2.imap_unordered(work, left_):
