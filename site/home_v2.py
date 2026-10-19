@@ -354,6 +354,9 @@ def build(d):
                '<p style="margin:18px 0 0;font-weight:800"><a href="/story/">New here? See the whole story in 7 steps →</a></p></div>\n')
         open(hp, 'w', encoding='utf-8').write(home.replace('<!-- NATIONAL:END -->', add + '<!-- NATIONAL:END -->', 1))
         changed = True
+    # the folder view (/folders/) and its switch on the current homepage (Betsy, Oct 19); after the sign-up step, which rewrites index.html
+    import home_folders   # noqa: E402
+    changed = home_folders.build(site, summ[HERO], money, plan_name, what_word, low) or changed
     # networks each price page leaves out of its figures (same rate at most places, BCBSTX ParPlan), by page
     fbp, medk = {}, {}
     for k, v in st['summaries'].items():

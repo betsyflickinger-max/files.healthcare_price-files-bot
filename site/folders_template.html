@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>The Healthcare Files (folder view)</title>
+<!-- FOLDERS (written by price-files-bot site/home_folders.py from site/folders_template.html; edits here are replaced on the next run) -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Mono:wght@400;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap">
+<style>
+/* Layout: two parts. 1) the homepage "file drawer": stacked folders, staggered tabs, one pulled open. 2) every other page: a row of folder tabs, the open one joined to its folder. Each section keeps one folder color everywhere. */
+:root{
+  --band:#2E5BE6; --hi:#F7C925; --ink:#151515; --paper:#FFFFFF; --muted:#4B5568; --rule:#D5DCEC; --ground:#EDEFF4;
+  /* one folder color per section */
+  /* palette from Betsy's reference (stacked colored folders) */
+  --f1:#2150DA; --t1:#FFFFFF;   /* Prices: blue */
+  --f2:#EB5B26; --t2:#FFFFFF;   /* My plan: orange */
+  --f3:#11735F; --t3:#FFFFFF;   /* Hospitals & insurers: teal */
+  --f4:#E2312C; --t4:#FFFFFF;   /* Price File Watch: red, the warning section */
+  --f5:#6E1146; --t5:#FFFFFF;   /* The files: maroon */
+  --f6:#5B2273; --t6:#FFFFFF;   /* Newsroom: purple */
+  --a1:#F5DE2A; --u1:#151515; --a2:#111111; --u2:#FFFFFF; --a3:#3A1E8E; --u3:#FFFFFF; --a4:#C23F7D; --u4:#FFFFFF; /* category tabs */
+  --kraft:#C9A16B;
+  --display:"Archivo",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --serif:"Newsreader",Georgia,serif; --type:"Courier Prime","Courier New",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--paper:#15171D;--ink:#EEF1F8;--muted:#A7B0C4;--rule:#2C3243;--ground:#0C0E12;color-scheme:dark}}
+:root[data-theme="dark"]{--paper:#15171D;--ink:#EEF1F8;--muted:#A7B0C4;--rule:#2C3243;--ground:#0C0E12;color-scheme:dark}
+body{background:var(--ground);color:var(--ink);font:16px/1.5 var(--display)}
+.outer{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px;max-width:1300px;margin:0 auto;display:grid;gap:34px}
+.intro h1{font:800 clamp(24px,3.4vw,34px)/1.15 var(--display);font-stretch:88%;margin:0;text-wrap:balance}
+.intro p{margin:8px 0 0;max-width:66ch;color:var(--muted)}
+.label{font:600 12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+.panel{background:var(--paper);border:1px solid var(--rule);padding:22px clamp(14px,3vw,28px) 26px;min-width:0}
+
+/* ---------- the tab shape: curved shoulders on both sides ---------- */
+.tab{--h:40px;position:relative;display:inline-flex;align-items:center;gap:10px;height:var(--h);padding:0 10px;margin:0 30px;
+  background:var(--c);color:var(--t);border:0;cursor:pointer;white-space:nowrap;
+  font:400 18px var(--serif);letter-spacing:0}
+.tab::before,.tab::after{content:"";position:absolute;bottom:0;width:31px;height:var(--h);background:var(--c);
+  -webkit-mask:var(--m) no-repeat 0 0/100% 100%;mask:var(--m) no-repeat 0 0/100% 100%}
+.tab::before{left:-30px;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31 40' preserveAspectRatio='none'%3E%3Cpath d='M0 40C14 40 15 0 31 0V40Z'/%3E%3C/svg%3E")}
+.tab::after{right:-30px;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 31 40' preserveAspectRatio='none'%3E%3Cpath d='M0 0C16 0 17 40 31 40H0Z'/%3E%3C/svg%3E")}
+.tab .no{opacity:.7}
+.tab:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+
+/* ---------- 1. homepage file drawer (stacked layers, like the reference) ---------- */
+.stage{background:#141414;padding:30px clamp(8px,3vw,40px) 34px;border-radius:4px}
+.stage .hint{font:13px var(--mono);color:#9A9A9A;margin:0 0 18px clamp(4px,2vw,24px)}
+.drawer{display:flex;flex-direction:column}
+.layer{position:relative;transition:margin-top .22s ease}
+.lbody{position:relative;background:var(--c);color:var(--t);min-height:46px;border-radius:2px 3px 0 0;transition:min-height .22s ease,box-shadow .22s}
+.layer+.layer{margin-top:-40px}
+.layer .tab{cursor:pointer}
+.ltabs{display:flex;align-items:flex-end;height:40px;position:relative;z-index:1}
+.ltabs .tab,.subs .tab{min-width:clamp(150px,19vw,250px);justify-content:center;font-size:20px}
+.ltabs .tab{margin-left:30px}
+/* category tabs: to the right, along the bottom of their own folder, like the reference */
+.subs{position:absolute;left:0;right:0;bottom:0;height:40px;pointer-events:none;z-index:1}
+.subs .tab{position:absolute;bottom:0;margin:0;pointer-events:auto}
+.subs .tab:nth-child(1){left:calc(34% + 30px)}.subs .tab:nth-child(2){left:calc(64% + 30px)}
+/* hover: the folder pulls up out of the stack and shows what's inside */
+.layer+.layer:not(.open):is(:hover,:focus-within){margin-top:-48px}
+.layer:not(.open):is(:hover,:focus-within) .lbody{min-height:170px;box-shadow:0 -8px 18px rgba(0,0,0,.35)}
+.layer:is(:hover,:focus-within,.open) .lmeta{display:grid}
+@media (prefers-reduced-motion:reduce){.layer,.lbody{transition:none}}
+.layer:last-child .lbody{min-height:70px;border-radius:2px 3px 4px 4px}
+.layer.open .lbody{padding:18px clamp(12px,3vw,40px) 64px}
+.lmeta{display:none;grid-template-columns:3.5em minmax(0,1fr) auto;gap:6px 20px;font:12.5px/1.5 var(--mono);padding:18px clamp(12px,3vw,40px) 0}
+.layer.open .lmeta{padding:0}
+.lmeta .peek{display:none}.layer:not(.open):is(:hover,:focus-within) .lmeta .peek{display:block;grid-column:2;margin-top:6px;opacity:.85}
+.lmeta .when{text-align:right}
+@media(max-width:620px){.subs{display:none}.ltabs .tab{min-width:0;font-size:17px}.lmeta{grid-template-columns:minmax(0,1fr)}.lmeta .when{text-align:left}.lmeta .peek{grid-column:auto}}
+
+/* v4: slimmer, longer tabs with long, gentle shoulders; uneven placement per folder */
+.drawer .tab{--h:34px;padding:0 16px;font-size:19px;min-width:var(--w,220px);justify-content:center}
+.drawer .tab::before,.drawer .tab::after{width:46px}
+.drawer .tab::before{left:-45px;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 34' preserveAspectRatio='none'%3E%3Cpath d='M0 34C21 34 23 0 46 0V34Z'/%3E%3C/svg%3E")}
+.drawer .tab::after{right:-45px;--m:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 34' preserveAspectRatio='none'%3E%3Cpath d='M0 0C23 0 25 34 46 34H0Z'/%3E%3C/svg%3E")}
+.drawer .ltabs{height:34px}
+.drawer .ltabs .tab{margin-left:calc(46px + var(--mx,0px))}
+.drawer .layer+.layer{margin-top:-34px}
+.drawer .lbody{min-height:42px}
+.drawer .subs{height:34px}
+.drawer .subs .tab{left:calc(var(--sx) + 46px)!important}
+.drawer .layer+.layer:not(.open):is(:hover,:focus-within){margin-top:-42px}
+.drawer .layer:not(.open):is(:hover,:focus-within) .lbody{min-height:150px}
+@media(max-width:620px){.drawer .tab{min-width:0;font-size:17px}.drawer .ltabs .tab{margin-left:calc(46px + var(--mxs,0px))}}
+/* the price gauge: the answer as a picture */
+.answer{font:700 19px/24px var(--type);margin:0 0 24px}
+.gauge{position:relative;height:96px;margin:0 0 24px}
+.gauge .trk{position:absolute;left:0;right:0;top:33px;height:6px;background:#D9DDE6;border-radius:3px}
+.gauge .seg{position:absolute;top:31px;height:10px;border-radius:5px;background:var(--c)}
+.gauge .mk{position:absolute;top:24px;width:2px;height:24px;background:#151515}
+.gauge .lb{position:absolute;font:12.5px/1.2 var(--type);white-space:nowrap}
+.gauge .up{top:4px}.gauge .dn{top:52px}.gauge .med{top:74px;display:flex;align-items:center;gap:6px}
+.gauge .mm{background:#C23F7D;width:3px}.gauge .sw{display:inline-block;width:3px;height:14px;background:#C23F7D}
+
+/* v5: front-to-back. Prices and My plan are the big folders up front; the "check our work" folders sit back, thinner and quieter */
+.drawer .layer.t-front .tab{--h:42px;font-size:22px}
+.drawer .layer.t-front .ltabs,.drawer .layer.t-front .subs{height:42px}
+.drawer .layer.t-front .subs .tab{--h:40px;font-size:20px}
+.drawer .layer+.layer.t-front{margin-top:-42px}
+.drawer .layer.t-front .lbody{min-height:56px}
+.drawer .layer.t-back .tab{--h:28px;font-size:16px}
+.drawer .layer.t-back .ltabs,.drawer .layer.t-back .subs{height:28px}
+.drawer .layer+.layer.t-back{margin-top:-28px}
+.drawer .layer.t-back .lbody{min-height:34px}
+.drawer .layer.t-back:not(.open):not(:hover):not(:focus-within) :is(.lbody,.tab){filter:brightness(.72) saturate(.8)}
+.drawer .layer+.layer.t-front:not(.open):is(:hover,:focus-within){margin-top:-52px}
+.drawer .layer+.layer.t-back:not(.open):is(:hover,:focus-within){margin-top:-36px}
+.backlab{font:12px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#8C8C8C;margin:14px 0 8px clamp(4px,2vw,24px)}
+/* the receipt slip, clipped on top of the lined sheet */
+.half .sheet.has-rcpt{min-height:470px}.has-rcpt .sig{max-width:38%}
+.rcpt{position:absolute;top:150px;right:-18px;width:min(250px,46%);background:#FFFFFF;color:#151515;font:13px/1.55 var(--type);padding:16px 16px 18px;
+  transform:rotate(1.6deg);box-shadow:0 4px 10px rgba(0,0,0,.22);z-index:2}
+.rcpt::before,.rcpt::after{content:"";position:absolute;left:0;right:0;height:8px;background:linear-gradient(135deg,#FFFFFF 50%,transparent 50%) 0 0/12px 8px repeat-x,linear-gradient(-135deg,#FFFFFF 50%,transparent 50%) 0 0/12px 8px repeat-x}
+.rcpt::before{top:-8px;transform:scaleY(-1)}.rcpt::after{bottom:-8px}
+.rcpt .c{text-align:center}.rcpt .hd{font-weight:700;letter-spacing:.08em}
+.rcpt hr{border:0;border-top:1.5px dashed #151515;margin:8px 0}
+.rcpt .ln{display:flex;justify-content:space-between;gap:8px}.rcpt .ln b{font-variant-numeric:tabular-nums}
+.rcpt .tot{font-weight:700;font-size:14px}
+.answer{font:700 19px/24px var(--type);margin:0 0 24px}
+@media(max-width:760px){.half .sheet.has-rcpt{min-height:0}.has-rcpt .sig{max-width:none}.rcpt{position:relative;top:auto;right:auto;width:auto;margin:10px 0 28px;transform:rotate(.8deg)}}
+
+/* ---------- the open folder (second reference) ---------- */
+.spread{display:none;margin-top:20px;background:#C9A16B;padding:12px;border-radius:4px;position:relative;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);
+  box-shadow:0 10px 24px rgba(0,0,0,.28);color:#151515}
+.layer.open .spread{display:grid}
+.half{position:relative;min-height:330px;border-radius:2px;padding:18px 18px 40px}
+.half.l{background:#DDE3C5}
+.half.r{background:#C9A16B;display:grid;grid-template-columns:52px minmax(0,1fr);padding:0 0 0 0;gap:0}
+.foot-lab{position:absolute;left:18px;bottom:12px;font:11px var(--type);letter-spacing:.12em;text-transform:uppercase}
+.sheet{position:relative;background:#FBFBF6;padding:22px 24px 26px 64px;font:15px/24px var(--type);min-height:290px;
+  background-image:linear-gradient(90deg,transparent 46px,#E9B7B7 46px,#E9B7B7 47px,transparent 47px),repeating-linear-gradient(#FBFBF6 0 23px,#C9D4E6 23px 24px);background-position:0 22px;
+  box-shadow:0 2px 6px rgba(0,0,0,.18);margin:-6px 0 0 -6px}
+.sheet h4{font:700 15px/24px var(--type);margin:0}
+.sheet p{margin:0 0 24px}
+.row{display:flex;justify-content:space-between;gap:10px}.row b{font-weight:700;font-variant-numeric:tabular-nums}
+.sig{font:13px/1.35 var(--display);margin-top:6px}.sig b{display:block}.sig i{display:block}
+.strip{background:var(--c);color:var(--t);border-radius:2px 0 0 2px;display:flex;align-items:flex-start;justify-content:center;padding:70px 0 40px;position:relative}
+.strip span{writing-mode:vertical-rl;transform:rotate(180deg);font:400 28px var(--serif);white-space:nowrap}
+.strip small{position:absolute;top:16px;left:10px;font:10.5px var(--type);letter-spacing:.1em;text-transform:uppercase;writing-mode:vertical-rl;transform:rotate(180deg)}
+.sheet2{background:#F1F0D9;padding:22px 24px 30px;font:15px/1.6 var(--type);margin:16px 16px 70px 0;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.sheet2 p{margin:0 0 14px}
+.note2{position:absolute;background:#C8C6F0;color:#151515;padding:16px 18px;font:14px/1.5 var(--type);width:min(250px,44%);box-shadow:0 3px 8px rgba(0,0,0,.22);z-index:2}
+.note2 .sig{font-size:12px}
+.n1{left:28%;bottom:-18px;transform:rotate(-1.2deg)}
+.n2{right:3%;bottom:30px;transform:rotate(.8deg)}
+.clip{position:absolute;top:-14px;left:22px;width:22px;height:64px;z-index:3}
+.binder{position:absolute;top:-10px;right:18px;width:44px;height:52px;z-index:3}
+@media(max-width:760px){
+  .spread{grid-template-columns:minmax(0,1fr);gap:12px}
+  .half{min-height:0}.half.r{grid-template-columns:40px minmax(0,1fr)}
+  .strip span{font-size:22px}
+  .sheet2{margin:12px 12px 16px 0}
+  .sheet{font-size:14px;padding-left:56px;background-image:linear-gradient(90deg,transparent 40px,#E9B7B7 40px,#E9B7B7 41px,transparent 41px),repeating-linear-gradient(#FBFBF6 0 23px,#C9D4E6 23px 24px)}.binder{right:-6px}
+  .note2{position:relative;left:auto;right:auto;bottom:auto;width:auto;margin:0 4px}
+  .notes2{display:grid;gap:12px;grid-column:1/-1}
+}
+@media(min-width:761px){.notes2{display:contents}}
+
+/* ---------- 2. tab bar on every other page ---------- */
+.site{border:1px solid var(--rule);background:var(--paper);overflow:hidden}
+.band{background:var(--band);padding:16px 20px 0}
+.brandrow{display:flex;align-items:center;gap:14px}
+.mark{font:900 28px/1 var(--display);font-stretch:118%;letter-spacing:.02em;color:var(--hi);text-decoration:none}
+.mark small{display:block;font:500 12px/1.3 var(--display);font-stretch:100%;letter-spacing:0;color:#DCE5FC;margin-top:4px}
+.start{margin-left:auto;background:var(--hi);color:#151515;font-weight:800;font-size:14px;padding:8px 13px;text-decoration:none;white-space:nowrap}
+.tabrow{display:flex;align-items:flex-end;margin-top:18px;overflow-x:auto;scrollbar-width:none;padding-left:2px}
+.tabrow::-webkit-scrollbar{display:none}
+.tabrow .tab{--h:36px;flex:0 0 auto;margin:0 4px 0 30px;font-size:16px;transform:translateY(3px);filter:saturate(.8) brightness(.95)}
+.tabrow .tab:first-child{margin-left:30px}
+.tabrow .tab[aria-selected="true"]{--h:41px;transform:none;filter:none;z-index:2}
+.face{background:var(--c);color:var(--t);padding:14px 20px 16px;display:flex;flex-wrap:wrap;gap:6px 20px;align-items:baseline}
+.face a{color:inherit;font-weight:700;font-size:15px;text-underline-offset:4px;text-decoration-thickness:1px}
+.face a[aria-current]{text-decoration-thickness:3px}
+.face .why{flex-basis:100%;margin:2px 0 0;font:13px var(--mono);opacity:.85}
+.pbody{padding:20px}
+.pbody h2{font:800 24px/1.15 var(--display);font-stretch:90%;margin:0}
+.pbody p{margin:6px 0 0;color:var(--muted);max-width:60ch}
+
+.views{display:grid;gap:26px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:1000px){.views{grid-template-columns:minmax(0,1fr) 360px;align-items:start}}
+.phone .site{border:8px solid #151515;border-radius:22px;max-width:360px}
+.phone .band{padding:12px 12px 0}.phone .mark{font-size:22px}.phone .mark small{font-size:11px}.phone .start{font-size:13px;padding:7px 9px}
+.phone .face{padding:12px 14px}.phone .pbody{padding:16px 14px}
+
+.notes{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:760px){.notes{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.note{background:var(--paper);border:1px solid var(--rule);padding:16px 18px}
+.note h3{font:800 16px var(--display);margin:0 0 6px}
+.note p{margin:0;font-size:14.5px}
+@media(max-width:560px){.folder .tab{margin-left:calc(22px + var(--xs))}.fface .meta{flex-basis:100%}}
+.tabrow{position:relative}
+
+/* ---------- 3. The files: a filing cabinet ---------- */
+:root{--steel:#A9B2C1;--steel-d:#8B95A7;--steel-l:#C7CEDA;--slot:#2A2F3A}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--steel:#5D6677;--steel-d:#4A5262;--steel-l:#727C8E;--slot:#0A0C10}}
+:root[data-theme="dark"]{--steel:#5D6677;--steel-d:#4A5262;--steel-l:#727C8E;--slot:#0A0C10}
+.cabwrap{display:grid;gap:26px;grid-template-columns:minmax(0,1fr)}
+@media(min-width:820px){.cabwrap{grid-template-columns:320px minmax(0,1fr);align-items:start}}
+.cab{background:var(--steel);border-radius:6px 6px 2px 2px;padding:12px 12px 4px;box-shadow:inset 0 0 0 2px var(--steel-d),0 14px 0 -6px var(--steel-d);max-width:340px;width:100%;justify-self:center}
+.drw{margin-bottom:10px}
+.inside{display:none;background:var(--slot);border-radius:3px 3px 0 0;padding:14px 8px 0;height:74px;overflow:hidden;align-items:flex-end;gap:0}
+.drw.open .inside{display:flex}
+.inside .tab{--h:30px;margin:0 0 0 24px;font-size:11px;padding:0 6px;flex:0 1 auto;min-width:0}
+.inside .tab+.tab{margin-left:30px}
+.inside .tab[aria-pressed="true"]{--c:var(--hi)!important;--t:#151515!important}
+.inside .tab .stem{display:block;overflow:hidden;text-overflow:ellipsis}
+.front{width:100%;border:0;cursor:pointer;display:grid;justify-items:center;gap:9px;padding:12px 10px 14px;
+  background:linear-gradient(var(--steel-l),var(--steel));box-shadow:inset 0 0 0 2px var(--steel-d);border-radius:3px;color:var(--ink)}
+.drw.open .front{border-radius:0 0 3px 3px;box-shadow:inset 0 0 0 2px var(--steel-d),0 6px 10px rgba(0,0,0,.25)}
+.front:focus-visible{outline:3px solid var(--hi);outline-offset:2px}
+.holder{background:#FBF8F0;color:#151515;border:2px solid var(--steel-d);padding:3px 12px;font:600 11.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;min-width:60%;text-align:center}
+.handle{width:42%;height:10px;border-radius:6px;background:var(--steel-d);box-shadow:inset 0 2px 0 rgba(0,0,0,.18)}
+.card{background:var(--kraft);color:#151515;border-radius:0 10px 10px 10px;padding:18px 20px 20px;position:relative;margin-top:36px;min-width:0}
+.card .tab{position:absolute;top:-36px;left:22px;--h:36px;--c:var(--kraft);--t:#151515;cursor:default}
+.card h3{font:800 22px/1.2 var(--display);font-stretch:90%;margin:0 0 4px}
+.card .lede{margin:0 0 12px;font-size:15px}
+.card dl{display:grid;grid-template-columns:minmax(0,9em) minmax(0,1fr);gap:0;margin:0;border-top:1.5px solid rgba(21,21,21,.35)}
+.card dt,.card dd{margin:0;padding:8px 0;border-bottom:1.5px solid rgba(21,21,21,.2);font-size:14.5px}
+.card dt{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding-top:10px}
+.card .go{display:inline-block;margin-top:14px;font-weight:800;color:#151515;text-underline-offset:4px}
+/* folder-view page */
+body{background:#141414;margin:0}
+.fv-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:18px 6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1300px;margin:0 auto}
+.fv-top .mark{font:900 30px/1 var(--display);font-stretch:118%;letter-spacing:.02em;color:var(--hi);text-decoration:none}
+.fv-top .mark small{display:block;font:500 12.5px/1.3 var(--display);font-stretch:100%;letter-spacing:0;color:#DCE5FC;margin-top:4px}
+.fv-toggle{margin-left:auto;font:600 13px var(--mono);color:#151515;background:var(--hi);padding:9px 14px;text-decoration:none;white-space:nowrap}
+.outer{padding-block:10px 40px}
+.goto{font:13px/1.6 var(--type);margin:12px 0 0}.goto a,.sig a{color:#151515}
+.rcpt .ln span{min-width:0}
+.subs a.tab{text-decoration:none}.subs a.tab:hover{text-decoration:underline}
+</style></head>
+<body>
+<header class="fv-top"><a class="mark" href="/">FILES<small>The receipt for the U.S. healthcare system</small></a>
+<a class="fv-toggle" href="/">Switch to the current design</a></header>
+<main class="outer"><div class="stage"><div class="drawer" id="drawer"></div></div></main>
+<script>window.FD=/*__DATA__*/null;</script>
+<script>
+const F=[
+ {k:'prices',tier:'t-front',w:'250px',mx:'0px',mxs:'0px',subs:[['31%','230px'],['63%','250px']],n:'01',t:'Prices',c:'--f1',tc:'--t1',x:'0%',xs:'0%',what:'What a procedure costs, place by place',meta:'2,452 price pages',links:['Look up a price','Price Finder','Compare places']},
+ {k:'plan',tier:'t-front',w:'200px',mx:'26px',mxs:'18px',subs:[['42%','210px'],['71%','190px']],n:'02',t:'My plan',c:'--f2',tc:'--t2',x:'30%',xs:'12%',what:'What you’d owe on your plan, and your rights',meta:'117 of 171 DFW plans',links:['Plan Calculator','Employer plans','Surprise bills']},
+ {k:'who',tier:'t-mid',w:'290px',mx:'0px',mxs:'4px',subs:[['55%','200px']],n:'03',t:'Hospitals & insurers',c:'--f3',tc:'--t3',x:'58%',xs:'4%',what:'Who owns what, and who pays what',meta:'Hospital + insurer profiles',links:['Hospitals','Insurers']},
+ {k:'watch',tier:'t-back',w:'240px',mx:'60px',mxs:'30px',subs:[['36%','270px']],n:'04',t:'Price File Watch',c:'--f4',tc:'--t4',x:'12%',xs:'16%',what:'Who isn’t publishing a usable price file',meta:'Checked weekly',links:['Who isn’t publishing','Missing hospital files']},
+ {k:'files',tier:'t-back',w:'180px',mx:'14px',mxs:'10px',subs:[['29%','250px'],['59%','230px']],n:'05',t:'The files',c:'--f5',tc:'--t5',x:'44%',xs:'6%',what:'Every public file we read, and how we read it',meta:'7 sources',links:['How we read the files','Hospital price files','Insurer price files','Medicare (CMS)','Marketplace plans','Form 5500','Surprise-bill data','Insurer loss ratios']},
+ {k:'news',tier:'t-back',w:'210px',mx:'40px',mxs:'22px',subs:[['67%','170px']],n:'06',t:'Newsroom',c:'--f6',tc:'--t6',x:'70%',xs:'18%',what:'What we’re finding in the files',meta:'Daily briefing',links:['What’s in the Files? (daily)','Research','Press kit','What’s coming','Corrections']}
+];
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const css=f=>`--c:var(${f.c});--t:var(${f.tc})`;
+
+const CLIP='<svg class="clip" viewBox="0 0 22 64" aria-hidden="true"><path d="M7 20V50a5 5 0 0 0 10 0V10a7 7 0 0 0-14 0v42a9 9 0 0 0 18 0V22" fill="none" stroke="#7E848E" stroke-width="2.2" stroke-linecap="round"/></svg>';
+const BINDER='<svg class="binder" viewBox="0 0 44 52" aria-hidden="true"><path d="M12 30V12a10 10 0 0 1 20 0v18" fill="none" stroke="#2A2A2A" stroke-width="2.4"/><path d="M5 30h34l-4 22H9Z" fill="#151515"/></svg>';
+const SIG=(a,b,c)=>`<div class="sig"><b>${a}</b><i>${b}</i>${c}</div>`;
+const SP={
+ prices:{rc:true,l:`<h4>Knee MRI</h4><h4>Dallas–Fort Worth</h4><p>&nbsp;</p><p class="answer">The middle price is $1,180.</p><div class="rcpt" role="group" aria-label="Receipt"><div class="c hd">THE HEALTHCARE FILES</div><div class="c">Receipt · Knee MRI</div><div class="c">Dallas–Fort Worth</div><hr><div class="ln"><span>Lowest price</span><b>$412</b></div><div class="ln"><span>Middle price</span><b>$1,180</b></div><div class="ln"><span>Highest price</span><b>$4,036</b></div><hr><div class="ln tot"><span>Medicare pays</span><b>$238</b></div><hr><div class="c">Checked 10/19/2026</div><div class="c">* Facility fee only *</div></div>`,
+   ls:SIG('From the files','Hospital and insurer price files','Checked Oct 19, 2026'),strip:'What it costs',
+   r:`<p>Expect more than one bill.</p><p>The scan, the radiologist who reads it, and sometimes the building each bill on their own. The price here is the scan. Ask for the others before you book.</p>`,
+   rs:SIG('How to read this price','Facility fee only','Doctor’s fee listed separately'),
+   n:[['Pick your insurer’s network to see what it pays each place.','Tip','Price Finder'],['Paying cash? Ask for the cash price in writing before you book.','Tip','Your rights']]},
+ plan:{l:`<h4>Your plan · sample</h4><p>&nbsp;</p><div class="row"><span>Plan</span><b>Silver HMO</b></div><div class="row"><span>Deductible left</span><b>$2,150</b></div><div class="row"><span>MRI, lowest place</span><b>$412</b></div><div class="row"><span>You’d owe</span><b>$412</b></div><p>&nbsp;</p><p>Until the deductible is met, you usually pay the negotiated rate yourself.</p>`,
+   ls:SIG('Plan Calculator','HealthCare.gov plans','2026 plan year'),strip:'Your rights',
+   r:`<p>Uninsured or paying cash? You can ask any provider for a good-faith estimate before your care.</p><p>If the bill comes in $400 or more above it, you can dispute it.</p>`,
+   rs:SIG('No Surprises Act','Federal law','In effect since 2022'),
+   n:[['Emergency care out of network? You owe your in-network share.','Your rights','Surprise bills'],['Keep the estimate. You’ll need it to dispute.','Tip','Your rights']]},
+ who:{l:`<h4>What’s in a hospital file</h4><p>&nbsp;</p><p>Who owns it. For-profit or not. Its Medicare star rating. Every insurer it lists rates for. A link to its price file.</p>`,
+   ls:SIG('Hospital profiles','From Medicare’s public lists','Each fact linked to its source'),strip:'Who pays what',
+   r:`<p>A loss ratio is the share of each premium dollar an insurer spends on care.</p><p>The law sets a floor: 80 cents for individual and small-group plans, 85 cents for large-group plans.</p>`,
+   rs:SIG('Insurer profiles','Loss-ratio filings','Filed with CMS each year'),
+   n:[['Every fact links to its public source.','Our rule','The files'],['See which insurers each hospital publishes rates for.','Tip','Hospitals']]},
+ watch:{l:`<h4>Who isn’t publishing</h4><p>&nbsp;</p><p>We looked for every hospital’s price file. When we couldn’t find a usable one, it goes on this list with what we tried and when.</p>`,
+   ls:SIG('Price File Watch','Hospitals and insurers','Checked weekly'),strip:'Right of reply',
+   r:`<p>Everyone named here got a notice and 10 business days to answer before this page went public.</p><p>Their replies are printed beside their names.</p>`,
+   rs:SIG('How we name names','Notice first, then publish','Replies printed in full'),
+   n:[['Know where a missing file is? Send us the link.','Help us','Report a file'],['A file can be online and still unusable.','What counts','Methodology']]},
+ files:{l:`<h4>How we read the files</h4><p>&nbsp;</p><p>1. Download it from the hospital or insurer.</p><p>2. Keep the original, fingerprinted.</p><p>3. Read every row. Never estimate or average.</p><p>4. Link each price back to its file and date.</p>`,
+   ls:SIG('Methodology','How we read the files','Updated as we learn'),strip:'The cabinet',
+   r:`<p>Seven kinds of public files feed this site, from hospitals, insurers, Medicare, HealthCare.gov and the Department of Labor.</p><p>Each one has its own drawer: what it is, the rule behind it, and how often it changes.</p>`,
+   rs:SIG('The files','Seven public sources','Open the cabinet'),
+   n:[['Prices older than six months get flagged.','Our rule','Methodology'],['Found a wrong price? Tell us.','Corrections','Report it']]},
+ news:{l:`<h4>What’s in the Files?</h4><p>&nbsp;</p><p>One story from the price files, every day. Short, dated, and linked to the rows it comes from.</p>`,
+   ls:SIG('The daily briefing','Newsroom','New each morning'),strip:'Research',
+   r:`<p>Longer write-ups on what the files show, each with the data behind it so you can check our work.</p>`,
+   rs:SIG('Research','With the data attached','Corrections posted in public'),
+   n:[['Reporters: the press kit has our numbers and how to cite us.','Press','Press kit'],['See what’s coming next on the roadmap.','What’s coming','Newsroom']]}
+};
+function spread(k,f){const s=SP[k];return `<div class="spread" style="${css(f)}">
+  <div class="half l">${CLIP}<div class="sheet${s.rc?' has-rcpt':''}">${s.l}${s.ls}</div><span class="foot-lab">The Healthcare Files</span></div>
+  <div class="half r"><div class="strip"><small>File ${f.n}</small><span>${esc(s.strip)}</span></div><div class="sheet2">${BINDER}${s.r}${s.rs}<p class="goto">Go to: ${f.links.map((l,i)=>`<a href="${f.hrefs[i]}">${esc(l)}</a>`).join(' · ')}</p></div></div>
+  <div class="notes2">${s.n.map((x,i)=>`<div class="note2 n${i+1}"><p style="margin:0 0 10px">${esc(x[0])}</p>${SIG(esc(x[1]),esc(x[2]),'')}</div>`).join('')}</div></div>`}
+function drawer(open){
+  const d=document.getElementById('drawer');
+  d.innerHTML=F.map(f=>`<div class="layer ${f.tier}${f.k===open?' open':''}" style="${css(f)};--w:${f.w};--mx:${f.mx};--mxs:${f.mxs}">
+    <div class="ltabs"><button class="tab" type="button" data-k="${f.k}" aria-expanded="${f.k===open}">${esc(f.t)}</button></div>
+    <div class="lbody"><div class="lmeta"><span>${f.n}</span><span>${esc(f.what)}.<br>${esc(f.meta)}.</span><span class="when">${esc(FD.date)}</span><span class="peek">${esc(f.links.join(' · '))}<br>Click to open the folder →</span></div>${f.k===open?spread(f.k,f):''}<div class="subs">${f.subs.map((q,i)=>{const a=(F.indexOf(f)*3+i)%4+1;return `<a class="tab sub" href="${f.hrefs[i+1]}" style="--c:var(--a${a});--t:var(--u${a});--sx:${q[0]};--w:${q[1]}">${esc(f.links[i+1])}</a>`}).join('')}</div></div></div>`).join('');
+  d.querySelectorAll('button.tab').forEach(b=>b.onclick=()=>{const k=b.dataset.k;drawer(k===open?'':k);d.querySelector(`.tab[data-k="${k}"]`).focus()});
+}
+F.forEach(f=>Object.assign(f,FD.f[f.k]||{}));Object.assign(SP,FD.sp||{});
+drawer('prices');
+</script>
+</body></html>
