@@ -520,7 +520,7 @@ def workP(u, c, src, MD):
     mem = {}
     for tin, docs, orgs in c.execute("""select tin, list(distinct pi) filter (where doc), list(distinct pi) filter (where pk.kind = 'G')
                                         from x join pk using (pi) group by tin""").fetchall():
-        if docs: mem[pid_of(tin)] = [sorted(docs), sorted(orgs or [])]
+        if docs: mem[pid_of(tin)] = [sorted(docs), sorted(orgs or []), tin]   # tax ID kept only in this private work file (for naming); never on a page
     futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{WK}P/{u}.json', Body=json.dumps(mem, separators=(',', ':')).encode()))
     for fu in futs: fu.result()
     c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
@@ -667,27 +667,24 @@ for c_, n_ in summary.items():
 embed = {'codes': codes, 'fac': ptab, 'nets': nets, 'dates': dates, 'urls': urls, 'labs': labs,
          'scope': {k_: sorted(v) for k_, v in scope.items() if len(v) < len(codes) - 20}}
 if PRACTICE:
-    # practice table: {practice id: [name, city, how named, doctor ids]}. Named after the organization NPI that bills under
-    # the same tax ID (the one seen in the most batches); a one-doctor practice is that doctor; otherwise the name is blank and
-    # the page says "Group of N doctors". 'o' = organization name, 's' = solo doctor, 'n' = no public name.
+    # practice table: {practice id: [name, city, how named, doctor ids]}; names only from public records (practice_names.py:
+    # 'i' IRS tax-exempt list, 'b' organization NPI + Medicare directory agree, 'm' Medicare directory majority, 's' solo, 'n' none)
     from collections import Counter
-    docs_, orgs_ = {}, {}
+    import practice_names
+    raw = {}
     def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
     with ThreadPoolExecutor(16) as P_:
         for m_ in P_.map(_rd, [k_ for k_, _ in ls(WK + 'P/')]):
-            for pid_, (d_, o_) in m_.items():
-                docs_.setdefault(pid_, set()).update(d_); orgs_.setdefault(pid_, Counter()).update(o_)
-    prac = {}
-    for pid_, d_ in docs_.items():
-        d_ = sorted(d_); cities = Counter(ptab[i_][1] for i_ in d_ if ptab[i_][1])
-        city = cities.most_common(1)[0][0] if cities else ''
-        if orgs_[pid_]: o_ = orgs_[pid_].most_common(1)[0][0]; prac[pid_] = [ptab[o_][0], ptab[o_][1] or city, 'o', d_]
-        elif len(d_) == 1: prac[pid_] = [ptab[d_[0]][0], ptab[d_[0]][1], 's', d_]
-        else: prac[pid_] = ['', city, 'n', d_]
+            for pid_, v_ in m_.items():
+                r_ = raw.setdefault(pid_, {'d': set(), 'o': Counter(), 't': None})
+                r_['d'].update(v_[0]); r_['o'].update(v_[1])
+                if len(v_) > 2 and v_[2]: r_['t'] = v_[2]
+    c_ = duckdb.connect(); c_.execute(f"set memory_limit='{E.get('MEM','12GB')}'; set temp_directory='{D}/tmp'")
+    prac = practice_names.name_all(raw, ptab, npis, c_, s3, B, str(D))
     embed['prac'] = prac
     how = Counter(v_[2] for v_ in prac.values())
-    log('practices', len(prac), 'named after an organization', how['o'], 'solo', how['s'], 'no public name', how['n'],
-        'doctors in a no-name group', sum(len(v_[3]) for v_ in prac.values() if v_[2] == 'n'))
+    log('practices', len(prac), 'named: IRS', how['i'], 'two sources agree', how['b'], 'Medicare majority', how['m'], 'solo', how['s'],
+        'no public name', how['n'], 'doctors in a no-name group', sum(len(v_[3]) for v_ in prac.values() if v_[2] == 'n'))
 s3.put_object(Bucket=B, Key=TOUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'npis.json', Body=json.dumps(npis).encode())
 log('DONE', len(codes), 'codes', len(ptab), 'providers', len(nets), 'networks', sum(summary.values()), 'lines')
