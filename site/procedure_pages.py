@@ -714,7 +714,7 @@ def includes(S):
 
 
 # ---------------------------------------------------------------- HTML
-SITE = {'name': 'What It Costs', 'robots': 'noindex,nofollow', 'origin': 'https://files.healthcare', 'nav': ''}
+SITE = {'name': 'The Healthcare Files', 'robots': 'noindex,nofollow', 'origin': 'https://files.healthcare', 'nav': ''}
 
 
 def site_settings(site):
@@ -1271,7 +1271,7 @@ def costs_index(areas, procs):
                                                 'url': SITE['origin'] + '/costs/', 'dateModified': TODAY.isoformat()})
 
 
-CSS = r'''/* What It Costs: shared stylesheet for /costs/ pages (written by price-files-bot site/procedure_pages.py). Same tokens as the homepage. */
+CSS = r'''/* The Healthcare Files: shared stylesheet for /costs/ pages (written by price-files-bot site/procedure_pages.py). Same tokens as the homepage. */
 :root{--board:#4A1C1C;--board-line:#552424;--board-ink:#F7EBD3;--board-sub:#E3CDB0;--paper:#FBF6EA;--ground:#E9DCBC;--ink:#2A1A12;--muted:#5E4B3A;--rule:#2A1A12;
 --stamp:#1F4FBF;--hi:#FFE27A;--display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;--body:"Public Sans","Helvetica Neue",Arial,sans-serif;--mono:"Courier Prime","Courier New",monospace;color-scheme:light}
 *{box-sizing:border-box}body{margin:0;background:var(--ground);color:var(--ink);font:17px/1.55 var(--body)}a{color:var(--ink)}
@@ -1440,7 +1440,7 @@ def national_section(areas, summaries, procs, n_rates_note):
 </style>
 <section data-view="home">
 <div class="board"><div class="wrap">
-<p style="font:700 14px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--hi);margin:0">The receipt for the U.S. healthcare system</p>
+<p class="hcf-tagline" style="font-size:18px;font-weight:600;line-height:1.4;color:var(--hi);margin:0;max-width:40em">What care really costs, from the price files hospitals and insurers have to publish.</p>
 <h1 class="letters">What is this going to <em>cost me?</em></h1>
 {home_bits.LEDE}
 <form class="nat-search" id="natForm" action="/costs/" method="get">
@@ -1766,6 +1766,7 @@ def deploy(force=False, only_areas=None):
         if attempt == 3:
             sys.exit('STOP: the live site kept changing; nothing deployed. The next daily run will try again.')
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-1500:])

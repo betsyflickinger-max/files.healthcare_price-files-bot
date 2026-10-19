@@ -451,7 +451,7 @@ def systems_of(owners):
 def shell(title, desc, url, current_hospitals=True):
     head = insurers_page.TEMPLATE[:insurers_page.TEMPLATE.index("</nav>") + 6]
     head = (head.replace('content="https://files.healthcare/insurers/"', f'content="{url}"')
-            .replace("Who Owns Your Health Plan · What It Costs", f"{E(title)} · What It Costs")
+            .replace("Who Owns Your Health Plan · The Healthcare Files", f"{E(title)} · The Healthcare Files")
             .replace(head[head.index('<meta name="description" content="'):head.index('">', head.index('<meta name="description" content="')) + 2],
                      f'<meta name="description" content="{E(desc)}">')
             .replace("</style>\n</head>", CSS + HV_CSS + "</style>\n</head>", 1))

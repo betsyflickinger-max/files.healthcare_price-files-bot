@@ -274,6 +274,7 @@ def publish(st):
     except Exception: prev = '2026-10-08'
     s3.put_object(Bucket=B, Key='site/every/CURRENT', Body=BID.encode())
     env = dict(os.environ, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), '/tmp/pub/deploy'], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main', '--commit-dirty=true'],
                        cwd='/tmp/pub/deploy', env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])

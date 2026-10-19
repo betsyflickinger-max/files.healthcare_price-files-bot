@@ -105,6 +105,7 @@ def main():
         E[k] = "".join(E.get(k, "").split())
     if not E.get("CLOUDFLARE_API_TOKEN"):
         sys.exit("CLOUDFLARE_API_TOKEN is not set; built but not deployed")
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'site', 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(["npx", "--yes", "wrangler@3.114.0", "pages", "deploy", "site", "--project-name", "upfront-dfw-preview",
                         "--branch", "main", "--commit-dirty=true"], cwd=d, env=dict(E, CLOUDFLARE_ACCOUNT_ID=E["R2_ACCOUNT_ID"]),
                        capture_output=True, text=True)

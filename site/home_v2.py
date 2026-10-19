@@ -476,6 +476,7 @@ def deploy():
     if s3.head_object(Bucket=B, Key=KEY)['ETag'] != etag:
         sys.exit('STOP: the live site changed while this ran; nothing deployed. Run again.')
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-1500:])

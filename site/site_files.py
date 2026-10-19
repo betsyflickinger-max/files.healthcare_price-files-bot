@@ -37,6 +37,7 @@ def push(d):
     if not os.path.isfile(f"{d}/site/price-finder/index.html") or not os.path.isdir(f"{d}/functions"):
         sys.exit("STOP: DIR is missing site/ or functions/; nothing deployed")
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E["R2_ACCOUNT_ID"])
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(["npx", "--yes", "wrangler@3.114.0", "pages", "deploy", "site", "--project-name", "upfront-dfw-preview",
                         "--branch", "main", "--commit-dirty=true"], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-1500:])

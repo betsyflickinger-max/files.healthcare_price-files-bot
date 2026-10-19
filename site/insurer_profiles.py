@@ -346,7 +346,7 @@ def page(name, R, P, S, nets, fdates, emp, idr, T, BLUE):
     url = f"https://files.healthcare/insurers/{slug(name)}/"
     desc = f"{title}: public records on the insurance companies it owns, where they sell, its members, price files and more."
     head = (head.replace('content="https://files.healthcare/insurers/"', f'content="{url}"')
-            .replace("Who Owns Your Health Plan · What It Costs", f"{E(title)} · Insurer profile · What It Costs")
+            .replace("Who Owns Your Health Plan · The Healthcare Files", f"{E(title)} · Insurer profile · The Healthcare Files")
             .replace(head[head.index('<meta name="description" content="'):head.index('">', head.index('<meta name="description" content="')) + 2],
                      f'<meta name="description" content="{E(desc)}">')
             .replace("</style>\n</head>", CSS + "</style>\n</head>", 1))

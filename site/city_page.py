@@ -204,8 +204,9 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
 
     # 3. wording
     w = Words(pre + '\x00' + post)
-    w.sub('<title>What It Costs Price Finder</title>', f'<title>{name} Price Finder · What It Costs</title>')
-    w.sub('content="Price Finder · What It Costs"', f'content="{name} Price Finder · What It Costs"')
+    w.s = w.s.replace('What It Costs', 'The Healthcare Files')   # Oct 18 rename: layouts saved before the rename still carry the old name
+    w.sub('<title>The Healthcare Files Price Finder</title>', f'<title>{name} Price Finder · The Healthcare Files</title>')
+    w.sub('content="Price Finder · The Healthcare Files"', f'content="{name} Price Finder · The Healthcare Files"')
     w.sub('content="https://files.healthcare/price-finder/"', f'content="https://files.healthcare/{slug}/price-finder/"')
     w.sub(r'<meta property="og:image[^>]*>', '', n=4, regex=True)   # the share image shows a DFW hospital
     w.sub('content="summary_large_image"', 'content="summary"')
@@ -410,6 +411,7 @@ def main():
         open(f'{fh}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(hpre + 'h/')).replace("PREFIX + 't/' + code", "PREFIX + code"))
     else: shutil.rmtree(fh, ignore_errors=True)
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])

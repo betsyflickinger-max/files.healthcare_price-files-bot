@@ -364,7 +364,7 @@ def patch_looks_css(s):
 
 
 def patch_disclaimers(s):
-    old = re.search(r'\[Choose one:\]\s*- \[(What It Costs does not currently accept payment[^\]]*)\]\s*- \[Some providers pay[^\]]*\]', s)
+    old = re.search(r'\[Choose one:\]\s*- \[(The Healthcare Files does not currently accept payment[^\]]*)\]\s*- \[Some providers pay[^\]]*\]', s)
     return s.replace(old.group(0), old.group(1)) if old else s
 
 
@@ -377,7 +377,7 @@ def patch_method(s):
 
 
 NOT_FOUND = '''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>Page not found · What It Costs</title>
+<meta name="robots" content="noindex"><title>Page not found · The Healthcare Files</title>
 <style>body{margin:0;background:#f6f1e7;color:#231f1a;font:17px/1.6 "Public Sans",system-ui,sans-serif;padding:0 16px}main{max-width:640px;margin:12vh auto}
 h1{font:600 40px/1.1 Georgia,serif;margin:0 0 12px}a{color:#9b3a2a}ul{padding-left:20px}</style></head><body><main>
 <p style="font:700 13px monospace;letter-spacing:.12em;text-transform:uppercase;color:#9b3a2a">404</p><h1>We couldn't find that page</h1>
@@ -430,9 +430,22 @@ html[data-look="units"]:not(#_) .tile .src,html[data-look="units"]:not(#_) .tile
 """
 
 
+
+# Insurer and hospital profiles (and the Hospitals list) put their header inside <main class="prof">; give it the same blue band.
+UNITS_PROF = r"""
+/* ux: units profiles oct18 */
+html[data-look="units"]:not(#_) main.prof>header{color:#fff;padding-block:30px 36px!important;margin-top:0!important;border-bottom:0!important;border-image:repeating-linear-gradient(#2E5BE6 0 26px,#3D69EC 26px 28px) fill 0 / 0 / 0 100vmax}
+html[data-look="units"]:not(#_) main.prof>header h1{color:#fff!important;font-weight:800!important;text-transform:uppercase;letter-spacing:-.025em}
+html[data-look="units"]:not(#_) main.prof>header .eyebrow{color:#F7C925!important}
+html[data-look="units"]:not(#_) main.prof>header .lede{color:#DCE5FC!important;border-bottom:0!important}
+html[data-look="units"]:not(#_) main.prof>header a{color:#fff!important}
+html[data-look="units"]:not(#_) main.prof>header .tag{color:#fff!important;border-color:#DCE5FC!important;background:transparent!important}
+"""
+
 def patch_units_css(s):
     s = s if '/* ux: units v2' in s else s.split('\n/* ux: units v1')[0] + UNITS_V1
-    return s if '/* ux: contrast oct18' in s else s + CONTRAST_OCT18
+    s = s if '/* ux: contrast oct18' in s else s + CONTRAST_OCT18
+    return s if '/* ux: units profiles oct18' in s else s + UNITS_PROF
 
 
 def patch_looks_js(s):
