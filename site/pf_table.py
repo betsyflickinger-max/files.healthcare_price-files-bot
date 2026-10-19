@@ -23,6 +23,11 @@ JS = '<script src="/pf-table.js"></script>'
 EYEBROW = re.compile(r'(<div class="eyebrow">)([^<]*?) · published prices(</div>)')
 
 
+CALC_FROM = 'const ps=byIns[S.ins].slice().sort('
+CALC_TO = ('const ps=(()=>{const seen={};return byIns[S.ins].filter(p=>{const k=JSON.stringify([p.n,p.m,p.d,p.x,p.k,p.cs]);'
+           'if(seen[k])return false;seen[k]=1;return true})})().sort(')
+
+
 def is_pf(s):
     return 'id="vPatient"' in s and 'function renderBoard()' in s
 
@@ -46,6 +51,13 @@ def apply(d):
     for f in ('pf-table.js', 'pf-table.css'):
         shutil.copyfile(os.path.join(HERE, 'assets', f), os.path.join(site, f))
     n = 0
+    pc = os.path.join(site, 'plan-calculator', 'index.html')     # one entry per plan design (Oct 19 test: plans sold under several IDs listed twice)
+    if os.path.isfile(pc):
+        t0 = open(pc, encoding='utf-8').read()
+        t1 = t0.replace(CALC_FROM, CALC_TO) if CALC_TO not in t0 else t0
+        if t1 != t0:
+            open(pc, 'w', encoding='utf-8').write(t1)
+            n += 1
     for root, _, fs in os.walk(site):
         if os.path.basename(root) == 'price-finder' and 'index.html' in fs:
             p = os.path.join(root, 'index.html')
@@ -55,6 +67,12 @@ def apply(d):
                 open(p, 'w', encoding='utf-8').write(t)
                 n += 1
     return n
+
+
+def nice(t):
+    sys.path.insert(0, HERE)
+    from procedure_pages import nice as _n
+    return _n(t)
 
 
 def _sig(xs):
@@ -80,8 +98,10 @@ def write_ml(d, only_stale=False):
         if os.path.isfile(p):
             for r in csv.DictReader(open(p, encoding='utf-8')):
                 ccn_npis.setdefault(r['ccn'], set()).add(r['npi'])
-    url_ccn = {}
+    url_ccn, ccn_name = {}, {}
     for r in csv.DictReader(open(os.path.join(ROOT, 'data', 'hospitals.csv'), encoding='utf-8')):
+        if r.get('name'):
+            ccn_name[r['ccn']] = r['name'].strip()
         if r.get('mrf_url'):
             url_ccn.setdefault(r['mrf_url'].strip(), set()).add(r['ccn'])
     site, n = os.path.join(d, 'site'), 0
@@ -96,7 +116,7 @@ def write_ml(d, only_stale=False):
             D = json.loads(t[t.find('>', i) + 1:t.find('</script>', i)])
             old = json.load(open(mp)) if os.path.isfile(mp) else {}
             srcs = [x[5] for x in (D.get('hosp') or {}).get('src') or []]
-            if only_stale and old.get('nf') == len(D['fac']) and old.get('hs') == _sig(srcs):
+            if only_stale and old.get('nf') == len(D['fac']) and old.get('hs') == _sig(srcs) and 'nm' in old:
                 continue
             if a['slug'] == 'dfw':
                 root = 'site/every/' + s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip() + '/'
@@ -122,16 +142,29 @@ def write_ml(d, only_stale=False):
                 f[i] = m[1]
                 q = r.setdefault(kd, [m[1], m[1], 0])
                 q[0], q[1], q[2] = min(q[0], m[1]), max(q[1], m[1]), q[2] + 1
+        # the name people know: CMS's hospital name for the place's Medicare ID, when only one place in this list has that ID
+        nm, by_ccn = {}, {}
+        for i, (x, npi) in enumerate(zip(fac, npis)):
+            m = ML.get(npi)
+            if m and m[0] == 'H' and len(m) > 2 and m[2] and m[2] in ccn_name:
+                by_ccn.setdefault(m[2], []).append(i)
+        for c, idx in by_ccn.items():
+            if len({re.sub(r'[^a-z]', '', fac[i][0].lower()) for i in idx}) != 1:
+                continue
+            nice_name = nice(ccn_name[c])
+            for i in idx:
+                if nice_name.lower() != fac[i][0].lower():
+                    nm[i] = nice_name
         h = {}
         for si, x in enumerate((D.get('hosp') or {}).get('src') or []):
             fis = sorted({i for c in url_ccn.get(str(x[4]).strip(), ()) for npi in ccn_npis.get(c, ()) for i in ni.get(npi, ())
                           if fac[i][2] in ('H', 'A')})
             if fis:
                 h[si] = [x[5], fis]           # the file's own key, so a rebuilt page with files in a new order can't misattribute
-        out.update({'r': r or out.get('r', {}), 'f': f, 'h': h, 'nf': len(fac), 'hs': _sig(srcs)})
+        out.update({'r': r or out.get('r', {}), 'f': f, 'h': h, 'nm': nm, 'nf': len(fac), 'hs': _sig(srcs)})
         open(mp, 'w').write(json.dumps(out, separators=(',', ':')))
         n += 1
-        print(f"  {a['slug']}: {len(f)} places with local Medicare, {len(h)} of {len((D.get('hosp') or {}).get('src') or [])} hospital files tied to places")
+        print(f"  {a['slug']}: {len(nm)} common hospital names, {len(f)} places with local Medicare, {len(h)} of {len((D.get('hosp') or {}).get('src') or [])} hospital files tied to places")
     return n
 
 

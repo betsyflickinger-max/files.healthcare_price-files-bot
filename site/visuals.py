@@ -76,11 +76,8 @@ def price_line(S, sg, mh, cc, med_asc):
     if cc:
         e = cc[0]
         pts.append((e['v'], 'cash', 'lowest cash price', f"{e['name']}" + ('' if cc[1] == 'posted' or e.get('date') else ' · no date in file')))
-    meds = []
-    if mh:
-        meds.append((mh[0], mh[1]))
-    if med_asc and (not mh or abs(med_asc - mh[0]) > 0.01):
-        meds.append((med_asc, 'surgery center facility fee, national rate before local adjustment'))
+    # one Medicare point (Betsy, Oct 19: too many Medicare numbers): the rate for the kind of place the lowest price is at
+    meds = [(med_asc, 'surgery center facility fee, national rate before local adjustment')] if med_asc else [(mh[0], mh[1])] if mh else []
     for v, lab in meds:
         pts.append((v, 'med', 'Medicare rate', f"{lab} · a yardstick, not a price you can get"))
     vals = [p[0] for p in pts if p[0] > 0]
@@ -188,7 +185,8 @@ def when_more(S, pf_path):
 
 
 def sections(S, sg, pf_path, mh, cc):
-    med_asc = ((S.get('med') or {}).get('asc') or [None])[0] if S.get('kind') == 'fac' else None
+    med_asc = (((S.get('med') or {}).get('asc') or [None])[0]
+               if S.get('kind') == 'fac' and (S.get('lo') or {}).get('kind') == 'A' else None)
     return price_line(S, sg, mh, cc, med_asc) + bill_slips(S, sg, pf_path)
 
 
@@ -201,6 +199,7 @@ CSS = r'''
 .vr-cash{background:#C2571A}.vr-med{width:12px;height:12px;top:23px;margin-left:-6px;border:2px solid var(--muted);background:var(--paper);transform:rotate(45deg)}
 .vr-q{position:absolute;top:0;margin-left:-2px;display:flex;flex-direction:column;align-items:center}.vr-q i{display:block;width:4px;height:44px;background:var(--ink)}
 .vr-q b{font:700 12px var(--mono);text-transform:uppercase;white-space:nowrap;margin-top:4px}
+.vr-line{overflow:visible}.vr-key li{min-width:0}.vr-key .m{overflow-wrap:anywhere}
 .vr-key{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:8px 28px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .vr-key li{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:15px}.vr-key b{font:700 17px var(--mono)}.vr-key .m{flex-basis:100%;padding-left:24px}
 .vr-k{display:inline-block;width:13px;height:13px;flex:none}.vr-k.vr-ins{border-radius:50%}.vr-k.vr-med{width:9px;height:9px}

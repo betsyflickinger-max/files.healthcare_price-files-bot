@@ -297,7 +297,7 @@ NOT_HERE = re.compile(r'rehab|behavioral|psychiatr|hospice|nursing|long[- ]?term
                       r'skilled|senior living|assisted living|home health|dialysis|\bdental|\bdds\b|pharmacy|'
                       # long-term acute care hospitals (NPPES 282E00000X), named by chain (Oct 18 fact-check: LifeCare at the top of DFW ACL)
                       r'lifecare|\bvibra\b|\bltach?\b|nexus specialty|acuity hospital|post[- ]?acute|cornerstone (?:hospital|specialty)|'
-                      r'texas health specialty hospital')
+                      r'texas health specialty hospital|transitional hospitals')
 SPECIALTY = [(re.compile(r'\beye\b|eyecare|surgeye|vision|retina|ophthalm|lasik|cataract'), ('Eye',)),
              (re.compile(r'cardiac|cardio|\bheart\b|\bcath\b|vascular'), ('Heart', 'Imaging', 'Inpatient stays')),
              (re.compile(r'nephrolog|kidney'), ('Lab tests',)),
@@ -862,6 +862,10 @@ def local_range(S):
     return ''.join(out)
 
 
+def kind_ok_both(S, m):
+    return S.get('kind') == 'fac' and bool(m.get('asc')) and bool(m.get('opps')) and m['asc'][0] < m['opps'][0]
+
+
 def med_headline(S):
     m = S['med']
     if not m:
@@ -1016,7 +1020,12 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                   if kind == 'posted' else f"hospital's own fee only · {hosp_link(e)}"))
         tiles.append(tile('Lowest cash price', money(e['v']) + (('–' + money(e['hi'])) if kind == 'posted' and e.get('hi') else ''), sub))
     mh = med_headline(S)
-    if mh:
+    m2 = S.get('med') or {}
+    if mh and kind_ok_both(S, m2):   # one tile, both kinds of place: surgery center and hospital (Oct 19)
+        tiles.append(tile("Medicare's national rate", f"{money(m2['asc'][0])} – {money(m2['opps'][0])}",
+                          "surgery center – hospital outpatient facility fee, 2026, before the local adjustment · a benchmark, not a price you can get"
+                          " · <a href='/methodology/#medicare-local'>how Medicare adjusts for local costs</a>"))
+    elif mh:
         nat = 'national rate' in mh[1]
         tiles.append(tile("Medicare's national rate" if nat else 'Medicare pays', money(mh[0]),
                           f"{esc(mh[1])}, 2026 · a benchmark, not a price you can get" + (" · <a href='/methodology/#medicare-local'>how Medicare adjusts for local costs</a>" if nat else '')))
@@ -1448,7 +1457,7 @@ def national_section(areas, summaries, procs, n_rates_note):
 <label for="natQ">What do you need?</label>
 <div class="row">{home_bits.qbox(opts_proc, every_codes())}
 <select id="natArea" aria-label="Where">{opts_area}</select><button type="submit">Show me</button></div>
-<p class="nat-pop">Popular: {''.join(f"<a href='/costs/{pslug[c]}/'>{esc(t)}</a>" for c, t in pop if c in pslug)} · <a href="/price-finder/">every billing code</a></p>
+<p class="nat-pop">Popular: {''.join(f"<a href='/costs/{pslug[c]}/' data-slug='{pslug[c]}'>{esc(t)}</a>" for c, t in pop if c in pslug)} · <a href="/price-finder/">every billing code</a></p>
 </form>
 {home_bits.foot(every_codes())}
 <p class="msg" style="display:none" id="msg"></p><div id="homeChips" hidden></div><form id="searchForm" hidden><input id="q"></form>
