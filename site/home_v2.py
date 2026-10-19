@@ -84,6 +84,11 @@ HERO_POOL = ['70551', '73721', '74177', '72148', '77067', '76700', '71046', '432
 HERO_MAX = 6
 
 
+def kids(g):
+    """Children's hospitals left out of hero examples (Betsy, Oct 19): kids' care often costs more for real reasons."""
+    return any(re.search(r"child", e['name'], re.I) for e in (g['lo'], g['hi']))
+
+
 def hero_html(S, slugs, code):
     """One hero spread: same procedure, same plan, lowest vs highest place in DFW, with both sources and a link to dig in."""
     g = S['gap']
@@ -134,7 +139,7 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, 
     for c in HERO_POOL:
         s = summ.get(c)
         gg = (s or {}).get('gap')
-        if c == HERO or c in used or c not in slugs or not gg or gg['lo']['v'] < 20 or not 3 <= gg['hi']['v'] / gg['lo']['v'] <= 60:
+        if c == HERO or c in used or c not in slugs or not gg or kids(gg) or gg['lo']['v'] < 20 or not 3 <= gg['hi']['v'] / gg['lo']['v'] <= 60:
             continue
         pool.append((gg['hi']['v'] / gg['lo']['v'], c))
     heroes = [hero_html(S, slugs, HERO)] + [hero_html(summ[c], slugs, c) for _, c in sorted(pool, reverse=True)[:HERO_MAX - 1]]
