@@ -178,7 +178,10 @@ def held_scopes(s3, b, all_jobs, names):
             pre = "upfront-site-st-" if sc == "s7" else f"upfront-site-st{sc}-"
             builds = [n for n in site if n.startswith(pre)]
         else:
-            builds = [n for n in site if not n.startswith("upfront-site-st")]
+            # Oct 19, 2026: only the DFW monthly build (upfront-site-YYYY-MM-*) and Texas builds (upfront-site-tx-*)
+            # read DFW/Texas tables. State builds with other ids (e.g. upfront-site-practice-ga-1-georgia-c3) were
+            # counted as DFW builds and held 3 DFW files with 10 slots free.
+            builds = [n for n in site if re.match(r"upfront-site-(\d{4}-\d{2}[a-z]?|tx)-", n)]
         if builds:
             held[sc] = f"waiting: a website build is running ({len(builds)} machines)"
     return held
