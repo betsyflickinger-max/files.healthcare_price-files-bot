@@ -1310,12 +1310,24 @@ def national_procedure(code, name, ps, per_area):
 
 def costs_index(areas, procs):
     """areas: [(area, au, n_with_price)], procs: [(code, name, cat, ps)]."""
-    groups = {}
+    # One chip per state; a state with several places (Texas) opens to its places only when tapped (Betsy, Oct 19).
+    # Plain <details>, so it works without script and the links stay in the page for search engines.
+    by_st = {}
     for a, au, n in areas:
-        groups.setdefault(area_group(a), []).append((a, au, n))
-    places = ''.join(f"<h3 class='h3 cat'>{esc(g)}</h3><div class='chips'>" + ''.join(
-        f"<a class='chip' href='/costs/{au}/'>{esc(a['name'])}</a>" for a, au, n in sorted(items, key=lambda x: x[0]['name'])) + "</div>"
-        for g, items in sorted(groups.items()))
+        by_st.setdefault(area_state(a), []).append((a, au))
+    st_name = {'TX': 'Texas'}
+    for a, au, n in areas:
+        if area_state(a) != 'TX':
+            st_name.setdefault(area_state(a), a['name'])
+    chips = []
+    for st, items in sorted(by_st.items(), key=lambda x: (x[0] != 'TX', st_name[x[0]])):   # Texas first
+        items.sort(key=lambda x: x[0]['name'])
+        if len(items) == 1:
+            chips.append(f"<a class='chip' href='/costs/{items[0][1]}/'>{esc(st_name[st])}</a>")
+        else:
+            chips.append(f"<details class='st'><summary class='chip'>{esc(st_name[st])} <span class='m'>· {len(items)} places</span></summary>"
+                         "<div class='chips'>" + ''.join(f"<a class='chip' href='/costs/{au}/'>{esc(a['name'])}</a>" for a, au in items) + "</div></details>")
+    places = "<div class='chips states'>" + ''.join(chips) + "</div>"
     cats = {}
     for code, name, cat, ps in procs:
         cats.setdefault(cat, []).append((code, name, ps))
@@ -1381,7 +1393,7 @@ table.rates{border-collapse:collapse;width:100%;min-width:560px;font-variant-num
 .doors{display:grid;border:2px solid var(--rule)}@media(min-width:800px){.doors{grid-template-columns:repeat(3,1fr)}}
 .door{display:flex;flex-direction:column;gap:8px;padding:22px;background:var(--paper);border-bottom:2px solid var(--rule)}.door:last-child{border-bottom:0}
 @media(min-width:800px){.door{border-bottom:0;border-right:2px solid var(--rule)}.door:last-child{border-right:0}}.door .cap{margin-top:6px}
-.chips{display:flex;flex-wrap:wrap;gap:8px}.chip{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}.st{display:inline-block}.st summary{cursor:pointer;list-style:none;font-weight:700}.st summary::-webkit-details-marker{display:none}.st summary::after{content:' \25B8';margin-left:6px}.st[open] summary::after{content:' \25BE'}.st[open]{display:block;flex-basis:100%}.st[open]>.chips{margin:10px 0 6px;padding:12px;border-left:3px solid var(--ink);background:var(--ground)}.chip{display:inline-flex;align-items:center;min-height:40px;padding:6px 12px;border:1px solid var(--ink);background:var(--paper);text-decoration:none;font-size:15px}
 .chip:hover{background:var(--hi)}
 .srcs p{max-width:52em;color:var(--muted);font-size:15px}.srcs details{margin-top:12px;font-size:15px}.srcs summary{cursor:pointer;font-weight:700;min-height:44px;display:flex;align-items:center}
 .srcs ul{padding-left:18px;margin:6px 0 0}.srcs li{margin:6px 0}
