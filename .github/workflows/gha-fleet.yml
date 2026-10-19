@@ -37,10 +37,11 @@ jobs:
           import os, sys
           sys.path.insert(0, "insurers")
           import boto3, fleet
-          s3 = boto3.client("s3", endpoint_url=f"https://{os.environ['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                            aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"], aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+          g = lambda k: "".join(os.environ[k].split())   # secrets can carry stray spaces/line breaks
+          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                            aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"),
                             region_name="auto")
-          b = os.environ["R2_BUCKET"]
+          b = g("R2_BUCKET")
           js, cl = fleet.jobs(s3, b), fleet.claims(s3, b)
           n = sum(1 for jid, j in js.items() if jid not in cl and j.get("kind", "insurer") == "insurer"
                   and j.get("mem", 8) <= fleet.GHA_MAX_MEM and not j.get("nogha"))

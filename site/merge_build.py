@@ -39,8 +39,9 @@ def log(*a): print(time.strftime('%H:%M:%S'), *a, flush=True)
 
 def s3c():
     import boto3
-    return boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                        aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks (as the other bot scripts do)
+    return boto3.client('s3', endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                        aws_access_key_id=g('R2_ACCESS_KEY_ID'), aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name='auto')
 
 
 def looks_placeholder(v, median):
@@ -149,7 +150,7 @@ def _one(args):
 
 
 def main():
-    BASE, ADD, OUT, Bk = E['BASE'], E['ADD'], E['OUT'], E['R2_BUCKET']
+    BASE, ADD, OUT, Bk = E['BASE'].strip(), E['ADD'].strip(), E['OUT'].strip(), ''.join(E['R2_BUCKET'].split())
     s3 = s3c()
     gj = lambda k: json.loads(s3.get_object(Bucket=Bk, Key=k)['Body'].read())
     be, ae = gj(BASE + 'embed.json'), gj(ADD + 'embed.json')
