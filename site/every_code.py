@@ -432,21 +432,21 @@ def pid_of(tin):
     if p is None:
         p = _PID[tin] = _hmac.new(E['R2_SECRET_ACCESS_KEY'].encode(), (tin or '').encode(), 'sha1').hexdigest()[:10]
     return p
-def workP(u, c, src, MD):
+def _workP(u, c, src, MD, part=''):
     """Stage B, PRACTICE=1 (Oct 18, 2026, Betsy OK'd the practice view): doctors (individual NPIs) are grouped by the tax-ID
     practice they bill under. Each practice row lists its distinct prices, each with the doctors who have it, so 14 doctors with
     one price become one entry instead of 14 rows. Prices per doctor follow the same rules as today, within one practice:
     headline = lowest positive rate with no modifier, else lowest positive; $0-only shows as $0. Hospitals, surgery centers
     and other organizations stay exactly as today (one row per provider). Page file: {'f': {provider: rows}, 'p': {practice:
     [[row, [doctor ids]], ...]}}; a row has the same 11 fields as today's provider rows."""
-    c.execute("create temp table pk as select unnest(range(?::bigint))::int pi, unnest(?::varchar[]) kind", [len(KIND), KIND])
-    c.execute(f"""create temp table x as select distinct q.*, pk.kind = 'P' doc from
+    c.execute("create or replace temp table pk as select unnest(range(?::bigint))::int pi, unnest(?::varchar[]) kind", [len(KIND), KIND])
+    c.execute(f"""create or replace temp table x as select distinct q.*, pk.kind = 'P' doc from
       (select x.code, pn.pi, nn.ni, x.fee, x.t, x.v, x.tin, coalesce(x.modi, '') modi, coalesce(x.st, '') st, coalesce(x.nt, '') nt, dn.di, un.ui from {src} x
          left join pn on pn.npi = x.npi left join nn on nn.ins = x.ins and nn.net = x.net
          left join dn on dn.dt = x.dt left join un on un.url = x.url) q join pk using (pi)""")
     nx = c.execute("select count(*) from x").fetchone()[0]
     t0_ = time.time(); log(f'P {u}: {nx:,} rows', 'doctors', c.execute("select count(*) from x where doc").fetchone()[0])
-    c.execute(f"""create temp table fl2 as select distinct pn.pi, nn.ni, f.v from read_parquet('{D}/flat/*.parquet') f
+    c.execute(f"""create or replace temp table fl2 as select distinct pn.pi, nn.ni, f.v from read_parquet('{D}/flat/*.parquet') f
                   join pn on pn.npi = f.npi join nn on nn.ins = f.ins and nn.net = f.net""")
     summ, scp = {}, {}
     pool = ThreadPoolExecutor(8); futs = []
@@ -525,8 +525,22 @@ def workP(u, c, src, MD):
     for tin, docs, orgs in c.execute("""select tin, list(distinct pi) filter (where doc), list(distinct pi) filter (where pk.kind = 'G')
                                         from x join pk using (pi) group by tin""").fetchall():
         if docs: mem[pid_of(tin)] = [sorted(docs), sorted(orgs or []), tin]   # tax ID kept only in this private work file (for naming); never on a page
-    futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{WK}P/{u}.json', Body=json.dumps(mem, separators=(',', ':')).encode()))
+    futs.append(pool.submit(s3.put_object, Bucket=B, Key=f'{WK}P/{u}{part}.json', Body=json.dumps(mem, separators=(',', ':')).encode()))
     for fu in futs: fu.result()
+    return nx, summ, scp
+def workP(u, c, src, MD):
+    try: nx, summ, scp = _workP(u, c, src, MD)
+    except duckdb.OutOfMemoryException:
+        # Oct 18, 2026: Colorado's biggest batches (90M+ rows, twice Mississippi's) ran out of memory building the doctor
+        # table. Redo the batch in 4 slices of its codes, one at a time; every code still lands in exactly one slice.
+        log(f'P {u}: out of memory, redoing in 4 slices'); c.execute('drop table if exists x; drop table if exists fl2')
+        nx, summ, scp = 0, {}, {}
+        for k_ in range(4):
+            # a different hash than the batch's own (hash(code) % 4 is the same for every code of one batch)
+            n_, s_, sc_ = _workP(u, c, f"(select * from {src} where hash(code || '#slice') % 4 = {k_})", MD, f'.{k_}')
+            nx += n_; summ.update(s_)
+            for a_, b_ in sc_.items(): scp.setdefault(a_, set()).update(b_)
+            c.execute('drop table if exists x; drop table if exists fl2')
     c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
     res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
     s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
