@@ -17,6 +17,7 @@ import json, os, time
 CHECK_AFTER_H = 2      # measure this long before projecting (at 24 machines, at most ~$12 spent before the check)
 LIMIT_USD = 100        # projected remaining spend that needs Betsy's OK
 LIMIT_H = 24           # ...or projected remaining time
+READ_LIMIT_H = 6       # Oct 18: a first step (reading files) longer than this with no batch finished is held too
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 

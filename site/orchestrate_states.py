@@ -345,6 +345,12 @@ def cost_hold(st, left):
     if 't0' not in ck: ck.update(t0=time.time(), done0=done_now); return False
     h = ck.get('hold')
     if h and not C.approved_usd(O.BID): log('price check: waiting for Betsy\'s OK:', h); return True
+    # Oct 18, 2026: the first step (reading the insurer tables, stage A) finishes no batches, so a build still reading at
+    # 2 hours looked like "no progress" and was held (st-2026-10c). Now the 2-hour measurement starts with the first
+    # finished batch; only a reading step longer than READ_LIMIT_H hours is held.
+    if not h and not ck.get('b0'):
+        if done_now > ck['done0']: ck.update(t0=time.time(), done0=done_now, b0=True); log('price check: first batches in, measuring from now'); return False
+        if time.time() - ck['t0'] < C.READ_LIMIT_H * 3600: return False
     if h:   # approved: start again with fresh launch counts and a fresh measurement
         log('price check: approved for $', C.approved_usd(O.BID), '- resuming')
         st['cost_check'] = {'t0': time.time(), 'done0': done_now, 'approved_after': h}
