@@ -161,6 +161,27 @@ def check(ccn, addr, names=(), other_names=()):
     return "wrong", why
 
 
+_DIRS = {"N", "S", "E", "W", "NE", "NW", "SE", "SW", "NORTH", "SOUTH", "EAST", "WEST"}
+
+
+def street_hit(ccn, text):
+    """Oct 19, 2026 (Betsy): True when a file's own text gives this hospital's Medicare street address (house number
+    followed by the street's first word, e.g. "1108 Ross Clark"). A system-wide file that lists every location's
+    address is then this hospital's file too, even when its name is the parent company's or a sister hospital's."""
+    h = medicare().get(ccn)
+    if not h or not text:
+        return False
+    toks = re.sub(r"[^A-Z0-9 ]", " ", h["address"].upper()).split()
+    if len(toks) < 2 or not toks[0].isdigit():
+        return False
+    rest = [t for t in toks[1:] if t not in _DIRS] or toks[1:]
+    word = rest[0]
+    if len(word) < 2:
+        return False
+    d = r"(?:(?:N|S|E|W|NE|NW|SE|SW|North|South|East|West)\.?\s+)?"
+    return re.search(rf"(?<![0-9]){toks[0]}\s+{d}{re.escape(word)}\b", text, re.I) is not None
+
+
 def from_file(path):
     """(address, names) a downloaded original gives for itself; ('', []) when unreadable. Never raises."""
     try:

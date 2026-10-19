@@ -281,6 +281,12 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
     if names is None:
         return None, f"file link is not a CMS price file ({info[:40]})"
     ours = [o for o in (names_ or [h["name"]]) if o != legal] or [h["name"]]
+    # Oct 19, 2026 (Betsy): a system-wide file that gives this hospital's own street address is its file, whatever
+    # name heads it (the parent company, the legal entity, a sister hospital). Clears most of the hand-check pile.
+    if identity.street_hit(h["ccn"], (addr or "") + " " + text[:200000]):
+        v, why = identity.check(h["ccn"], addr, names, ours)
+        if v != "wrong" or identity.street_hit(h["ccn"], addr or ""):
+            return "yes", f"file gives this hospital's street address ({identity.medicare()[h['ccn']]['address'].title()})"
     scored = sorted(((discover.score(o, n), n) for n in names for o in ours), reverse=True) or [(0, "?")]
     best, bname = scored[0]
     # every distinctive word of the hospital's name must be in the file's name (Oct 14: a close score alone let
