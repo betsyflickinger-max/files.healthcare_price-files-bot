@@ -118,7 +118,7 @@ def merge_step(st, left):
         md = st.setdefault('merge_dispatch', {}).setdefault(slug, {'n': 0, 'at': 0})
         if md['n'] < 2:
             if time.time() - md['at'] > 6.5 * 3600:   # GitHub ends a job at 6 hours, so a run older than that is over
-                r = subprocess.run(['gh', 'workflow', 'run', 'merge-build.yml', '-f', f'base={base}', '-f', f'add={tadd(slug)}',
+                r = subprocess.run(['gh', 'workflow', 'run', 'merge-build.yml', '--ref', 'main', '-f', f'base={base}', '-f', f'add={tadd(slug)}',
                                     '-f', f'out={tout(slug)}'], capture_output=True, text=True, timeout=90,
                                    stdin=subprocess.DEVNULL, env=dict(os.environ, GH_PROMPT_DISABLED='1'))
                 if r.returncode == 0: md.update(n=md['n'] + 1, at=time.time()); log('merge for', slug, 'started on GitHub (try', md['n'], ')')
