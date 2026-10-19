@@ -28,7 +28,8 @@ import tarfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import procedure_pages as pp   # noqa: E402
-import story   # noqa: E402  (money, esc, slugs, area URLs: one set of rules for every page)
+import story   # noqa: E402
+import page_extras as px   # noqa: E402  (money, esc, slugs, area URLs: one set of rules for every page)
 
 esc, money = pp.esc, pp.money
 AREA = 'dfw'
@@ -290,6 +291,14 @@ def build(d):
     geo = json.load(open(gp, encoding='utf-8')) if os.path.isfile(gp) else None
     sec2 = story.section(summ, site, qbox, area_opts, chips, signup_block(proc_opts, area_opts), mm.group(0) if mm else '', nf, nt,
                          chips_js + pp.home_bits.HOME_JS.replace('__EVERY__', every), D=D, geo=geo, nice=pp.nice)
+    # DFW place locations for the price-page maps (same matching as the story's map)
+    loc = {}
+    if D and geo:
+        for i, x in enumerate(D['fac']):
+            g = geo['p'][i] if i < len(geo['p']) else -1
+            k = (pp.nice(x[0]), pp.nice(x[1]))
+            if g >= 0 and k not in loc:
+                loc[k] = geo['locs'][g]
     del D
     changed = write_page(site, 'story', home, sec2, 'The story: ') or changed
     # sign-ups on the current homepage (its front section is rewritten daily, so this is re-added each run)
@@ -300,12 +309,17 @@ def build(d):
         open(hp, 'w', encoding='utf-8').write(home.replace('<!-- NATIONAL:END -->', add + '<!-- NATIONAL:END -->', 1))
         changed = True
     # networks each price page leaves out of its figures (same rate at most places, BCBSTX ParPlan), by page
-    fbp = {}
+    fbp, medk = {}, {}
     for k, v in st['summaries'].items():
         a_, c_ = k.split('|', 1)
         if c_ in slugs:
-            fbp[(pp.area_url_slug(a_), slugs[c_])] = {(n['ins'], n['plan']) for n in v.get('networks') or [] if n.get('flat') or n.get('par')}
-    return patch_price_pages(site, fbp) or changed
+            key = (pp.area_url_slug(a_), slugs[c_])
+            fbp[key] = {(n['ins'], n['plan']) for n in v.get('networks') or [] if n.get('flat') or n.get('par')}
+            m_ = v.get('med') or {}
+            if v.get('kind') == 'fac':
+                medk[key] = {kk: m_[s_][0] for kk, s_ in (('H', 'opps'), ('A', 'asc')) if m_.get(s_)}
+    extras = {'loc': {pp.area_url_slug(AREA): loc}, 'zips': (geo or {}).get('zips') or {}, 'medk': medk, 'site_name': pp.SITE['name']}
+    return patch_price_pages(site, fbp, extras) or changed
 
 
 def write_page(site, name, home, sec, title_prefix):
@@ -399,7 +413,7 @@ def gauge_block(prices, med, medl):
             '<script src="/hcf-gauge.js" defer></script>')
 
 
-def patch_price_pages(site, flat_by_page=None):
+def patch_price_pages(site, flat_by_page=None, extras=None):
     """Every /costs/<area>/<procedure>/ page gets the sign-up card (alert fixed to that page) and, where the page has its
     prices.csv and a "Got a quote?" box, the quote gauge under that box. Both re-added after each daily rebuild."""
     n_su = n_ga = 0
@@ -411,6 +425,14 @@ def patch_price_pages(site, flat_by_page=None):
     if not os.path.isfile(gj) or open(gj, encoding='utf-8').read() != GAUGE_JS:
         open(gj, 'w', encoding='utf-8').write(GAUGE_JS)
         changed = True
+    mj = os.path.join(site, 'hcf-map.js')
+    if not os.path.isfile(mj) or open(mj, encoding='utf-8').read() != px.MAP_JS:
+        open(mj, 'w', encoding='utf-8').write(px.MAP_JS)
+        changed = True
+    ex = extras or {}
+    shares = os.path.join(base, 'share-cards.json')
+    seen_cards = json.load(open(shares, encoding='utf-8')) if os.path.isfile(shares) else {}
+    n_x = 0
     for area in os.listdir(base):
         ad = os.path.join(base, area)
         if not os.path.isdir(ad):
@@ -439,11 +461,56 @@ def patch_price_pages(site, flat_by_page=None):
                         k = s.index('</form>', i) + len('</form>')
                         s = s[:k] + gauge_block(vals, float(m.group(1)) if m else 0.0, html.unescape(m.group(2)) if m else '') + s[k:]
                         n_ga += 1
+            # extras: 100 squares, map, what-to-ask, share card (each once; re-added after a rebuild)
+            if os.path.isfile(pc):
+                rows = list(csv.reader(open(pc, encoding='utf-8')))
+                if len(rows) > 2:
+                    hd = rows[0][0] if rows[0] else ''
+                    mh = re.match(r'# (.*) \(([A-Z][A-Za-z-]* [^)]+)\) in (.*?)\. Source', hd)
+                    h = rows[1]
+                    recs = [dict(zip(h, r)) for r in rows[2:] if len(r) == len(h)]
+                    flat = (flat_by_page or {}).get((area, proc), set())
+                    vals = sorted(float(r['price']) for r in recs if r['type'] == 'insurer rate' and r['price'] and (r['insurer'], r['network or label']) not in flat)
+                    m = re.search(r'class="vr-line"[^>]*data-med="([\d.]+)" data-medl="([^"]*)"', s)
+                    med, medl = (float(m.group(1)), html.unescape(m.group(2))) if m else (0.0, '')
+                    anchor = '<section class="sec vis-bills"' if '<section class="sec vis-bills"' in s else ('<div class="wrap" style="margin:28px auto">' + SU_MARK if SU_MARK in s else '<footer')
+                    add = ''
+                    if px.MARK_SQ not in s and vals:
+                        mk = (ex.get('medk') or {}).get((area, proc)) or {}
+                        if mk:   # facility fees: like with like (hospitals vs Medicare's hospital rate, surgery centers vs its surgery-center rate)
+                            kmap = {'hospital': mk.get('H'), 'surgery center': mk.get('A')}
+                            pairs = [(float(r['price']), kmap[r['kind']]) for r in recs if r['type'] == 'insurer rate' and r['price'] and kmap.get(r['kind'])
+                                     and (r['insurer'], r['network or label']) not in flat]
+                            note = 'Medicare\'s rate for the same kind of place (' + ', '.join(f'{w} {px.short(mk[c_])}' for c_, w in (('H', 'hospital'), ('A', 'surgery center')) if mk.get(c_)) + ')'
+                        else:
+                            pairs = [(v, med) for v in vals] if med else []
+                            note = f"Medicare's rate of {px.short(med)} ({medl})"
+                        add += px.squares_block(pairs, note)
+                    lc = (ex.get('loc') or {}).get(area)
+                    if px.MARK_MAP not in s and lc:
+                        add += px.map_block(px.map_data(recs, flat, lc, (ex.get('medk') or {}).get((area, proc), {})), ex.get('zips') or {})
+                    if add and anchor in s:
+                        s = s.replace(anchor, add + anchor, 1)
+                    if px.MARK_ASK not in s and mh:
+                        a2 = ('<div class="wrap" style="margin:28px auto">' + SU_MARK) if SU_MARK in s else '<footer'
+                        s = s.replace(a2, '<div class="wrap">' + px.ask_block(mh.group(1), mh.group(2)) + '</div>\n' + a2, 1)
+                    if vals and mh:
+                        sig = f'{vals[0]:.2f}|{vals[-1]:.2f}|{len(vals)}|v2'
+                        png = os.path.join(ad, proc, 'share.png')
+                        if seen_cards.get(f'{area}/{proc}') != sig or not os.path.isfile(png):
+                            if px.share_card(png, re.sub(r'\s*\([^)]*\)', '', mh.group(1)), mh.group(3), vals[0], vals[-1], len(vals), ex.get('site_name') or 'The Healthcare Files'):
+                                seen_cards[f'{area}/{proc}'] = sig
+                        if os.path.isfile(png) and '/share.png"' not in s:
+                            s = re.sub(r'<meta property="og:image" content="[^"]*">', f'<meta property="og:image" content="https://files.healthcare/costs/{area}/{proc}/share.png">'
+                                       '<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">', s, count=1)
+                    if s != s0:
+                        n_x += 1
             if s != s0:
                 open(p, 'w', encoding='utf-8').write(s)
-    if n_su or n_ga:
-        print(f'price pages: sign-up card added to {n_su}, quote gauge added to {n_ga}')
-    return changed or n_su > 0 or n_ga > 0
+    json.dump(seen_cards, open(shares, 'w', encoding='utf-8'))
+    if n_su or n_ga or n_x:
+        print(f'price pages: sign-up card added to {n_su}, quote gauge added to {n_ga}, extras added/updated on {n_x}')
+    return changed or n_su > 0 or n_ga > 0 or n_x > 0
 
 
 # ---------------------------------------------------------------- tester tracking
@@ -668,7 +735,21 @@ def patch_control(d):
 
 
 # ---------------------------------------------------------------- deploy (same pull / deploy / save-back steps as procedure_pages.py)
+class Retry(Exception):
+    pass
+
+
 def deploy():
+    """Another bot can deploy while this runs (the first run makes ~2,300 share cards, a few minutes): start over, up to 3 times."""
+    for attempt in range(3):
+        try:
+            return _deploy_once()
+        except Retry:
+            print(f'the live site changed while this ran; starting over from the newer site (attempt {attempt + 2})', flush=True)
+    sys.exit('STOP: the live site kept changing; nothing deployed. The next daily run will try again.')
+
+
+def _deploy_once():
     import boto3
     E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "CLOUDFLARE_API_TOKEN")}
     s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
@@ -695,7 +776,7 @@ def deploy():
         print('/v2/ and tracking already up to date; nothing to deploy')
         return
     if s3.head_object(Bucket=B, Key=KEY)['ETag'] != etag:
-        sys.exit('STOP: the live site changed while this ran; nothing deployed. Run again.')
+        raise Retry()
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',

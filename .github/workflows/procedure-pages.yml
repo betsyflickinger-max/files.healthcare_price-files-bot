@@ -45,7 +45,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install boto3==1.35.36
+      - run: pip install boto3==1.35.36 pillow==10.4.0
       - shell: bash
         run: python site/procedure_pages.py deploy $FORCE | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Homepage v2 (/v2/) and tester tracking, from the same figures (site/home_v2.py; skips if nothing changed)
