@@ -442,10 +442,19 @@ html[data-look="units"]:not(#_) main.prof>header a{color:#fff!important}
 html[data-look="units"]:not(#_) main.prof>header .tag{color:#fff!important;border-color:#DCE5FC!important;background:transparent!important}
 """
 
+
+# The longer name (The Healthcare Files) pushed the phone Menu button off screen; long links and wide tables on profiles.
+UNITS_PHONE = r"""
+/* ux: units phone oct18b */
+@media (max-width:480px){html[data-look="units"]:not(#_) .logo{font-size:19px!important;letter-spacing:-.01em!important;white-space:nowrap}html[data-look="units"]:not(#_) .start-pill{padding:6px 9px!important;font-size:14px!important}html[data-look="units"]:not(#_) .menu-btn{padding:6px 10px!important}html[data-look="units"]:not(#_) .bar .wrap{gap:8px!important}}
+@media (max-width:700px){html[data-look="units"]:not(#_) main.prof a{overflow-wrap:anywhere}html[data-look="units"]:not(#_) main.prof table{display:block;overflow-x:auto;max-width:100%}}
+"""
+
 def patch_units_css(s):
     s = s if '/* ux: units v2' in s else s.split('\n/* ux: units v1')[0] + UNITS_V1
     s = s if '/* ux: contrast oct18' in s else s + CONTRAST_OCT18
-    return s if '/* ux: units profiles oct18' in s else s + UNITS_PROF
+    s = s if '/* ux: units profiles oct18' in s else s + UNITS_PROF
+    return s if '/* ux: units phone oct18b' in s else s + UNITS_PHONE
 
 
 def patch_looks_js(s):
