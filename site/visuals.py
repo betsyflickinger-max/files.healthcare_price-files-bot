@@ -78,20 +78,33 @@ def price_line(S, sg, mh, cc, med_asc):
         pts.append((e['v'], 'cash', 'lowest cash price', f"{e['name']}" + ('' if cc[1] == 'posted' or e.get('date') else ' · no date in file')))
     # one Medicare point (Betsy, Oct 19: too many Medicare numbers): the rate for the kind of place the lowest price is at
     meds = [(med_asc, 'surgery center facility fee, national rate before local adjustment')] if med_asc else [(mh[0], mh[1])] if mh else []
-    for v, lab in meds:
-        pts.append((v, 'med', 'Medicare rate', f"{lab} · a yardstick, not a price you can get"))
+    an = S.get('anes')   # anesthesia: Medicare pays (base units + 15-minute time units) x the local conversion factor (Oct 19)
+    if an:
+        one = an['lo'] == an['hi']
+        meds = [(an['lo'], f"{an['where']}" + ('' if one else f" (up to {_money(an['hi'])} in another part of this area)")),
+                (an['lo'] * an['bu'], f"{an['bu']} base units, before any time units")]
+        for (v, lab), t in zip(meds, ('Medicare per unit', 'Medicare base amount')):
+            pts.append((v, 'med', t, f"{lab} · a yardstick, not a price you can get"))
+    else:
+        for v, lab in meds:
+            pts.append((v, 'med', 'Medicare rate', f"{lab} · a yardstick, not a price you can get"))
     vals = [p[0] for p in pts if p[0] > 0]
     a, b = min(vals) * 0.8, max(vals) * 1.25
     la, lb = math.log10(a), math.log10(b)
     pos = lambda v: max(0.0, min(100.0, (math.log10(v) - la) / (lb - la) * 100))
     marks = ''.join(f'<span class="vr-m vr-{c}" style="left:{pos(v):.2f}%" title="{esc(_money(v))} {esc(t)}"></span>' for v, c, t, _ in pts if v > 0)
-    mv = meds[0][0] if meds else 0
+    mv = meds[0][0] if meds and not an else 0
     xm = lambda v, c: (f' <i class="vr-xm">{_times(v / mv)}× Medicare</i>' if mv > 0 and c != 'med' else '')
     key = ''.join(f'<li><span class="vr-k vr-{c}" aria-hidden="true"></span><b>{_money(v)}</b> {esc(t)}{xm(v, c)}<span class="m">{esc(s)}</span></li>'
                   for v, c, t, s in sorted(pts, key=lambda p: p[0]))
     big = ''
-    medv0 = meds[0][0] if meds else 0
-    if medv0 > 0:
+    medv0 = meds[0][0] if meds and not an else 0
+    if an:
+        rate = _money(an['lo']) if an['lo'] == an['hi'] else f"{_money(an['lo'])} to {_money(an['hi'])}"
+        big = (f'<div class="vr-big"><span class="vr-x">{_money(an["lo"])}<small class="vr-xl"> a unit</small></span><span>That is what Medicare pays '
+               f'per anesthesia unit here ({rate}). Medicare counts {an["bu"]} base units for this procedure plus 1 unit for every 15 minutes. '
+               f"Insurers' files mix rates per unit with totals per case, so the lowest and highest here may not be the same kind of price.</span></div>")
+    elif medv0 > 0:
         # Medicare first (Betsy, Oct 19): the yardstick people can judge by, right beside the lowest and highest.
         top = hi if hi and S.get('lines', 0) > 1 and hi['v'] > lo['v'] else lo
         rx = lambda v: (f"{_times(v / medv0)} times Medicare's rate" if v >= medv0 * 1.05 else

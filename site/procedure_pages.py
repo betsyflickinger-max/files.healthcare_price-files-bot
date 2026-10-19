@@ -827,6 +827,35 @@ def med_lines(S, med_area):
     return L
 
 
+_ANES = None
+def anes_med(S, area):
+    """Medicare anesthesia yardstick (Oct 19): the code's base units and the area's CY2026 conversion factor(s), straight from CMS
+    files in reference/medicare/. Never assumes a case length. None when the code has no CMS base units."""
+    global _ANES
+    code = S.get('code') or ''
+    if _ANES is None:
+        ref = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'reference', 'medicare')
+        _ANES = ({r['code']: int(r['base_units']) for r in csv.DictReader(open(os.path.join(ref, 'anes_base_units.csv')))},
+                 list(csv.DictReader(open(os.path.join(ref, 'anes_cf_2026.csv')))))
+    bu, cf = _ANES
+    if code not in bu:
+        return None
+    st = 'TEXAS' if area_state(area) == 'TX' else area['slug'].replace('-', ' ').upper()
+    if area['slug'] == 'washington-dc':
+        locs = [r for r in cf if r['locality_name'].startswith('DC')]
+    else:
+        cons = {r['contractor'] for r in cf if r['locality_name'] in (st, 'REST OF ' + st)}
+        locs = [r for r in cf if r['contractor'] in cons]
+        if area['slug'] not in STATES:          # a metro or town: its own Medicare localities, else the rest of the state
+            words = ' ' + re.sub(r'[^A-Z]+', ' ', area['name'].upper()) + ' '
+            locs = [r for r in locs if f" {r['locality_name']} " in words] or [r for r in locs if r['locality_name'] == 'REST OF ' + st]
+    if not locs:
+        return None
+    v = sorted(float(r['cf_nonqualifying_apm']) for r in locs)
+    where = ', '.join(sorted(r['locality_name'].title().replace('Dc ', 'DC ').replace('Md/Va', 'MD/VA').replace(' Of ', ' of ') for r in locs))
+    return {'bu': bu[code], 'lo': v[0], 'hi': v[-1], 'where': where if len(locs) <= 3 else f"{len(locs)} Medicare areas in the state"}
+
+
 LABOR = {'H': 0.60, 'A': 0.50}    # labor-related share: OPPS 60% (CY2026 OPPS final rule), ASC 50% (MedPAC ASC Payment Basics, Oct 2026)
 
 
@@ -1030,6 +1059,7 @@ def faq(S, area, med_area):
 
 def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     AREA_SLUG[0] = area['slug']
+    S['anes'] = anes_med(S, area)
     pl, sg = fee_words(S)
     url = f'/costs/{au}/{ps}/'
     cm, yr = common(S), TODAY.year
@@ -1158,6 +1188,11 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"</div></section>")
 
     ml = med_lines(S, med_area)
+    an = S.get('anes')
+    if not ml and an:
+        alk = '<a class="src" href="https://www.cms.gov/files/zip/2026-anesthesia-conversion-factors.zip" target="_blank" rel="noopener">CMS 2026 anesthesia conversion factors ↗</a>'
+        ml = [('Anesthesia, per unit', an['where'] + ('' if an['lo'] == an['hi'] else f", up to {money(an['hi'])} in another part of this area"), an['lo'], alk),
+              (f"Anesthesia base amount ({an['bu']} base units)", 'before time units; Medicare adds 1 unit per 15 minutes', an['lo'] * an['bu'], alk)]
     med_sec = (f"<section class='sec' id='medicare'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
                f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare. Facility fees are shown at the national rate so places compare on the same footing; next to each hospital and surgery center "
                f"we also show Medicare's rate for that place after its local adjustment. <a href='/methodology/#medicare-local'>How Medicare adjusts for local costs</a>.</p><ol class='word'>"
