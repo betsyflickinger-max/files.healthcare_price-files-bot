@@ -42,8 +42,10 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "nc": ("bot/insurers/nc/", "data/scope/nc_npis_all.parquet", "data/nc/"),
     # Connecticut (Oct 16, 2026): same pattern as North Carolina (provider list "Build provider list" with CT and ct)
     "ct": ("bot/insurers/ct/", "data/scope/ct_npis_all.parquet", "data/ct/"),
+    # Illinois (Oct 18, 2026): same pattern (provider list "Build provider list" with IL and il); pick list claude/illinois-pick-list.md
+    "il": ("bot/insurers/il/", "data/scope/il_npis_all.parquet", "data/il/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",

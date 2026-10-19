@@ -76,5 +76,6 @@ SQL_SHORT = """when file_label ilike 'BCBSTX%' then 'BCBSTX'
  when file_label ilike 'Anthem Missouri%' then 'Anthem Missouri' when file_label ilike 'Anthem Connecticut%' then 'Anthem Connecticut'
  when file_label ilike 'BCBS Alabama%' then 'BCBS Alabama' when file_label ilike 'BCBS Mississippi%' then 'BCBS Mississippi'
  when file_label ilike 'Blue KC%' then 'Blue KC'
+ when file_label ilike 'BCBS Illinois%' then 'BCBS Illinois'
  when reporting_entity_name ilike '%blue cross%of texas%' then 'BCBSTX'
  when reporting_entity_name ilike '%blue cross%' then reporting_entity_name"""

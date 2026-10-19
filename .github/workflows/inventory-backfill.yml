@@ -23,7 +23,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        scope: [dfw, tx, s7, nc, ct]
+        scope: [dfw, tx, s7, nc, ct, il]
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
