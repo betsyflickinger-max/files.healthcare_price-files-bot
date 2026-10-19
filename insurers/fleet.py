@@ -30,6 +30,12 @@ GONE_MINS = 20                 # a claim with no heartbeat for this long, whose 
 BOOT_MINS = 20                 # a new machine gets this long to install and claim its first job
 MAX_ATTEMPTS = 2               # machines that died mid-file before the file is reported as failed
 ST_ROOM = 4                    # while the seven-state website build runs, leave this many slots free for it
+# Oct 18, 2026 (Betsy OK'd): small files (jobs that fit 8 GB) are read for free on GitHub's machines
+# (.github/workflows/gha-fleet.yml, the repo is public). The launcher leaves them alone for GHA_GRACE_MIN after they are
+# queued, so it only rents a DigitalOcean machine for one if the GitHub lane is down or behind.
+GHA_LANE = True
+GHA_MAX_MEM = 8
+GHA_GRACE_MIN = 90
 
 
 def now():
@@ -219,7 +225,10 @@ def plan(all_jobs, all_claims, held, machines, free):
     Machines still starting up (no claim yet, younger than BOOT_MINS) count as already covering a job, so the same
     job never gets two new machines. Returns a list of (size, job) - one machine per unclaimed job, biggest first,
     at most `free` of them."""
-    waiting = order([j for jid, j in all_jobs.items() if jid not in all_claims and j["scope"] not in held])
+    waiting = order([j for jid, j in all_jobs.items() if jid not in all_claims and j["scope"] not in held
+                     and not (GHA_LANE and j.get("kind", "insurer") == "insurer" and j.get("mem", 8) <= GHA_MAX_MEM
+                              and not j.get("nogha")
+                              and age_mins(j.get("enqueued_at", "")) < GHA_GRACE_MIN)])
     busy = {str(c.get("droplet_id")) for c in all_claims.values()}
     booting = sorted((m for m in machines if str(m[0]) not in busy and age_mins(m[2]) < BOOT_MINS),
                      key=lambda m: -mem_gb(m[3]))

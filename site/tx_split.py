@@ -26,6 +26,12 @@ REST = E.get('SRC') == 'rest'
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
                 'nc': {'NC': 'north-carolina'},   # Oct 16, 2026: North Carolina has its own scope
                 'ct': {'CT': 'connecticut'}}   # Oct 16, 2026: Connecticut has its own scope (data/ct/)
+
+# Oct 18, 2026: states on the shared schedule (site/state_scopes.json) are added here, so a new state needs no code edits
+try:
+    import json as _j
+    SCOPE_STATES.update({k: v for k, v in _j.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state_scopes.json'))).items() if not k.startswith('_')})
+except Exception: pass
 SC = E.get('SCOPE', '')
 ST = SC in SCOPE_STATES
 STATES = SCOPE_STATES.get(SC, {})

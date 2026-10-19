@@ -39,8 +39,9 @@ def log(*a): print(time.strftime('%H:%M:%S'), *a, flush=True)
 
 def s3c():
     import boto3
-    return boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                        aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks (as the other bot scripts do)
+    return boto3.client('s3', endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                        aws_access_key_id=g('R2_ACCESS_KEY_ID'), aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name='auto')
 
 
 def looks_placeholder(v, median):
@@ -104,7 +105,7 @@ def medians(f):
     return out
 
 
-def merge_code(bf, af, P, base_md=None):
+def merge_code(bf, af, P, base_md=None, keep_flags=False):
     """BASE rows (minus replaced networks) + remapped ADD rows; returns (f, row count, set of network indexes).
     base_md = {fee: [median, n]} from the BASE build's md/ files (every_code.py, from Oct 18, 2026): the same typical rate
     BASE's own rows were flagged against. Without it, the median of the merged code's headline rates is used."""
@@ -118,8 +119,8 @@ def merge_code(bf, af, P, base_md=None):
         npi_i = str(P['pmap'][int(pi)])
         for r in rows:
             r2 = remap_row(r, P); f.setdefault(npi_i, []).append(r2); added.append(r2)
-    md = medians(f)
-    for r in added:   # flags 2 and 8 against the merged code (see header)
+    md = {} if keep_flags else medians(f)
+    for r in ([] if keep_flags else added):   # flags 2 and 8 against the merged code (see header)
         m = (base_md or {}).get(str(r[1]))
         if not m or m[1] < 5: m = md.get(r[1])
         r[4] &= ~(2 | 8)
@@ -140,16 +141,17 @@ def _init():
 def _one(args):
     code, in_base, in_add, BASE, ADD, OUT, Bk, bmd = args
     P = GP
+    keep = bool(P.get('keep_flags'))
     bf = decode(S3.get_object(Bucket=Bk, Key=f'{BASE}t/{code}.txt')['Body'].read()) if in_base else None
     af = decode(S3.get_object(Bucket=Bk, Key=f'{ADD}t/{code}.txt')['Body'].read()) if in_add else None
-    f, n, nets = merge_code(bf, af, P, bmd)
+    f, n, nets = merge_code(bf, af, P, bmd, keep)
     if n:
         S3.put_object(Bucket=Bk, Key=f'{OUT}t/{code}.txt', Body=encode(f), ContentType='text/plain')
     return code, n, sorted(nets)
 
 
 def main():
-    BASE, ADD, OUT, Bk = E['BASE'], E['ADD'], E['OUT'], E['R2_BUCKET']
+    BASE, ADD, OUT, Bk = E['BASE'].strip(), E['ADD'].strip(), E['OUT'].strip(), ''.join(E['R2_BUCKET'].split())
     s3 = s3c()
     gj = lambda k: json.loads(s3.get_object(Bucket=Bk, Key=k)['Body'].read())
     be, ae = gj(BASE + 'embed.json'), gj(ADD + 'embed.json')
@@ -214,5 +216,50 @@ def main():
     return info
 
 
+def carry_main():
+    """Oct 18, 2026 (Betsy: keep the codes already built). CARRY=1: BASE = a new "common codes first" build (rare codes
+    listed in embed "coming"), ADD = the area's previous full build. Every coming code the previous build has is carried
+    over with its own rows, dates and file links (remapped to the new lookup lists, flags kept), marked "carried": <the
+    build it came from>, so the page shows last time's prices with their original checked dates instead of "We're pulling
+    these prices now". A carried code is replaced as soon as it's rebuilt (on request or by the background fill)."""
+    BASE, ADD, OUT, Bk = E['BASE'].strip(), E['ADD'].strip(), E['OUT'].strip(), ''.join(E['R2_BUCKET'].split())
+    s3 = s3c()
+    gj = lambda k: json.loads(s3.get_object(Bucket=Bk, Key=k)['Body'].read())
+    be, ae = gj(BASE + 'embed.json'), gj(ADD + 'embed.json')
+    bn, an = gj(BASE + 'npis.json'), gj(ADD + 'npis.json')
+    P = plan(be, bn, ae, an)
+    coming = be.get('coming', {})
+    carry = sorted(c for c in coming if c in ae['codes'] and ae['codes'][c].get('n'))
+    built = sorted(be['codes'])
+    log(len(built), 'codes built new,', len(carry), 'carried over from', ADD, ',', len(coming) - len(carry), 'still coming')
+    global GP
+    GP = {k: P[k] for k in ('nmap', 'dmap', 'umap', 'lmap', 'pmap')}; GP['replaced'] = []; GP['keep_flags'] = True
+    jobs = [(c, False, True, BASE, ADD, OUT, Bk, None) for c in carry]
+    counts, t0 = {}, time.time()
+    with get_context('fork').Pool(int(E.get('PROCS', '8')), initializer=_init) as pool:
+        for i, (code, n, nets) in enumerate(pool.imap_unordered(_one, jobs, chunksize=4), 1):
+            if n: counts[code] = n
+            if i % 1000 == 0: log(f'carried {i}/{len(jobs)} ({round(time.time() - t0)} s)')
+    def cp(code): s3.copy_object(Bucket=Bk, Key=f'{OUT}t/{code}.txt', CopySource={'Bucket': Bk, 'Key': f'{BASE}t/{code}.txt'})
+    if BASE != OUT:
+        with ThreadPoolExecutor(32) as tp: list(tp.map(cp, built))
+    codes = dict(be['codes'])
+    when = ADD.rstrip('/').rsplit('/', 1)[-1]
+    for c, n in counts.items():
+        e = dict(ae['codes'][c]); e.update(n=n, f=None, carried=when); codes[c] = e
+    left = {c: v for c, v in coming.items() if c not in counts}
+    embed = {**be, 'codes': codes, 'fac': P['fac'], 'nets': P['nets'], 'dates': P['dates'], 'urls': P['urls'], 'labs': P['labs']}
+    if left: embed['coming'] = left
+    else: embed.pop('coming', None)
+    info = dict(at=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), mode='carry', base=BASE, add=ADD, out=OUT,
+                built_new=len(built), carried=len(counts), still_coming=len(left),
+                seconds=round(time.time() - t0))
+    s3.put_object(Bucket=Bk, Key=OUT + 'merge.json', Body=json.dumps(info, indent=1).encode())
+    s3.put_object(Bucket=Bk, Key=OUT + 'npis.json', Body=json.dumps(P['npis']).encode())
+    s3.put_object(Bucket=Bk, Key=OUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
+    log('DONE', info)
+    return info
+
+
 if __name__ == '__main__':
-    main()
+    carry_main() if E.get('CARRY') else main()

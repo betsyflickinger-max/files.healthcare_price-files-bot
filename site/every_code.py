@@ -73,8 +73,32 @@ if E.get('ASTART'): r_ = int(E['ASTART']) % max(1, len(files)); files = files[r_
 log('stage A', len(files), 'files', round(sum(s for _, s in files) / 1e9, 1), 'GB')
 WK = E.get('WK', 'work/every/2026-10-08/')
 AC = E.get('ACACHE', WK + 'A/')   # stage A results, shared across monthly builds
-# same table + size -> same results; Oct 18, 2026: NETS_FROM_LABEL names networks differently, so it gets its own cache entries
-TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if E.get('NETS_FROM_LABEL') else '')).encode()).hexdigest()[:12] for key, size in files}
+# Oct 18, 2026: tables named by their file label (one network per file): every table with NETS_FROM_LABEL=1, or the
+# tables listed in LABEL_TABLES_KEY (an R2 JSON list of table names: the catalog networks, e.g. Anthem's and Blue Cross's
+# employer networks, whose membership files list each provider's products and so split one network into many entries)
+# Oct 18, 2026 (Betsy approved): "common codes first". PHASE=1 builds only the state's priority codes (PRIORITY_KEY, R2
+# site/priority/<ST>.json, 2,000 codes) plus every MS-DRG, and writes the page with every other code listed as coming
+# ("p": 1, n = its row count) so the page can say "We're pulling these prices now". PHASE=2 builds the rest (background
+# fill on spare machine time); PHASE=codes builds just CODES (comma list: requested codes). Phases share stage A and the
+# lookup lists, so their files fit the same embed.json. Unset = everything at once, as before.
+PHASE = E.get('PHASE', '')
+PRI = []
+if PHASE:
+    try: PRI = json.loads(s3.get_object(Bucket=B, Key=E['PRIORITY_KEY'])['Body'].read())['codes'] if PHASE in ('1', '2') else [c_.strip() for c_ in E.get('CODES', '').split(',') if c_.strip()]
+    except Exception as e_: print('priority list not read:', e_, flush=True); raise
+PRI_DRGS = PHASE in ('1', '2')   # MS-DRGs (codes of up to 3 digits) count as priority codes
+LABEL_TABLES = set()
+if E.get('LABEL_TABLES_KEY'):
+    try: LABEL_TABLES = set(json.loads(s3.get_object(Bucket=B, Key=E['LABEL_TABLES_KEY'])['Body'].read()))
+    except Exception as e_: print('label table list not read:', e_, flush=True)
+def _has_membership(key):
+    try: s3.head_object(Bucket=B, Key=key.replace('/rates/', '/membership/')); return True
+    except Exception: return False
+# only tables that HAVE a membership file are named differently, so the others keep their saved stage-A work
+LABEL_KEYS = {k for k, _ in files if k.rsplit('/', 1)[1].rsplit('.', 1)[0] in LABEL_TABLES and _has_membership(k)} if LABEL_TABLES else set()
+def by_label(key): return bool(E.get('NETS_FROM_LABEL')) or key in LABEL_KEYS
+# same table + size -> same results; label-named tables get their own cache entries
+TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if by_label(key) else '')).encode()).hexdigest()[:12] for key, size in files}
 TAGS = set(TAG.values())
 doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
 def isdone(tag): 
@@ -136,7 +160,7 @@ for ii, (key, size) in enumerate(files):
             # Oct 18, 2026: NETS_FROM_LABEL=1 (update builds of catalog networks, e.g. Anthem's employer networks): one
             # network per file, named by its label. The membership file lists each provider's Anthem products ("Blue
             # Connection | Blue Preferred HMO | Pathway"), which split one employer network into ~200 picker entries.
-            if E.get('NETS_FROM_LABEL'): mj = False
+            if by_label(key): mj = False
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
@@ -316,6 +340,13 @@ def work(u):
         FLAT = set(c.execute(f"select distinct npi, ins, net, v from read_parquet('{D}/flat/*.parquet')").fetchall())
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
     if sp is not None: src = f"(select * from {src} where hash(code) % {NB * SPLIT} = {k + NB * sp})"
+    if PHASE:   # common codes first: keep this phase's codes; record the others (code -> rows) for the page and the fill
+        c.execute("create temp table pri as select unnest(?::varchar[]) code", [PRI])
+        isp = "(code in (select code from pri)" + (" or regexp_full_match(code, '[0-9]{1,3}'))" if PRI_DRGS else ")")
+        if PHASE == '1':
+            pend = dict(c.execute(f"select code, count(*) from {src} where not {isp} group by code").fetchall())
+            s3.put_object(Bucket=B, Key=f'{WK}pending/{u}.json', Body=json.dumps(pend, separators=(',', ':')).encode())
+        src = f"(select * from {src} where {'not ' if PHASE == '2' else ''}{isp})"
     if SORTV in ('2', '3'):
         c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
         c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])
@@ -523,6 +554,11 @@ if E.get('BCLAIM'):
                 if r_[1]: log('took over', r_[0], f'{r_[1]:,} rows')
 # another machine may have finished buckets meanwhile: reload them all, and write embed only when every bucket is in
 summary, scope, done_units = {}, {}, set()
+for wk_ in [w_ for w_ in E.get('ALSO_WK', '').split(',') if w_]:   # common codes first: the earlier phase's finished codes
+    for k_, _ in ls(wk_ + 'B/'):
+        kb, nx_, summ_, scp_ = json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
+        summary.update(summ_)
+        for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
 for k_, _ in ls(WK + 'B/'):
     kb, nx_, summ_, scp_ = json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read()); done_units.add(str(kb))
     summary.update(summ_)
@@ -535,8 +571,21 @@ for c_, n_ in summary.items():
     t_, nm = NAMES.get(c_, ('CPT', ''))
     if c_ in FEAT: codes[c_] = {'name': FEAT[c_]['plain_name'], 'cat': FEAT[c_]['category'], 'type': FEAT[c_]['code_type'], 'n': n_, 'f': None}
     else: codes[c_] = {'name': (nm or f'{t_} {c_}').strip(), 'cat': 'description as written in the insurer file', 'type': t_, 'n': n_, 'f': None, 'd': 1}
+PENDING = {}
+for wk_ in [WK] + [w_ for w_ in E.get('ALSO_WK', '').split(',') if w_]:
+    for k_, _ in ls(wk_ + 'pending/'):
+        PENDING.update(json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read()))
+# not built yet: listed apart (embed "coming", not "codes", so nothing that reads built codes trips on them) so the page can
+# show "We're pulling these prices now" and ask for them; rows = how big the code is (the background fill goes smallest first)
+COMING = {}
+for c_, rows_ in PENDING.items():
+    if c_ in codes: continue
+    t_, nm = NAMES.get(c_, ('CPT', ''))
+    COMING[c_] = {'name': FEAT[c_]['plain_name'] if c_ in FEAT else (nm or f'{t_} {c_}').strip(), 'type': t_, 'rows': rows_}
+if COMING: log(len(COMING), 'codes listed as coming (built on request or by the background fill)')
 embed = {'codes': codes, 'fac': ptab, 'nets': nets, 'dates': dates, 'urls': urls, 'labs': labs,
          'scope': {k_: sorted(v) for k_, v in scope.items() if len(v) < len(codes) - 20}}
+if COMING: embed['coming'] = COMING
 s3.put_object(Bucket=B, Key=TOUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'npis.json', Body=json.dumps(npis).encode())
 log('DONE', len(codes), 'codes', len(ptab), 'providers', len(nets), 'networks', sum(summary.values()), 'lines')
