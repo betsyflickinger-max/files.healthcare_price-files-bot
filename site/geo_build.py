@@ -205,7 +205,7 @@ placed = sum(1 for x in p if x >= 0)
 STOP = set('the of at and llc lp l p inc pllc pa ltd co company subsidiary dba a an texas tx health system systems hospitals'.split())
 toks = lambda s: {t for t in re.sub(r'[^a-z0-9 ]', ' ', (s or '').lower()).split() if t not in STOP and len(t) > 1}
 by_city = {}
-for i, (nm, city, kind) in enumerate(D['fac']):
+for i, (nm, city, kind) in enumerate(x_[:3] for x_ in D['fac']):   # Oct 19, 2026: rows may carry a 4th field (state)
     if kind != 'P' and p[i] >= 0: by_city.setdefault(city.lower(), []).append((toks(nm), p[i]))
 # hand-checked locations (site/geo_places.csv: CMS Hospital General Information, NPI Registry or OpenStreetMap, source in each row)
 _pf = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'geo_places.csv')

@@ -131,6 +131,60 @@ class Store:
             return {}
         return {i: self._ml[n] for i, n in enumerate(npis) if n in self._ml}
 
+    def provider_states(self, area, D):
+        """fac index -> state of the provider's practice ZIP (site/zip_state.py), for the out-of-state check in summarize().
+        Oct 19, 2026. Builds from then on carry it as the 4th field of each D['fac'] row; for older builds it is read here from
+        the area's provider list (the NPIS file its build used, by NPI via the build's npis.json). {} when it can't be read:
+        the page is then built as before, with nothing left out."""
+        fac = D['fac']
+        if fac and all(len(x) > 3 for x in fac):
+            return {i: x[3] for i, x in enumerate(fac) if x[3]}
+        if self.offline:
+            p = os.path.join(self.offline, area['slug'], 'states.json')   # offline test: {fac index: state}
+            return {int(k): v for k, v in json.load(open(p)).items()} if os.path.isfile(p) else {}
+        if not self.s3:
+            return {}
+        try:
+            import pyarrow.parquet as pq
+            from zip_state import zip_state
+            pre = self.prefix(area, 't')
+            if not pre or not pre.endswith('t/'):
+                return {}
+            npis = json.loads(self.s3.get_object(Bucket=self.B, Key=pre[:-2] + 'npis.json')['Body'].read())
+            if len(npis) != len(fac):
+                print(f"  {area['slug']}: npis.json ({len(npis)}) and page providers ({len(fac)}) differ; no out-of-state check", flush=True)
+                return {}
+            slug = area['slug']
+            if slug == 'dfw':
+                keys = ['data/2026-09-29/dfw_npis_all.parquet']
+            elif slug in STATES:
+                scopes = ['s7', 'nc', 'ct']
+                try:
+                    scopes += [k for k in json.load(open(os.path.join(HERE, 'state_scopes.json'))) if not k.startswith('_')]
+                except Exception:
+                    pass
+                keys = [f'data/{sc}/state/{slug}/npis.parquet' for sc in scopes]
+            else:
+                keys = [f'data/tx/metro/{slug}/npis.parquet']
+            body = None
+            for k in keys:
+                try:
+                    body = self.s3.get_object(Bucket=self.B, Key=k)['Body'].read()
+                    break
+                except Exception:
+                    continue
+            if body is None:
+                print(f"  {slug}: no provider list found ({keys[0]}...); no out-of-state check", flush=True)
+                return {}
+            import io
+            tb = pq.read_table(io.BytesIO(body), columns=['npi', 'zip5'], use_threads=False).to_pydict()   # no thread pool: one stuck at exit in tests
+            z = dict(zip(tb['npi'], tb['zip5']))
+            out = {i: zip_state(z.get(n)) for i, n in enumerate(npis)}
+            return {i: v for i, v in out.items() if v}
+        except Exception as e:
+            print(f"  {area['slug']}: no out-of-state check ({type(e).__name__}: {e})", flush=True)
+            return {}
+
     def get(self, area, kind, code):
         if self.offline:
             p = os.path.join(self.offline, area['slug'], kind, code + '.txt')
@@ -376,12 +430,21 @@ def file_date(e):
     return '-'.join(m.groups()) if m else e.get('date')
 
 
-def summarize(D, code, t, h, loc=None):
+def summarize(D, code, t, h, loc=None, st=None, pst=None):
     """Everything a procedure page shows, as plain data. Mirrors the Price Finder's own rules (see the page's main script):
     one line per provider per network = that provider's lowest standard rate (no modifier) in that network; $0 lines,
-    percent-of-charges lines and lines the file flags as unusually low are kept out of the low/high figures."""
+    percent-of-charges lines and lines the file flags as unusually low are kept out of the low/high figures.
+    Oct 19, 2026: st = the area's state, pst = {fac index: state of the provider's practice ZIP} (Store.provider_states).
+    A provider whose state is known and isn't the area's is left out of the figures (counted in 'n_out_of_state'); the
+    Alabama pages showed an Atlanta clinic whose registry entry says "Atlanta, AL 30329". Its rates stay in the files."""
     C = D['codes'][code]
     f = (t or {}).get('f') or C.get('f') or {}
+    n_away = 0
+    if st and pst:
+        away = {fi for fi in f if pst.get(int(fi), st) != st}
+        if away:
+            n_away = len(away)
+            f = {fi: rs for fi, rs in f.items() if fi not in away}
     nets = [n.split('|', 1) for n in D['nets']]
     drg = 'DRG' in (C.get('type') or '')
 
@@ -611,6 +674,7 @@ def summarize(D, code, t, h, loc=None):
         'code': code, 'name': C['name'], 'common': SEARCH_NAMES.get(code, (None,))[0] or re.sub(r'\s*\([^)]*\)', '', C['name']).strip(), 'cat': C.get('cat', ''), 'type': C.get('type', ''), 'drg': drg, 'kind': kind,
         'lines': len(lines), 'providers': len({(e['name'], e['city']) for e in allines}), 'networks': networks,
         'lo': lines[0] if lines else None, 'hi': lines[-1] if lines else None, 'lowest': lowest,
+        'n_out_of_state': n_away,
         'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_high': len(high[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
         'fac_kinds': sorted(fac_kinds) if kind == 'fac' else [],
         'doc_lo': doc[0] if doc else None, 'doc_hi': doc[-1] if doc else None, 'doc_n': len(doc),
@@ -1687,9 +1751,13 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
             D = page_data(pages[a['slug']][0])[0]
             mine = [c for c in codes if c in has[a['slug']]]
             loc = store.local_medicare(a, len(D['fac']))
+            pst = store.provider_states(a, D)   # Oct 19, 2026: out-of-state providers are left out of the figures
+            if pst:
+                n_away = sum(1 for v in pst.values() if v != area_state(a))
+                print(f"  {a['slug']}: {n_away} provider(s) with a practice ZIP outside {area_state(a)} left out of the figures", flush=True)
             def one(c):
                 try:
-                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc)
+                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc, area_state(a), pst)
                 except Exception as e:     # one bad file never stops the rest; that page keeps its last version
                     print(f"  {a['slug']} {c}: skipped ({type(e).__name__}: {e})", flush=True)
                     return None

@@ -43,6 +43,7 @@ for sub in ('xpart', 'stage', 'aux', 'flat', 'names', 'tmp', 'in'): (D / sub).mk
 con = duckdb.connect()
 con.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('MEM','12GB')}'; set threads={E.get('THREADS','8')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp'; set partitioned_write_max_open_files=8")
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from zip_state import zip_state  # noqa: E402  (Oct 19, 2026: provider state from the practice ZIP)
 import blues  # noqa: E402  (Oct 15, 2026: each Blue plan by name, not every Blue Cross price as BCBSTX)
 SHORT = """case """ + blues.SQL_SHORT + """
  when reporting_entity_name ilike '%uhic%' or reporting_entity_name ilike '%united%' then 'UnitedHealthcare'
@@ -238,7 +239,8 @@ if E.get('STOPA'): log('STOPA'); sys.exit(0)
 # ---------- lookups ----------
 s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), str(D / 'npis.parquet'))
 s3.download_file(B, 'site/site_codes.csv', str(D / 'site_codes.csv'))
-NP = {r[0]: r[1:] for r in con.execute(f"select npi, entity_type, name, credential, taxonomy_1, city from '{D}/npis.parquet'").fetchall()}
+# Oct 19, 2026: zip5 too, for each provider's state (4th field of D.fac below)
+NP = {r[0]: r[1:] for r in con.execute(f"select npi, entity_type, name, credential, taxonomy_1, city, zip5 from '{D}/npis.parquet'").fetchall()}
 FEAT = {r['code']: r for r in csv.DictReader(open(D / 'site_codes.csv'))}
 NAMES = {c: (t, nm) for c, t, nm in con.execute(f"""select code, arg_max(ctype, n), arg_max(name, n) from
   (select code, ctype, name, sum(n) n from read_parquet('{D}/names/*.parquet') group by all) group by code""").fetchall()}
@@ -256,14 +258,17 @@ def label_str(modi, st, nt, other):
     if other: p.append('billed under another tax ID')
     return ', '.join(p)
 def provider(npi):
-    et, name, cred, tax, city = NP.get(npi, ('2', None, None, '', '')); tax = tax or ''
+    """[name, city, kind, state]. Oct 19, 2026: state = the state of the provider's practice ZIP (site/zip_state.py), '' when not
+    known. The registry's own state field can be wrong (NPI 1467486373: "Atlanta, AL 30329" sat on the Alabama pages), so
+    procedure_pages.py leaves a provider whose ZIP is in another state out of an area's figures. Nothing is removed here."""
+    et, name, cred, tax, city, z5 = NP.get(npi, ('2', None, None, '', '', '')); tax = tax or ''
     kind = 'P' if et == '1' else 'A' if tax.startswith('261QA') else 'H' if tax[:3] in ('282', '283', '284', '286', '273', '275', '276') else 'G'
     nm = (name or f'NPI {npi}').strip()
     if nm.isupper():
         nm = nm.title()
         for a, b in ((' Llc', ' LLC'), (' Pllc', ' PLLC'), (' Pa', ' PA'), (' Lp', ' LP'), (' Md', ' MD'), (' Dds', ' DDS')): nm = nm.replace(a, b)
     if cred and kind == 'P': nm = f"{nm}, {cred.replace('.', '')}"
-    return [nm, (city or '').title(), kind]
+    return [nm, (city or '').title(), kind, zip_state(z5)]
 # ---------- global lookup tables (fixed before stage B so workers can run in parallel) ----------
 AUX = {}
 for k_, v_ in con.execute(f"select k, val from read_parquet('{D}/aux/*.parquet') group by all order by k, val").fetchall(): AUX.setdefault(k_, []).append(v_ if v_ is not None else '')
