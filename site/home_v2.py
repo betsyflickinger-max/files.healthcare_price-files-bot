@@ -283,8 +283,13 @@ def build(d):
     mm = re.search(r'<div class="nat-map">.*?</div>\s*<p class="cap">.*?</p></div>', home, re.S)
     chips_js = ("<script>(function(){var A=document.getElementById('natArea');function c(){[].forEach.call(document.querySelectorAll('.v2-chip'),"
                 "function(a){a.href='/costs/'+A.value+'/'+a.dataset.slug+'/'})}A.addEventListener('change',c);c();})();</script>")
+    pf = os.path.join(site, 'price-finder', 'index.html')
+    D = pp.page_data(pf)[0] if os.path.isfile(pf) else None
+    gp = os.path.join(d, 'geo.json')
+    geo = json.load(open(gp, encoding='utf-8')) if os.path.isfile(gp) else None
     sec2 = story.section(summ, site, qbox, area_opts, chips, signup_block(proc_opts, area_opts), mm.group(0) if mm else '', nf, nt,
-                         chips_js + pp.home_bits.HOME_JS.replace('__EVERY__', every))
+                         chips_js + pp.home_bits.HOME_JS.replace('__EVERY__', every), D=D, geo=geo, nice=pp.nice)
+    del D
     changed = write_page(site, 'story', home, sec2, 'The story: ') or changed
     # sign-ups on the current homepage (its front section is rewritten daily, so this is re-added each run)
     hp = os.path.join(site, 'index.html')
@@ -614,6 +619,11 @@ def deploy():
     etag = s3.head_object(Bucket=B, Key=KEY)['ETag']
     s3.download_file(B, KEY, f'{d}/site.tgz')
     s3.download_file(B, 'site/deploy/costs_state.json', f'{d}/costs_state.json')
+    try:   # the Price Finder map's locations, for the story's map step
+        cur = s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip()
+        s3.download_file(B, f'site/every/{cur}/geo.json', f'{d}/geo.json')
+    except Exception as e:
+        print('no map locations; the story skips its map step:', e)
     with tarfile.open(f'{d}/site.tgz') as t:
         t.extractall(d, filter='fully_trusted')
     if not os.path.isfile(f'{d}/site/index.html') or not os.path.isfile(f'{d}/functions/_middleware.js'):
@@ -637,6 +647,8 @@ def deploy():
         sys.exit('STOP: the live site changed during the deploy; not saving back. Run again so both changes are kept.')
     os.remove(f'{d}/site.tgz')
     os.remove(f'{d}/costs_state.json')
+    if os.path.isfile(f'{d}/geo.json'):
+        os.remove(f'{d}/geo.json')
     with tarfile.open('/tmp/home_v2-site.tgz', 'w:gz') as t:
         for name in os.listdir(d):
             if name != '.wrangler':
