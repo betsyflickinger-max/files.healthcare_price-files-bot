@@ -48,4 +48,4 @@ date in name = from the link; saved = the file's own last_updated_on when the bo
 
 | File | HTTP | Size (bytes) | last_updated_on |
 |---|---|---|---|
-| 2026-09-17_Blue-Local-Atrium-Group_B00000000012_in-network-rates.json.gz | 206 | 98 | (not found in first 256 KB) |
+| 2026-09-17_Blue-Local-Atrium-Group_B00000000012_in-network-rates.json.gz | 206 | 98 | (not found in first 256 KB); plans pointing to it: 68 {'individual': 68}; e.g. ['blue local gold premier a 1800 with atrium health', 'blue local gold standard a 2000 with atrium health', 'blue local silver preferred 2800 with atrium health'] |
