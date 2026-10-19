@@ -53,13 +53,14 @@ CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest
 # Localities from CMS 2026 GPCI2026.csv (checked at build time: the build stops if a state/locality pair is missing).
 # GA and MO have more than one doctor-fee locality; the page uses the one with the most providers (Atlanta, St. Louis) and says so.
 STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA',
-            'north-carolina': 'NC', 'connecticut': 'CT'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
-SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct'}   # state pages not listed here are in the seven-state scope (data/s7/)
+            'north-carolina': 'NC', 'connecticut': 'CT', 'illinois': 'IL'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
+SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct', 'illinois': 'il'}   # state pages not listed here are in the seven-state scope (data/s7/)
 STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colorado', '01', 'Colorado'),
                'oklahoma': ('Oklahoma', '00', 'Oklahoma'), 'alabama': ('Alabama', '00', 'Alabama'),
                'mississippi': ('Mississippi', '00', 'Mississippi'), 'missouri': ('Missouri', '01', 'Metropolitan St. Louis'),
                'georgia': ('Georgia', '01', 'Atlanta'), 'north-carolina': ('North Carolina', '00', 'North Carolina'),   # NC: one statewide locality (CMS locality file)
-               'connecticut': ('Connecticut', '00', 'Connecticut')}   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
+               'connecticut': ('Connecticut', '00', 'Connecticut'),
+               'illinois': ('Illinois', '16', 'Chicago')}   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
 for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
 def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
 def npis_key(slug): return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
@@ -78,7 +79,7 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'small-towns': '-106.8,25.7,-93.4,36.7',
             'tennessee': '-90.6,34.7,-81.4,36.9', 'colorado': '-109.3,36.7,-101.8,41.3', 'oklahoma': '-103.3,33.4,-94.2,37.3',
             'alabama': '-88.7,29.9,-84.7,35.3', 'mississippi': '-91.9,29.9,-87.9,35.3', 'missouri': '-96.0,35.7,-88.9,40.9',
-            'georgia': '-85.9,30.1,-80.6,35.3', 'north-carolina': '-84.6,33.5,-75.2,36.9', 'connecticut': '-74.0,40.7,-71.5,42.3'}
+            'georgia': '-85.9,30.1,-80.6,35.3', 'north-carolina': '-84.6,33.5,-75.2,36.9', 'connecticut': '-74.0,40.7,-71.5,42.3', 'illinois': '-91.7,36.8,-87.3,42.7'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '

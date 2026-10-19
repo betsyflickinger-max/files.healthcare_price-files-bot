@@ -33,7 +33,7 @@ if not os.environ.get('ST_BUILD'):
 os.environ['BUILD'] = STB + '-' + MONTH
 try: open('/tmp/st_bid', 'w').write(os.environ['BUILD'])   # the workflow reads the build id from here
 except Exception: pass
-PAGES_WF = 'state-pages.yml' if SCOPE == 's7' else f'{SCOPE}-pages.yml'
+PAGES_WF = 'state-pages.yml' if SCOPE == 's7' else f'{SCOPE}-pages.yml' if SCOPE in ('nc', 'ct') else 'state-builds.yml'   # Oct 18: shared schedule
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import orchestrate as O
 from orchestrate import B, s3, log, exists, getj, putj, ls, ensure, free_slots
@@ -44,6 +44,12 @@ SIZE = 's-8vcpu-32gb-amd'
 SCOPE_STATES = {'s7': {'TN': 'tennessee', 'CO': 'colorado', 'OK': 'oklahoma', 'AL': 'alabama', 'MS': 'mississippi', 'MO': 'missouri', 'GA': 'georgia'},
                 'nc': {'NC': 'north-carolina'},   # Oct 16, 2026: North Carolina has its own scope
                 'ct': {'CT': 'connecticut'}}   # Oct 16, 2026: Connecticut has its own scope (data/ct/)
+
+# Oct 18, 2026: states on the shared schedule (site/state_scopes.json) are added here, so a new state needs no code edits
+try:
+    import json as _j
+    SCOPE_STATES.update({k: v for k, v in _j.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state_scopes.json'))).items() if not k.startswith('_')})
+except Exception: pass
 STATES = {k: v for k, v in SCOPE_STATES[SCOPE].items() if not REBUILD or k in REBUILD['states']}
 W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # Oct 14 8:20pm CT: Georgia's batches (90-150M rows) don't fit in 6 GB, so its machines spent 60-85% of their time waiting on
@@ -69,8 +75,11 @@ def sizes(prefix):
 
 
 def s7_busy():
-    m = s3.get_object(Bucket=B, Key=f'bot/insurers/{SCOPE}/manifest.csv')['Body'].read().decode()
-    return sum(1 for r in csv.DictReader(io.StringIO(m)) if r.get('status') in ('running', 'queued'))
+    try: m = s3.get_object(Bucket=B, Key=f'bot/insurers/{SCOPE}/manifest.csv')['Body'].read().decode()
+    except Exception: return 1   # Oct 18, 2026: a new state whose files haven't been checked yet counts as busy
+    rows = list(csv.DictReader(io.StringIO(m)))
+    if not any(r.get('status') == 'processed' for r in rows): return max(1, len(rows))   # nothing read yet: never build empty
+    return sum(1 for r in rows if r.get('status') in ('running', 'queued'))
 
 
 def state_npis():
@@ -358,7 +367,10 @@ def main():
     log('state pages build', MONTH, 'stage', st['stage'])
     if st['stage'] == 'wait':
         busy = s7_busy()
-        if busy and not E.get('FORCE'): log(busy, SCOPE, 'insurer files still queued or being read; waiting'); return putj(SP + 'state.json', st)
+        if busy and not E.get('FORCE'):
+            log(busy, SCOPE, 'insurer files still queued or being read; waiting')
+            open('/tmp/st_waiting', 'w').write(str(busy))   # Oct 18: the shared schedule ends its run instead of looping for hours
+            return putj(SP + 'state.json', st)
         if free_slots() < 2:
             # Oct 18, 2026 (machine shares): tell the insurer reader a build is waiting, so it leaves ST_ROOM slots as its
             # machines finish files (before, a build couldn't start while the reader held every slot)
