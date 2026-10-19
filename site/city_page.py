@@ -236,7 +236,13 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     w.s = w.s.replace('What It Costs', 'The Healthcare Files')   # Oct 18 rename: layouts saved before the rename still carry the old name
     w.sub('<title>The Healthcare Files Price Finder</title>', f'<title>{name} Price Finder · The Healthcare Files</title>')
     w.sub('content="Price Finder · The Healthcare Files"', f'content="{name} Price Finder · The Healthcare Files"')
+    # Oct 19, 2026: the live layout's share link (og:url) still named the old preview address, so this check stopped every
+    # state/city page build ("expected 1 x content=...files.healthcare/price-finder/"). Both addresses become the page's own.
+    w.s = w.s.replace('content="https://upfront-dfw-preview.pages.dev/price-finder/"', 'content="https://files.healthcare/price-finder/"')
     w.sub('content="https://files.healthcare/price-finder/"', f'content="https://files.healthcare/{slug}/price-finder/"')
+    # the canonical link (added Oct 18) pointed every state/city page at the DFW page
+    if '<link rel="canonical" href="https://files.healthcare/price-finder/">' in w.s:
+        w.sub('<link rel="canonical" href="https://files.healthcare/price-finder/">', f'<link rel="canonical" href="https://files.healthcare/{slug}/price-finder/">')
     w.sub(r'<meta property="og:image[^>]*>', '', n=4, regex=True)   # the share image shows a DFW hospital
     w.sub('content="summary_large_image"', 'content="summary"')
     w.sub('every DFW hospital, surgery center, doctor, lab and imaging center,',
