@@ -48,19 +48,34 @@ def miles(a, b):
     return 2 * 3958.8 * math.asin(math.sqrt(h))
 
 
+def _top_rows(head, n=2):
+    """First rows of a CSV, read as CSV (Oct 19, 2026). str.splitlines() also breaks on characters such as U+2028 and
+    \x1c-\x1e that some files (UHS hospitals) have inside a quoted hospital name, which cut the header row short and
+    hid the address of 55 files."""
+    out = []
+    for row in csv.reader(io.StringIO(head, newline="")):
+        out.append(row)
+        if len(out) >= n:
+            break
+    return out
+
+
 def address_text(text):
-    """The hospital_address value(s) from the top of a CMS price file (CSV or JSON), as one string ('' if none)."""
+    """The hospital_address value(s) from the top of a CMS price file (CSV or JSON), as one string ('' if none).
+    A JSON file may give its header fields after the prices (ClaraPrice files do, Oct 19, 2026): callers pass the
+    file's last part too (text = start + end), and the search covers both."""
     head = text[:300000]
     if head.lstrip()[:1] in "{[":
         out = []
-        for m in re.finditer(r'"hospital_address"\s*:\s*(\[[^\]]*\]|"[^"]*")', head):
+        src = text if len(text) <= 600000 else head + text[-300000:]
+        for m in re.finditer(r'"hospital_address"\s*:\s*(\[[^\]]*\]|"[^"]*")', src):
             try:
                 v = json.loads(m.group(1))
             except json.JSONDecodeError:
                 continue
             out += v if isinstance(v, list) else [v]
-        return " | ".join(str(x) for x in out)
-    rows = list(csv.reader(io.StringIO("\n".join(head.splitlines()[:3]))))
+        return " | ".join(dict.fromkeys(str(x) for x in out))
+    rows = _top_rows(head)
     if len(rows) < 2:
         return ""
     return " | ".join(rows[1][i] for i, c in enumerate(rows[0]) if c.strip().lower().startswith("hospital_address") and i < len(rows[1]))
@@ -106,19 +121,19 @@ def names_text(text):
     out = []
     if head.lstrip()[:1] in "{[":
         for k in ("hospital_name", "location_name"):
-            for m in re.finditer(rf'"{k}"\s*:\s*(\[[^\]]*\]|"[^"]*")', head):
+            for m in re.finditer(rf'"{k}"\s*:\s*(\[[^\]]*\]|"[^"]*")', text if len(text) <= 600000 else head + text[-300000:]):
                 try:
                     v = json.loads(m.group(1))
                 except json.JSONDecodeError:
                     continue
                 out += v if isinstance(v, list) else [v]
     else:
-        rows = list(csv.reader(io.StringIO("\n".join(head.splitlines()[:3]))))
+        rows = _top_rows(head)
         if len(rows) >= 2:
             for i, c in enumerate(rows[0]):
                 if i < len(rows[1]) and c.strip().lower().startswith(("hospital_name", "location_name")):
                     out += rows[1][i].split("|")
-    return [str(x).strip() for x in out if str(x).strip()]
+    return list(dict.fromkeys(str(x).strip() for x in out if str(x).strip()))
 
 
 def _city(s):
@@ -187,7 +202,13 @@ def from_file(path):
     try:
         import reader
         with reader.sniff_open(path) as f:
-            t = f.read(1_500_000).decode("utf-8-sig", "replace")
+            raw = f.read(1_500_000)
+            t = raw.decode("utf-8-sig", "replace")
+            if t.lstrip()[:1] in "{[" and not address_text(t):   # JSON may give its header after the prices: read the end
+                tail, n = raw[-300000:], len(raw)
+                while n < 6_000_000_000 and (b := f.read(8 << 20)):
+                    tail, n = (tail + b)[-300000:], n + len(b)
+                t = t + tail.decode("utf-8", "replace")
         return address_text(t), names_text(t)
     except Exception:
         return "", []
