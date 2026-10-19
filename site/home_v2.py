@@ -15,6 +15,8 @@ searches, how far people scroll, one optional "what were you hoping to find?" qu
 Safe to run again: every step checks a marker first. The procedure-pages workflow runs `deploy` after its own deploy,
 so /v2/ always shows the same figures as the price pages.
 """
+import hashlib
+import html
 import json
 import os
 import re
@@ -24,7 +26,8 @@ import sys
 import tarfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import procedure_pages as pp   # noqa: E402  (money, esc, slugs, area URLs: one set of rules for every page)
+import procedure_pages as pp   # noqa: E402
+import story   # noqa: E402  (money, esc, slugs, area URLs: one set of rules for every page)
 
 esc, money = pp.esc, pp.money
 AREA = 'dfw'
@@ -73,7 +76,7 @@ def what_word(S):
     return 'the facility fee', "The doctor's fee and anesthesia are billed separately."
 
 
-def section(summ, slugs, n_places, files_found, files_total, areas_opts, every):
+def section(summ, slugs, n_places, files_found, files_total, areas_opts, every, signup=''):
     S = summ[HERO]
     g = S['gap']
     lo, hi = g['lo'], g['hi']
@@ -113,7 +116,7 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every):
     spread = ''
     if sp and sp['x'] >= 3:
         spread = (f'<div class="v2-card v2-story"><p class="kicker">Your insurer matters too</p>'
-                  f'<h2>One hospital. {sp["n"]} insurance networks. {pp.short_money(sp["lo"]["v"])} to {pp.short_money(sp["hi"]["v"])}.</h2>'
+                  f'<h2>One hospital. Different insurers. {pp.short_money(sp["lo"]["v"])} to {pp.short_money(sp["hi"]["v"])}.</h2>'
                   f'<p>At {esc(sp["name"])} in {esc(sp["city"])}, {fee} for a {esc(common)} depends on who is paying: '
                   f'{esc(plan_name(sp["lo"]))} has agreed to {money(sp["lo"]["v"])} ({src(sp["lo"])}); {esc(plan_name(sp["hi"]))} has agreed to '
                   f'{money(sp["hi"]["v"])} ({src(sp["hi"])}). That\'s {sp["x"]:.1f} times as much, for the same procedure in the same building.</p></div>')
@@ -182,6 +185,7 @@ def section(summ, slugs, n_places, files_found, files_total, areas_opts, every):
 .v2-door:hover,.v2-door:focus-visible{{background:var(--ground)}}.v2-door h3{{margin:0;font-size:22px}}.v2-door .go{{margin-top:auto;font-weight:800;color:var(--stamp)}}
 .v2-who-built{{display:grid;gap:18px}}@media(min-width:800px){{.v2-who-built{{grid-template-columns:3fr 2fr}}}}
 .v2-rules{{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:16px}}.v2-rules li::before{{content:"\\2713";font-weight:800;margin-right:8px;color:var(--stamp)}}
+.v2-storylink{{margin:16px 0 0;font-weight:800}}.v2-storylink a{{color:var(--hi)!important;text-underline-offset:4px}}
 .v2-more{{display:flex;flex-wrap:wrap;gap:10px 24px;margin:0;padding:24px 0 8px;font-weight:700}}
 @media(max-width:600px){{.v2-board li{{flex-direction:column;gap:4px}}.v2-opts{{grid-template-columns:1fr}}}}
 </style>
@@ -199,6 +203,7 @@ Hospitals and insurers have to publish these prices, in files too big to open. <
 <select id="natArea" aria-label="Where">{areas_opts}</select><button type="submit">Show me</button></div>
 <div class="v2-chips" aria-label="Popular">{chips}</div>
 </form>
+<p class="v2-storylink"><a href="/story/">New here? See the whole story in 7 steps →</a></p>
 <p class="v2-trust"><span>Free, no ads</span><span>Every price linked to its source</span><span>Prices, not your medical records</span></p>
 <p class="msg" style="display:none" id="msg"></p><div id="homeChips" hidden></div><form id="searchForm" hidden><input id="q"></form>
 </div></div></div>
@@ -218,6 +223,7 @@ Hospitals and insurers have to publish these prices, in files too big to open. <
 <div class="sec v2-who-built"><div><p class="kicker">Who keeps the receipts</p><h2>Built by someone who used to sit on the other side of the table</h2>
 <p class="lede">{esc(pp.AUTHOR['bio'])}</p></div>
 <ul class="v2-rules"><li>Every price links to the file it came from</li><li>Every price shows the date it was published; old files are flagged</li><li>Nothing is estimated or averaged</li><li><a href="/methodology/">How we read the files</a></li></ul></div>
+<div class="sec">{signup}</div>
 <p class="v2-more"><a href="/costs/">Prices in {n_places} places →</a><a href="/price-file-watch/">{files_found:,} of {files_total:,} hospitals have a price file we could find →</a></p>
 </div>
 <script>(function(){{
@@ -264,20 +270,115 @@ def build(d):
     every = (re.search(r'Search (\S+) procedures, tests and services', home) or [None, 'every'])[1]
     found = re.search(r'<h2>([\d,]+) of ([\d,]+) hospitals</h2>', home)
     n_places = len(json.load(open(os.path.join(site, 'cities.json'), encoding='utf-8')))
-    sec = section(summ, slugs, n_places, int(found.group(1).replace(',', '')) if found else 0, int(found.group(2).replace(',', '')) if found else 0,
-                  m.group(1) if m else '', every)
+    nf, nt = (int(found.group(1).replace(',', '')), int(found.group(2).replace(',', ''))) if found else (0, 0)
+    area_opts = m.group(1) if m else ''
+    proc_opts = ''.join(f"<option value='{esc(slugs[c])}'{' selected' if c == HERO else ''}>{esc(n)}</option>"
+                        for c, n in sorted(((c, s['name']) for c, s in summ.items() if c in slugs), key=lambda t: t[1]))
+    sec = section(summ, slugs, n_places, nf, nt, area_opts, every, signup_block(proc_opts, area_opts))
+    changed = write_page(site, 'v2', home, sec, '(v2) ')
+    # the story page: same shell, same figures
+    qbox = pp.home_bits.qbox(proc_opts, every).replace('value="Colonoscopy (diagnostic)"', 'value=""')
+    pop = [('45378', 'Colonoscopy'), ('73721', 'Knee MRI'), ('66984', 'Cataract surgery'), ('27447', 'Knee replacement'), ('59400', 'Having a baby'), ('80053', 'Blood panel')]
+    chips = ''.join(f'<a class="v2-chip" data-slug="{slugs[c]}" href="{proc_url(slugs, c)}">{esc(t)}</a>' for c, t in pop if c in slugs)
+    mm = re.search(r'<div class="nat-map">.*?</div>\s*<p class="cap">.*?</p></div>', home, re.S)
+    chips_js = ("<script>(function(){var A=document.getElementById('natArea');function c(){[].forEach.call(document.querySelectorAll('.v2-chip'),"
+                "function(a){a.href='/costs/'+A.value+'/'+a.dataset.slug+'/'})}A.addEventListener('change',c);c();})();</script>")
+    sec2 = story.section(summ, site, qbox, area_opts, chips, signup_block(proc_opts, area_opts), mm.group(0) if mm else '', nf, nt,
+                         chips_js + pp.home_bits.HOME_JS.replace('__EVERY__', every))
+    changed = write_page(site, 'story', home, sec2, 'The story: ') or changed
+    # sign-ups on the current homepage (its front section is rewritten daily, so this is re-added each run)
+    hp = os.path.join(site, 'index.html')
+    if SU_MARK not in home and '<!-- NATIONAL:END -->' in home:
+        add = (f'<div class="wrap"><div class="sec">{signup_block(proc_opts, area_opts)}</div>'
+               '<p style="margin:18px 0 0;font-weight:800"><a href="/story/">New here? See the whole story in 7 steps →</a></p></div>\n')
+        open(hp, 'w', encoding='utf-8').write(home.replace('<!-- NATIONAL:END -->', add + '<!-- NATIONAL:END -->', 1))
+        changed = True
+    return patch_price_pages(site) or changed
+
+
+def write_page(site, name, home, sec, title_prefix):
     page = re.sub(r'<!-- NATIONAL:START.*?<!-- NATIONAL:END -->', lambda _: sec, home, count=1, flags=re.S)
     if page == home:
-        sys.exit('STOP: homepage has no NATIONAL block; /v2/ not written')
-    page = page.replace('<title>', '<title>(v2) ', 1)
-    out = os.path.join(site, 'v2', 'index.html')
+        sys.exit(f'STOP: homepage has no NATIONAL block; /{name}/ not written')
+    page = page.replace('<title>', '<title>' + title_prefix, 1)
+    out = os.path.join(site, name, 'index.html')
     old = open(out, encoding='utf-8').read() if os.path.isfile(out) else ''
     if old == page:
         return False
     os.makedirs(os.path.dirname(out), exist_ok=True)
     open(out, 'w', encoding='utf-8').write(page)
-    print('wrote site/v2/index.html')
+    print(f'wrote site/{name}/index.html')
     return True
+
+
+# ---------------------------------------------------------------- email sign-ups (weekly receipt, price alerts)
+SU_MARK = '<!-- SIGNUP (site/home_v2.py) -->'
+SU_CSS = (".su{background:var(--paper);color:var(--ink);border:2px solid var(--rule);padding:clamp(18px,3vw,28px);position:relative}"
+          ".su-cut{margin:-6px 0 14px;font:700 13px var(--mono);letter-spacing:.14em;text-transform:uppercase;border-bottom:2px dashed var(--rule);padding-bottom:10px}"
+          ".su-grid{display:grid;gap:22px}@media(min-width:800px){.su-grid{grid-template-columns:1fr 1fr}}"
+          ".su-f{display:grid;gap:8px;align-content:start}.su-f h3{margin:0;font-size:22px}.su-f p{margin:0;font-size:16px;line-height:1.45}"
+          ".su-f label{font:700 13px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}"
+          ".su-f input[type=email],.su-f select{min-height:46px;border:2px solid var(--rule);padding:0 10px;font:16px var(--body);background:var(--paper);color:var(--ink);width:100%;box-sizing:border-box}"
+          ".su-f button{min-height:48px;border:0;background:var(--ink);color:var(--paper);font:800 15px var(--body);cursor:pointer;margin-top:6px}"
+          ".su-hp{position:absolute!important;left:-9999px!important;width:1px;height:1px}"
+          ".su-msg{min-height:1.4em;font-weight:700}.su-fine{margin:16px 0 0;font-size:14px;line-height:1.5;color:var(--muted)}")
+SU_JS = r'''<script>(function(){if(window.hcfSu)return;window.hcfSu=1;document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('.su-f');if(!f)return;e.preventDefault();
+var m=f.querySelector('.su-msg'),em=f.querySelector('input[type=email]').value.trim(),w=f.querySelector('[name=what]'),a=f.querySelector('[name=area]');
+var what=w?(w.tagName==='SELECT'?w.options[w.selectedIndex].text:w.value):'';if(a)what+=' in '+a.options[a.selectedIndex].text;
+if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){m.textContent='Please check the email address.';return}
+m.textContent='Sending…';fetch('/api/signup',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',
+body:JSON.stringify({list:f.dataset.list,email:em,what:what,page:location.pathname,website:f.querySelector('.su-hp').value})})
+.then(function(r){return r.json()}).then(function(j){m.textContent=j.ok?(f.dataset.list==='alert'?'You’re on the list for '+what+'.':'You’re on the list for the weekly receipt.'):(j.error||'That didn’t work. Please try again.');
+if(j.ok){try{window.hcfTrack&&window.hcfTrack({ev:'signup',detail:f.dataset.list==='alert'?'price alert: '+what:'weekly receipt'})}catch(x){}}})
+.catch(function(){m.textContent='That didn’t work. Please try again.'})},true)})();</script>'''
+
+
+def signup_block(proc_opts='', area_opts='', fixed=''):
+    """The "Detach and return" sign-up card: the weekly receipt and price alerts. fixed = the alert's subject on a price page."""
+    uid = 'su' + hashlib.sha1((fixed or proc_opts[:200] or 'x').encode()).hexdigest()[:6]
+    if fixed:
+        pick = f'<input type="hidden" name="what" value="{esc(fixed)}"><p><b>For:</b> {esc(fixed)}</p>'
+    else:
+        pick = (f'<label for="{uid}p">What</label><select id="{uid}p" name="what">{proc_opts}</select>'
+                f'<label for="{uid}a">Where</label><select id="{uid}a" name="area">{area_opts}</select>')
+    return (f'{SU_MARK}<style>{SU_CSS}</style><div class="su" id="signup"><p class="su-cut"><span aria-hidden="true">✂ </span>Detach and return</p><div class="su-grid">'
+            f'<form class="su-f" data-list="weekly"><h3>The weekly receipt</h3><p>One real price from the files every Friday: what it was, where it came from, and what it means for you.</p>'
+            f'<label for="{uid}w">Your email</label><input id="{uid}w" type="email" autocomplete="email" required>'
+            f'<input class="su-hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'
+            f'<button type="submit">Send me the weekly receipt</button><p class="su-msg" aria-live="polite"></p></form>'
+            f'<form class="su-f" data-list="alert"><h3>Price alerts</h3><p>We\'ll email you when a price changes for what you looked up.</p>{pick}'
+            f'<label for="{uid}e">Your email</label><input id="{uid}e" type="email" autocomplete="email" required>'
+            f'<input class="su-hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">'
+            f'<button type="submit">Alert me when it changes</button><p class="su-msg" aria-live="polite"></p></form></div>'
+            '<p class="su-fine">We use your email only for what you sign up for. No ads, never sold or shared, and you can unsubscribe any time. '
+            'While the site is a private preview we\'re only collecting sign-ups; the emails start when it goes public.</p></div>' + SU_JS)
+
+
+def patch_price_pages(site):
+    """Add the sign-up card (alert fixed to that page's procedure and place) to every /costs/<area>/<procedure>/ page."""
+    n = 0
+    base = os.path.join(site, 'costs')
+    if not os.path.isdir(base):
+        return False
+    for area in os.listdir(base):
+        ad = os.path.join(base, area)
+        if not os.path.isdir(ad):
+            continue
+        for proc in os.listdir(ad):
+            p = os.path.join(ad, proc, 'index.html')
+            if not os.path.isfile(p):
+                continue
+            s = open(p, encoding='utf-8').read()
+            if SU_MARK in s or '<footer' not in s:
+                continue
+            h1 = re.search(r'<h1[^>]*>(.*?)</h1>', s, re.S)
+            label = html.unescape(re.sub(r'<[^>]+>|\s+', ' ', h1.group(1))).strip() if h1 else proc.replace('-', ' ')
+            block = f'<div class="wrap" style="margin:28px auto">{signup_block(fixed=label)}</div>\n'
+            open(p, 'w', encoding='utf-8').write(s.replace('<footer', block + '<footer', 1))
+            n += 1
+    if n:
+        print(f'sign-up card added to {n} price pages')
+    return n > 0
 
 
 # ---------------------------------------------------------------- tester tracking
@@ -370,6 +471,29 @@ async function logEvent(env, waitUntil, who, request) {
 """
 
 
+SIGNUP_FN = r"""// Email sign-ups (Oct 18, 2026; site/home_v2.py): the weekly receipt and price alerts. POST /api/signup.
+// Saved privately to R2 signups/<list>/<id>.json; nothing is sent yet (emails start when the site goes public).
+async function sha(s) { const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s)); return [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join(''); }
+const out = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+export async function onRequestPost({ request, env }) {
+  let o = {};
+  try { o = JSON.parse((await request.text()).slice(0, 4000)) || {}; } catch (e) {}
+  if (o.website) return out({ ok: true });                       // filled-in hidden field: a bot
+  const email = String(o.email || '').trim().toLowerCase().slice(0, 254);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return out({ ok: false, error: 'Please check the email address.' }, 400);
+  const list = o.list === 'alert' ? 'alert' : 'weekly';
+  const what = list === 'alert' ? String(o.what || '').slice(0, 200) : '';
+  if (list === 'alert' && !what) return out({ ok: false, error: 'Pick what you want alerts for.' }, 400);
+  if (!env.PF) return out({ ok: false, error: 'Sign-ups are not available right now.' }, 503);
+  const id = (await sha(email + '|' + what)).slice(0, 32);
+  const rec = { t: new Date().toISOString(), email, list, what, page: String(o.page || '').slice(0, 200),
+    device: /Mobi/.test(request.headers.get('User-Agent') || '') ? 'phone' : 'computer', confirmed: false };
+  await env.PF.put('signups/' + list + '/' + id + '.json', JSON.stringify(rec), { httpMetadata: { contentType: 'application/json' } });
+  return out({ ok: true });
+}
+"""
+
+
 def patch_tracking(d):
     """Middleware: accept tester events at /__ev and load /hcf-t.js for testers. Idempotent; returns True if anything changed."""
     changed = False
@@ -398,6 +522,11 @@ def patch_tracking(d):
         js = js.replace(old, "(tester ? '<style>.look-pick{display:none!important}</style><script src=\"/hcf-t.js\" defer></script>' : '')", 1)
         open(p, 'w', encoding='utf-8').write(js)
         changed = True
+    f = os.path.join(d, 'functions', 'api', 'signup.js')
+    os.makedirs(os.path.dirname(f), exist_ok=True)
+    if not os.path.isfile(f) or open(f, encoding='utf-8').read() != SIGNUP_FN:
+        open(f, 'w', encoding='utf-8').write(SIGNUP_FN)
+        changed = True
     pv = os.path.join(d, 'site', 'privacy', 'index.html')
     if os.path.isfile(pv):
         s = open(pv, encoding='utf-8').read()
@@ -405,50 +534,72 @@ def patch_tracking(d):
         b = ('we keep a simple record of which pages they view and when, what they tap or click, how far down a page they scroll, '
              'and their answer if they reply to a one-question survey, so we can see what is useful. We do not record what they type into search boxes.')
         if a in s:
-            open(pv, 'w', encoding='utf-8').write(s.replace(a, b, 1))
+            s = s.replace(a, b, 1)
             changed = True
+        su = ('<p id="email"><strong>Email sign-ups.</strong> If you sign up for the weekly receipt or a price alert, we keep your email address, '
+              'what you asked to hear about, and when you signed up. We use it only to send what you asked for. We never sell or share it, and every email '
+              'will have a one-click unsubscribe. You can ask us to delete it at any time.</p>')
+        if 'id="email"' not in s and '<p><strong>4. Health-related data.' in s:
+            s = s.replace('<p><strong>4. Health-related data.', su + '\n<p><strong>4. Health-related data.', 1)
+            changed = True
+        if changed:
+            open(pv, 'w', encoding='utf-8').write(s)
     return changed
 
 
 # ---------------------------------------------------------------- control center: show the tracker's data (Visitors tab)
-CTL = [
-    ("const sec = (p) => { const a = (p || '/').split('?')[0]; if (a === '/' || a === '') return 'Homepage';",
-     "const sec = (p) => { const a = (p || '/').split('?')[0].split('#')[0]; if (a === '/' || a === '') return 'Homepage'; if (a === '/v2/') return 'Homepage v2';"),
-    ("""    <div class="card">
+CTL = [   # (marker that shows the step is done, anchor, replacement)
+    ("if (a === '/v2/') return 'Homepage v2';",
+     "const sec = (p) => { const a = (p || '/').split('?')[0]; if (a === '/' || a === '') return 'Homepage';",
+     "const sec = (p) => { const a = (p || '/').split('?')[0].split('#')[0]; if (a === '/' || a === '') return 'Homepage'; if (a === '/v2/') return 'Homepage v2'; if (a === '/story/') return 'Story';"),
+    ('id="v-events"', """    <div class="card">
       <div class="head"><div><h3>Every page view</h3>""", """    <div class="card">
-      <div class="head"><div><h3>What testers did on the page</h3><p class="muted">Newest first: taps, searches, the guess game, how long they stayed and how far they scrolled, and answers to the homepage question "What were you hoping to find?". Collected since Oct 18, 2026.</p></div>
+      <div class="head"><div><h3>What testers did on the page</h3><p class="muted">Newest first: taps, searches, the guess game, story steps reached, how long they stayed and how far they scrolled, and answers to the homepage question "What were you hoping to find?". Collected since Oct 18, 2026.</p></div>
         <div class="controls"><input type="search" id="v-eq" placeholder="Search tester, page or action" aria-label="Search tester, page or action"></div></div>
       <div class="tbl" style="max-height:28rem"><table id="v-events" data-source="visitors_events" data-row-key="id">
         <thead><tr><th data-field="t"><button>When</button></th><th data-field="tester"><button>Tester</button></th><th data-field="page"><button>Page</button></th><th data-field="event"><button>What</button></th><th data-field="detail"><button>Detail</button></th><th data-field="device"><button>Device</button></th></tr></thead><tbody></tbody></table></div>
     </div>
     <div class="card">
       <div class="head"><div><h3>Every page view</h3>"""),
-    ("""    const q = ($('#v-q').value || '').trim().toLowerCase(), log = rowsOf('visitors_log');""",
+    ('id="v-signups"', """    <div class="card">
+      <div class="head"><div><h3>What testers did on the page</h3>""", """    <div class="card">
+      <div class="head"><div><h3>Email sign-ups</h3><p class="muted">Weekly receipt and price alerts, newest first. Collected only; nothing is emailed until launch.</p></div></div>
+      <div class="tbl" style="max-height:22rem"><table id="v-signups" data-source="visitors_signups" data-row-key="id">
+        <thead><tr><th data-field="t"><button>When</button></th><th data-field="list"><button>List</button></th><th data-field="email"><button>Email</button></th><th data-field="what"><button>For</button></th><th data-field="page"><button>Signed up on</button></th></tr></thead><tbody></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="head"><div><h3>What testers did on the page</h3>"""),
+    ("rowsOf('visitors_events')", """    const q = ($('#v-q').value || '').trim().toLowerCase(), log = rowsOf('visitors_log');""",
      """    const eq = ($('#v-eq').value || '').trim().toLowerCase(), evs = rowsOf('visitors_events');
     T($('#v-events'), evs && evs.filter((r) => !eq || [r.tester, r.page, r.event, r.detail].join(' ').toLowerCase().includes(eq)),
       [{f: 't', fmt: when}, {f: 'tester'}, {f: 'page'}, {f: 'event'}, {f: 'detail'}, {f: 'device'}], {sort: 't', dir: -1});
     const q = ($('#v-q').value || '').trim().toLowerCase(), log = rowsOf('visitors_log');"""),
-    ("""    $('#v-q').addEventListener('input', redraw); } redraw(); }};""",
+    ("rowsOf('visitors_signups')", """    const eq = ($('#v-eq').value || '').trim().toLowerCase(), evs = rowsOf('visitors_events');""",
+     """    T($('#v-signups'), rowsOf('visitors_signups'), [{f: 't', fmt: when}, {f: 'list'}, {f: 'email'}, {f: 'what'}, {f: 'page'}], {sort: 't', dir: -1});
+    const eq = ($('#v-eq').value || '').trim().toLowerCase(), evs = rowsOf('visitors_events');"""),
+    ("$('#v-eq').addEventListener", """    $('#v-q').addEventListener('input', redraw); } redraw(); }};""",
      """    $('#v-q').addEventListener('input', redraw); $('#v-eq').addEventListener('input', redraw); } redraw(); }};"""),
 ]
 
 
 def patch_control(d):
-    """Visitors tab: a "What testers did on the page" table and in-page views grouped under Homepage. Idempotent; a
-    missing anchor (the page was rebuilt differently) is reported, never fatal."""
+    """Visitors tab: in-page views grouped under their page, "What testers did on the page" and "Email sign-ups" tables.
+    Each step is skipped once done; a missing anchor (the page was rebuilt differently) is reported, never fatal."""
     p = os.path.join(d, 'site', 'control', 'index.html')
     if not os.path.isfile(p):
         return False
-    s = open(p, encoding='utf-8').read()
-    if 'id="v-events"' in s:
-        return False
-    for a, b in CTL:
+    s0 = s = open(p, encoding='utf-8').read()
+    for done, a, b in CTL:
+        if done in s:
+            continue
         if s.count(a) != 1:
-            print('control center layout changed; tracker table not added')
-            return False
+            print('control center layout changed; a Visitors-tab step was skipped:', done)
+            continue
         s = s.replace(a, b)
-    open(p, 'w', encoding='utf-8').write(s)
-    return True
+    if s != s0:
+        open(p, 'w', encoding='utf-8').write(s)
+        return True
+    return False
 
 
 # ---------------------------------------------------------------- deploy (same pull / deploy / save-back steps as procedure_pages.py)

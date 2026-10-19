@@ -84,6 +84,8 @@ def label(path):
         return "Homepage"
     if path.strip("/") == "v2":
         return "Homepage v2"
+    if path.strip("/") == "story":
+        return "Story"
     parts = [p for p in path.strip("/").split("/") if p]
     return " · ".join(p.replace("-", " ").capitalize() for p in parts)
 
@@ -136,7 +138,7 @@ def main():
              "last_view_at": rows[-1]["t"] if rows else None, "last_view_by": rows[-1]["who"] if rows else None,
              "first_view_at": rows[0]["t"] if rows else None}]
 
-    what = {"tap": "Tapped", "search": "Searched", "guess": "Guess game", "guess-skip": "Skipped the guess game", "answer": "Answered the question",
+    what = {"tap": "Tapped", "search": "Searched", "guess": "Guess game", "guess-skip": "Skipped the guess game", "answer": "Answered the question", "chapter": "Reached story step", "jar": "Used the deductible jar", "signup": "Signed up",
             "leave": "Left the page"}
     ev_rows = []
     for e in reversed([e for e in evs if e.get("ev") != "view"]):
@@ -147,6 +149,17 @@ def main():
             d = f"{d} → {e['to']}"
         ev_rows.append({"id": f"{e['t']}-{e['who']}", "t": e["t"], "tester": e["who"], "page": label(e.get("page", "")),
                         "event": what.get(e.get("ev"), e.get("ev", "")), "detail": d, "device": e.get("device", "")})
+    # email sign-ups (site/home_v2.py): private list for the control center only
+    sk = []
+    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="signups/"):
+        sk += [o["Key"] for o in pg.get("Contents", [])]
+    with ThreadPoolExecutor(16) as ex:
+        sus = list(ex.map(lambda k: json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read()), sk))
+    su_rows = sorted(({"id": k, "t": r.get("t"), "list": "Price alert" if r.get("list") == "alert" else "Weekly receipt", "email": r.get("email", ""),
+                       "what": r.get("what", ""), "page": label(r.get("page", ""))} for k, r in zip(sk, sus)), key=lambda r: r["t"] or "", reverse=True)
+    # emails never go into git (out/board is also pushed to the private data repo): straight to R2 for the control center only
+    s3.put_object(Bucket=B, Key="control/data/visitors_signups.json", Body=json.dumps(su_rows, separators=(",", ":")).encode(),
+                  ContentType="application/json")
     for name, data in (("visitors_events", ev_rows[:3000]), ("visitors_meta", meta), ("visitors_people", people), ("visitors_pages", page_rows), ("visitors_log", log)):
         json.dump(data, open(f"{OUT}/{name}.json", "w"), separators=(",", ":"))
     print(f"visitors: {len(names)} testers, {meta[0]['visited']} visited, {len(rows)} page views ({skipped} test views left out)")
