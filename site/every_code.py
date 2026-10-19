@@ -529,6 +529,22 @@ def _workP(u, c, src, MD, part=''):
     for fu in futs: fu.result()
     return nx, summ, scp
 def workP(u, c, src, MD):
+    # Oct 19, 2026: size the batch first and split a big one up front (SLICE_ROWS rows per slice, default 30M), so it doesn't
+    # fail once before being split; the out-of-memory fallback below still catches anything that slips through
+    rows_ = c.execute(f"select count(*) from {src}").fetchone()[0]
+    k_n = max(1, -(-rows_ // int(E.get('SLICE_ROWS', '30000000'))))
+    if k_n > 1:
+        log(f'P {u}: {rows_:,} rows, building in {k_n} slices')
+        nx, summ, scp = 0, {}, {}
+        for k_ in range(k_n):
+            n_, s_, sc_ = _workP(u, c, f"(select * from {src} where hash(code || '#slice') % {k_n} = {k_})", MD, f'.{k_}')
+            nx += n_; summ.update(s_)
+            for a_, b_ in sc_.items(): scp.setdefault(a_, set()).update(b_)
+            c.execute('drop table if exists x; drop table if exists fl2')
+        c.close(); finish_dirs(u); shutil.rmtree(D / f'tmp/w{u}', ignore_errors=True)
+        res = (u, nx, summ, {kk: sorted(v) for kk, v in scp.items()})
+        s3.put_object(Bucket=B, Key=f'{WK}B/{u}.json', Body=json.dumps(res).encode())
+        return res
     try: nx, summ, scp = _workP(u, c, src, MD)
     except duckdb.OutOfMemoryException:
         # Oct 18, 2026: Colorado's biggest batches (90M+ rows, twice Mississippi's) ran out of memory building the doctor
