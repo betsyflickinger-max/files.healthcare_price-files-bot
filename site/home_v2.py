@@ -91,7 +91,7 @@ def hero_html(S, slugs, code):
     fee, extra = what_word(S)
     common = low(S['common'])
     kinds = {lo.get('kind'), hi.get('kind')}
-    where = 'hospitals' if kinds == {'H'} else 'surgery centers' if kinds == {'A'} else 'places'
+    where = 'hospitals' if kinds == {'H'} else 'doctors' if kinds == {'P'} else 'places'   # "surgery centers" dropped: the file label can call a hospital campus one
     return (f'<p class="v2-set">Same {esc(common)}. Same {esc(plan_name(lo))} plan. Two Dallas&ndash;Fort Worth {where}.</p>'
             f'<h1 class="letters"><span>{pp.short_money(lo["v"])}</span> <em class="or">or</em> <em>{pp.short_money(hi["v"])}</em></h1>'
             f'<p class="v2-why">That\'s {esc(lo["name"])} and {esc(hi["name"])}: <b>{hi["v"] / lo["v"]:.1f} times as much</b> for the same procedure on the same insurance.\n'
