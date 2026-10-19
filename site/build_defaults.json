@@ -2,5 +2,35 @@
  "practice": true,
  "slice_rows": 30000000,
  "big_machine": true,
- "why": "Oct 19, 2026 (Betsy OK'd): every new state build uses the practice view (doctors grouped by the tax-ID practice they bill under; tested on Mississippi, PASS on all 21,736 codes), sizes each batch up front and splits any over slice_rows price rows, and runs one big-memory machine per state for batches still too big (one huge code). Update mode (adding networks to a finished build) stays a normal build until merge_build.py handles practice files."
+ "why": "Oct 19, 2026 (Betsy OK'd): every new state build uses the practice view (doctors grouped by the tax-ID practice they bill under; tested on Mississippi, PASS on all 21,736 codes), sizes each batch up front and splits any over slice_rows price rows, and runs one big-memory machine per state for batches still too big (one huge code). Update mode (adding networks to a finished build) stays a normal build until merge_build.py handles practice files.",
+ "per_state": {
+  "new-york": {
+   "slice_rows": 20000000,
+   "big_size": "m-8vcpu-64gb-intel",
+   "big_mem": "56GB"
+  },
+  "california": {
+   "slice_rows": 20000000,
+   "big_size": "m-8vcpu-64gb-intel",
+   "big_mem": "56GB"
+  },
+  "florida": {
+   "slice_rows": 20000000,
+   "big_size": "m-8vcpu-64gb-intel",
+   "big_mem": "56GB"
+  },
+  "virginia": {
+   "slice_rows": 20000000
+  },
+  "district-of-columbia": {
+   "slice_rows": 20000000
+  },
+  "wisconsin": {
+   "slice_rows": 20000000
+  },
+  "illinois": {
+   "slice_rows": 20000000
+  }
+ },
+ "per_state_why": "Oct 19, 2026 (Betsy: 'the smallest possible pieces' for the next five states): 20M-row slices instead of 30M (Colorado's batches ran 70-97M rows; New York, California and Florida have about 2-4x Colorado's providers), and for the three biggest a 64 GB big-memory machine ($0.59/h) for the one-huge-code batches"
 }

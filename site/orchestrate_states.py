@@ -478,14 +478,15 @@ def main():
                 if UPDATE:
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
+                bd = build_defaults(); ps = bd.get('per_state', {}).get(slug, {})   # per-state settings win
                 if st.get('practice'):
-                    env.update(PRACTICE='1', SLICE_ROWS=str(build_defaults().get('slice_rows', 30000000)))
+                    env.update(PRACTICE='1', SLICE_ROWS=str(ps.get('slice_rows', bd.get('slice_rows', 30000000))))
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
                 if st.get('practice') and i == 0 and build_defaults().get('big_machine', True):
                     # one big-memory machine per state: it builds only the batches the others mark as too big (one huge code)
                     big = {k_: v_ for k_, v_ in env.items() if k_ not in ('BCLAIM', 'BCLAIM_H', 'SPLIT')}
-                    big.update(BIG='1', WORKERS='1', WMEM='24GB', WTHREADS='8', STALL_MIN='240', OUTP=f'{SP}{slug}-big/')
-                    ensure(st, f'{slug}-big', SIZE, O.RUN_INS, big, False)
+                    big.update(BIG='1', WORKERS='1', WMEM=ps.get('big_mem', '24GB'), WTHREADS='8', STALL_MIN='240', OUTP=f'{SP}{slug}-big/')
+                    ensure(st, f'{slug}-big', ps.get('big_size', SIZE), O.RUN_INS, big, False)
         release_finished(left)
         relaunch_old(left)
         cap, held = build_cap(left)
