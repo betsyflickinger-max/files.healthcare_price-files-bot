@@ -55,6 +55,25 @@ def head(s3, bucket, key, nbytes=2_000_000):
     return data.decode("utf-8-sig", "replace")
 
 
+def tail(s3, bucket, key, keep=300_000, cap=3_000_000_000):
+    """The last part of a saved original, decompressed (the whole object is streamed; only the end is kept)."""
+    if s3.head_object(Bucket=bucket, Key=key)["ContentLength"] > cap:
+        return ""
+    body = s3.get_object(Bucket=bucket, Key=key)["Body"]
+    out = b""
+    try:
+        if key.endswith(".zst"):
+            with zstandard.ZstdDecompressor().stream_reader(body) as r:
+                while (b := r.read(8 << 20)):
+                    out = (out + b)[-keep:]
+        else:
+            for b in iter(lambda: body.read(8 << 20), b""):
+                out = (out + b)[-keep:]
+    except zstandard.ZstdError:
+        pass
+    return out.decode("utf-8", "replace")
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--states", default="")
@@ -83,6 +102,8 @@ def main():
     def one(k):
         try:
             t = head(s3, bucket, k)
+            if t.lstrip()[:1] in "{[" and not identity.address_text(t):
+                t += tail(s3, bucket, k)   # Oct 19, 2026: JSON header fields may come after the prices (ClaraPrice)
             return k, identity.address_text(t), identity.names_text(t), ""
         except Exception as e:
             return k, "", [], f"{type(e).__name__}: {str(e)[:120]}"
