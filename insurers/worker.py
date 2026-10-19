@@ -16,6 +16,7 @@ For each file:
 import csv
 import io
 import json
+import shutil
 import os
 import subprocess
 import sys
@@ -246,6 +247,9 @@ def self_delete():
 def me():
     """This machine: its DigitalOcean id, name and memory (read from DigitalOcean, since the launcher may have had to
     take a different size than it asked for)."""
+    if os.environ.get("GHA_WORKER"):   # Oct 18, 2026: a free GitHub Actions machine (gha-fleet.yml) takes only small files
+        tag = f"gha-{os.environ.get('GITHUB_RUN_ID', '0')}-{os.environ.get('GHA_INDEX', '1')}"
+        return dict(droplet_id=tag, name="upfront-fleet-" + tag, mem=int(os.environ.get("WORKER_MEM", "8")))
     meta = "http://169.254.169.254/metadata/v1/"
     did = requests.get(meta + "id", timeout=5).text.strip()
     name = requests.get(meta + "hostname", timeout=5).text.strip()
@@ -279,13 +283,18 @@ def queue_main():
     log(f"machine {who['name']} ({who['mem']} GB) taking jobs from the queue")
     (DATA / "rates").mkdir(parents=True, exist_ok=True)
     (DATA / "membership").mkdir(parents=True, exist_ok=True)
-    have_scope, done_n = {}, 0
+    have_scope, done_n, t_start = {}, 0, time.time()
+    stop_after = float(os.environ.get("MAX_CLAIM_MINUTES", "0") or 0) * 60   # GitHub jobs end at 6 hours: stop claiming before
     while True:
+        if stop_after and time.time() - t_start > stop_after:
+            log(f"time limit for new files reached ({done_n} files read); leaving the rest for the next run")
+            return
         js = fleet.jobs(s3, B)
         cl = fleet.claims(s3, B)
         held = fleet.held_scopes(s3, B, js, machine_names())
         cand = fleet.order([j for jid, j in js.items()
-                            if jid not in cl and j["scope"] not in held and j.get("mem", 8) <= who["mem"]])
+                            if jid not in cl and j["scope"] not in held and j.get("mem", 8) <= who["mem"]
+                            and not (os.environ.get("GHA_WORKER") and (j.get("kind", "insurer") != "insurer" or j.get("nogha")))])
         job = next((j for j in cand if fleet.claim(s3, B, j["id"], who)), None)
         if job is None:
             left = len([j for jid, j in js.items() if jid not in cl])
@@ -319,6 +328,17 @@ def queue_main():
             res = dict(slot=job["slot"], url=job["url"], ok=False, error=f"{type(e).__name__}: {str(e)[:400]}",
                        kind=job.get("kind", "insurer"), state=job.get("state", ""), ccns=job.get("ccns", []))
         stop.set()
+        err = str(res.get("error", ""))
+        if os.environ.get("GHA_WORKER") and not res.get("ok") and any(x in err for x in (
+                "No space left", "MemoryError", "Killed", "exit code -9", "exit code 137", "Out of Memory", "OutOfMemory")):
+            # too big for a GitHub machine: hand it back to the queue for a rented machine instead of reporting a failure
+            job["nogha"] = True
+            job["enqueued_at"] = "2000-01-01T00:00:00Z"   # past the GitHub grace period, so the launcher rents for it now
+            fleet.put_job(s3, B, job)
+            fleet.release(s3, B, job["id"])
+            log(f"[{job['id']}] too big for this GitHub machine ({err[:120]}); back in line for a rented machine")
+            shutil.rmtree(DATA / "rates", ignore_errors=True); (DATA / "rates").mkdir(parents=True, exist_ok=True)
+            continue
         res.update(finished_at=fleet.iso(), machine=who["name"])
         s3.put_object(Bucket=B, Key=job["done_key"], Body=json.dumps(res).encode())
         fleet.finish(s3, B, job["id"])

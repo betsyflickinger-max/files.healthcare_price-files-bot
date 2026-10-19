@@ -9,7 +9,7 @@ site/builds/st-YYYY-MM/state.json. Stages:
            city_page.py --deploy per state (pages at /<state>/price-finder/, listed in the Area picker on every page)
 Nothing is averaged; every rate keeps its insurer file. Machines delete themselves when done.
 Env: as orchestrate.py, plus [ST_BUILD=YYYY-MM] [FORCE=1]."""
-import csv, io, json, os, sys, time
+import csv, io, json, os, subprocess, sys, time
 
 MONTH = os.environ.get('ST_BUILD') or time.strftime('%Y-%m')
 # Oct 16, 2026: ST_SCOPE=nc builds North Carolina (its own insurer tables data/nc/, build id stnc-YYYY-MM); default s7.
@@ -114,6 +114,16 @@ def merge_step(st, left):
             base = f"site/every-st/{slug}/{REBUILD['from']}/" if REBUILD.get('from') else newest(slug)
             if not base or base == tout(slug): st['problems'].append(f'{slug}: no finished build to merge into'); continue
             st['merge_from'][slug] = base
+        # Oct 18, 2026: the merge runs on a free GitHub machine (merge-build.yml); a rented machine only after 2 tries
+        md = st.setdefault('merge_dispatch', {}).setdefault(slug, {'n': 0, 'at': 0})
+        if md['n'] < 2:
+            if time.time() - md['at'] > 6.5 * 3600:   # GitHub ends a job at 6 hours, so a run older than that is over
+                r = subprocess.run(['gh', 'workflow', 'run', 'merge-build.yml', '-f', f'base={base}', '-f', f'add={tadd(slug)}',
+                                    '-f', f'out={tout(slug)}'], capture_output=True, text=True, timeout=90,
+                                   stdin=subprocess.DEVNULL, env=dict(os.environ, GH_PROMPT_DISABLED='1'))
+                if r.returncode == 0: md.update(n=md['n'] + 1, at=time.time()); log('merge for', slug, 'started on GitHub (try', md['n'], ')')
+                else: log('could not start the GitHub merge for', slug, (r.stderr or r.stdout)[:200]); md['n'] = 2
+            continue
         ensure(st, f'{slug}-merge', MERGE_SIZE, RUN_MERGE, dict(BASE=base, ADD=tadd(slug), OUT=tout(slug), PROCS='6'), False)
 
 
