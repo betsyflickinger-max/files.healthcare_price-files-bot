@@ -1,2 +1,7 @@
-{"_about": "Oct 18, 2026 (Betsy approved): state scopes whose page builds use common codes first (site/priority_codes.py lists, every_code.py PHASE=1). Illinois first. Refreshes of already-built states also need the carry-over step (merge_build.py CARRY=1) before they switch, so they're not listed yet.",
- "scopes": ["il"]}
+{
+ "_about": "Oct 18, 2026 (Betsy approved): state scopes whose page builds use common codes first (site/priority_codes.py lists, every_code.py PHASE=1). Illinois first. Refreshes of already-built states also need the carry-over step (merge_build.py CARRY=1) before they switch, so they're not listed yet.",
+ "scopes": [
+  "il",
+  "n5"
+ ]
+}

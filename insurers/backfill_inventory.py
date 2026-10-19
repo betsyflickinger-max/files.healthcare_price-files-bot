@@ -5,7 +5,7 @@ already exist this month is skipped, and the run stops cleanly before its time b
 Writes, per table (same places as new reads):
   bot/insurers/census/<yyyy-mm>/<scope>/<table>.json
   <out>/ends/<table>.parquet
-Run: python insurers/backfill_inventory.py --scope dfw|tx|s7|nc|ct|il [--minutes 320] [--limit N]
+Run: python insurers/backfill_inventory.py --scope dfw|tx|s7|nc|ct|il|n5 [--minutes 320] [--limit N]
 """
 import argparse
 import json
@@ -21,7 +21,7 @@ import duckdb
 sys.path.insert(0, str(Path(__file__).resolve().parent / "pipeline"))
 import inventory  # noqa: E402
 
-OUTS = {"dfw": "data/full/", "tx": "data/tx/", "s7": "data/s7/", "nc": "data/nc/", "ct": "data/ct/", "il": "data/il/"}
+OUTS = {"dfw": "data/full/", "tx": "data/tx/", "s7": "data/s7/", "nc": "data/nc/", "ct": "data/ct/", "il": "data/il/", "n5": "data/n5/"}
 E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
 B = E["R2_BUCKET"] or "upfrontdfwdata"
 MONTH = date.today().strftime("%Y-%m")

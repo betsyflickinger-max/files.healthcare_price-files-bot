@@ -188,7 +188,7 @@ def sbe_issuers(states):
 # reading-list name -> pattern for CMS / state marketplace names. Molina is left out on purpose: it is on the list but its
 # files are not posted (Price File Watch), so it gets searched like any other missing insurer.
 ALIASES = {"Aetna": r"aetna", "Alliant": r"alliant", "Ambetter": r"ambetter", "Anthem Colorado": r"anthem",
-           "Anthem Georgia": r"anthem", "Anthem Missouri": r"anthem", "Anthem Connecticut": r"anthem", "BCBS of Illinois": r"blue ?cross.*illinois|bcbs.*illinois|hcsc", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
+           "Anthem Georgia": r"anthem", "Anthem Missouri": r"anthem", "Anthem Connecticut": r"anthem", "BCBS of Illinois": r"blue ?cross.*illinois|bcbs.*illinois|hcsc", "Anthem New York (Empire BCBS)": r"empire|anthem", "Anthem Blue Cross California": r"anthem", "Anthem Virginia (HealthKeepers)": r"anthem|healthkeepers", "Anthem Wisconsin": r"anthem", "Blue Shield of California": r"blue ?shield.*california", "CareFirst BCBS": r"carefirst", "Florida Blue": r"florida blue|blue ?cross.*florida", "Excellus BCBS": r"excellus", "Highmark Blue Shield of Northeastern NY": r"highmark", "Oxford (UnitedHealthcare)": r"oxford|united ?health", "UnitedHealthcare of California": r"united ?health", "BCBS Alabama": r"blue ?cross.*alabama", "BCBS Mississippi": r"blue ?cross.*mississippi",
            "BCBSOK": r"blue ?cross.*oklahoma", "BCBST": r"blue ?cross.*tennessee", "BCBSTX": r"blue ?cross.*texas",
            "BSW Health Plan": r"baylor scott", "Blue KC": r"blue ?cross.*kansas city|blue ?kc", "Cigna": r"cigna",
            "Curative": r"curative", "CHRISTUS Health Plan": r"christus", "Community Health Choice": r"community health choice",
@@ -201,7 +201,7 @@ NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r
 def known_networks():
     """(scope states, reading-list insurer) the bot already reads."""
     known = []
-    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"})):
+    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"}), ("networks_n5.csv", {"NY", "CA", "VA", "DC", "FL", "WI"})):
         p = ROOT / "insurers" / f
         if p.exists():
             for r in csv.DictReader(open(p, encoding="utf-8")):

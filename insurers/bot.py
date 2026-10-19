@@ -44,8 +44,12 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "ct": ("bot/insurers/ct/", "data/scope/ct_npis_all.parquet", "data/ct/"),
     # Illinois (Oct 18, 2026): same pattern (provider list "Build provider list" with IL and il); pick list claude/illinois-pick-list.md
     "il": ("bot/insurers/il/", "data/scope/il_npis_all.parquet", "data/il/"),
+    # Next five states (Oct 19, 2026; Betsy approved claude/next-five-pick-lists.md): New York, California, Virginia + DC,
+    # Florida, Wisconsin as ONE scope, so the national UnitedHealthcare/Cigna/Aetna files are read once for all of them
+    # (provider list "Build provider list" with NY,CA,VA,DC,FL,WI and n5); tx_split.py splits rows by practice state
+    "n5": ("bot/insurers/n5/", "data/scope/n5_npis_all.parquet", "data/n5/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",

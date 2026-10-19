@@ -11,7 +11,7 @@ on:
         type: boolean
         default: true
       scope:
-        description: "Area: dfw (the live DFW tables), tx (all of Texas, data/tx/) or s7 (first national batch: TN, CO, OK, AL, MS, MO, GA, data/s7/) or nc (North Carolina, data/nc/) or ct (Connecticut, data/ct/) or il (Illinois, data/il/)"
+        description: "Area: dfw (the live DFW tables), tx (all of Texas, data/tx/) or s7 (first national batch: TN, CO, OK, AL, MS, MO, GA, data/s7/) or nc (North Carolina, data/nc/) or ct (Connecticut, data/ct/) or il (Illinois, data/il/) or n5 (NY, CA, VA, DC, FL, WI, data/n5/)"
         default: "dfw"
       fill:
         description: "Quick fill only (collect results, start waiting files on free machines; used by finished machines)"
@@ -95,6 +95,7 @@ jobs:
           python insurers/bot.py --scope nc $FILL || echo "::warning::North Carolina (nc) pass failed"
           python insurers/bot.py --scope ct $FILL || echo "::warning::Connecticut (ct) pass failed"
           python insurers/bot.py --scope il $FILL || echo "::warning::Illinois (il) pass failed"
+          python insurers/bot.py --scope n5 $FILL || echo "::warning::next five states (n5) pass failed"
           [ -f out/insurer_alerts_tx.md ] && cat out/insurer_alerts_tx.md >> out/insurer_alerts.md || true
           cat out/insurer_summary_tx.md >> "$GITHUB_STEP_SUMMARY"
           cat out/insurer_summary_dfw.md >> "$GITHUB_STEP_SUMMARY"

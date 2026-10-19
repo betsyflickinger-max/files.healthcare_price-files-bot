@@ -1,2 +1,14 @@
-{"_about": "Oct 18, 2026: states built by the one shared schedule (.github/workflows/state-builds.yml). Each scope: its states (code -> page slug). North Carolina and Connecticut still have their own schedules (nc-pages.yml, ct-pages.yml) until they move here.",
- "il": {"IL": "illinois"}}
+{
+ "_about": "Oct 18, 2026: states built by the one shared schedule (.github/workflows/state-builds.yml). Each scope: its states (code -> page slug). North Carolina and Connecticut still have their own schedules (nc-pages.yml, ct-pages.yml) until they move here.",
+ "il": {
+  "IL": "illinois"
+ },
+ "n5": {
+  "NY": "new-york",
+  "CA": "california",
+  "VA": "virginia",
+  "DC": "district-of-columbia",
+  "FL": "florida",
+  "WI": "wisconsin"
+ }
+}
