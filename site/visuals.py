@@ -198,6 +198,7 @@ CSS = r'''
 .vr-m{position:absolute;top:20px;width:16px;height:16px;margin-left:-8px}.vr-ins{border-radius:50%;background:var(--stamp)}
 .vr-cash{background:#C2571A}.vr-med{width:12px;height:12px;top:23px;margin-left:-6px;border:2px solid var(--muted);background:var(--paper);transform:rotate(45deg)}
 .vr-q{position:absolute;top:0;margin-left:-2px;display:flex;flex-direction:column;align-items:center}.vr-q i{display:block;width:4px;height:44px;background:var(--ink)}
+.vr-q[hidden]{display:none!important}
 .vr-q b{font:700 12px var(--mono);text-transform:uppercase;white-space:nowrap;margin-top:4px}
 .vr-line{overflow:visible}.vr-key li{min-width:0}.vr-key .m{overflow-wrap:anywhere}
 .vr-key{list-style:none;margin:28px 0 0;padding:0;display:grid;gap:8px 28px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}

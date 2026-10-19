@@ -30,9 +30,10 @@
   var MDDO = /(^|[ ,])(M\.?D\.?|D\.?O\.?)($|[ ,])/;
   // the files' spelling slips (the page's own tidy() fixes them on screen; these keep one row per place)
   D.fac.forEach(function (x) {
-    x[0] = String(x[0]).replace(/\bMuesnter\b/g, 'Muenster').replace(/\bSouhtlake\b/g, 'Southlake');
+    x[0] = String(x[0]).replace(/\bMuesnter\b/g, 'Muenster').replace(/\bSouhtlake\b/g, 'Southlake').replace(/\bHosptials?\b/g, function (w) { return w.length > 8 ? 'Hospitals' : 'Hospital'; });
     if ((x[2] === 'H' || x[2] === 'A') && PERSON.test(x[0]) && !/hospital|center|surgery|clinic/i.test(x[0])) x[2] = 'P';   // a person filed as a facility
   });
+  function outside(city) { var o = ML && ML.outc; return !!(o && o.indexOf(String(city || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim()) >= 0); }
   function applyNames() {     // the name people know (CMS's hospital name), with the legal name kept for the fine print
     if (!ML || ML.nf !== D.fac.length || !ML.nm) return;
     Object.keys(ML.nm).forEach(function (i) { if (LEGAL[i] == null) { LEGAL[i] = D.fac[i][0]; D.fac[i][0] = ML.nm[i]; } });
@@ -63,6 +64,13 @@
     return (FITC[key] = ok);
   }
   window.__ptFits = fitsFor;
+  function docOk(code, i) {    // doctors (MD/DO) and practices, for procedures; anyone listed, for visits, therapy and anesthesia
+    var C = D.codes[code] || {}, cat = LEG[C.cat] || C.cat || '';
+    if (code.slice(0, 2) === '00' || /^(Office visits|Behavioral health|Physical therapy|Maternity|Anesthesia)$/.test(cat)) return true;
+    var nm = D.fac[i][0], k = kindOf(i);
+    return k === 'P' ? MDDO.test(nm) : k === 'G' ? !LABRX.test(nm) && !IMG.test(nm) && !NOT_HERE.test(nm) : false;
+  }
+  window.__ptDocOk = docOk;
   // ---------- the numbers for one code ----------
   var cache = cache || {};
   function build(code) {
@@ -129,7 +137,7 @@
       var cs = cash[i] || null;
       if (pc && (!cs || pc.v < cs.v)) cs = {v: pc.v, url: pc.src, what: 'posted cash price' + (pc.chk ? ', checked ' + pc.chk : '')};
       return {i: i, name: x[0], city: x[1], kind: kindOf(i), fees: places[fi], med: md, ma: ma[i] || null, cash: cs, legal: LEGAL[i],
-              tag: VA.test(x[0]) ? 'veterans only' : CHILD.test(x[0]) ? "children's" : ''};
+              tag: VA.test(x[0]) ? 'veterans only' : CHILD.test(x[0]) ? "children's" : outside(x[1]) ? 'outside the metro' : ''};
     });
     // one row per place: the same name and city under two IDs keeps the lowest fee in each network
     var seen = {};
@@ -187,7 +195,7 @@
   // a rate's own label from the file: "derived" amounts are insurers' bookkeeping figures (often for HMO doctors paid a set
   // amount per patient), not prices; a doctor's fee filed for a hospital or clinic setting compares with Medicare's facility-setting rate
   var labOf = function (r) { return r[10] >= 0 ? String(D.labs[r[10]] || '') : ''; };
-  var DER = '<span class="pt-der" title="The insurer calls this a derived amount: a figure it uses for its own bookkeeping, often for doctors paid a set amount per patient each month. It is not a price anyone pays for this visit or procedure.">derived, not a price</span>';
+  var DER = '<span class="pt-der" title="The insurer calls this a derived amount: a figure it uses for its own bookkeeping, often for doctors paid a set amount per patient each month. It is not a price anyone pays for this visit or procedure.">accounting figure, not a price</span>';
   function feeCell(o, n) {
     var r = o.fees[n]; if (!r) return '<td><span class="pt-none" title="No published rate in this network">—</span></td>';
     var lb = labOf(r), der = /derived/.test(lb), ref = o.med, pfs = pfsOf(S.code), fac = /outpatient|inpatient/.test(lb);
@@ -205,14 +213,24 @@
   var maCell = function (o) { return '<td class="pt-med">' + (o.ma ? hLink(o.ma, M$(o.ma.v)).replace('class="pt-v"', 'class="pt-v pt-ink"') + '<span class="pt-x">' + E(o.ma.who.split(' · ')[0]) + '</span>' : '<span class="pt-none" title="' + (o.kind === 'H' ? "Not in this hospital's price file, or we couldn't tie the file to this hospital" : "Only hospitals have to post Medicare Advantage rates") + '">—</span>') + '</td>'; };
   var cashCell = function (o) { if (!o.cash) return '<td><span class="pt-none" title="No cash price posted; ask for a written Good Faith Estimate">—</span></td>'; var s = shade(o.cash.v, o); return '<td' + s[0] + '>' + hLink(o.cash, M$(o.cash.v)) + s[1] + '</td>'; };
   var bar = function (v, m) { if (!m) return '<td class="pt-bar"></td>'; var mx = Math.max(v, m) * 1.05; return '<td class="pt-bar"><span class="pt-x">' + X(v / m) + ' Medicare</span><div class="pt-track" aria-hidden="true"><div class="pt-fill" style="width:' + (v / mx * 100) + '%"></div><div class="pt-mline" style="left:' + (m / mx * 100) + '%"></div></div></td>'; };
-  var netLab = function (n) { var a = NET[n].i, b = NET[n].n; return b.toLowerCase().indexOf(a.toLowerCase()) === 0 ? b : a + ' ' + b; };
+  var netLab = function (n) { var a = NET[n].i, b = NET[n].n; if (PAR.test(b)) b += " (Blue Cross's deal with doctors outside its networks)"; return b.toLowerCase().indexOf(a.toLowerCase()) === 0 ? b : a + ' ' + b; };
 
+  // place search: words in any order, the legal name too, and everyday short names (UT Southwestern, JPS, Medical City...)
+  var NALIAS = {ut: 'university of texas', utsw: 'university of texas southwestern', jps: 'john peter smith', st: 'saint', thr: 'texas health',
+    bsw: 'baylor scott', bswh: 'baylor scott', mcd: 'medical city', chst: 'childrens', 'children\'s': 'childrens', parkland: 'parkland'};
+  var GENERIC = /^(medical|center|centre|hospital|hospitals|health|healthcare|of|the|at|and|llc|lp|inc|regional|system|campus|clinic)$/;
+  function findQ(o, q) {
+    var hay = (' ' + [o.name, o.legal || '', o.city].join(' ').toLowerCase().replace(/[^a-z0-9]+/g, ' ') + ' ');
+    var ws = q.toLowerCase().replace(/[^a-z0-9' ]+/g, ' ').split(/ +/).filter(Boolean), need = ws.filter(function (w) { return !GENERIC.test(w); });
+    if (!need.length) need = ws;
+    return need.every(function (w) { var a = NALIAS[w]; return hay.indexOf(' ' + w) >= 0 || (a && hay.indexOf(' ' + a) >= 0); });
+  }
   function renderTable() {
     var code = S.code, C = D.codes[code], B = build(code);
     var chosen = !document.getElementById('pay').classList.contains('ux-ask');
     var mode = S.pay === 'cash' ? 'cash' : (!T.all && chosen && /^\d+$/.test(S.pay) && B.cnt[S.pay]) ? 'net' : 'all';
     var q = T.q.toLowerCase();
-    var list = B.rows.filter(function (o) { return (!T.k || o.kind === T.k || (T.k === 'G' && o.kind === 'P')) && (!q || (o.name + ' ' + o.city).toLowerCase().indexOf(q) >= 0); });
+    var list = B.rows.filter(function (o) { return (!T.k || o.kind === T.k || (T.k === 'G' && o.kind === 'P')) && (!q || findQ(o, q)); });
     var kinds = {}; B.rows.forEach(function (o) { kinds[o.kind === 'P' ? 'G' : o.kind] = 1; });
     var KB = [['', 'All']].concat([['A', 'Surgery centers'], ['H', 'Hospitals'], ['G', B.useDoc ? 'Practices and clinicians' : 'Clinics, labs, imaging']].filter(function (k) { return kinds[k[0]]; }));
     var col = function (k) { return T.col[code + k] != null ? T.col[code + k] : B.def[k]; };
@@ -225,7 +243,7 @@
       lede = "Each row is one " + (B.useDoc ? 'practice or clinician' : 'place') + ", with its " + thing + " in each insurer's network." + (B.useDoc || !Object.keys(B.doc).length ? '' : " The first row is the doctor's fee, a separate bill from whoever does it.") + " Switch a column's network at the top of it, or pick yours under <b>How are you paying?</b> to see " + (B.useDoc ? 'only your network' : 'both bills together') + '.';
       var mine = chosen && /^\d+$/.test(S.pay) ? NET[S.pay].i : null;
       head = '<tr><th class="pt-pl">' + (B.useDoc ? 'Practice or clinician' : 'Place') + '<span class="pt-x">tick 2 or more to compare</span></th><th>Medicare<span class="pt-x">traditional, 2026</span></th>' +
-        (B.useDoc ? '' : '<th>Medicare Advantage<span class="pt-x">hospital files</span></th><th>Cash<span class="pt-x">no insurance</span></th>') +
+        (B.useDoc ? '' : '<th>Medicare Advantage<span class="pt-x">private Medicare plans</span></th><th>Cash<span class="pt-x">no insurance</span></th>') +
         B.order.map(function (k) {
           var n = col(k), fl = B.flat[n];
           return '<th' + (k === mine ? ' class="pt-mine"' : '') + '><span class="pt-ins">' + E(k) + '</span>' + (B.ins[k].length > 1 ? '<select data-ptcol="' + E(k) + '" aria-label="' + E(k) + ' network">' + B.ins[k].map(function (m) { return '<option value="' + m + '"' + (m === n ? ' selected' : '') + '>' + E(NET[m].n) + '</option>'; }).join('') + '</select>' : '<span class="pt-x">' + E(NET[n].n) + '</span>') +
@@ -253,7 +271,8 @@
       list = list.filter(function (o) { return o.fees[n]; }).sort(function (a, b) { return (!!a.tag - !!b.tag) || a.fees[n][3] - b.fees[n][3]; });
       total = list.length;
       lede = B.useDoc ? "Your network's published fee at each practice and clinician, against Medicare. Lowest first." :
-        "Both bills in your network: the place's fee plus the doctor's. The doctor's figure is the middle fee this network lists across this area's doctors and groups (each one a real listed price); yours depends on who does it. Lowest total first. <button type=\"button\" class=\"pt-link\" data-ptall>Show every insurer instead</button>";
+        "Both bills in your network: the place's fee plus the doctor's. The doctor's figure is the middle fee this network lists across this area's doctors and groups (each one a real listed price); yours depends on who does it. Lowest total first. <button type=\"button\" class=\"pt-link\" data-ptall>Show every insurer instead</button>" +
+        (location.pathname === '/price-finder/' ? ' · <a href="/plan-calculator/?code=' + encodeURIComponent(code) + '&net=' + encodeURIComponent(D.nets[+S.pay]) + '">What would I owe on my plan?</a>' : '');
       head = B.useDoc ? '<tr><th class="pt-pl">Practice or clinician</th><th>Fee</th><th>Medicare</th><th class="pt-bar">Against Medicare</th></tr>' :
         '<tr><th class="pt-pl">Place</th><th>Place\'s fee</th><th>+ Doctor\'s fee<span class="pt-x">typical</span></th><th>= Both bills</th><th>Medicare, both<span class="pt-x">this place + doctor</span></th><th class="pt-bar">Against Medicare</th></tr>';
       list.slice(0, T.n).forEach(function (o) {
@@ -272,7 +291,7 @@
       (mode === 'all' ? '<div class="pt-pick">' + B.order.filter(function (k) { return B.ins[k].length > 1; }).map(function (k) { return '<label>' + E(k) + '<select data-ptcol="' + E(k) + '">' + B.ins[k].map(function (m) { return '<option value="' + m + '"' + (m === col(k) ? ' selected' : '') + '>' + E(NET[m].n) + '</option>'; }).join('') + '</select></label>'; }).join('') + '</div>' : '') +
       (total ? '<div class="pt-wrap"><table class="pt-t"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' : '<p class="empty">' + (mode === 'cash' ? 'No cash prices published for this code here yet.' : 'No published dollar rates for this code here yet. The other tabs list every line, including percent-of-charges rates.') + '</p>') +
       '<div class="pt-more">' + (total > T.n ? '<button type="button" class="more" data-ptmore>Show more</button>' : '') + '<span>Showing ' + Math.min(T.n, total) + ' of ' + total + '</span></div>' +
-      '<p class="pt-fine">Medicare is CMS\'s 2026 rate for that kind of place, adjusted for the place\'s local wages where we matched it to its Medicare record (<a href="/methodology/#medicare-each-place">how</a>); it\'s a yardstick, not a price you can get unless you\'re on Medicare. Medicare Advantage is the lowest Medicare Advantage line in the hospital\'s own price file. Rates marked <i>derived, not a price</i> are insurers\' bookkeeping figures, often for doctors paid a set amount per patient; they\'re listed but not shaded, and left out of the doctor\'s fee. Left out, as on the price pages: percent-of-charges rates, $0 lines, rates flagged unusually low, filler-looking rates, and places that don\'t do this kind of service (they\'re all on the <b>Every rate</b> tab). Every price links to the file it came from.</p></section>';
+      '<p class="pt-fine">Medicare is CMS\'s 2026 rate for that kind of place, adjusted for the place\'s local wages where we matched it to its Medicare record (<a href="/methodology/#medicare-each-place">how</a>); it\'s a yardstick, not a price you can get unless you\'re on Medicare. Medicare Advantage is the lowest Medicare Advantage line in the hospital\'s own price file. Rates marked <i>accounting figure, not a price</i> are insurers\' bookkeeping figures, often for doctors paid a set amount per patient; they\'re listed but not shaded, and left out of the doctor\'s fee. Left out, as on the price pages: percent-of-charges rates, $0 lines, rates flagged unusually low, filler-looking rates, and places that don\'t do this kind of service (they\'re all on the <b>Every rate</b> tab). Every price links to the file it came from.</p></section>';
     var bd = document.getElementById('board');
     bd.innerHTML = html + scenarios(code) + '<div class="pt-tray"' + (Object.keys(T.sel).length ? '' : ' hidden') + '><span data-ptn></span><button type="button" class="more" data-ptcmp>Compare side by side</button><button type="button" class="pt-link" data-ptclr>Clear</button></div>';
     // each cell carries its column's name, so on a phone every row reads as a card
@@ -373,9 +392,7 @@
     [['vTable', 'table'], ['vPatient', 'patient'], ['vBoard', 'board'], ['vMap', 'map']].forEach(function (x) { var el = document.getElementById(x[0]); if (el) el.setAttribute('aria-pressed', v === x[1]); });
     document.getElementById('patient').hidden = v !== 'patient'; document.getElementById('board').hidden = v !== 'board' && v !== 'table';
     document.getElementById('mapv').hidden = v !== 'map'; document.getElementById('payWrap').hidden = v === 'board';
-    var ux = document.querySelector('.ux-pay span');       // the "showing X as an example" note says what this view shows
-    if (ux) { if (!ux.dataset.orig) ux.dataset.orig = ux.innerHTML;
-      ux.innerHTML = v === 'table' ? 'Showing <b>every insurer</b>. Prices depend on your insurance, so pick your plan\'s network in <b>paying with</b> to see just yours, or choose <b>Paying cash</b>.' : ux.dataset.orig; }
+    syncNote();
     var bills = document.querySelector('.ux-bills');      // "Expect more than one bill" follows the view it belongs to
     if (bills) document.getElementById(v === 'table' ? 'board' : 'patient').insertAdjacentElement('afterend', bills);
     render();
@@ -385,10 +402,16 @@
   try { first = !localStorage.getItem('pfv2'); localStorage.setItem('pfv2', '1'); } catch (e) {}
   setView(first || S.view === 'table' ? 'table' : S.view);
 
+  function syncNote() {      // the "showing X as an example" note says what's actually selected
+    var ux = document.querySelector('.ux-pay span'); if (!ux) return;
+    ux.innerHTML = S.pay === 'all' ? 'Showing <b>every insurer</b>. Prices depend on your insurance, so pick your plan\'s network in <b>paying with</b> to see just yours, or choose <b>Paying cash</b>.'
+      : 'Showing <b>' + E((payEl && payEl.selectedOptions[0] || {}).textContent || '') + '</b> as an example. Prices depend on your insurance, so pick your plan\'s network in <b>paying with</b>, or choose <b>Paying cash</b>.';
+  }
   // the bill slips (site/ux_polish.py) get this page's own published ranges when the Compare view knows them
   var rw = render;
   render = function () {
     var out = rw.apply(this, arguments);
+    try { syncNote(); } catch (e) {}
     try {
       var qb = document.querySelector('.ux-hits'), q0 = window.__uxQ || new URLSearchParams(location.search).get('q');
       if (qb && q0) document.getElementById('title').textContent = 'Results for “' + q0 + '”';
@@ -422,8 +445,13 @@
     var oa = document.createElement('option'); oa.value = 'all'; oa.textContent = 'Every insurer (compare them)';
     payEl.insertBefore(oa, payEl.firstChild);
   }
-  if (payEl.classList.contains('ux-ask')) { payEl.value = 'all'; S.pay = 'all'; }
-  var pickFirst = '<p class="note">This list shows one network at a time. Pick your network under <b>How are you paying?</b>, or open <button type="button" class="pt-link" data-ptgo>Compare</button> to see every insurer side by side.</p>';
+  (function () {   // a shared link with &net= keeps that network (second first-visitor test)
+    var qn = window.__uxNet || new URLSearchParams(location.search).get('net'), lab = function (x) { return (String(x).split('|').slice(1).join('|') || String(x)).toLowerCase(); }, ni = -1;
+    if (qn && Array.isArray(D.nets)) { ni = D.nets.indexOf(qn); if (ni < 0) ni = D.nets.findIndex(function (n) { return lab(n) === lab(qn); }); }
+    if (ni >= 0) { S.pay = String(ni); payEl.value = S.pay; payEl.classList.remove('ux-ask'); }
+    else if (payEl.classList.contains('ux-ask')) { payEl.value = 'all'; S.pay = 'all'; }
+  })();
+  var pickFirst = '<p class="note">This list shows one network at a time. Pick your network under <b>How are you paying?</b>, or open <button type="button" class="pt-link" data-ptgo>Compare</button> to see every insurer side by side.</p><p><button type="button" class="more" data-ptpick>Choose my insurance</button></p>';
   // Price list tab: hospitals and surgery centers list their facility fee; a place with only a doctor's fee listed goes with the practices
   var rp = renderPatient;
   try {
@@ -436,7 +464,10 @@
   } catch (e) {}
   renderPatient = function () { if (S.pay === 'all') { document.getElementById('patient').innerHTML = pickFirst; return; } return rp.apply(this, arguments); };
   if (window.renderMap) { var rm = window.renderMap; window.renderMap = function () { if (S.pay === 'all') { document.getElementById('mapv').innerHTML = pickFirst; return; } return rm.apply(this, arguments); }; }
-  document.addEventListener('click', function (e) { if (e.target.closest('[data-ptgo]')) setView('table'); });
+  document.addEventListener('click', function (e) {
+    if (e.target.closest('[data-ptgo]')) setView('table');
+    if (e.target.closest('[data-ptpick]')) { payEl.scrollIntoView({block: 'center', behavior: 'smooth'}); payEl.focus(); try { payEl.showPicker(); } catch (er) {} }
+  });
 
   // ---------- search: any word order, everyday words (the homepage says "knee MRI"; the files say "MRI ... knee") ----------
   var SYN = {mri: 'magnetic resonance', ct: 'computed tomography', cat: 'computed tomography', 'x-ray': 'xray', xray: 'x-ray', ultrasound: 'sonogram', echo: 'echocardiogram',

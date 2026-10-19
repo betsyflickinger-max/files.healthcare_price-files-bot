@@ -329,9 +329,11 @@ def nice(t):
     t = re.sub(r'(?<=\S )(Of|And|At|For|The)(?= \S)', lambda m: m.group(1).lower(), t)
     t = re.sub(r'\b(Llc|Llp|Lp|Pllc|Pa|Pc|Vamc|Va|Uhs|Ii|Iii|Iv|Usmd|Jps|Hma|Fw|Mca|Chi|Utsw|Ut|Bsw|Hca|Ltac|Asc|Er)\b', lambda m: m.group(1).upper(), t)
     t = re.sub(r'\.{2,}$', '.', t)
+    t = re.sub(r'\bMuesnter\b', 'Muenster', re.sub(r'\bSouhtlake\b', 'Southlake', t))
     return CITY_FIX.get(t, t)
 
 
+DOC_MDDO = re.compile(r'(^|[ ,])(M\.?D\.?|D\.?O\.?)($|[ ,])')
 CITY_FIX = {'Souhtlake': 'Southlake', 'Muesnter': 'Muenster'}   # spelling slips seen in the files (Oct 2026)
 
 
@@ -393,7 +395,8 @@ def summarize(D, code, t, h, loc=None):
 
     def entry(fi, r):
         x = fac(fi)
-        x.update(v=r[3], net=r[0], ins=nets[r[0]][0], plan=nets[r[0]][1], date=D['dates'][r[5]], url=D['urls'][r[6]], low=bool(r[4] & 2))
+        x.update(v=r[3], net=r[0], ins=nets[r[0]][0], plan=nets[r[0]][1], date=D['dates'][r[5]], url=D['urls'][r[6]], low=bool(r[4] & 2),
+                 lab=(D['labs'][r[10]] if len(r) > 10 and r[10] is not None and 0 <= r[10] < len(D.get('labs') or []) else ''))
         return x
 
     # Facility fees count only for the kinds of places that do this service: hospitals and surgery centers, plus imaging
@@ -473,7 +476,15 @@ def summarize(D, code, t, h, loc=None):
     for e in allines:
         by_net.setdefault(e['net'], []).append(e)
     # each provider counted once per network (a provider can have several NPIs), so a network never shows more than the page total
-    networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'n': len({(e['name'], e['city']) for e in es}), 'lo': es[0], 'hi': es[-1],
+    docs_by_net = {}
+    if kind == 'fac':
+        for (fi_, n_), e in per['doc'].items():
+            nm_ = D['fac'][int(fi_)][0]
+            ok_ = (e['kind'] == 'P' and DOC_MDDO.search(nm_)) or (e['kind'] == 'G' and not LAB.search(nm_.lower()) and not IMAGING.search(nm_.lower()) and not NOT_HERE.search(nm_.lower()))
+            if ok_ and 'derived' not in (e.get('lab') or ''):
+                docs_by_net.setdefault(n_, []).append(e['v'])
+    doc_mid = {n_: sorted(v)[len(v) // 2] for n_, v in docs_by_net.items() if len(v) >= 5}
+    networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'doc_mid': doc_mid.get(n), 'n': len({(e['name'], e['city']) for e in es}), 'lo': es[0], 'hi': es[-1],
                  'flat': bool(mostly_one(es)), 'one': mostly_one(es), 'par': bool(PARPLAN.search(nets[n][1] or ''))} for n, es in by_net.items()]
     # BCBSTX ParPlan: listed in the networks table, labeled, but kept out of the headline figures (Oct 18: what it represents is
     # under review; the same amount repeats across hospitals)
@@ -642,6 +653,11 @@ def netname(ins, plan):
 
 def who(e):
     return f"{e['name']}{', ' + e['city'] if e.get('city') else ''}"
+
+
+def whoh(e):
+    """who() as HTML, flagging places outside the DFW metro."""
+    return f"{esc(e['name'])}{', ' + ctag(e['city']) if e.get('city') else ''}"
 
 
 def lede(S, area):
@@ -862,6 +878,30 @@ def local_range(S):
     return ''.join(out)
 
 
+def allin_html(S):
+    """One all-in line under the tiles (Oct 19, first-visitor test): the cheapest place fee plus the typical doctor's fee in the same network."""
+    best = None
+    for n in S.get('networks') or []:
+        if n.get('doc_mid') and not n.get('flat') and not n.get('par'):
+            t = n['lo']['v'] + n['doc_mid']
+            if best is None or t < best[0]:
+                best = (t, n)
+    if not best:
+        return ''
+    t, n = best
+    return (f"<p class='allin'><b>All in, place plus doctor: from {money(t)}</b> in {esc(netname(n['ins'], n['plan']))} "
+            f"({money(n['lo']['v'])} at {esc(n['lo']['name'])} + {money(n['doc_mid'])}, the typical doctor's fee in that network). "
+            f"Anesthesia and any lab work bill separately. <a href='#by-network'>Your network's total</a></p>")
+
+
+def jump_html(S, cash_sec, hosp_sec, med_sec):
+    L = [('#by-network', 'Your insurance')] if S.get('networks') else []
+    L += [('#cash', 'Cash prices')] if cash_sec else []
+    L += [('#hospital-files', "Hospitals' own files")] if hosp_sec else []
+    L += [('#medicare', 'Medicare')] if med_sec else []
+    return ("<nav class='jump' aria-label='On this page'><span>Jump to:</span>" + ''.join(f"<a href='{h}'>{esc(t)}</a>" for h, t in L) + '</nav>') if len(L) > 1 else ''
+
+
 def kind_ok_both(S, m):
     return S.get('kind') == 'fac' and bool(m.get('asc')) and bool(m.get('opps')) and m['asc'][0] < m['opps'][0]
 
@@ -1052,17 +1092,25 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         notes.append(f"{S['n_pct']:,} {'rate is' if S['n_pct'] == 1 else 'rates are'} published as a percent of billed charges, with no dollar figure.")
 
     # by network
+    both_cols = S['kind'] == 'fac' and any(n.get('doc_mid') for n in S['networks'])
+    if both_cols:
+        notes.insert(0, "Both bills = the lowest place fee in that network plus the middle fee that network lists for doctors (MD or DO) and "
+                        "practices for this code. Anesthesia and any lab work bill separately, and your share depends on your plan.")
     net_rows = ''.join(
         f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{(' · <span class=flag>same rate everywhere</span>' if n['one'][1] == n['one'][0] else f" · <span class=flag>same {money(n['one'][2])} at {n['one'][1]} of {n['one'][0]} places</span>") if n.get('one') else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
-        f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{esc(who(n['lo']))} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
+        f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{whoh(n['lo'])} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
-        f"{'<div class=m>' + esc(who(n['hi'])) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td></tr>"
+        f"{'<div class=m>' + whoh(n['hi']) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td>"
+        + ((f"<td class='num' data-l='+ Doctor (typical)'>{money(n['doc_mid'])}</td><td class='num tot' data-l='= Both bills, from'>{money(n['lo']['v'] + n['doc_mid'])}</td>"
+            if n.get('doc_mid') else "<td class='num' data-l='+ Doctor (typical)'>—</td><td class='num' data-l='= Both bills, from'>—</td>") if both_cols else '')
+        + "</tr>"
         for n in S['networks'])
-    net_sec = (f"<section class='sec'><p class='kicker'>What it costs, by insurer network</p><h2>Who pays what</h2>"
+    net_sec = (f"<section class='sec' id='by-network'><p class='kicker'>What it costs, by insurer network</p><h2>Who pays what</h2>"
                f"<p class='lede'>Each line counts the providers with a published {sg} in that network and shows the lowest and highest. "
                f"Your plan's network decides which line applies to you. <a href='{esc(finder)}'>See every place and every insurer side by side, "
                f"with Medicare beside each place →</a></p>"
-               f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th></tr></thead>"
+               f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th>"
+               f"{'<th class=num>+ Doctor (typical)</th><th class=num>= Both bills, from</th>' if both_cols else ''}</tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
@@ -1083,7 +1131,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                    for e in S['hcash'][:10]]
     cash_items.sort(key=lambda x: x[0])
     more_h = len(S['hcash']) - 10
-    cash_sec = (f"<div><p class='kicker'>Paying without insurance</p><h3 class='h3'>Cash prices</h3><ol class='word'>{''.join(x[1] for x in cash_items)}</ol>"
+    cash_sec = (f"<div id='cash'><p class='kicker'>Paying without insurance</p><h3 class='h3'>Cash prices</h3><ol class='word'>{''.join(x[1] for x in cash_items)}</ol>"
                 + (f"<p class='cap'>{more_h} more hospital cash prices in the <a href='{esc(finder)}'>Price Finder</a>.</p>" if more_h > 0 else '')
                 + "<p class='cap'>Ask for a written <b>Good Faith Estimate</b> when you schedule. Providers must give one to patients paying "
                   "cash, and you can dispute a bill that comes in $400 or more above it.</p></div>") if cash_items else ''
@@ -1093,7 +1141,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         hr = S['hrate']
         rows = ''.join(f"<li><span><b>{esc(e['name'])}</b><span class='m'>{esc(e['ins'])} · {esc(e['plan'])} · {hosp_link(e)}</span></span>"
                        f"<span class='n'>{money(e['v'])}</span></li>" for e in hr[:5])
-        hosp_sec = (f"<section class='sec'><p class='kicker'>In hospitals' own price files</p><h2>What hospitals say they're paid</h2>"
+        hosp_sec = (f"<section class='sec' id='hospital-files'><p class='kicker'>In hospitals' own price files</p><h2>What hospitals say they're paid</h2>"
                     f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {S['hfiles']:,} hospital "
                     f"{'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from {money(hr[0]['v'])} to "
                     f"{money(hr[-1]['v'])} (hospital fee only, one line per hospital per insurer). The five lowest:</p><ol class='word'>{rows}</ol></section>")
@@ -1110,7 +1158,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"</div></section>")
 
     ml = med_lines(S, med_area)
-    med_sec = (f"<section class='sec'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
+    med_sec = (f"<section class='sec' id='medicare'><p class='kicker'>For comparison</p><h2>What Medicare pays</h2><p class='lede'>From CMS's 2026 fee schedules. "
                f"A reference point only: you can't buy care at Medicare rates unless you're on Medicare. Facility fees are shown at the national rate so places compare on the same footing; next to each hospital and surgery center "
                f"we also show Medicare's rate for that place after its local adjustment. <a href='/methodology/#medicare-local'>How Medicare adjusts for local costs</a>.</p><ol class='word'>"
                + ''.join(f"<li><span><b>{esc(a)}</b><span class='m'>{esc(b)} · {lk}</span></span><span class='n'>{money(v)}</span></li>" for a, b, v, lk in ml)
@@ -1149,9 +1197,11 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 {byline}
 {f'<p class="aka">Also called: {esc(", ".join(aka))}.</p>' if aka else ''}
 {('<div class="tiles">' + ''.join(tiles) + '</div>') if tiles else ''}
-<p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{' <a class="btn ghost" href="/plan-calculator/">What would I owe?</a>' if area['slug'] == 'dfw' else ''}{f' <a class="btn ghost" href="{esc(csv_url)}" download>Download the data (CSV)</a>' if csv_url else ''}</p>
+{allin_html(S)}
+<p class="ctas"><a class="btn hi" href="{esc(finder)}">See every {esc(sg)} in the Price Finder</a>{f' <a class="btn ghost" href="/plan-calculator/?code={esc(S["code"])}">What would I owe?</a>' if area['slug'] == 'dfw' else ''}{f' <a class="btn ghost" href="{esc(csv_url)}" download>Download the data (CSV)</a>' if csv_url else ''}</p>
 </div></section>
 <div class="wrap">
+{jump_html(S, cash_sec, hosp_sec, med_sec)}
 {visuals.sections(S, sg, pf_path, mh, cc)}
 {stand_sec}
 {net_sec}
@@ -1310,6 +1360,10 @@ CSS = r'''/* The Healthcare Files: shared stylesheet for /costs/ pages (written 
 .btn.hi{background:var(--hi);color:var(--ink)!important}.btn.ghost{border:2px solid var(--board-ink);color:var(--board-ink)!important}.btn:hover{filter:brightness(.93)}
 .sec{padding-block:44px}.sec+.sec{border-top:2px solid var(--rule)}
 .kicker{font:700 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--stamp);margin:0 0 8px}
+.allin{margin:18px 0 0;padding:12px 16px;background:var(--paper);color:var(--ink);border-left:6px solid var(--hi);max-width:62em;font-size:16px}.allin a{color:var(--stamp)}
+.jump{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:18px 0 0;padding:10px 0;border-bottom:1px solid var(--rule);font:600 15px var(--body)}.jump span{color:var(--muted);font-weight:500}
+.jump a{color:var(--ink);border:1px solid var(--ink);padding:6px 10px;text-decoration:none;min-height:36px;display:inline-flex;align-items:center}.jump a:hover{background:var(--hi)}
+td.tot{font-size:17px}
 h2{font:900 clamp(32px,5vw,52px)/1 var(--display);text-transform:uppercase;letter-spacing:.02em;margin:0 0 12px;text-wrap:balance}
 h3,.h3{font:800 20px/1.25 var(--body);margin:0 0 8px}.h3.cat{margin:26px 0 10px}
 .lede{max-width:44em;margin:0 0 18px;color:var(--muted);font-size:17px}.cap{font-size:14px;color:var(--muted);margin:10px 0 0;max-width:52em}

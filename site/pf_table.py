@@ -28,6 +28,18 @@ CALC_TO = ('const ps=(()=>{const seen={};return byIns[S.ins].filter(p=>{const k=
            'if(seen[k])return false;seen[k]=1;return true})})().sort(')
 
 
+MAP_FROM = "    if (!best) continue;\n    const [name, city, kind] = D.fac[fi];"
+MAP_TO = ("    if (!best) continue;\n    if (window.__ptFits && M.fee === 0 && !window.__ptFits(S.code, +fi)) continue;   // places that don't do this (pf-table.js)\n"
+          "    if (window.__ptDocOk && M.fee === 1 && !window.__ptDocOk(S.code, +fi)) continue;\n    const [name, city, kind] = D.fac[fi];")
+CALC_ROWS_FROM = "const rows=all.filter(r=>S.kind==='pro'?isPro(r):!isPro(r));"
+CALC_ROWS_TO = "const rows=all.filter(r=>S.kind==='pro'?isPro(r):!isPro(r)).filter(r=>!window.__calcSkip||!window.__calcSkip(D.prov[r[2]][0],D.proc[pi]&&D.proc[pi][1]));"
+CALC_JS = '<script src="/calc-link.js" defer></script>'
+CALC_OWN_FROM = "    if (cls === 0 && f[2] === 'P') continue;\n    list.push({f, r: mine[0],"
+CALC_OWN_TO = ("    if (cls === 0 && f[2] === 'P') continue;\n    if (cls === 0 && window.__calcSkip && window.__calcSkip(f[0], M.codes[code] && M.codes[code][0])) continue;\n"
+               "    list.push({f, r: mine[0],")
+CALC_FLAT = ("'<span class=\"flag\">flat case rate</span>'", "'<span class=\"flag\">same price for many procedures</span>'")
+
+
 def is_pf(s):
     return 'id="vPatient"' in s and 'function renderBoard()' in s
 
@@ -41,6 +53,13 @@ def patch(s):
     if JS not in s:
         i = s.rfind('</body>')
         s = s[:i] + JS + s[i:] if i >= 0 else s + JS
+    s = s.replace('<span class="flag flat">flat case rate</span>', '<span class="flag flat" title="The same amount is listed for five or more different procedures at this place, so it is not specific to this one">same price for many procedures</span>')
+    # a shared link's &net= survives the first render, which rewrites the address to ?code= (second first-visitor test)
+    s = s.replace('window.__uxQ=new URLSearchParams(location.search).get("q")}',
+                  'window.__uxQ=new URLSearchParams(location.search).get("q");window.__uxNet=new URLSearchParams(location.search).get("net")}', 1)
+    if 'window.__uxNet=' in s:
+        s = s.replace("let chosen = !!new URLSearchParams(location.search).get('net');", "let chosen = !!window.__uxNet;")
+        s = s.replace("/*netparam*/ { const qn = new URLSearchParams(location.search).get('net');", "/*netparam*/ { const qn = window.__uxNet;")
     return EYEBROW.sub(r'\1What it costs · \2\3', s)
 
 
@@ -52,9 +71,22 @@ def apply(d):
         shutil.copyfile(os.path.join(HERE, 'assets', f), os.path.join(site, f))
     n = 0
     pc = os.path.join(site, 'plan-calculator', 'index.html')     # one entry per plan design (Oct 19 test: plans sold under several IDs listed twice)
+    shutil.copyfile(os.path.join(HERE, 'assets', 'calc-link.js'), os.path.join(site, 'calc-link.js'))
+    mj = os.path.join(site, 'price-finder', 'map.js')
+    if os.path.isfile(mj):
+        t0 = open(mj, encoding='utf-8').read()
+        if MAP_FROM in t0 and '__ptFits' not in t0:
+            open(mj, 'w', encoding='utf-8').write(t0.replace(MAP_FROM, MAP_TO, 1)); n += 1
     if os.path.isfile(pc):
         t0 = open(pc, encoding='utf-8').read()
         t1 = t0.replace(CALC_FROM, CALC_TO) if CALC_TO not in t0 else t0
+        if CALC_ROWS_TO not in t1:
+            t1 = t1.replace(CALC_ROWS_FROM, CALC_ROWS_TO)
+        if 'window.__calcSkip(f[0]' not in t1:
+            t1 = t1.replace(CALC_OWN_FROM, CALC_OWN_TO)
+        t1 = t1.replace(*CALC_FLAT)
+        if CALC_JS not in t1 and '</head>' in t1:
+            t1 = t1.replace('</head>', CALC_JS + '</head>', 1)
         if t1 != t0:
             open(pc, 'w', encoding='utf-8').write(t1)
             n += 1
@@ -116,7 +148,7 @@ def write_ml(d, only_stale=False):
             D = json.loads(t[t.find('>', i) + 1:t.find('</script>', i)])
             old = json.load(open(mp)) if os.path.isfile(mp) else {}
             srcs = [x[5] for x in (D.get('hosp') or {}).get('src') or []]
-            if only_stale and old.get('nf') == len(D['fac']) and old.get('hs') == _sig(srcs) and 'nm' in old:
+            if only_stale and old.get('nf') == len(D['fac']) and old.get('hs') == _sig(srcs) and 'nm' in old and ('outc' in old or a['slug'] != 'dfw'):
                 continue
             if a['slug'] == 'dfw':
                 root = 'site/every/' + s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip() + '/'
@@ -161,6 +193,11 @@ def write_ml(d, only_stale=False):
                           if fac[i][2] in ('H', 'A')})
             if fis:
                 h[si] = [x[5], fis]           # the file's own key, so a rebuilt page with files in a new order can't misattribute
+        if a['slug'] == 'dfw':
+            try:
+                out['outc'] = sorted(json.load(open(os.path.join(HERE, 'dfw_metro.json')))['outside'])
+            except Exception:
+                pass
         out.update({'r': r or out.get('r', {}), 'f': f, 'h': h, 'nm': nm, 'nf': len(fac), 'hs': _sig(srcs)})
         open(mp, 'w').write(json.dumps(out, separators=(',', ':')))
         n += 1

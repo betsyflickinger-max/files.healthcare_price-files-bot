@@ -36,6 +36,8 @@ html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand) span{font-w
 @media (max-width:480px){html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand){font-size:19px!important}}
 /* Oct 19, 2026 (Betsy): prices stand out from the text around them (deep Units blue, 7:1 on the page ground) */
 html[data-look="units"]:not(#_) :is(.price,.n,.tv,td.num[data-l="Lowest"],td.num[data-l="Highest"]){color:#1F45C4}
+/* Oct 19: the map's label layer (svg.top) is not the page's top bar; the blue band rule was painting over the whole map */
+html[data-look="units"]:not(#_):not(#__) .mv-map .top{border-image:none!important;padding:0!important;color:inherit!important;border-bottom:0!important}
 '''
 # The look switcher was for choosing a look; Units is chosen (Oct 19), so the preview stops adding it (tester tracking stays).
 MW_FROM = ("'<link rel=\"stylesheet\" href=\"/looks/looks.css\"><script src=\"/looks/looks.js\"></script>' + (tester ? "
