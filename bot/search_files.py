@@ -170,20 +170,57 @@ def head_text(url, limit=1_000_000):
     return buf.decode("utf-8", "replace"), ct
 
 
+ZIP_FULL_MAX = int(E.get("ZIP_FULL_MAX_MB") or 300) * 1024 ** 2
+EXCEL = "excel file"
+
+
+def _zip_member_head(z, limit):
+    names = [i.filename for i in z.infolist()]
+    if "xl/workbook.xml" in names or "[Content_Types].xml" in names and any(n.startswith("xl/") for n in names):
+        return "", EXCEL
+    members = [i for i in z.infolist() if re.search(r"\.(json|csv)$", i.filename, re.I)]
+    if not members:
+        return "", "zip file (no JSON or CSV inside)"
+    m = max(members, key=lambda i: i.file_size)
+    with z.open(m) as f:
+        return f.read(limit).decode("utf-8", "replace"), "zip:" + m.filename[-60:]
+
+
 def zip_head(url, limit=1_000_000):
     """Oct 14: read the start of the price file INSIDE a zip without downloading the whole zip (HTTP range requests
-    fetch the zip's table of contents and the first part of the file). ('', 'zip file') if the server won't allow it."""
+    fetch the zip's table of contents and the first part of the file).
+    Oct 19, 2026: servers that ignore range requests (Craneware's apim.services.craneware.com sends the whole zip)
+    kept zips (the other 48 of the 106 held on Oct 14) from being opened; a zip up to ZIP_FULL_MAX_MB (300) is now downloaded whole and opened here.
+    An Excel workbook (.xlsx is a zip too: 58 of the 106 held) returns 'excel file': not one of CMS's formats."""
     try:
         from remotezip import RemoteZip
         with RemoteZip(url, headers={"User-Agent": discover.UA}, timeout=60, verify=False) as z:
-            members = [i for i in z.infolist() if re.search(r"\.(json|csv)$", i.filename, re.I)]
-            if not members:
-                return "", "zip file (no JSON or CSV inside)"
-            m = max(members, key=lambda i: i.file_size)
-            with z.open(m) as f:
-                return f.read(limit).decode("utf-8", "replace"), "zip:" + m.filename[-60:]
-    except Exception as e:
-        return "", f"zip file ({type(e).__name__})"
+            return _zip_member_head(z, limit)
+    except Exception as e:  # noqa: BLE001
+        first = f"zip file ({type(e).__name__})"
+    import tempfile
+    import zipfile
+    try:
+        with tempfile.TemporaryFile() as tmp:
+            n = 0
+            with requests.get(url, headers={"User-Agent": discover.UA}, timeout=(10, 120), stream=True, verify=False,
+                              allow_redirects=True) as r:
+                if r.status_code != 200:
+                    return "", first
+                size = r.headers.get("content-length", "")
+                if size.isdigit() and int(size) > ZIP_FULL_MAX:
+                    return "", f"{first}; {int(size) / 1024 ** 2:.0f} MB, too big to open here"
+                for chunk in r.iter_content(1 << 20):
+                    n += len(chunk)
+                    if n > ZIP_FULL_MAX:
+                        return "", f"{first}; over {ZIP_FULL_MAX // 1024 ** 2} MB, too big to open here"
+                    tmp.write(chunk)
+            tmp.seek(0)
+            with zipfile.ZipFile(tmp) as z:
+                text, info = _zip_member_head(z, limit)
+                return text, info if info == EXCEL else info + " (whole zip downloaded)"
+    except Exception as e:  # noqa: BLE001
+        return "", f"{first}; whole download failed ({type(e).__name__})"
 
 
 def names_in_file(text):
@@ -234,6 +271,8 @@ def check_file(h, url, dup, names_=None, strict=False, legal=""):
     if (h["ccn"], url) in REJECT:
         return None, "ruled out by hand: " + REJECT[(h["ccn"], url)]
     text, info = head_text(url)
+    if info == EXCEL:   # Oct 19: an .xlsx is not a file the bot (or CMS's template) can use; no hand check needed
+        return None, "file link is an Excel workbook (.xlsx), not one of CMS's required formats (CSV or JSON)"
     if info.startswith("zip file"):
         return "held", "zipped file link; the server wouldn't let the bot peek inside without downloading it all"
     if not text:
@@ -390,6 +429,18 @@ def deep_layer(h, hosts, pages, names_, dup, done_hosts):
                 if ok == "held":
                     held = held or ("held", "browser: " + msg, "", discover.clean(u), "")
             files = files or bl
+        own_pages = [p for p in pages if discover.host(p) == d]
+        if own_pages and E.get("FETCH_BROWSER") != "0":
+            # Oct 19, 2026: download buttons built with JavaScript (PARA's price pages): click them, check what they fetch
+            cl = fetch_plus.browser_click_links(own_pages)
+            for u in cl[:8]:
+                ok, msg = check_file(h, discover.clean(u), dup, names_, strict=discover.host(u) != d,
+                                     legal=NAMES.get(h["ccn"], {}).get("legal", ""))
+                if ok == "yes":
+                    return "found", f"clicked a download button on {own_pages[0][:90]}: " + msg, "", discover.clean(u), ""
+                if ok == "held":
+                    held = held or ("held", "clicked download: " + msg, "", discover.clean(u), "")
+            files = files or cl
         why.append(f"{d}: crawled {n} pages, {len(files)} file-like links")
         if E.get("NO_ARCHIVES") == "1":
             continue

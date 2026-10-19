@@ -241,3 +241,69 @@ def browser_links(urls, wait_ms=5000, follow=2):
         except Exception:  # noqa: BLE001
             return []
     return [x for x in dict.fromkeys(found) if x.startswith("http")][:40]
+
+
+CLICK_TEXT = re.compile(r"standard[-_ ]?charges?|machine[-_ ]?readable|chargemaster|charge description master|"
+                        r"price[-_ ]?transparen|\bmrf\b|download", re.I)
+SKIP_TEXT = re.compile(r"shoppable|estimat|average charges|unavailable|\bpdf\b|good faith|financial assistance", re.I)
+
+
+def browser_click_links(urls, max_clicks=8, wait_ms=4000):
+    """Oct 19, 2026: price pages whose download buttons are JavaScript (href="#"), e.g. PARA's
+    apps.para-hcfs.com/PTT/FinalLinks/*.aspx (25 hospitals the Oct 14 search left "not found"). Opens each page in
+    headless Chrome, clicks the buttons and links whose text mentions standard charges / machine-readable / download
+    (skipping shoppable-services, estimator and average-charge lists), and returns the link each click downloads or
+    opens. The link is usually a plain GET (PARA: Reports.aspx?dbName=...&type=CDMWithoutLabel) that the daily run can
+    fetch like any other. Every link still has to pass search_files.check_file."""
+    if os.environ.get("FETCH_BROWSER") == "0" or not urls:
+        return []
+    _ensure_browser()
+    found = []
+    with _LOCK:
+        try:
+            from playwright.sync_api import sync_playwright
+            with sync_playwright() as p:
+                b = _launch(p)
+                try:
+                    ctx = b.new_context(user_agent=UA_CHROME, accept_downloads=True)
+                    for u in [x for x in urls if x][:3]:
+                        pg = ctx.new_page()
+                        try:
+                            pg.goto(u, timeout=45_000, wait_until="domcontentloaded")
+                            pg.wait_for_timeout(wait_ms)
+                        except Exception:  # noqa: BLE001
+                            pg.close()
+                            continue
+                        els = pg.locator("a, button, input[type=submit], input[type=button]")
+                        clicks = 0
+                        for i in range(min(els.count(), 400)):
+                            if clicks >= max_clicks:
+                                break
+                            el = els.nth(i)
+                            try:
+                                text = " ".join(((el.inner_text(timeout=1000) or el.get_attribute("value") or "")).split())[:150]
+                                href = el.get_attribute("href") or ""
+                            except Exception:  # noqa: BLE001
+                                continue
+                            # plain links are browser_links' job; this is for buttons a fetch can't follow
+                            if href and not href.startswith(("#", "javascript")):
+                                continue
+                            if not CLICK_TEXT.search(text) or SKIP_TEXT.search(text):
+                                continue
+                            clicks += 1
+                            before = len(ctx.pages)
+                            try:
+                                with pg.expect_download(timeout=20_000) as d:
+                                    el.click(timeout=5000)
+                                found.append(d.value.url)
+                                d.value.cancel()
+                            except Exception:  # noqa: BLE001
+                                for q in ctx.pages[before:]:   # opened in a new tab instead
+                                    found.append(q.url)
+                                    q.close()
+                        pg.close()
+                finally:
+                    b.close()
+        except Exception:  # noqa: BLE001
+            return []
+    return [x for x in dict.fromkeys(found) if x.startswith("http")][:20]
