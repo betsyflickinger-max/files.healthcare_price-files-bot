@@ -326,11 +326,22 @@ def bclaim(u):
     s3.put_object(Bucket=B, Key=key, Body=ROLE.encode()); time.sleep(2)   # two machines can claim at once: last write wins
     try: return s3.get_object(Bucket=B, Key=key)['Body'].read().decode() == ROLE
     except Exception: return True
+_S3PID = [os.getpid()]
+def fresh_s3():
+    """Oct 18, 2026: each forked stage-B worker gets its own storage client. Sharing the parent's (forked mid-connection)
+    corrupted TLS ("decryption failed or bad record mac"), which crashed the script and restarted machines (Mississippi
+    practice test: 5 restarts on 4 machines)."""
+    global s3
+    if os.getpid() != _S3PID[0]:
+        s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                          aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+        _S3PID[0] = os.getpid()
 def work(u):
     """One bucket (or one piece of one). DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and
     applies the same rules as 09r: headline = lowest positive rate with no modifier (else lowest positive), up to 8
     other rates, $0 count, flat-case-rate, unusually-low and unusually-high flags (median via approx_quantile;
     flag bits: 1 flat case rate, 2 under a fifth of the median, 4 $0 listed, 8 filler-looking: over 5x the median and shaped like filler, or over 100x)."""
+    fresh_s3()
     k, sp = unit_parts(u)
     try:
         return tuple(json.loads(s3.get_object(Bucket=B, Key=f'{WK}B/{u}.json')['Body'].read()))
