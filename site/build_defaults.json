@@ -1,0 +1,6 @@
+{
+ "practice": true,
+ "slice_rows": 30000000,
+ "big_machine": true,
+ "why": "Oct 19, 2026 (Betsy OK'd): every new state build uses the practice view (doctors grouped by the tax-ID practice they bill under; tested on Mississippi, PASS on all 21,736 codes), sizes each batch up front and splits any over slice_rows price rows, and runs one big-memory machine per state for batches still too big (one huge code). Update mode (adding networks to a finished build) stays a normal build until merge_build.py handles practice files."
+}

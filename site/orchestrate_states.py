@@ -107,6 +107,13 @@ def update_tables():
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
 CODE_OF = {v: k for k, v in STATES.items()}
+def build_defaults():
+    """Oct 19, 2026: site/build_defaults.json, the standard settings for new state builds (practice view, batch slicing,
+    big-memory machine). Tested on Mississippi, Colorado and Missouri, Oct 18-19."""
+    try: return json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build_defaults.json')))
+    except Exception: return {}
+
+
 def common_first():
     """Oct 18, 2026: scopes listed in site/common_first.json build their state's 2,000 priority codes (+ every MS-DRG) first;
     every other code is listed on the page as coming and built on request or by the background fill."""
@@ -246,7 +253,7 @@ def announce(st, left):
 def release_finished(left):
     for d in O.droplets():
         for slug in STATES.values():
-            if slug not in left and d['name'].startswith(f'upfront-site-{O.BID}-{slug}-c'):
+            if slug not in left and (d['name'].startswith(f'upfront-site-{O.BID}-{slug}-c') or d['name'] == f'upfront-site-{O.BID}-{slug}-big'):
                 try: O.do('DELETE', f"/droplets/{d['id']}"); log('released', d['name'], '(its state is done)')
                 except Exception as e: log('release failed', d['name'], repr(e)[:150])
 
@@ -392,6 +399,9 @@ def main():
             log('not enough free machines; waiting (asked the insurer reader to leave room)'); return putj(SP + 'state.json', st)
         O.bundle()
         st.update(stage='split', started=time.strftime('%Y-%m-%d %H:%M'))
+        # Oct 19, 2026 (Betsy OK'd): the standard way to build a state, fixed when the build starts so a build in flight keeps
+        # its mode (site/build_defaults.json): practice view, big batches sized up front, one big-memory machine per state
+        st['practice'] = bool(build_defaults().get('practice')) and not UPDATE
     if st['stage'] == 'split':
         sz = sizes(f'data/{SCOPE}/rates/')
         done = {k.rsplit('/', 1)[1][:-5] for k in ls(f'data/{SCOPE}/state/_done/')}
@@ -468,7 +478,14 @@ def main():
                 if UPDATE:
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
+                if st.get('practice'):
+                    env.update(PRACTICE='1', SLICE_ROWS=str(build_defaults().get('slice_rows', 30000000)))
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
+                if st.get('practice') and i == 0 and build_defaults().get('big_machine', True):
+                    # one big-memory machine per state: it builds only the batches the others mark as too big (one huge code)
+                    big = {k_: v_ for k_, v_ in env.items() if k_ not in ('BCLAIM', 'BCLAIM_H', 'SPLIT')}
+                    big.update(BIG='1', WORKERS='1', WMEM='24GB', WTHREADS='8', STALL_MIN='240', OUTP=f'{SP}{slug}-big/')
+                    ensure(st, f'{slug}-big', SIZE, O.RUN_INS, big, False)
         release_finished(left)
         relaunch_old(left)
         cap, held = build_cap(left)

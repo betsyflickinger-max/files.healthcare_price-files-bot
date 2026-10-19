@@ -87,6 +87,12 @@ def refresh_sources():
     con.execute(f"""copy (select EIN ein, any_value(NAME) nm from read_csv_auto('{d}/eo*.csv', all_varchar=true, union_by_name=true)
                     group by EIN) to '{d}/irs.parquet' (format parquet)""")
     s3.upload_file(f'{d}/dac.parquet', E['R2_BUCKET'], K_DAC); s3.upload_file(f'{d}/irs.parquet', E['R2_BUCKET'], K_IRS)
+    # CMS Hospital Enrollments (each hospital's NPIs and CMS number), for the list-price math's hospital links
+    cat = json.loads(urllib.request.urlopen('https://data.cms.gov/data.json', timeout=300).read())
+    hu = max(((x.get('title', ''), x['downloadURL']) for d_ in cat['dataset'] for x in d_.get('distribution', [])
+              if x.get('title', '').startswith('Hospital Enrollments :') and str(x.get('downloadURL', '')).endswith('.csv')))[1]
+    urllib.request.urlretrieve(hu, f'{d}/hospital_enrollments.csv')
+    s3.upload_file(f'{d}/hospital_enrollments.csv', E['R2_BUCKET'], 'data/names/hospital_enrollments.csv')
     s3.put_object(Bucket=E['R2_BUCKET'], Key='data/names/sources.json', Body=json.dumps(
         {'dac': url, 'dac_modified': meta.get('modified'), 'irs': IRS_URLS}).encode())
     print('practice name sources refreshed', url, meta.get('modified'))

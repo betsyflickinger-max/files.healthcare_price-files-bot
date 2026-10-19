@@ -13,6 +13,7 @@ charges, and the percentage applies to those too). No list price, no match: the 
 import collections, csv, json
 
 MARK = '/*lpm*/'
+K_ENROLL = 'data/names/hospital_enrollments.csv'   # CMS Hospital Enrollments (practice_names.py sources refreshes it)
 HELPERS = r"""
 /*lpm*/
 const HLINK = D.hlink || {};

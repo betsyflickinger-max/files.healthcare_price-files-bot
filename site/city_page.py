@@ -112,6 +112,35 @@ class Words:
         self.s = re.sub(old, new.replace('\\', '\\\\'), self.s, flags=re.S) if regex else self.s.replace(old, new)
 
 
+def practice_and_list_price(page, s3, B, out):
+    """Oct 19, 2026 (Betsy OK'd): the practice view (practice_view.py) and the dollar math for percent-of-charges contracts
+    (list_price_math.py). Both are page code that does nothing without its data, so they go on every page. D.hlink links each
+    insurer-file hospital to its own price file: CMS Hospital Enrollments NPIs + the NPIs each hospital file lists, via the
+    CMS number the hospital step recorded for each file (site/builds/hosp-*/areas.json)."""
+    import practice_view, list_price_math
+    s = open(page, encoding='utf-8').read()
+    pre, D, post = split(s)
+    hl = {}
+    try:
+        if D.get('hosp', {}).get('src'):
+            areas = {}
+            for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix='site/builds/hosp-'):
+                for o in pg.get('Contents', []):
+                    if o['Key'].endswith('/areas.json'):
+                        for k_, v_ in json.loads(s3.get_object(Bucket=B, Key=o['Key'])['Body'].read()).items(): areas[o['Key'] + k_] = v_
+            s3.download_file(B, list_price_math.K_ENROLL, f'{out}/hospital_enrollments.csv')
+            names = json.loads(s3.get_object(Bucket=B, Key='reference/geo/names.json')['Body'].read())
+            npis = json.load(open(f'{out}/npis.json'))
+            hl = list_price_math.hlink_for(D['hosp']['src'], areas, f'{out}/hospital_enrollments.csv', npis, names)
+    except Exception as e:
+        print('hospital links for the list-price math not built (the page shows percentages alone):', repr(e)[:200])
+    D['hlink'] = hl
+    s = join(pre, D, post)
+    s = list_price_math.patch(practice_view.patch(s))
+    open(page, 'w', encoding='utf-8').write(s)
+    print(f"practice view {'with' if D.get('prac') else 'without'} practices; list-price math links {len(hl)} providers to their hospital files")
+
+
 def pfs_for(rvu_zip, loc, codes, st='TX'):
     """Medicare doctor fees for one locality: same formula and filters as build_med_all.py. code -> {'pfs'|'pfs26': [office, facility]}"""
     Z = zipfile.ZipFile(rvu_zip)
@@ -382,6 +411,7 @@ def main():
     if A.map_only:   # Oct 15, 2026: refresh only the map files for the page already published (saved in R2), no new page
         page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
     else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json')
+    if not A.map_only: practice_and_list_price(page, s3, B, A.out)
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return

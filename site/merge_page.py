@@ -13,6 +13,11 @@ for c, o in old.items():
     if c in new['codes'] and not o.get('d'):
         new['codes'][c].update(name=o['name'], cat=o['cat'], type=o.get('type', new['codes'][c].get('type'))); new['codes'][c].pop('d', None)
 for k in ('codes', 'fac', 'nets', 'dates', 'urls', 'labs', 'scope'): D[k] = new[k]
+# Oct 19, 2026: practice view (every_code.py PRACTICE=1): the practice table travels with the build; a build without one
+# (a normal build) drops any old one so the page never shows practices that don't match its provider list
+for k in ('prac', 'coming'):
+    if k in new: D[k] = new[k]
+    else: D.pop(k, None)
 for c in D['codes'].values(): c['f'] = None
 D['hosp'] = json.load(open(hosp))
 # No Surprises Act figures (nsa/arb_page.py): provider lines are keyed by position, so re-key them for the new provider
