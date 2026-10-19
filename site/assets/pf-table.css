@@ -89,3 +89,4 @@ a.pt-v:hover{text-decoration:underline}
   .pt .pt-t tr.pt-doc td,.pt .pt-t tr.pt-doc td.pt-pl{background:#DCE5FC}
   .pt-cmp .pt-t th,.pt-cmp .pt-t td{min-width:120px}
 }
+.pt-der{display:block;margin-top:3px;font:500 10px "Look DM Mono",ui-monospace,monospace;letter-spacing:.04em;text-transform:uppercase;color:#8A5A00;background:#FBEFC6;padding:0 4px;white-space:nowrap}

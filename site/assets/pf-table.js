@@ -84,7 +84,7 @@
     Object.keys(f).forEach(function (fi) {
       f[fi].forEach(function (r) {
         var isDoc = r[1] || anes;
-        if (isDoc) { if (keep(r, mD)) { var k = fi + '|' + r[0]; if (!(k in docs) || r[3] < docs[k][0]) docs[k] = [r[3], r]; } return; }
+        if (isDoc) { if (keep(r, mD) && !/derived/.test(r[10] >= 0 ? String(D.labs[r[10]] || '') : '')) { var k = fi + '|' + r[0]; if (!(k in docs) || r[3] < docs[k][0]) docs[k] = [r[3], r]; } return; }
         if (!fits(+fi) || !keep(r, mF)) return;
         var p = places[fi] || (places[fi] = {}); if (!p[r[0]] || r[3] < p[r[0]][3]) p[r[0]] = r;
       });
@@ -184,10 +184,16 @@
     return url ? '<a class="pt-v" href="' + E(url) + '" target="_blank" rel="noopener" title="' + E(tip) + '">' + txt + '</a>' : '<span class="pt-v" title="' + E(tip) + '">' + txt + '</span>';
   };
   var shade = function (v, o) { var x = o.med ? v / o.med[0] : null; return [x ? ' class="pt-b' + BAND(x) + '"' : '', x ? '<span class="pt-x">' + X(x) + ' Medicare</span>' : '']; };
-  function feeCell(o, n, B) {
+  // a rate's own label from the file: "derived" amounts are insurers' bookkeeping figures (often for HMO doctors paid a set
+  // amount per patient), not prices; a doctor's fee filed for a hospital or clinic setting compares with Medicare's facility-setting rate
+  var labOf = function (r) { return r[10] >= 0 ? String(D.labs[r[10]] || '') : ''; };
+  var DER = '<span class="pt-der" title="The insurer calls this a derived amount: a figure it uses for its own bookkeeping, often for doctors paid a set amount per patient each month. It is not a price anyone pays for this visit or procedure.">derived, not a price</span>';
+  function feeCell(o, n) {
     var r = o.fees[n]; if (!r) return '<td><span class="pt-none" title="No published rate in this network">—</span></td>';
-    var s = shade(r[3], o);
-    return '<td' + s[0] + '>' + fileLink(r, M$(r[3]), o.med && r[3] / o.med[0]) + s[1] + '</td>';
+    var lb = labOf(r), der = /derived/.test(lb), ref = o.med, pfs = pfsOf(S.code), fac = /outpatient|inpatient/.test(lb);
+    if ((o.kind === 'P' || o.kind === 'G') && pfs && fac && pfs[1] != null) ref = [pfs[1], 'Medicare in a hospital or clinic setting'];
+    var x = ref ? r[3] / ref[0] : null;
+    return '<td' + (x && !der ? ' class="pt-b' + BAND(x) + '"' : '') + '>' + fileLink(r, M$(r[3]), x) + (x ? '<span class="pt-x">' + X(x) + ' Medicare' + (fac && ref !== o.med ? ' (clinic setting)' : '') + '</span>' : '') + (der ? DER : '') + '</td>';
   }
   function placeCell(o) {
     var KN = {H: 'hospital', A: 'surgery center', G: 'practice or clinic', P: 'clinician'};
@@ -266,7 +272,7 @@
       (mode === 'all' ? '<div class="pt-pick">' + B.order.filter(function (k) { return B.ins[k].length > 1; }).map(function (k) { return '<label>' + E(k) + '<select data-ptcol="' + E(k) + '">' + B.ins[k].map(function (m) { return '<option value="' + m + '"' + (m === col(k) ? ' selected' : '') + '>' + E(NET[m].n) + '</option>'; }).join('') + '</select></label>'; }).join('') + '</div>' : '') +
       (total ? '<div class="pt-wrap"><table class="pt-t"><thead>' + head + '</thead><tbody>' + body + '</tbody></table></div>' : '<p class="empty">' + (mode === 'cash' ? 'No cash prices published for this code here yet.' : 'No published dollar rates for this code here yet. The other tabs list every line, including percent-of-charges rates.') + '</p>') +
       '<div class="pt-more">' + (total > T.n ? '<button type="button" class="more" data-ptmore>Show more</button>' : '') + '<span>Showing ' + Math.min(T.n, total) + ' of ' + total + '</span></div>' +
-      '<p class="pt-fine">Medicare is CMS\'s 2026 rate for that kind of place, adjusted for the place\'s local wages where we matched it to its Medicare record (<a href="/methodology/#medicare-each-place">how</a>); it\'s a yardstick, not a price you can get unless you\'re on Medicare. Medicare Advantage is the lowest Medicare Advantage line in the hospital\'s own price file. Left out, as on the price pages: percent-of-charges rates, $0 lines, rates flagged unusually low, filler-looking rates, and places that don\'t do this kind of service (they\'re all on the <b>Every rate</b> tab). Every price links to the file it came from.</p></section>';
+      '<p class="pt-fine">Medicare is CMS\'s 2026 rate for that kind of place, adjusted for the place\'s local wages where we matched it to its Medicare record (<a href="/methodology/#medicare-each-place">how</a>); it\'s a yardstick, not a price you can get unless you\'re on Medicare. Medicare Advantage is the lowest Medicare Advantage line in the hospital\'s own price file. Rates marked <i>derived, not a price</i> are insurers\' bookkeeping figures, often for doctors paid a set amount per patient; they\'re listed but not shaded, and left out of the doctor\'s fee. Left out, as on the price pages: percent-of-charges rates, $0 lines, rates flagged unusually low, filler-looking rates, and places that don\'t do this kind of service (they\'re all on the <b>Every rate</b> tab). Every price links to the file it came from.</p></section>';
     var bd = document.getElementById('board');
     bd.innerHTML = html + scenarios(code) + '<div class="pt-tray"' + (Object.keys(T.sel).length ? '' : ' hidden') + '><span data-ptn></span><button type="button" class="more" data-ptcmp>Compare side by side</button><button type="button" class="pt-link" data-ptclr>Clear</button></div>';
     // each cell carries its column's name, so on a phone every row reads as a card

@@ -22,6 +22,7 @@ NAME = 'The Healthcare Files'
 TAGLINE = 'What care really costs, from the price files hospitals and insurers have to publish.'
 RENAME = [('What It <span>Costs</span>', 'The Healthcare <span>Files</span>'), ('What It Costs', NAME), ('WHAT IT COSTS', NAME.upper())]
 LINK = '<link rel="stylesheet" href="/units.css">'
+SRCJS = '<script src="/hcf-src.js" defer></script>'   # warns before a source link starts a giant file download (Oct 19)
 # One wordmark on every page (Betsy, Oct 19): "Files" always yellow (tool pages, profiles and Price Finders had it plain),
 # and lighter than the page headings so the name doesn't read as one more headline.
 BRAND_RX = re.compile(r'(<a class="(?:sn-brand|brand)"[^>]*>)The Healthcare Files</a>')
@@ -34,6 +35,10 @@ html[data-look="units"]:not(#_):not(#__) :is(.logo,.sn-brand,.brand) span{font-w
 /* Oct 19, 2026 (Betsy): prices stand out from the text around them (deep Units blue, 7:1 on the page ground) */
 html[data-look="units"]:not(#_) :is(.price,.n,.tv,td.num[data-l="Lowest"],td.num[data-l="Highest"]){color:#1F45C4}
 '''
+# The look switcher was for choosing a look; Units is chosen (Oct 19), so the preview stops adding it (tester tracking stays).
+MW_FROM = ("'<link rel=\"stylesheet\" href=\"/looks/looks.css\"><script src=\"/looks/looks.js\"></script>' + (tester ? "
+           "'<style>.look-pick{display:none!important}</style><script src=\"/hcf-t.js\" defer></script>' : '')")
+MW_TO = "(tester ? '<script src=\"/hcf-t.js\" defer></script>' : '')"
 TEXT = ('.html', '.htm', '.webmanifest', '.xml', '.js', '.css', '.csv')   # not .txt/.json (price data); .csv only gets the name
 
 
@@ -67,6 +72,10 @@ def bake(s):
         i = s.lower().find('</head>')
         if i >= 0:
             s = s[:i] + LINK + s[i:]
+    if SRCJS not in s:
+        i = s.lower().find('</head>')
+        if i >= 0:
+            s = s[:i] + SRCJS + s[i:]
     return s
 
 
@@ -78,6 +87,8 @@ def apply(d):
         p = os.path.join(site, 'units.css')
         if not os.path.exists(p) or open(p, encoding='utf-8').read() != css:
             open(p, 'w', encoding='utf-8').write(css)
+    if os.path.isdir(site):
+        shutil.copyfile(os.path.join(HERE, 'assets', 'hcf-src.js'), os.path.join(site, 'hcf-src.js'))
     og = os.path.join(HERE, 'assets', 'og.jpg')
     if os.path.exists(og) and os.path.isdir(site):
         shutil.copyfile(og, os.path.join(site, 'og.jpg'))
@@ -104,6 +115,11 @@ def apply(d):
                     t = bake(t)
                 if t != s:
                     open(p, 'w', encoding='utf-8').write(t); changed += 1
+    mw = os.path.join(d, 'functions', '_middleware.js')
+    if os.path.isfile(mw):
+        t0 = open(mw, encoding='utf-8').read()
+        if MW_FROM in t0:
+            open(mw, 'w', encoding='utf-8').write(t0.replace(MW_FROM, MW_TO)); changed += 1
     try:   # Price Finder "Compare" view (Oct 19): its two files, the page tags, and ml.json where a rebuild made it stale
         import pf_table
         changed += pf_table.apply(d)
