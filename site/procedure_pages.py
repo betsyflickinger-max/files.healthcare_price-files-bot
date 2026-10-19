@@ -318,10 +318,9 @@ SEARCH_NAMES = {
 }
 
 # The person behind the site, for the byline, the About page and the pages' structured data. Change here; every page follows.
-AUTHOR = {'name': 'Betsy Flickinger', 'role': 'former employee-benefits consultant',
-          'bio': ("Betsy spent years as an employee-benefits consultant, helping employers buy health plans and seeing from the inside "
-                  "how the prices insurers negotiate stay hidden from the people paying the bills. Federal rules now make insurers and "
-                  "hospitals publish those prices. This site reads the files and puts every price in plain view, with a link to the file it came from.")}
+AUTHOR = {'name': 'Betsy Flickinger', 'role': 'founder of The Healthcare Files',
+          'bio': ('Betsy Flickinger works on the economics of healthcare and work, alongside everyone it touches: executives, employers, '
+                  'employees and gig workers. The Healthcare Files reads the price files hospitals and insurers are required to publish and puts every price in plain view, with a link to the file it came from.')}
 
 
 def common(S):
