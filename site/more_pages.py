@@ -20,13 +20,33 @@ import os
 import re
 import sys
 from collections import Counter
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import procedure_pages as pp   # noqa: E402
 
 PFX = 'site/more/'
+_W, _STORES = {}, {}
+
+
+def own_store(site_dir):
+    pid = os.getpid()
+    if pid not in _STORES:
+        _STORES[pid] = pp.Store(site_dir)
+    return _STORES[pid]
+
+
+def _call_batch(codes, threads=4):
+    """Runs in a forked worker: this process's share of the codes, a few at a time (threads overlap the R2 downloads)."""
+    out = []
+    with ThreadPoolExecutor(threads) as ex:
+        for j, r in enumerate(ex.map(_W['one'], codes)):
+            if r:
+                out.append(r)
+            if (j + 1) % 50 == 0:
+                print(f'  worker {os.getpid()}: {j + 1} of {len(codes)}', flush=True)
+    return out
 esc = pp.esc
 
 
@@ -105,14 +125,16 @@ def build_area(site_dir, store, slug, threads=16, shard=0, of=1):
     au = pp.area_url_slug(slug)
     D, med_area, _ = pp.page_data(page_path(site, a))
     loc = store.local_medicare(a, len(D['fac']))
+    pst = store.provider_states(a, D)   # out-of-state providers left out, same as the featured pages
     codes = [c for c in P['areas'][slug] if c in D['codes']]
     mine = codes[shard::of]   # this job's share (jobs for one place run side by side)
     slugs, live = P['slugs'], {s: set(v) for s, v in P['areas'].items()}
     others_by = {x['slug']: (x['name'], pp.area_url_slug(x['slug'])) for x in areas}
 
     def one(c):
+        store = own_store(site_dir)   # one R2 client per worker process (clients aren't safe to share across a fork)
         try:
-            S = pp.summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc)
+            S = pp.summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc, pp.area_state(a), pst)
         except Exception as e:
             print(f'  {c}: skipped ({type(e).__name__}: {e})', flush=True)
             return None
@@ -137,12 +159,14 @@ def build_area(site_dir, store, slug, threads=16, shard=0, of=1):
                 'index': bool(S.get('index', S['any']))}
 
     done = []
-    with ThreadPoolExecutor(threads) as ex:
-        for i, r in enumerate(ex.map(one, mine)):
-            if r:
-                done.append(r)
-            if (i + 1) % 200 == 0:
-                print(f'  {slug} part {shard + 1}/{of}: {i + 1} of {len(mine)}', flush=True)
+    # The work is mostly Python (reading big rate files, working out figures), so one thread pool only used one core
+    # (Oct 19 test: 200 pages in 40 min). Forked worker processes, each with a few threads for the R2 waits, use every core.
+    _W['one'] = one
+    import multiprocessing as mp
+    procs = os.cpu_count() or 2
+    with ProcessPoolExecutor(procs, mp_context=mp.get_context('fork')) as ex:
+        for r in ex.map(_call_batch, [mine[k::procs] for k in range(procs)]):
+            done += r
     put(store, f'{au}/manifest-{shard}-of-{of}.json', json.dumps({'area': slug, 'name': a['name'], 'built': pp.TODAY.isoformat(), 'pages': done},
                                                  separators=(',', ':')), 'application/json')
     print(f'{slug} part {shard + 1}/{of}: {len(done)} pages ({sum(1 for d in done if d["index"])} indexable) of {len(mine)} codes')
