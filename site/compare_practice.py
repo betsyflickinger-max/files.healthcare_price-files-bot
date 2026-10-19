@@ -15,14 +15,23 @@ s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflar
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
 B = E['R2_BUCKET']; LIVE = E['LIVE']; TEST = E['TEST']
 def j(key): return json.loads(s3.get_object(Bucket=B, Key=key)['Body'].read())
+_S3 = {}
+def cli():   # one client per process (the check forks worker processes)
+    pid = os.getpid()
+    if pid not in _S3:
+        _S3[pid] = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                                aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    return _S3[pid]
 def page(prefix, code):
-    try: return json.loads(gzip.decompress(base64.b64decode(s3.get_object(Bucket=B, Key=f'{prefix}t/{code}.txt')['Body'].read())))
-    except s3.exceptions.NoSuchKey: return None
+    try: return json.loads(gzip.decompress(base64.b64decode(cli().get_object(Bucket=B, Key=f'{prefix}t/{code}.txt')['Body'].read())))
+    except cli().exceptions.NoSuchKey: return None
 el, nl = j(LIVE + 'embed.json'), j(LIVE + 'npis.json')
 try: et, nt = j(TEST + 'embed.json'), j(TEST + 'npis.json')
 except Exception: et, nt = el, nl; print('test build has no embed.json yet (partial test): using the live lookup lists')
 KIND = {nl[i]: p[2] for i, p in enumerate(el['fac'])}
 codes = E['CODES'].split(',') if E.get('CODES') else sorted(set(el['codes']) | set(et['codes']))
+# SHARD=i/n: this machine checks every n-th code (several machines split the work); PROCS: parallel processes
+SH = E.get('SHARD', '0/1'); si, sn = (int(x) for x in SH.split('/')); codes = codes[si::sn]
 C = Counter(); EX = {}
 def ex(kind, x):
     C[kind] += 1
@@ -62,15 +71,21 @@ def one(code):
     out.append(('lines_live', sum(len(r) for r in a['f'].values())))
     out.append(('lines_test', sum(len(r) for r in b['f'].values()) + sum(len(e) for e in b.get('p', {}).values())))
     return out
-with ThreadPoolExecutor(32) as P:
-    for i, res in enumerate(P.map(one, codes)):
+import multiprocessing as mp
+def one_safe(code):
+    for t in range(3):
+        try: return one(code)
+        except Exception as e: err = repr(e)[:200]
+    return [('check_error', (code, err))]
+with mp.get_context('fork').Pool(int(E.get('PROCS', '8'))) as P:
+    for i, res in enumerate(P.imap_unordered(one_safe, codes, chunksize=20)):
         for kind, x in res:
             if kind in ('org_rows_ok', 'lines_live', 'lines_test', 'doctor_ok'): C[kind] += x
             else: ex(kind, x)
         if i % 2000 == 0: print(i, 'of', len(codes), dict(C), flush=True)
-bad = sum(C[k] for k in ('code_missing_live', 'code_missing_test', 'org_rows_differ', 'doctor_missing', 'doctor_mispriced', 'doctor_extra'))
+bad = sum(C[k] for k in ('code_missing_live', 'code_missing_test', 'org_rows_differ', 'doctor_missing', 'doctor_mispriced', 'doctor_extra', 'check_error'))
 rep = {'codes': len(codes), 'counts': dict(C), 'examples': EX, 'result': 'PASS' if bad == 0 else 'FAIL',
        'practices': len(et.get('prac', {})), 'npis_identical': nl == nt}
-s3.put_object(Bucket=B, Key=TEST + 'compare_practice.json', Body=json.dumps(rep, indent=1, default=str).encode())
+s3.put_object(Bucket=B, Key=TEST + f"compare_practice_{si}of{sn}.json", Body=json.dumps(rep, indent=1, default=str).encode())
 print(json.dumps(rep, indent=1, default=str)[:4000])
 sys.exit(0 if bad == 0 else 1)
