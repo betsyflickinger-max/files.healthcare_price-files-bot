@@ -219,20 +219,56 @@ body{background:var(--ground);color:var(--ink);font:16px/1.5 var(--display)}
 .card dt{font:600 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding-top:10px}
 .card .go{display:inline-block;margin-top:14px;font-weight:800;color:#151515;text-underline-offset:4px}
 /* folder-view page */
-body{background:#141414;margin:0}
+body{background:var(--ground);margin:0}
+.fv-bar{background:var(--band)}
 .fv-top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:18px 6px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));max-width:1300px;margin:0 auto}
 .fv-top .mark{font:900 30px/1 var(--display);font-stretch:118%;letter-spacing:.02em;color:var(--hi);text-decoration:none}
 .fv-top .mark small{display:block;font:500 12.5px/1.3 var(--display);font-stretch:100%;letter-spacing:0;color:#DCE5FC;margin-top:4px}
 .fv-toggle{margin-left:auto;font:600 13px var(--mono);color:#151515;background:var(--hi);padding:9px 14px;text-decoration:none;white-space:nowrap}
-.outer{padding-block:10px 40px}
+.outer{padding-block:10px 60px}
+/* no dark frame around the drawer (Betsy, Oct 20) */
+.stage{background:none;padding:0;border-radius:0}
+.stage.pulled{animation:fv-pull .45s ease-out both}
+@keyframes fv-pull{from{opacity:0;transform:translateY(-40px) scale(.97)}to{opacity:1;transform:none}}
+/* the filing cabinet: closed until you open it */
+.cab-hero{display:grid;justify-items:center;gap:14px;padding-block:clamp(24px,5vw,56px) 24px;text-align:center}
+.cab-kicker{font:400 clamp(24px,3.4vw,36px)/1.2 var(--serif);margin:0;max-width:22em;text-wrap:balance}
+.cab-hint{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+.bigcab{position:relative;width:min(340px,82vw);border:0;padding:16px 16px 6px;cursor:pointer;background:linear-gradient(90deg,#9AA3B3,#B9C1CE 18%,#B9C1CE 82%,#9AA3B3);
+  border-radius:8px 8px 3px 3px;box-shadow:inset 0 0 0 2px #7F889A,0 18px 0 -8px #7F889A,0 26px 30px -14px rgba(0,0,0,.35);display:grid;gap:12px;transition:transform .2s}
+.bigcab:hover{transform:translateY(-3px)}
+.bigcab:focus-visible{outline:4px solid var(--hi);outline-offset:4px}
+.bc-drw{display:grid}
+.bc-inside{height:0;overflow:hidden;background:#20242C;border-radius:3px 3px 0 0;display:flex;align-items:flex-end;gap:6px;padding:0 14px;transition:height .35s ease}
+.bc-inside i{flex:1;height:22px;border-radius:7px 7px 0 0;background:var(--c)}
+.bc-inside i:nth-child(odd){height:28px}
+.bc-face{display:grid;justify-items:center;gap:12px;padding:18px 12px 16px;background:linear-gradient(#D3D9E2,#B3BBC8);box-shadow:inset 0 0 0 2px #7F889A;border-radius:3px;
+  transition:transform .35s ease,box-shadow .35s}
+.bc-label{background:#FBF8F0;color:#151515;border:2px solid #7F889A;padding:4px 14px;font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;min-width:62%}
+.bc-handle{width:46%;height:12px;border-radius:7px;background:#7F889A;box-shadow:inset 0 3px 0 rgba(0,0,0,.18)}
+.bigcab:hover .d1 .bc-face{transform:translateY(5px)}
+.bigcab.open .d1 .bc-inside{height:54px}
+.bigcab.open .d1 .bc-face{transform:translateY(14px) scale(1.05);box-shadow:inset 0 0 0 2px #7F889A,0 10px 16px rgba(0,0,0,.3)}
+@media (prefers-reduced-motion:reduce){.bigcab,.bc-inside,.bc-face{transition:none}.stage.pulled{animation:none}}
 .goto{font:13px/1.6 var(--type);margin:12px 0 0}.goto a,.sig a{color:#151515}
 .rcpt .ln span{min-width:0}
 .subs a.tab{text-decoration:none}.subs a.tab:hover{text-decoration:underline}
 </style></head>
 <body>
-<header class="fv-top"><a class="mark" href="/">FILES<small>The receipt for the U.S. healthcare system</small></a>
-<a class="fv-toggle" href="/">Switch to the current design</a></header>
-<main class="outer"><div class="stage"><div class="drawer" id="drawer"></div></div></main>
+<div class="fv-bar"><header class="fv-top"><a class="mark" href="/">FILES<small>The receipt for the U.S. healthcare system</small></a>
+<a class="fv-toggle" href="/">Switch to the current design</a></header></div>
+<main class="outer">
+<section class="cab-hero" aria-label="The filing cabinet">
+<p class="cab-kicker">Every price on this site comes from a public file. They’re all in here.</p>
+<button type="button" class="bigcab" id="bigcab" aria-expanded="false" aria-controls="files">
+<span class="bc-drw d1"><span class="bc-inside" aria-hidden="true"><i style="--c:var(--f1)"></i><i style="--c:var(--f2)"></i><i style="--c:var(--f3)"></i><i style="--c:var(--f4)"></i><i style="--c:var(--f5)"></i><i style="--c:var(--f6)"></i></span><span class="bc-face"><span class="bc-label">The files</span><span class="bc-handle"></span></span></span>
+<span class="bc-drw"><span class="bc-face"><span class="bc-label">Prices · Plans</span><span class="bc-handle"></span></span></span>
+<span class="bc-drw"><span class="bc-face"><span class="bc-label">Hospitals · Insurers</span><span class="bc-handle"></span></span></span>
+</button>
+<p class="cab-hint" id="cabHint">Click the cabinet to open it</p>
+</section>
+<div class="stage" id="files" hidden><div class="drawer" id="drawer"></div></div>
+</main>
 <script>window.FD=/*__DATA__*/null;</script>
 <script>
 const F=[
@@ -294,5 +330,11 @@ function drawer(open){
 }
 F.forEach(f=>Object.assign(f,FD.f[f.k]||{}));Object.assign(SP,FD.sp||{});
 drawer('prices');
+(function(){var c=document.getElementById('bigcab'),st=document.getElementById('files'),h=document.getElementById('cabHint');
+var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+c.addEventListener('click',function(){var open=!c.classList.contains('open');c.classList.toggle('open',open);c.setAttribute('aria-expanded',open);
+h.textContent=open?'Click the cabinet to close it':'Click the cabinet to open it';
+if(!open){st.hidden=true;st.classList.remove('pulled');return}
+setTimeout(function(){st.hidden=false;st.classList.add('pulled');st.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'})},calm?0:380)})})();
 </script>
 </body></html>
