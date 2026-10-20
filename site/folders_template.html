@@ -234,22 +234,21 @@ body{background:var(--ground);margin:0}
 .cab-hero{display:grid;justify-items:center;gap:14px;padding-block:clamp(24px,5vw,56px) 24px;text-align:center}
 .cab-kicker{font:400 clamp(24px,3.4vw,36px)/1.2 var(--serif);margin:0;max-width:22em;text-wrap:balance}
 .cab-hint{font:600 13px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
-.bigcab{position:relative;width:min(340px,82vw);border:0;padding:16px 16px 6px;cursor:pointer;background:linear-gradient(90deg,#9AA3B3,#B9C1CE 18%,#B9C1CE 82%,#9AA3B3);
-  border-radius:8px 8px 3px 3px;box-shadow:inset 0 0 0 2px #7F889A,0 18px 0 -8px #7F889A,0 26px 30px -14px rgba(0,0,0,.35);display:grid;gap:12px;transition:transform .2s}
-.bigcab:hover{transform:translateY(-3px)}
-.bigcab:focus-visible{outline:4px solid var(--hi);outline-offset:4px}
-.bc-drw{display:grid}
-.bc-inside{height:0;overflow:hidden;background:#20242C;border-radius:3px 3px 0 0;display:flex;align-items:flex-end;gap:6px;padding:0 14px;transition:height .35s ease}
-.bc-inside i{flex:1;height:22px;border-radius:7px 7px 0 0;background:var(--c)}
-.bc-inside i:nth-child(odd){height:28px}
+.bigcab{position:relative;width:min(360px,84vw);padding:16px 16px 6px;background:linear-gradient(90deg,#9AA3B3,#B9C1CE 18%,#B9C1CE 82%,#9AA3B3);
+  border-radius:8px 8px 3px 3px;box-shadow:inset 0 0 0 2px #7F889A,0 18px 0 -8px #7F889A,0 26px 30px -14px rgba(0,0,0,.35);display:grid;gap:12px}
+.bc-drw{display:grid;border:0;padding:0;margin:0;background:none;cursor:pointer;width:100%;font:inherit}
+.bc-drw:focus-visible{outline:4px solid var(--hi);outline-offset:3px}
+.bc-inside{height:0;overflow:hidden;background:#20242C;border-radius:3px 3px 0 0;display:flex;align-items:flex-end;gap:8px;padding:0 18px;transition:height .35s ease}
+.bc-inside i{flex:1;max-width:90px;height:24px;border-radius:8px 8px 0 0;background:var(--c)}
+.bc-inside i:nth-child(even){height:30px}
 .bc-face{display:grid;justify-items:center;gap:12px;padding:18px 12px 16px;background:linear-gradient(#D3D9E2,#B3BBC8);box-shadow:inset 0 0 0 2px #7F889A;border-radius:3px;
   transition:transform .35s ease,box-shadow .35s}
-.bc-label{background:#FBF8F0;color:#151515;border:2px solid #7F889A;padding:4px 14px;font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;min-width:62%}
+.bc-label{background:#FBF8F0;color:#151515;border:2px solid #7F889A;padding:4px 14px;font:600 13px var(--mono);letter-spacing:.12em;text-transform:uppercase;min-width:66%}
 .bc-handle{width:46%;height:12px;border-radius:7px;background:#7F889A;box-shadow:inset 0 3px 0 rgba(0,0,0,.18)}
-.bigcab:hover .d1 .bc-face{transform:translateY(5px)}
-.bigcab.open .d1 .bc-inside{height:54px}
-.bigcab.open .d1 .bc-face{transform:translateY(14px) scale(1.05);box-shadow:inset 0 0 0 2px #7F889A,0 10px 16px rgba(0,0,0,.3)}
-@media (prefers-reduced-motion:reduce){.bigcab,.bc-inside,.bc-face{transition:none}.stage.pulled{animation:none}}
+.bc-drw:not(.open):hover .bc-face{transform:translateY(5px)}
+.bc-drw.open .bc-inside{height:56px}
+.bc-drw.open .bc-face{transform:translateY(14px) scale(1.05);box-shadow:inset 0 0 0 2px #7F889A,0 10px 16px rgba(0,0,0,.3);position:relative;z-index:1}
+@media (prefers-reduced-motion:reduce){.bc-inside,.bc-face{transition:none}}
 .goto{font:13px/1.6 var(--type);margin:12px 0 0}.goto a,.sig a{color:#151515}
 .rcpt .ln span{min-width:0}
 .subs a.tab{text-decoration:none}.subs a.tab:hover{text-decoration:underline}
@@ -260,12 +259,8 @@ body{background:var(--ground);margin:0}
 <main class="outer">
 <section class="cab-hero" aria-label="The filing cabinet">
 <p class="cab-kicker">Every price on this site comes from a public file. They’re all in here.</p>
-<button type="button" class="bigcab" id="bigcab" aria-expanded="false" aria-controls="files">
-<span class="bc-drw d1"><span class="bc-inside" aria-hidden="true"><i style="--c:var(--f1)"></i><i style="--c:var(--f2)"></i><i style="--c:var(--f3)"></i><i style="--c:var(--f4)"></i><i style="--c:var(--f5)"></i><i style="--c:var(--f6)"></i></span><span class="bc-face"><span class="bc-label">The files</span><span class="bc-handle"></span></span></span>
-<span class="bc-drw"><span class="bc-face"><span class="bc-label">Prices · Plans</span><span class="bc-handle"></span></span></span>
-<span class="bc-drw"><span class="bc-face"><span class="bc-label">Hospitals · Insurers</span><span class="bc-handle"></span></span></span>
-</button>
-<p class="cab-hint" id="cabHint">Click the cabinet to open it</p>
+<div class="bigcab" id="bigcab"><button type="button" class="bc-drw" data-g="0" aria-expanded="false" aria-controls="files"><span class="bc-inside" aria-hidden="true"><i style="--c:var(--f1)"></i><i style="--c:var(--f2)"></i></span><span class="bc-face"><span class="bc-label">Prices &amp; plans</span><span class="bc-handle"></span></span></button><button type="button" class="bc-drw" data-g="1" aria-expanded="false" aria-controls="files"><span class="bc-inside" aria-hidden="true"><i style="--c:var(--f3)"></i></span><span class="bc-face"><span class="bc-label">Hospitals &amp; insurers</span><span class="bc-handle"></span></span></button><button type="button" class="bc-drw" data-g="2" aria-expanded="false" aria-controls="files"><span class="bc-inside" aria-hidden="true"><i style="--c:var(--f4)"></i><i style="--c:var(--f5)"></i><i style="--c:var(--f6)"></i></span><span class="bc-face"><span class="bc-label">Check our work</span><span class="bc-handle"></span></span></button></div>
+<p class="cab-hint" id="cabHint">Pick a drawer to open it</p>
 </section>
 <div class="stage" id="files" hidden><div class="drawer" id="drawer"></div></div>
 </main>
@@ -323,26 +318,29 @@ function spread(k,f){const s=SP[k];return `<div class="spread" style="${css(f)}"
   <div class="notes2">${s.n.map((x,i)=>`<div class="note2 n${i+1}"><p style="margin:0 0 10px">${esc(x[0])}</p>${SIG(esc(x[1]),esc(x[2]),'')}</div>`).join('')}</div></div>`}
 function drawer(open){
   const d=document.getElementById('drawer');
-  d.innerHTML=F.map(f=>`<div class="layer ${f.tier}${f.k===open?' open':''}" style="${css(f)};--w:${f.w};--mx:${f.mx};--mxs:${f.mxs}">
+  d.innerHTML=F.filter(f=>!window.GRP||GRP.indexOf(f.k)>=0).map(f=>`<div class="layer ${f.tier}${f.k===open?' open':''}" style="${css(f)};--w:${f.w};--mx:${f.mx};--mxs:${f.mxs}">
     <div class="ltabs"><button class="tab" type="button" data-k="${f.k}" aria-expanded="${f.k===open}">${esc(f.t)}</button></div>
     <div class="lbody"><div class="lmeta"><span>${f.n}</span><span>${esc(f.what)}.<br>${esc(f.meta)}.</span><span class="when">${esc(FD.date)}</span><span class="peek">${esc(f.links.join(' · '))}<br>Click to open the folder →</span></div>${f.k===open?spread(f.k,f):''}<div class="subs">${f.subs.map((q,i)=>{const a=(F.indexOf(f)*3+i)%4+1;return `<a class="tab sub" href="${f.hrefs[i+1]}" style="--c:var(--a${a});--t:var(--u${a});--sx:${q[0]};--w:${q[1]}">${esc(f.links[i+1])}</a>`}).join('')}</div></div></div>`).join('');
   d.querySelectorAll('button.tab').forEach(b=>b.onclick=()=>{const k=b.dataset.k;drawer(k===open?'':k);d.querySelector(`.tab[data-k="${k}"]`).focus()});
 }
 F.forEach(f=>Object.assign(f,FD.f[f.k]||{}));Object.assign(SP,FD.sp||{});
 drawer('prices');
-(function(){var c=document.getElementById('bigcab'),st=document.getElementById('files'),h=document.getElementById('cabHint');
-var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
-c.addEventListener('click',function(){var open=!c.classList.contains('open');c.classList.toggle('open',open);c.setAttribute('aria-expanded',open);
-h.textContent=open?'Click the cabinet to close it':'Click the cabinet to open it';
-if(!open){st.hidden=true;st.classList.remove('pulled');return}
-setTimeout(function(){st.hidden=false;
+(function(){var G=[['prices','plan'],['who'],['watch','files','news']];
+var cab=document.getElementById('bigcab'),st=document.getElementById('files'),h=document.getElementById('cabHint'),D=[].slice.call(cab.querySelectorAll('.bc-drw'));
+var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches,timer;
+D.forEach(function(b){b.addEventListener('click',function(){var i=+b.dataset.g,was=b.classList.contains('open');clearTimeout(timer);
+D.forEach(function(x){x.classList.remove('open');x.setAttribute('aria-expanded','false')});
+if(was){st.hidden=true;h.textContent='Pick a drawer to open it';return}
+b.classList.add('open');b.setAttribute('aria-expanded','true');h.textContent='Click the drawer again to close it';
+window.GRP=G[i];drawer(G[i][0]);st.hidden=true;
+timer=setTimeout(function(){st.hidden=false;
 if(calm){st.scrollIntoView({block:'start'});return}
-/* the files fly out of the open drawer into the stack (Betsy, Oct 20): one move, each folder a beat after the last */
-var src=c.querySelector('.d1 .bc-inside').getBoundingClientRect(),L=[].slice.call(st.querySelectorAll('.layer'));
+/* the drawer's files fly out into the stack (Betsy, Oct 20): one move, each folder a beat after the last */
+var src=b.querySelector('.bc-inside').getBoundingClientRect(),L=[].slice.call(st.querySelectorAll('.layer'));
 L.forEach(function(l){var r=l.getBoundingClientRect();l.style.transformOrigin='top center';l.style.transition='none';l.style.opacity='0';
 l.style.transform='translate('+(src.left+src.width/2-(r.left+r.width/2))+'px,'+(src.top-r.top)+'px) scale('+Math.min(.3,src.width/r.width)+')'});
 st.offsetHeight;
-L.forEach(function(l,i){var d=i*80;l.style.transition='transform .65s cubic-bezier(.2,.8,.2,1) '+d+'ms, opacity .25s ease '+d+'ms';l.style.transform='';l.style.opacity='1'});
-setTimeout(function(){L.forEach(function(l){l.style.transition='';l.style.transformOrigin=''});st.scrollIntoView({behavior:'smooth',block:'start'})},650+L.length*80+150)},380)})})();
+L.forEach(function(l,k){var d=k*90;l.style.transition='transform .65s cubic-bezier(.2,.8,.2,1) '+d+'ms, opacity .25s ease '+d+'ms';l.style.transform='';l.style.opacity='1'});
+timer=setTimeout(function(){L.forEach(function(l){l.style.transition='';l.style.transformOrigin=''});st.scrollIntoView({behavior:'smooth',block:'start'})},650+L.length*90+150)},calm?0:380)})})})();
 </script>
 </body></html>
