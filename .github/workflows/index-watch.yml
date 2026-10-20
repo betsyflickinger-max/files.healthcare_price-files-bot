@@ -1,0 +1,65 @@
+name: Insurer index watch
+
+# Oct 20, 2026 (Betsy): every insurer file source we know of is checked once a day, not only the ~46 insurers on the
+# pick lists (those are read by insurers.yml every 6 hours). insurers/index_watch.py:
+#  - daily: each index file / price-file page still answers, and whether it changed
+#  - the 3rd of each month (after insurers post around the 1st): read each index, check that every rate file it names
+#    answers (this would have caught Arkansas Blue Cross's missing part-1 files on Oct 1), save each index to
+#    archive.org and each price-file page to the Wayback Machine
+# New problems open an issue (label insurer-file-alert), the same as insurers.yml.
+
+on:
+  schedule:
+    - cron: "41 13 * * *"   # every day, 8:41am Central
+  push:                     # also runs when the watch itself or its hand-added list changes
+    branches: [main]
+    paths: [insurers/index_watch.py, insurers/index_watch_extra.csv]
+  workflow_dispatch:
+    inputs:
+      deep:
+        description: "Also read each index and check every rate file it names (and save to archive.org)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: insurer-index-watch
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
+      IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Check every insurer index and price-file page
+        run: |
+          ARGS=""
+          [ "${{ inputs.deep }}" = "true" ] && ARGS="--deep"
+          [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%d)" = "03" ] && ARGS="--deep"
+          python insurers/index_watch.py $ARGS
+      - run: cat out/index_summary.md >> "$GITHUB_STEP_SUMMARY"
+        if: always()
+      - name: Open an issue for new problems
+        if: always()
+        run: |
+          if [ -f out/index_alerts.md ]; then
+            gh label create insurer-file-alert --color B22222 --description "Insurer file failed, shrank, or went stale" 2>/dev/null || true
+            gh issue create --title "Insurer index watch: problems $(date -u +%F)" --body-file out/index_alerts.md --label insurer-file-alert
+          fi

@@ -40,6 +40,7 @@ ROOT = Path(__file__).resolve().parent.parent
 MAX_BYTES = 6 * 1024 ** 3      # GitHub's free runner has ~14 GB disk; original + compressed copy must fit
 DROP_ALERT = 0.5               # alert when rows fall by more than half
 FIRST_WEEK_ENDS = date(2026, 10, 19)
+DAILY = True   # Oct 20, 2026: check every hospital every day (see due())
 
 FILE_FIELDS = ["url", "etag", "last_modified", "size", "sample_fp", "sha256", "bytes", "r2_key", "format",
                "records", "file_last_updated_on", "first_seen", "last_checked", "last_changed",
@@ -73,6 +74,12 @@ def due(h, hosp_prev, today, force):
     found = (h.get("found_by") or "").split()[-1:]      # a site/file link found (find_sites, search_files) on or after
     if found and found[0] >= last[:10] and (           # the last check: check it on the very next run, not next week
             age >= 1 or hosp_prev.get("status") in PROBLEM):
+        return True
+    # Oct 20, 2026 (Betsy: every hospital checked once a day): every hospital with a file link is checked daily. A check
+    # is only a header request ("did it change?"); the file is downloaded when it changed, or for the weekly full
+    # download (check.FULL_EVERY_DAYS), so this adds header checks, not downloads. Hospitals with no file found stay on
+    # their weekly day, because that path runs a site search. DAILY = False goes back to weekly.
+    if DAILY and age >= 1 and hosp_prev.get("status") != "no price file found":
         return True
     return bucket and age >= 1
 

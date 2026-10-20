@@ -1,0 +1,9 @@
+insurer,state,kind,url
+Arkansas Blue Cross (USAble Mutual),AR,index,https://mrf.arkansasbluecross.com/mrf/us_abcbs_hii_arkbluecross_index
+Arkansas Blue Cross (Health Advantage),AR,index,https://mrf.arkansasbluecross.com/mrf/hmo_ha_hii_arkbluecross_index
+Arkansas Blue Cross (Health Advantage TPA),AR,index,https://mrf.arkansasbluecross.com/mrf/hmo_ha_tpa_arkbluecross_index
+Arkansas Blue Cross (OCTAVE),AR,index,https://mrf.arkansasbluecross.com/mrf/hmo_octave_hii_arkbluecross_index
+Arkansas Blue Cross (BlueAdvantage),AR,index,https://mrf.arkansasbluecross.com/mrf/us_ba_abcbs_tpa_arkbluecross_index
+Arkansas Blue Cross,AR,page,https://www.arkansasbluecross.com/policies/transparency/mrfs
+QualChoice (Centene),AR,index,https://www.centene.com/content/dam/centene/Centene%20Corporate/json/DOCUMENT/2026-09-28_qualchoice_index.json
+Centene,national,page,https://www.centene.com/price-transparency-files.html

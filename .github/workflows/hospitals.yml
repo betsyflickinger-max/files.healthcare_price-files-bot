@@ -2,7 +2,7 @@ name: Hospital price files
 
 on:
   schedule:
-    - cron: "17 9 * * *"   # every day, 4:17am Central (each hospital comes up about once a week)
+    - cron: "17 9 * * *"   # every day, 4:17am Central (since Oct 20, 2026 every hospital is checked daily; files download only when changed)
   workflow_dispatch:
     inputs:
       states:
