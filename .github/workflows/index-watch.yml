@@ -20,6 +20,10 @@ on:
         description: "Also read each index and check every rate file it names (and save to archive.org)"
         type: boolean
         default: false
+      evidence:
+        description: "Save the Price File Watch evidence files (kind 'evidence' in index_watch_extra.csv) to archive.org and the Wayback Machine now"
+        type: boolean
+        default: false
 
 concurrency:
   group: insurer-index-watch
@@ -53,6 +57,7 @@ jobs:
           ARGS=""
           [ "${{ inputs.deep }}" = "true" ] && ARGS="--deep"
           [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%d)" = "03" ] && ARGS="--deep"
+          { [ "${{ inputs.evidence }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; } && ARGS="$ARGS --evidence"
           python insurers/index_watch.py $ARGS
       - run: cat out/index_summary.md >> "$GITHUB_STEP_SUMMARY"
         if: always()

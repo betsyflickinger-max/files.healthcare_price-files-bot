@@ -7,3 +7,8 @@ Arkansas Blue Cross (BlueAdvantage),AR,index,https://mrf.arkansasbluecross.com/m
 Arkansas Blue Cross,AR,page,https://www.arkansasbluecross.com/policies/transparency/mrfs
 QualChoice (Centene),AR,index,https://www.centene.com/content/dam/centene/Centene%20Corporate/json/DOCUMENT/2026-09-28_qualchoice_index.json
 Centene,national,page,https://www.centene.com/price-transparency-files.html
+"UnitedHealthcare of Texas, Inc. (marketplace; index names no in-network file)",TX,evidence,https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-10-01/2026-10-01_UnitedHealthcare-of-Texas-Inc_index.json
+"Academy Fence Company (UHC/Oxford self-funded POS; no in-network file)",,evidence,https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-10-01/2026-10-01_Academy-Fence-Company-Inc_index.json
+"Gaffney Bennett and Associates (UHC/Oxford self-funded POS; no in-network file)",,evidence,https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-10-01/2026-10-01_GAFFNEY-BENNETT-AND-ASSOCIATES-INC_index.json
+"Alpi US (UHC/Oxford self-funded POS; no in-network file)",,evidence,https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-10-01/2026-10-01_Alpi-US-Ltd_index.json
+"Health Plan of Nevada (GAHP Balance HMO; no in-network file)",NV,evidence,https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-10-01/2026-10-01_Health-Plan-of-Nevada-Inc_index.json
