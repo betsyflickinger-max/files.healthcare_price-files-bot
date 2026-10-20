@@ -356,7 +356,10 @@ def build(d):
         changed = True
     # the folder view (/folders/) and its switch on the current homepage (Betsy, Oct 19); after the sign-up step, which rewrites index.html
     import home_folders   # noqa: E402
-    changed = home_folders.build(site, summ[HERO], money, plan_name, what_word, low) or changed
+    pool = sorted(((summ[c]['gap']['hi']['v'] / summ[c]['gap']['lo']['v'], c) for c in HERO_POOL
+                   if c != HERO and c in summ and c in slugs and summ[c].get('gap') and not kids(summ[c]['gap'])
+                   and summ[c]['gap']['lo']['v'] >= 20 and 3 <= summ[c]['gap']['hi']['v'] / summ[c]['gap']['lo']['v'] <= 60), reverse=True)
+    changed = home_folders.build(site, summ[HERO], money, plan_name, what_word, low, [summ[c] for _, c in pool[:HERO_MAX - 1]]) or changed
     # networks each price page leaves out of its figures (same rate at most places, BCBSTX ParPlan), by page
     fbp, medk = {}, {}
     for k, v in st['summaries'].items():

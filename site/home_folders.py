@@ -94,18 +94,30 @@ FOLDERS = {   # what each folder links to (first link = the folder's main page)
 }
 
 
-def build(site, S, money, plan_name, what_word, low):
+def build(site, S, money, plan_name, what_word, low, more=()):
     """Write site/folders/index.html and the switch on the current homepage. Returns True if anything changed."""
     tpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'folders_template.html'), encoding='utf-8').read()
     f = {k: dict(v) for k, v in FOLDERS.items()}
     f['prices']['meta'] = f"Example: {low(S['common'])}, the same plan at two places"
     today = datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=-5)))
-    data = {'date': today.strftime('%b %-d, %Y'), 'f': f, 'sp': dict(WORDS, prices=prices_folder(S, money, plan_name, what_word, low))}
+    # receipts (Betsy, Oct 19: at least 5 good examples of the huge spread): the colonoscopy first, then the same widest
+    # same-plan gaps the /v2/ hero uses, with a "Show me another" button on the receipt
+    rcs = [prices_folder(x, money, plan_name, what_word, low) for x in [S, *more]]
+    n = len(rcs)
+    for i, r in enumerate(rcs):
+        if n > 1:
+            r['l'] += f'<p class="rc-nav"><button type="button" class="rc-next">Show me another</button> <span>{i + 1} of {n}</span></p>'
+    data = {'date': today.strftime('%b %-d, %Y'), 'f': f, 'sp': dict(WORDS, prices=rcs[0]), 'receipts': rcs}
     # WORDS entries for watch only change part of a folder: merge onto the template's own words in the browser
     data['sp']['watch'] = {**data['sp']['watch'], '_merge': True}
     blob = json.dumps(data, ensure_ascii=False).replace('</', '<\\/')
     page = tpl.replace('/*__DATA__*/null', blob, 1)
     page = page.replace('Object.assign(SP,FD.sp||{});', 'Object.keys(FD.sp||{}).forEach(k=>{SP[k]=FD.sp[k]._merge?Object.assign(SP[k],FD.sp[k]):FD.sp[k]});', 1)
+    page = page.replace("drawer('prices');", "drawer('prices');var RI=0;document.addEventListener('click',function(e){if(!e.target.closest('.rc-next'))return;"
+                        "RI=(RI+1)%FD.receipts.length;SP.prices=FD.receipts[RI];drawer('prices');var b=document.querySelector('.rc-next');if(b)b.focus()});", 1)
+    page = page.replace('</style>', '.rc-nav{position:relative;z-index:3;margin:0 0 24px;max-width:40%;flex-wrap:wrap;display:flex;gap:10px;align-items:center;font:13px var(--type)}'
+                        '.rc-next{font:700 14px var(--type);background:#151515;color:#FBFBF6;border:0;padding:8px 12px;cursor:pointer}'
+                        '@media(max-width:760px){.rc-nav{max-width:none}}</style>', 1)
     out = os.path.join(site, 'folders', 'index.html')
     old = open(out, encoding='utf-8').read() if os.path.isfile(out) else ''
     changed = False
