@@ -21,6 +21,7 @@ the insurer catalog (catalog.py) and insurers/index_watch_extra.csv (added by ha
          daily like an index, so an alert opens if the insurer removes or changes it.
 
 Run:  python insurers/index_watch.py [--deep] [--evidence] [--limit N] [--dry-run]
+On GitHub, a commit message containing [deep] that touches this file or index_watch_extra.csv runs the deep check now.
 """
 import argparse
 import csv
