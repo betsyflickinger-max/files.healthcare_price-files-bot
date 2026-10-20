@@ -335,6 +335,14 @@ var calm=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').match
 c.addEventListener('click',function(){var open=!c.classList.contains('open');c.classList.toggle('open',open);c.setAttribute('aria-expanded',open);
 h.textContent=open?'Click the cabinet to close it':'Click the cabinet to open it';
 if(!open){st.hidden=true;st.classList.remove('pulled');return}
-setTimeout(function(){st.hidden=false;st.classList.add('pulled');st.scrollIntoView({behavior:calm?'auto':'smooth',block:'start'})},calm?0:380)})})();
+setTimeout(function(){st.hidden=false;
+if(calm){st.scrollIntoView({block:'start'});return}
+/* the files fly out of the open drawer into the stack (Betsy, Oct 20): one move, each folder a beat after the last */
+var src=c.querySelector('.d1 .bc-inside').getBoundingClientRect(),L=[].slice.call(st.querySelectorAll('.layer'));
+L.forEach(function(l){var r=l.getBoundingClientRect();l.style.transformOrigin='top center';l.style.transition='none';l.style.opacity='0';
+l.style.transform='translate('+(src.left+src.width/2-(r.left+r.width/2))+'px,'+(src.top-r.top)+'px) scale('+Math.min(.3,src.width/r.width)+')'});
+st.offsetHeight;
+L.forEach(function(l,i){var d=i*80;l.style.transition='transform .65s cubic-bezier(.2,.8,.2,1) '+d+'ms, opacity .25s ease '+d+'ms';l.style.transform='';l.style.opacity='1'});
+setTimeout(function(){L.forEach(function(l){l.style.transition='';l.style.transformOrigin=''});st.scrollIntoView({behavior:'smooth',block:'start'})},650+L.length*80+150)},380)})})();
 </script>
 </body></html>
