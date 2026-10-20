@@ -113,7 +113,17 @@ def ia_upload(paths, month):
         rs = upload(f"upfront-insurer-file-receipts-{month}", files={Path(p).name: p for p in paths}, metadata=md,
                     access_key=ak, secret_key=sk, retries=5, retries_sleep=30)
         bad = [r for r in rs if getattr(r, "status_code", 200) >= 300]
-        return f"archive.org HTTP {bad[0].status_code}" if bad else "archive.org: saved"
+        if bad:
+            return f"archive.org HTTP {bad[0].status_code}"
+        # Oct 20: an upload once reported success with nothing saved, so confirm the files are really in the item.
+        import time
+        for _ in range(6):
+            have = {f["name"] for f in requests.get(f"https://archive.org/metadata/upfront-insurer-file-receipts-{month}",
+                                                    timeout=60).json().get("files", [])}
+            if all(Path(p).name in have for p in paths):
+                return "archive.org: saved"
+            time.sleep(30)
+        return "archive.org: upload reported OK but the files are not in the item (check the archive.org keys)"
     except Exception as e:  # never let archive.org stop the run
         return f"archive.org: {type(e).__name__}: {str(e)[:200]}"
 
