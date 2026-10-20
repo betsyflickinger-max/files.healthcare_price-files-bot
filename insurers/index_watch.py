@@ -14,8 +14,13 @@ the insurer catalog (catalog.py) and insurers/index_watch_extra.csv (added by ha
   archive (with deep) the index file itself goes to archive.org (item upfront-insurer-index-files-<YYYY-MM>), and
          every price-file page goes to the Wayback Machine (Save Page Now), so there is a public record of what each
          insurer said it published and when.
+  evidence (Oct 20, 2026; Betsy: "what about the fact that they could delete or change it?") rows in
+         index_watch_extra.csv with kind "evidence" are files we cite on the Price File Watch (e.g. UnitedHealthcare
+         of Texas's index that names no in-network file). Each is saved to archive.org and the Wayback Machine when
+         it is added (--evidence; the push that adds it runs this) and again with every deep check, and is checked
+         daily like an index, so an alert opens if the insurer removes or changes it.
 
-Run:  python insurers/index_watch.py [--deep] [--limit N] [--dry-run]
+Run:  python insurers/index_watch.py [--deep] [--evidence] [--limit N] [--dry-run]
 """
 import argparse
 import csv
@@ -89,7 +94,7 @@ def daily_check(src, prev):
     h = check.headers(src["url"])
     if not h["ok"]:
         status = "broken"
-    elif src["kind"] == "index" and h.get("html"):
+    elif src["kind"] in ("index", "evidence") and h.get("html"):
         status = "web page, not a file"
     else:
         status = "ok"
@@ -184,6 +189,8 @@ def deep_check(src, month, archive):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--deep", action="store_true", help="also read each index and check every rate file it names")
+    ap.add_argument("--evidence", action="store_true",
+                    help="save every 'evidence' row (index_watch_extra.csv) to archive.org and the Wayback Machine now")
     ap.add_argument("--no-archive", action="store_true", help="deep check without saving to archive.org/Wayback")
     ap.add_argument("--limit", type=int, default=0, help="only the first N sources (testing)")
     ap.add_argument("--dry-run", action="store_true", help="check and print; write nothing to R2")
@@ -208,9 +215,18 @@ def main():
         store.write_csv(s3, b, f"{W}{today}.csv", rows, FIELDS)
         store.write_csv(s3, b, W + "latest.csv", rows, FIELDS)
 
+    if a.evidence and not a.deep and not a.dry_run:
+        ev = [x for x in srcs if x["kind"] == "evidence"]
+        for s in ev:
+            row, _ = deep_check(s, month, archive=True)
+            wb = wayback_save(s["url"])
+            print(f"evidence: {s['insurer']}: {row['archived'] or row['error']}; {wb}", flush=True)
+            time.sleep(8)
+        print(f"evidence: {len(ev)} files saved", flush=True)
+
     if a.deep:
         deep_rows = []
-        for s in [x for x in srcs if x["kind"] == "index"]:
+        for s in [x for x in srcs if x["kind"] in ("index", "evidence")]:
             row, missing = deep_check(s, month, archive=not a.no_archive and not a.dry_run)
             deep_rows.append(row)
             print(f"deep: {s['insurer']}: {row['links']} links, {row['missing']} of {row['checked']} checked missing "
@@ -229,7 +245,7 @@ def main():
         if s3:
             store.write_csv(s3, b, f"{W}deep/{month}.csv", deep_rows, DEEP_FIELDS)
         if not a.no_archive and not a.dry_run:
-            pages = [x for x in srcs if x["kind"] == "page"]
+            pages = [x for x in srcs if x["kind"] in ("page", "evidence")]
             saved = 0
             for p in pages:
                 saved += wayback_save(p["url"]) == "wayback"
