@@ -23,6 +23,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
+from botocore.exceptions import ClientError
 
 HERE = Path(__file__).resolve().parent
 sys.path[:0] = [str(HERE), str(HERE.parent / "bot")]
@@ -48,8 +49,11 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     # Florida, Wisconsin as ONE scope, so the national UnitedHealthcare/Cigna/Aetna files are read once for all of them
     # (provider list "Build provider list" with NY,CA,VA,DC,FL,WI and n5); tx_split.py splits rows by practice state
     "n5": ("bot/insurers/n5/", "data/scope/n5_npis_all.parquet", "data/n5/"),
+    # Arkansas (Oct 20, 2026; Betsy: ahead of CT, IL and n5): own provider list ("Build provider list" with AR and ar);
+    # pick list claude/arkansas-pick-list.md. Arkansas Blue Cross is left out while every part 1 of its files is missing (404).
+    "ar": ("bot/insurers/ar/", "data/scope/ar_npis_all.parquet", "data/ar/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
@@ -342,6 +346,14 @@ def launch(s3, b, man, now, dry):
     until the account's live machine limit is reached. Machines keep taking jobs until none are left, so files that
     don't get a machine now are picked up by the first machine that frees up."""
     queued = [m for m in man.values() if m.get("status") == "queued" and m.get("next_url")]
+    # Oct 20, 2026: a new area's files wait until its provider list exists (workflow "Build provider list"), instead of
+    # renting machines that would fail on the missing list. They go in line on the first pass after it appears.
+    if queued and not dry:
+        try:
+            s3.head_object(Bucket=b, Key=SCOPES[SCOPE][1])
+        except ClientError:
+            print(f"queue: {len(queued)} {SCOPE} files wait for the provider list {SCOPES[SCOPE][1]}")
+            return fill(s3, b, now)
     run_id = now.strftime("%Y%m%d-%H%M")
     for m in queued:
         size = SIZES.get(m["machine_group"], droplets.DEFAULT_SIZE)

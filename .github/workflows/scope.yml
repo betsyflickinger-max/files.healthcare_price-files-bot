@@ -1,6 +1,11 @@
 name: Build provider list
 
 on:
+  # Oct 20, 2026: also runs when insurers/scope_requests.txt changes, so a new state's provider list can be asked for
+  # in a commit (one line per list: "STATES NAME", e.g. "AR ar"). Every line is (re)built on each change.
+  push:
+    branches: [main]
+    paths: [insurers/scope_requests.txt]
   workflow_dispatch:
     inputs:
       state:
@@ -27,4 +32,12 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt pyarrow==26.0.0
-      - run: python insurers/build_scope.py "${{ inputs.state }}" "${{ inputs.name }}"
+      - if: github.event_name == 'workflow_dispatch'
+        run: python insurers/build_scope.py "${{ inputs.state }}" "${{ inputs.name }}"
+      - if: github.event_name == 'push'
+        run: |
+          grep -v '^[[:space:]]*#' insurers/scope_requests.txt | while read -r st nm; do
+            [ -z "$st" ] && continue
+            echo "building provider list $st -> $nm"
+            python insurers/build_scope.py "$st" "$nm" < /dev/null
+          done

@@ -11,7 +11,7 @@ on:
         type: boolean
         default: true
       scope:
-        description: "Area: dfw (the live DFW tables), tx (all of Texas, data/tx/) or s7 (first national batch: TN, CO, OK, AL, MS, MO, GA, data/s7/) or nc (North Carolina, data/nc/) or ct (Connecticut, data/ct/) or il (Illinois, data/il/) or n5 (NY, CA, VA, DC, FL, WI, data/n5/)"
+        description: "Area: dfw (the live DFW tables), tx (all of Texas, data/tx/) or s7 (first national batch: TN, CO, OK, AL, MS, MO, GA, data/s7/) or nc (North Carolina, data/nc/) or ct (Connecticut, data/ct/) or il (Illinois, data/il/) or n5 (NY, CA, VA, DC, FL, WI, data/n5/) or ar (Arkansas, data/ar/)"
         default: "dfw"
       fill:
         description: "Quick fill only (collect results, start waiting files on free machines; used by finished machines)"
@@ -93,6 +93,7 @@ jobs:
           [ -f out/insurer_alerts.md ] && mv out/insurer_alerts.md out/insurer_alerts_tx.md
           python insurers/bot.py --scope s7 $FILL || echo "::warning::first national batch (s7) pass failed"
           python insurers/bot.py --scope nc $FILL || echo "::warning::North Carolina (nc) pass failed"
+          python insurers/bot.py --scope ar $FILL || echo "::warning::Arkansas (ar) pass failed"   # Oct 20, 2026: ahead of CT, IL and n5 (Betsy)
           python insurers/bot.py --scope ct $FILL || echo "::warning::Connecticut (ct) pass failed"
           python insurers/bot.py --scope il $FILL || echo "::warning::Illinois (il) pass failed"
           python insurers/bot.py --scope n5 $FILL || echo "::warning::next five states (n5) pass failed"

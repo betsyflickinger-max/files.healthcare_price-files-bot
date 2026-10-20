@@ -1,0 +1,3 @@
+# Provider lists to build on the next push (workflow "Build provider list"): STATES NAME
+# Oct 20, 2026: Arkansas
+AR ar

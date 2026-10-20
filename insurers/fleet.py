@@ -187,10 +187,16 @@ def held_scopes(s3, b, all_jobs, names):
     return held
 
 
+# Oct 20, 2026 (Betsy: "move it ahead of them"): areas whose new files go to the front of the line, ahead of every
+# other area's new files. Re-reads of unchanged files still come last. Empty the tuple to go back to plain order.
+FIRST_SCOPES = ("ar",)
+
+
 def order(js):
-    """Claim and rent in this order: new files before re-reads of unchanged files, then the biggest first (they take
-    longest), then the oldest in line."""
-    return sorted(js, key=lambda j: (bool(j.get("backfill")), -j.get("mem", 8), j.get("enqueued_at", "")))
+    """Claim and rent in this order: new files before re-reads of unchanged files, then FIRST_SCOPES' files, then the
+    biggest first (they take longest), then the oldest in line."""
+    return sorted(js, key=lambda j: (bool(j.get("backfill")), j.get("scope") not in FIRST_SCOPES, -j.get("mem", 8),
+                                     j.get("enqueued_at", "")))
 
 
 # ---- the launcher's side ----
