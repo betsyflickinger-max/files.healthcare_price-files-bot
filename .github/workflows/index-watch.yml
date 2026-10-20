@@ -57,6 +57,8 @@ jobs:
           ARGS=""
           [ "${{ inputs.deep }}" = "true" ] && ARGS="--deep"
           [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%d)" = "03" ] && ARGS="--deep"
+          # a commit message with [deep] runs the monthly check now (e.g. to confirm a fix)
+          case "${{ github.event.head_commit.message }}" in *"[deep]"*) ARGS="--deep" ;; esac
           { [ "${{ inputs.evidence }}" = "true" ] || [ "${{ github.event_name }}" = "push" ]; } && ARGS="$ARGS --evidence"
           python insurers/index_watch.py $ARGS
       - run: cat out/index_summary.md >> "$GITHUB_STEP_SUMMARY"

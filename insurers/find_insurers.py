@@ -192,7 +192,13 @@ ALIASES = {"Aetna": r"aetna", "Alliant": r"alliant", "Ambetter": r"ambetter", "A
            "BCBSOK": r"blue ?cross.*oklahoma", "BCBST": r"blue ?cross.*tennessee", "BCBSTX": r"blue ?cross.*texas",
            "BSW Health Plan": r"baylor scott", "Blue KC": r"blue ?cross.*kansas city|blue ?kc", "Cigna": r"cigna",
            "Curative": r"curative", "CHRISTUS Health Plan": r"christus", "Community Health Choice": r"community health choice",
-           "Moda": r"\bmoda\b", "Oscar": r"oscar", "UnitedHealthcare": r"united ?health", "Wellpoint": r"wellpoint"}
+           "Moda": r"\bmoda\b", "Oscar": r"oscar", "UnitedHealthcare": r"united ?health", "Wellpoint": r"wellpoint",
+           # Oct 20, 2026: reading-list insurers that had no pattern, so they were searched as if missing
+           "QualChoice": r"qualchoice|\bqca health", "ConnectiCare": r"connecticare", "AmeriHealth Caritas Next": r"amerihealth caritas",
+           "AvMed": r"\bavmed", "Fidelis Care (Ambetter)": r"fidelis", "Health First Health Plans": r"health first",
+           "Health Net (Ambetter)": r"health ?net", "Independent Health": r"independent health",
+           "Kaiser Permanente": r"kaiser", "Western Health Advantage": r"western health advantage",
+           "BCBSNC": r"blue ?cross.*north carolina|bcbsnc", "Healthfirst": r"healthfirst"}
 # companies whose files we already know how to find nationally (one company-wide listing covers every state)
 NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r"aetna", "Oscar": r"oscar",
             "Ambetter (Centene)": r"ambetter", "Anthem / Wellpoint (Elevance)": r"anthem|wellpoint|empire blue"}
@@ -201,7 +207,7 @@ NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r
 def known_networks():
     """(scope states, reading-list insurer) the bot already reads."""
     known = []
-    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"}), ("networks_n5.csv", {"NY", "CA", "VA", "DC", "FL", "WI"}), ("networks_ar.csv", {"AR"})):
+    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"}), ("networks_n5.csv", {"NY", "CA", "VA", "DC", "FL", "WI"}), ("networks_ar.csv", {"AR"}), ("networks_nyhf.csv", {"NY"})):
         p = ROOT / "insurers" / f
         if p.exists():
             for r in csv.DictReader(open(p, encoding="utf-8")):

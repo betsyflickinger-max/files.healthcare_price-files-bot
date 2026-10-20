@@ -1,0 +1,43 @@
+name: Coverage checklist
+
+# Oct 20, 2026 (Betsy: "make sure we're covering every single insurer that would be required to participate").
+# insurers/coverage.py: every insurer with members on the federal Medical Loss Ratio list, each with its status
+# (reading / files found / broken / portal only / not found / not searched), plus every claims administrator named on
+# a health plan's Form 5500 Schedule C. Runs daily after the insurer index watch, so "broken" reflects today's checks.
+# Output: R2 bot/coverage/ (insurers.csv, states.csv, admins.csv, summary.json, report.md), control/data/coverage_insurers.json,
+# and this run's summary page on GitHub.
+
+on:
+  schedule:
+    - cron: "17 15 * * *"   # every day, 10:17am Central (after the 8:41am index watch)
+  push:
+    branches: [main]
+    paths: [insurers/coverage.py, insurers/find_insurers.py, data/insurer_sources.csv, insurers/mlr/master_insurers.csv]
+  workflow_dispatch:
+
+concurrency:
+  group: coverage-checklist
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt duckdb
+      - run: python insurers/coverage.py --admins
+      - run: cat out/coverage/report.md >> "$GITHUB_STEP_SUMMARY"
+        if: always()
