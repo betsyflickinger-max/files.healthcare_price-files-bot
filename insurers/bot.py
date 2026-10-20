@@ -49,11 +49,14 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     # Florida, Wisconsin as ONE scope, so the national UnitedHealthcare/Cigna/Aetna files are read once for all of them
     # (provider list "Build provider list" with NY,CA,VA,DC,FL,WI and n5); tx_split.py splits rows by practice state
     "n5": ("bot/insurers/n5/", "data/scope/n5_npis_all.parquet", "data/n5/"),
+    # Healthfirst (NY marketplace), Oct 20, 2026 (Betsy: yes, in as many pieces as needed): 6,137 plain-JSON files, about
+    # 2 TB, read in its own scope so the five states' pages don't wait on it; its New York tables join New York's build later
+    "nyhf": ("bot/insurers/nyhf/", "data/scope/nyhf_npis_all.parquet", "data/nyhf/"),
     # Arkansas (Oct 20, 2026; Betsy: ahead of CT, IL and n5): own provider list ("Build provider list" with AR and ar);
     # pick list claude/arkansas-pick-list.md. Arkansas Blue Cross is left out while every part 1 of its files is missing (404).
     "ar": ("bot/insurers/ar/", "data/scope/ar_npis_all.parquet", "data/ar/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
