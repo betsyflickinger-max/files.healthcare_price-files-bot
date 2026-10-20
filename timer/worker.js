@@ -24,6 +24,9 @@ const JOBS = [
   ['40 16 * * *', 'dashboard.yml'],
   ['41 7 * * 0', 'find-sites.yml'],
   ['11 13 5 * *', 'plans.yml'],
+  ['41 13 * * *', 'index-watch.yml'],                                           // every insurer index + page, daily
+  ['51 14 3 * *', 'index-watch.yml', { deep: 'true' }],                        // monthly deep check: every rate file link (receipts)
+  ['23 12 7 * *', 'receipts.yml'],                                             // national file receipts, after catalogs + deep check
 ];
 
 function part(spec, v, min, max) {
