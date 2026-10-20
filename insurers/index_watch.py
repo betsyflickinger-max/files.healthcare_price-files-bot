@@ -47,7 +47,9 @@ import store  # noqa: E402
 
 W = "bot/watch/indexes/"
 DEEP_MAX_MB = 400      # indexes bigger than this (Anthem 11 GB, UHC's 68,000 small ones) are left to catalog.py
-LINK_CAP = 3000        # rate-file links checked per index in the deep check (evenly sampled when there are more)
+LINK_CAP = 20000       # rate-file links checked per index in the deep check (evenly sampled when there are more)
+RECEIPT_FIELDS = ["checked_on", "insurer", "state", "index_url", "file_name", "url", "http", "bytes", "last_modified",
+                  "etag", "answered", "error"]
 THREADS = 16
 FIELDS = ["checked_on", "insurer", "state", "kind", "url", "http", "status", "size", "last_modified", "etag",
           "changed", "error", "source"]
@@ -183,6 +185,12 @@ def deep_check(src, month, archive):
     missing = [(u, r["http"] or r["error"][:60]) for u, r in res if not r["ok"]]
     row.update(checked=len(sample), missing=len(missing),
                missing_examples=" | ".join(u.split("?")[0].rsplit("/", 1)[-1] for u, _ in missing[:3]))
+    # Receipts (Oct 20, 2026): one row per rate file checked, from the server's own answer (no download), so there is
+    # a record of every file the index named, its size and date, even if the insurer later deletes or changes it.
+    row["receipts"] = [dict(checked_on=row["checked_on"], insurer=src["insurer"], state=src["state"],
+                            index_url=src["url"].split("?")[0], file_name=u.split("?")[0].rsplit("/", 1)[-1],
+                            url=u.split("?")[0], http=r["http"], bytes=r["size"], last_modified=r["last_modified"],
+                            etag=r["etag"], answered="yes" if r["ok"] else "no", error=r["error"][:120]) for u, r in res]
     return row, missing
 
 
@@ -228,6 +236,10 @@ def main():
         deep_rows = []
         for s in [x for x in srcs if x["kind"] in ("index", "evidence")]:
             row, missing = deep_check(s, month, archive=not a.no_archive and not a.dry_run)
+            rec = row.pop("receipts", [])
+            if s3 and rec:
+                store.write_csv(s3, b, f"bot/receipts/{month}/watch/{slug(s['insurer'])}_"
+                                f"{hashlib.sha256(s['url'].encode()).hexdigest()[:8]}.csv", rec, RECEIPT_FIELDS)
             deep_rows.append(row)
             print(f"deep: {s['insurer']}: {row['links']} links, {row['missing']} of {row['checked']} checked missing "
                   f"{row['error']}", flush=True)
