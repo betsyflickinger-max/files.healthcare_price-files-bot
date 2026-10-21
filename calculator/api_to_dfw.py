@@ -81,14 +81,14 @@ def raw_strings(c):
     unit = " per Stay" if "per stay" in ds else " per Day" if "per day" in ds else ""
     if "no charge" in co:
         copay = "No Charge after deductible" if "after" in co else "No Charge"
-    elif amt and float(amt) > 0:
+    elif amt is not None and amt != "" and (float(amt) > 0 or "copay" in co):
         when = " after deductible" if "after" in co else " with deductible" if "with" in co else ""
         copay = f"${float(amt):,.2f}" + (f" Copay{unit}{when}" if unit or when else "")
     else:
         copay = "Not Applicable"
     if "no charge" in ci:
         coins = "No Charge after deductible" if "after" in ci else "No Charge"
-    elif rate is not None and float(rate) > 0:
+    elif rate is not None and rate != "" and (float(rate) > 0 or "coinsurance" in ci):
         pct = float(rate) * 100 if float(rate) <= 1 else float(rate)
         coins = f"{pct:.2f}%" + (" Coinsurance after deductible" if "after" in ci else "")
     else:
@@ -149,6 +149,8 @@ def build(cl, year, prev):
               .drop_duplicates(["insurer", "network_url"]).set_index(["insurer", "network_url"])) if pv is not None else None
 
     rows, cs = [], []
+    want = {" ".join(n.lower().split()): n for n in BENEFITS}   # match names ignoring case/spacing
+    seen_other, moop_kinds = {}, set()
     stamp = dt.date.today().isoformat()
     for pid, sfx, label, csr_word, p in variants:
         iss = (p.get("issuer") or {}).get("name", "").strip()
@@ -174,14 +176,21 @@ def build(cl, year, prev):
             dfw_counties="; ".join(sorted(found[pid][1])), sbc_url=p.get("benefits_url", ""), brochure_url=p.get("brochure_url", ""),
             network_url=p.get("network_url", ""), referral_required="Yes" if p.get("specialist_referral_required") else "No",
             source=f"HealthCare.gov Marketplace API {year} (pulled {stamp})", deductible_for_calc=t_ded or m_ded))
+        for m in p.get("moops") or []:
+            moop_kinds.add((m.get("type"), m.get("family"), m.get("family_cost"), m.get("network_tier")))
         for b in p.get("benefits") or []:
-            if b.get("name") not in BENEFITS:
+            name = want.get(" ".join((b.get("name") or "").lower().split()))
+            if not name:
+                seen_other[b.get("name")] = seen_other.get(b.get("name"), 0) + 1
                 continue
+            b = {**b, "name": name}
             shares = [c for c in b.get("cost_sharings") or [] if (c.get("network_tier") or "In-Network") == "In-Network"]
             c = ([x for x in shares if csr_word in (x.get("csr") or "")] or shares or [{}])[0]
             copay, coins = raw_strings(c)
             cs.append(dict(plan_id=f"{pid}-{sfx}", benefit=b["name"], is_covered="Covered" if b.get("covered") else "Not Covered",
                            copay_raw=copay, coinsurance_raw=coins, **parse(copay, coins), notes=(b.get("explanation") or "").strip()))
+    print("API benefit names not used (name: plans):", dict(sorted(seen_other.items())))
+    print("API moop kinds (type, family, family_cost, tier):", sorted(moop_kinds, key=str))
     pl = pd.DataFrame(rows).sort_values("plan_id").reset_index(drop=True)
     cols = ["plan_id", "benefit", "is_covered", "copay_raw", "coinsurance_raw", "copay_amount", "copay_unit", "copay_timing",
             "coinsurance_pct", "coinsurance_timing", "deductible_applies", "cost_share_type", "notes"]
@@ -202,6 +211,8 @@ def check(pl, cs, ref, year):
     k = ["plan_id", "benefit"]
     m = cs.merge(rc, on=k, suffixes=("_api", "_puf"))
     print(f"cost-sharing rows: API {len(cs)}, PUF {len(rc)}, both {len(m)}")
+    miss = rc.merge(cs[k], on=k, how="left", indicator=True).query("_merge == 'left_only'")
+    print("  PUF rows the API lacks, by benefit:", miss.benefit.value_counts().to_dict())
     for col in ["copay_amount", "copay_unit", "copay_timing", "coinsurance_pct", "coinsurance_timing", "deductible_applies"]:
         x, y = m[col + "_api"].astype(str).str.replace(".0", "", regex=False), m[col + "_puf"].astype(str).str.replace(".0", "", regex=False)
         bad = m[x != y]
