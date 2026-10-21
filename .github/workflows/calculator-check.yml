@@ -1,0 +1,47 @@
+name: Plan Calculator API check
+
+# One-off proof that the HealthCare.gov Marketplace API matches CMS's official plan files (PUFs).
+# Builds a year from the API and compares it cell by cell with the PUF build already in
+# calculator/data/<year>/. Writes nothing to main or R2; posts the result as an issue.
+on:
+  workflow_dispatch:
+    inputs:
+      year:
+        description: "Year that already has a PUF build to compare against"
+        default: "2026"
+  push:
+    branches: [main]
+    paths: [.github/workflows/calculator-check.yml]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GH_TOKEN: ${{ github.token }}
+      MARKETPLACE_API_KEY: ${{ secrets.MARKETPLACE_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pandas==2.2.3
+      - name: Build from the API and compare
+        run: |
+          Y="${{ inputs.year }}"; [ -z "$Y" ] && Y=2026
+          set +e
+          python calculator/api_to_dfw.py $Y --out work --check calculator/data/$Y > check.txt 2>&1
+          rc=$?
+          set -e
+          cat check.txt
+          { echo "Marketplace API build of $Y compared with the CMS plan files (PUF) build in \`calculator/data/$Y/\`. Exit code $rc."
+            echo; echo "Network names are blank in this test (no $((Y-1)) tables to copy them from), so network differences are expected."
+            echo; echo '```'; tail -c 60000 check.txt; echo '```'
+          } > issue.md
+          gh issue create --title "Marketplace API check: $Y (exit $rc)" --body-file issue.md
+          exit $rc
