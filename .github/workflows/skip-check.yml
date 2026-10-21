@@ -1,0 +1,49 @@
+name: Skipped-network check
+
+# Oct 21, 2026 (Betsy: yes): what do the pick lists leave out? insurers/skip_check.py.
+#   pick:    choose a sample of left-out networks from the newest catalogs; the network list (artifact) is committed as
+#            insurers/networks_skip<area>.csv only after Betsy OKs its GB (machine-rules.md rule 3).
+#   compare: after the insurer bot has read the sample (scope skip<area>), compare its prices with the kept networks.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cmd:
+        description: "pick or compare"
+        default: "pick"
+      area:
+        description: "Area whose kept networks are already read (il)"
+        default: "il"
+      insurers:
+        description: "pick: insurers, comma separated"
+        default: "uhc,aetna"
+      n:
+        description: "pick: networks per insurer"
+        default: "10"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt duckdb==1.5.6
+      - if: ${{ inputs.cmd == 'pick' }}
+        run: |
+          mkdir -p out
+          python insurers/skip_check.py pick --area "${{ inputs.area }}" --insurers "${{ inputs.insurers }}" --n "${{ inputs.n }}" > "out/networks_skip${{ inputs.area }}.csv"
+      - if: ${{ inputs.cmd == 'compare' }}
+        run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skip-check-${{ inputs.cmd }}-${{ inputs.area }}
+          path: out/
