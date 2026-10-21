@@ -29,6 +29,24 @@ def sig(s): return {w for w in words(s) if w not in STOP and len(w) > 2}
 def ein(t):
     d = re.sub(r'\D', '', t or '')
     return d if len(d) == 9 else None
+def top1(c):
+    """Most common item, ties broken by the item itself, so every machine names a practice the same way (Oct 21, 2026: two
+    machines building Georgia disagreed on ~17 names because Counter.most_common breaks ties by insertion order, and that
+    order came from set iteration, which changes with each process's string hashing)."""
+    return min(c.items(), key=lambda kv: (-kv[1], str(kv[0]))) if c else None
+def spell_key(name): return re.sub(r'[^a-z0-9]', '', (name or '').lower())
+def same_spelling(prac):
+    """One spelling per name (Oct 21, 2026, Betsy): "Northland Hearing Centers Inc", "..., Inc" and "..., Inc." differ only in
+    punctuation, spacing or capitals, so every practice gets the spelling most of them use (ties: the longest, then A-Z).
+    Different words (Inc vs LLC) stay as they are: those can be different legal companies. Changes prac in place."""
+    by = collections.defaultdict(collections.Counter)
+    for v in prac.values():
+        if v[0] and v[2] != 's': by[spell_key(v[0])][v[0]] += 1
+    pick = {k: min(c.items(), key=lambda kv: (-kv[1], -len(kv[0]), kv[0]))[0] for k, c in by.items() if len(c) > 1}
+    n = 0
+    for v in prac.values():
+        if v[0] and v[2] != 's' and (w := pick.get(spell_key(v[0]))) and w != v[0]: v[0] = w; n += 1
+    return n
 def tidy(name):
     """IRS and CMS names are upper case: title-case them the way the page does provider names."""
     if not name or not name.isupper(): return name
@@ -46,27 +64,28 @@ def name_all(raw, ptab, npis, con, s3=None, bucket=None, workdir='/tmp'):
             if s3 and not os.path.exists(p): s3.download_file(bucket, k, p)
         need = sorted({npis[i] for v in raw.values() for i in v['d']})
         con.execute('create or replace temp table need_ as select unnest(?::varchar[]) npi', [need])
-        for n, org in con.execute(f"select d.npi, d.org from read_parquet('{workdir}/dac.parquet') d join need_ using (npi)").fetchall():
+        for n, org in con.execute(f"select d.npi, d.org from read_parquet('{workdir}/dac.parquet') d join need_ using (npi) order by 1, 2").fetchall():
             dac.setdefault(n, set()).add(org)
         eins = sorted({e for v in raw.values() for e in [ein(v.get('t'))] if e})
         con.execute('create or replace temp table eins_ as select unnest(?::varchar[]) ein', [eins])
-        irs = dict(con.execute(f"select i.ein, i.nm from read_parquet('{workdir}/irs.parquet') i join eins_ using (ein)").fetchall())
+        irs = dict(con.execute(f"select i.ein, min(i.nm) from read_parquet('{workdir}/irs.parquet') i join eins_ using (ein) group by 1").fetchall())
     except Exception as e:
         print('practice names: public name lists not available, using solo/no-name only:', repr(e)[:150], flush=True)
     out = {}
     for pid, v in raw.items():
         d = sorted(v['d']); cities = collections.Counter(ptab[i][1] for i in d if ptab[i][1])
-        city = cities.most_common(1)[0][0] if cities else ''
+        city = top1(cities)[0] if cities else ''
         orgs = v.get('o') or collections.Counter()
-        org_name = ptab[orgs.most_common(1)[0][0]][0] if orgs else ''
-        med = collections.Counter(o for i in d for o in dac.get(npis[i], ()))
-        top = med.most_common(1)[0] if med else None
+        org_name = ptab[top1(orgs)[0]][0] if orgs else ''
+        med = collections.Counter(o for i in d for o in sorted(dac.get(npis[i], ())))
+        top = top1(med)
         e = ein(v.get('t'))
         if len(d) == 1 and not (e and e in irs): out[pid] = [ptab[d[0]][0], ptab[d[0]][1], 's', d]
         elif e and e in irs: out[pid] = [tidy(irs[e]), city, 'i', d]
         elif org_name and top and sig(org_name) & sig(top[0]): out[pid] = [org_name, city, 'b', d]
         elif top and top[1] / len(d) > 0.5 and not org_name: out[pid] = [tidy(top[0]), city, 'm', d]   # an organization NPI that disagrees = conflicting sources: no name
         else: out[pid] = ['', city, 'n', d]
+    same_spelling(out)
     return out
 
 
@@ -84,7 +103,7 @@ def refresh_sources():
     con = duckdb.connect()
     con.execute(f"""copy (select distinct NPI npi, "Facility Name" org from read_csv_auto('{d}/dac.csv', all_varchar=true)
                     where "Facility Name" <> '') to '{d}/dac.parquet' (format parquet)""")
-    con.execute(f"""copy (select EIN ein, any_value(NAME) nm from read_csv_auto('{d}/eo*.csv', all_varchar=true, union_by_name=true)
+    con.execute(f"""copy (select EIN ein, min(NAME) nm from read_csv_auto('{d}/eo*.csv', all_varchar=true, union_by_name=true)
                     group by EIN) to '{d}/irs.parquet' (format parquet)""")
     s3.upload_file(f'{d}/dac.parquet', E['R2_BUCKET'], K_DAC); s3.upload_file(f'{d}/irs.parquet', E['R2_BUCKET'], K_IRS)
     # CMS Hospital Enrollments (each hospital's NPIs and CMS number), for the list-price math's hospital links

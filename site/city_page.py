@@ -135,6 +135,9 @@ def practice_and_list_price(page, s3, B, out):
     except Exception as e:
         print('hospital links for the list-price math not built (the page shows percentages alone):', repr(e)[:200])
     D['hlink'] = hl
+    if D.get('prac'):   # Oct 21, 2026: one spelling per practice name, also for builds made before practice_names did it
+        import practice_names
+        print('practice names respelled:', practice_names.same_spelling(D['prac']))
     s = join(pre, D, post)
     s = list_price_math.patch(practice_view.patch(s))
     open(page, 'w', encoding='utf-8').write(s)
