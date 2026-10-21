@@ -282,6 +282,7 @@ def redo(areas):
 
 
 IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
+PUBLISH_TRIES = 3          # Oct 21, 2026: how many times a state page's publish step is tried before it is left failed
 
 
 def publish_one(O, st, a, how):
@@ -316,6 +317,18 @@ def state_by_state(O, st):
             st['published'].pop(a, None); st['launches'].pop(f'h2-{a}', None); st['stage'] = 'h2'
             try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{a}.done')
             except Exception: pass
+    # Oct 21, 2026 (Betsy): a page whose publish step failed is tried again on the next runs, up to PUBLISH_TRIES times in
+    # all. Before this, a failed publish was recorded once and never retried (Connecticut was built Oct 18 and sat unpublished
+    # for three days after city_page.py was fixed). After the last try it stays "failed" and the run log says so.
+    tries = st.setdefault('publish_tries', {})
+    for a in areas:
+        if str(st['published'].get(a, '')).startswith('failed: page not published'):
+            if tries.get(a, 1) < PUBLISH_TRIES:
+                tries[a] = tries.get(a, 1) + 1
+                O.log(a, 'publish failed before: trying again (try', tries[a], 'of', PUBLISH_TRIES, ')')
+                st['published'].pop(a, None)
+            else:
+                O.log(a, 'STILL NOT PUBLISHED after', PUBLISH_TRIES, 'tries: see the publish step in earlier runs')
     ready = [a for a in areas if O.exists(f'site/every-st/{a}/{month}/embed.json')]
     done = {k.rsplit('/', 1)[1][:-5] for k in O.ls(SP + 'h2/')}
     busy = 0
