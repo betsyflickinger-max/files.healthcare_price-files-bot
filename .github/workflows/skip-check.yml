@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       cmd:
-        description: "pick or compare"
+        description: "pick, queue (check + queue the sample files; run again to collect results) or compare"
         default: "pick"
       area:
         description: "Area whose kept networks are already read (il)"
@@ -30,6 +30,9 @@ jobs:
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -41,9 +44,14 @@ jobs:
         run: |
           mkdir -p out
           python insurers/skip_check.py pick --area "${{ inputs.area }}" --insurers "${{ inputs.insurers }}" --n "${{ inputs.n }}" > "out/networks_skip${{ inputs.area }}.csv"
+      # Oct 21, 2026: run here, not in the 10-minute insurer pass. With Healthfirst's 6,137 files in the queue that pass
+      # spends ~50 minutes per area and hits its 60-minute limit before reaching skipil.
+      - if: ${{ inputs.cmd == 'queue' || inputs.cmd == 'compare' }}
+        run: python insurers/bot.py --scope "skip${{ inputs.area }}"
       - if: ${{ inputs.cmd == 'compare' }}
         run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
       - uses: actions/upload-artifact@v4
         with:
           name: skip-check-${{ inputs.cmd }}-${{ inputs.area }}
           path: out/
+          if-no-files-found: ignore
