@@ -1,0 +1,200 @@
+[
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera PBC PPO (Heritage) network - W00008 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_W00008_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.767,
+  "plan_ids": 594,
+  "status": "Works",
+  "note": "Linked from 553 of Premera's 554 October indexes (Premera's own + employer indexes); 594 plan ids. "
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera PBC PAR network - W00005 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_W00005_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.767,
+  "plan_ids": 594,
+  "status": "Works",
+  "note": "Linked from 553 of Premera's 554 October indexes (Premera's own + employer indexes); 594 plan ids. Not a copy of W00008 by size alone (766.9 vs 766.6 MB); kept separate."
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera WA Heritage Signature / LifeWise WA Connect PCP - W00020 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_W00020_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.762,
+  "plan_ids": 21,
+  "status": "Works",
+  "note": "Linked from 1 of Premera's 554 October indexes (Premera's own + employer indexes); 21 plan ids. Small-group metal plans (Balance ...)."
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera Heritage Prime network - W00019 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_W00019_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.757,
+  "plan_ids": 20,
+  "status": "Works",
+  "note": "Linked from 20 of Premera's 554 October indexes (Premera's own + employer indexes); 20 plan ids. "
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera Blue Cross HMO Sherwood HMO - W00044 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_W00044_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.405,
+  "plan_ids": 5,
+  "status": "Works",
+  "note": "Linked from 1 of Premera's 554 October indexes (Premera's own + employer indexes); 5 plan ids. Index: 2026-10-02_PREMERA-BLUE-CROSS-HMO_index.json.gz."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Regence Preferred - Washington providers (WPPO)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WPPO_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.94,
+  "plan_ids": 4834,
+  "status": "Works",
+  "note": "4834 plan ids across Regence/Asuris indexes link it, 2113 of them Regence BlueShield's. File WPPO_NonRLRX, last modified 10 Sep 2026. Each Regence plan links all four Regence states' provider files; this row is the file for providers in this state."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Regence Participating - Washington providers (WPAR)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WPAR_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.94,
+  "plan_ids": 4542,
+  "status": "Works",
+  "note": "4542 plan ids across Regence/Asuris indexes link it, 2113 of them Regence BlueShield's. File WPAR_NonRLRX, last modified 10 Sep 2026. Network name inside file: 'Washington Participating Network' (WPPO says 'Washington PPO Network'); rates differ in a spot check, so both kept."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Regence Individual Connect - Washington providers (WRCN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WRCN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.847,
+  "plan_ids": 60,
+  "status": "Works",
+  "note": "60 plan ids across Regence/Asuris indexes link it, 12 of them Regence BlueShield's. File WRCN_NonRLRX, last modified 11 Sep 2026. Individual market (Cascade plans)."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Blue High Performance Network - Washington providers (WHPN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WHPN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.224,
+  "plan_ids": 9,
+  "status": "Works",
+  "note": "9 plan ids across Regence/Asuris indexes link it, 0 of them Regence BlueShield's. File WHPN_NonRLRX, last modified 11 Sep 2026. Regence's own BlueHPN contracts in WA."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Asuris / Preferred - eastern WA providers (WANH)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WANH_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.112,
+  "plan_ids": 803,
+  "status": "Works",
+  "note": "803 plan ids across Regence/Asuris indexes link it, 0 of them Regence BlueShield's. File WANH_NonRLRX, last modified 10 Sep 2026. Used by Asuris (421 plan ids) and Regence Idaho (382)."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Individual Connect - eastern WA providers (WECN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WECN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.091,
+  "plan_ids": 19,
+  "status": "Works",
+  "note": "19 plan ids across Regence/Asuris indexes link it, 0 of them Regence BlueShield's. File WECN_NonRLRX, last modified 11 Sep 2026. Used by Regence Idaho and Asuris individual plans."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Accountable Health Network - MultiCare EPO (WMULTI)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WMULTI_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.064,
+  "plan_ids": 186,
+  "status": "Works",
+  "note": "186 plan ids across Regence/Asuris indexes link it, 186 of them Regence BlueShield's. File WMULTI_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Accountable Health Network - Eastside Health Network EPO (WEHPOL)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WEHPOL_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.052,
+  "plan_ids": 4,
+  "status": "Works",
+  "note": "4 plan ids across Regence/Asuris indexes link it, 4 of them Regence BlueShield's. File WEHPOL_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Accountable Health Network - UW Medicine (WUOFWA)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WUOFWA_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.03,
+  "plan_ids": 183,
+  "status": "Works",
+  "note": "183 plan ids across Regence/Asuris indexes link it, 183 of them Regence BlueShield's. File WUOFWA_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueShield (WA)",
+  "network_label": "Custom - UMP Achieve 1 (WA Health Care Authority) (WUMP)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueShield-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_WUMP_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.029,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "1 plan ids across Regence/Asuris indexes link it, 1 of them Regence BlueShield's. File WUMP_NonRLRX, last modified 11 Sep 2026. 1 plan id but it is the state employee UMP plan."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Navigator (PPO) - WA",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00188-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53124-45.c000.json",
+  "parts": 9,
+  "gb": 1.134,
+  "plan_ids": 146,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: WA Navigator Silver (WMN10274). 146 WA Navigator plans; median plan's set is only 0.027 GB. Markets {'group': 16, 'individual': 130}."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Voyager - WA",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00170-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53104-52.c000.json",
+  "parts": 9,
+  "gb": 1.193,
+  "plan_ids": 15,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: WA Voyager Platinum (WMV10116). 15 WA Voyager plans; median plan's set is only 0.617 GB. Markets {'group': 15}."
+ },
+ {
+  "insurer": "Community Health Plan of Washington",
+  "network_label": "Cascade Select (individual)",
+  "index_url": "",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": null,
+  "status": "Not found",
+  "note": "Transparency page lists no files; the Oct 14 lead was a short-lived signed blob link to an allowed-amounts file; the storage account refuses listing."
+ }
+]

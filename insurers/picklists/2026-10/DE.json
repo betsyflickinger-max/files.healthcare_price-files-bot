@@ -1,0 +1,46 @@
+[
+ {
+  "insurer": "Highmark BCBS Delaware",
+  "network_label": "Highmark BCBS Delaware - DE PPO (Non Product) (000000803)",
+  "index_url": "https://mrfdata.hmhs.com/files/070/del/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_Delaware_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/070/del/inbound/local/2026-09-21_000000803_in-network-rates_01_of_02.json.gz",
+  "parts": 2,
+  "gb": 0.002,
+  "plan_ids": 86,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-16. Highmark-hosted local file (DE PPO), reporting entity \"Highmark DE.\"; parts 2 has the facility (MS-DRG, RC) rates."
+ },
+ {
+  "insurer": "Highmark BCBS Delaware",
+  "network_label": "Highmark BCBS Delaware - Blue Choice (070_09B0)",
+  "index_url": "https://mrfdata.hmhs.com/files/070/del/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_Delaware_index.json",
+  "sample_file_url": "https://highmarkbcbsde.mrf.bcbs.com/2026-10_070_09B0_in-network-rates_01_of_02.json.gz?&Expires=1795269681&Signature=L6uF62uKalNNqD5pbF16Cx6SiCsa4JIASgFZ2DXNjyPS18G1reuiNaDwtd~mYWMms2~7begZualmdQIbwCCjh-Up3vD~SMSC6MhTnCgiGL2RvEdSzAsQQNyYMTo5e0G~pnOa~cQIcPOAcm2M5NTiH5LoDDaaJGU~9Vwece6zaX4k-Aal7get7VmxvEo73Ky-5oa6McWydxemuWgzwPDBtO5I8RctKRkC15DoWmowFP3hFxxqSrw1oK-uNw4OqhFzgzVs~NygJPEHr~m7NDXf3sDlzWrGBxIs4OEOjx--ozF12VBZu4~V1u6PlIsCbSnWbR9kKeWFNiANC3LC837RkQ__&Key-Pair-Id=K27TQMT39R1C8A",
+  "parts": 2,
+  "gb": 0.002,
+  "plan_ids": 85,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-01. Delaware home network (plan code 070) in BlueCard format, highmarkbcbsde.mrf.bcbs.com copy; also linked from every other Highmark index as a BlueCard file. Read this DE copy once."
+ },
+ {
+  "insurer": "Highmark BCBS Delaware",
+  "network_label": "Highmark BCBS Delaware - Blue Classic (070_09D0)",
+  "index_url": "https://mrfdata.hmhs.com/files/070/del/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_Delaware_index.json",
+  "sample_file_url": "https://highmarkbcbsde.mrf.bcbs.com/2026-10_070_09D0_in-network-rates_01_of_02.json.gz?&Expires=1795269681&Signature=CAbSuK87z~13pDOOfMcavdjH3aok807thSH0wumizJadOmrBYH75C9ZX7~qAaWKBy5O8HmhK0rL9Qrg061YrhSfL5krtUN6slwA-kKRzZpRjR6PonF7DF37CYy~9d~5kNxKcU7QBDXU7HFwDfnntH6aRlNKd-ScHkRFXseK5pgUjdvIqyIhRGZ-7jRa0NtLahEnmAkpKZTLexim9jzGZVgrUXpxCWfSl9jeYe0U5~moKBOG12osnXCucLzkYb5D9bx0W5D9q0DCUaod9ljStf1~nEoJQVw-4C~ceShwapvja9BTLsYTANQavB07QtCnFDZgw9JpZScyvRUNkmG9nbA__&Key-Pair-Id=K27TQMT39R1C8A",
+  "parts": 2,
+  "gb": 0.0,
+  "plan_ids": 3,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-01. Small traditional network (268 provider groups in part 1)."
+ },
+ {
+  "insurer": "AmeriHealth Caritas Next (Independence family)",
+  "network_label": "AmeriHealth Caritas VIP Next DE Exchange (23 contract files)",
+  "index_url": "https://www.amerihealthcaritasnext.com/content/dam/amerihealth-caritas/acnext/json/2026/2026-10-02_amerihealthcaritas_vip_next_inc_index.json",
+  "sample_file_url": "https://www.amerihealthcaritasnext.com/content/dam/amerihealth-caritas/acnext/json/tic/S-DEEXFQPCP001-innetwork-1.json",
+  "parts": 23,
+  "gb": 0.024,
+  "plan_ids": 10,
+  "status": "Works",
+  "note": "Same per-contract layout as the NC/FL lists (one small file per contract: S-DEEXFQPCP001, S-DEEXFQSPEC01, S-DEEXHHCCHS01, S-DEEXHOSP0002, S-DEEXHOSP0100, S-DEEXHOSPBEBE, S-DEEXHOSPNCHS, S-DEEXHOSPSUNB, S-DEEXIRF00001, S-DEEXSIGNFY01, S-DEEXSNF00001, S-DEEXSPEC0009, S-NATDEEXAMSDE, S-NATDEEXBOND1, S-NATDEEXCSID1, S-NATDEEXEDHCS, S-NATDEEXINFUC, S-NATDEEXOPTUM, S-NATDEEXOWCH0, S-NATDEEXPCP01, S-NATDEEXQUEST, S-NATDEEXSPEC1, S-NATDEEXTRUHR). All 23 files list the same 10 individual-market HIOS plans."
+ }
+]

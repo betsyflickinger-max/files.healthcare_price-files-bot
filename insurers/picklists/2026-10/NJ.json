@@ -1,0 +1,101 @@
+[
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon Managed Care network (MGCN)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_MANAGED-CARE-BCBSA-Horizon-Healthcare-Services-Inc_MGCN_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 1.128,
+  "plan_ids": 11,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. Near-copy under the HMO company (Horizon Healthcare of New Jersey, \"-i\" index, 1,127,838,052 vs 1,127,609,332 bytes): read this copy."
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon Managed Care - individual and small group (MCEX)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-07-12_Horizon-BCBSNJ_MANAGED-CARE-INDIVIDUAL-AND-SMALL-GROUP-Horizon-Healthcare-Services-Inc_MCEX_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 1.092,
+  "plan_ids": 12,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. Two near-copies under the HMO company in the \"-i\" index (1,092,248,105 and 1,092,338,973 bytes): read this copy."
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon OMNIA Tier 1 (OMT1)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_OMNIA-Horizon-Healthcare-Services-Inc_OMT1_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 0.787,
+  "plan_ids": 16,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. Near-copy for individual/small market (OMNIA-INDIVIDUAL-SMALL-MARKET OMT1, 787,445,669 vs 787,327,472 bytes): read this copy."
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon OMNIA Tier 2 (OMT2)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_OMNIA-Horizon-Healthcare-Services-Inc_OMT2_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 0.295,
+  "plan_ids": 16,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. Near-copy for individual/small market (295,607,670 vs 295,448,250 bytes): read this copy."
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon PPO / traditional (TRAD)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_PPO-Horizon-Healthcare-Services-Inc_TRAD_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 1.15,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. INDEMNITY TRAD file is a near-copy (1,149,970,789 vs 1,149,794,392 bytes): read the PPO copy."
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon Advantage EPO with Blue HPN (OEX1)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_MANAGED-CARE-BCBSA-Horizon-Healthcare-Services-Inc_OEX1_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 1.052,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. "
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon EPO with Blue HPN (OEX2)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-09-11_Horizon-BCBSNJ_MANAGED-CARE-BCBSA-Horizon-Healthcare-Services-Inc_OEX2_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 1.079,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. "
+ },
+ {
+  "insurer": "Horizon BCBS of New Jersey",
+  "network_label": "Horizon Out of Area plan (AEPO)",
+  "index_url": "https://horizonblue.sapphiremrfhub.com/tocs/202610/2026-10-01_horizon-healthcare-services_index.json",
+  "sample_file_url": "https://horizonblue.sapphiremrfhub.com/mrfs/202610/2026-07-12_Horizon-BCBSNJ_MANAGED-CARE-Horizon-Healthcare-Services-Inc_AEPO_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 0.126,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Each has a tiny \"_Bundled\" companion file (1-3 KB) in the index; read it with the main file. "
+ },
+ {
+  "insurer": "AmeriHealth NJ (Independence)",
+  "network_label": "AmeriHealth Insurance Co. of NJ / AmeriHealth HMO NJ medical network",
+  "index_url": "https://storage.googleapis.com/ihg-dart-edw-mrf-prod-public/ahnj/2026-10-01_ahnj_index.json",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": 0,
+  "status": "Not found",
+  "note": "Index lists only Davis Vision files and a MultiPlan PHCS pointer; no medical negotiated rates (also ahnjhmo index)."
+ }
+]

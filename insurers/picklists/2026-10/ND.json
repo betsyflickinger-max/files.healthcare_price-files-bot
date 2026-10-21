@@ -1,0 +1,134 @@
+[
+ {
+  "insurer": "Blue Cross Blue Shield of North Dakota",
+  "network_label": "BCBSND local network 5200 (main PPO/BlueDirect etc.)",
+  "index_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-10-01_BlueCrossBlueShieldND_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-09-25_000005200_in-network-rates_01_of_10.json.gz",
+  "parts": 10,
+  "gb": 0.209,
+  "plan_ids": 703,
+  "status": "Works",
+  "note": "Files dated 2026-09-25 in the Oct index. Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of North Dakota",
+  "network_label": "BCBSND local network 5202 (same employers as 5200, second network)",
+  "index_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-10-01_BlueCrossBlueShieldND_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-09-25_000005202_in-network-rates_01_of_10.json.gz",
+  "parts": 10,
+  "gb": 0.209,
+  "plan_ids": 699,
+  "status": "Works",
+  "note": "Files dated 2026-09-25 in the Oct index. Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of North Dakota",
+  "network_label": "BCBSND DakotaBlue Trinity (5232)",
+  "index_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-10-01_BlueCrossBlueShieldND_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-09-25_000005232_in-network-rates_01_of_10.json.gz",
+  "parts": 10,
+  "gb": 0.023,
+  "plan_ids": 3,
+  "status": "Works",
+  "note": "Files dated 2026-09-25 in the Oct index. Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of North Dakota",
+  "network_label": "BCBSND DakotaBlue / DakotaBlue Altru (5233)",
+  "index_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-10-01_BlueCrossBlueShieldND_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/320/nd/inbound/local/2026-09-25_000005233_in-network-rates_01_of_10.json.gz",
+  "parts": 10,
+  "gb": 0.025,
+  "plan_ids": 3,
+  "status": "Works",
+  "note": "Files dated 2026-09-25 in the Oct index. Markets group,individual"
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 4 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-4_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.07,
+  "plan_ids": 1362,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group 1347 + individual 15. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 6 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-6_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.07,
+  "plan_ids": 1236,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group 1206 + individual 30. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 3 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-3_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.072,
+  "plan_ids": 456,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 2 (NDPERS PPO + Sanford Broad)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-2_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.06,
+  "plan_ids": 971,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group: NDPERS (ND state employees). Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Choice Passport-ND",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Choice_Passport-ND_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000506,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Individual Choice-ND",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Individual_Choice-ND_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000119,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Altru Prime by Medica-ND",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Altru_Prime_by_Medica-ND_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 9.3e-05,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Essentia Choice Care with Medica-Indiv-ND",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Essentia_Choice_Care_with_Medica-Indiv-ND_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000163,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ }
+]

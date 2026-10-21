@@ -1,0 +1,134 @@
+[
+ {
+  "insurer": "Blue Cross Blue Shield of Massachusetts",
+  "network_label": "HMO Blue (fully insured copy) - BCBSMA main network",
+  "index_url": "https://transparency-in-coverage.bluecrossma.com/2026-10-01_Blue-Cross-and-Blue-Shield-of-Massachusetts-HMO-Blue-Inc_index.json",
+  "sample_file_url": "https://transparency-in-coverage.bluecrossma.com/2026-10-01_Blue-Cross-and-Blue-Shield-of-Massachusetts-Inc_HMO-Blue-Fully-Insured_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.129,
+  "plan_ids": 7,
+  "status": "Works",
+  "note": "Near-copies (about 82,100-82,350 NPIs, 18,350-18,400 codes, prices within 3%): Blue Care Elect FI (9 plans), Blue Care Elect Self Insured (356), New England Managed Care SI (290), HMO Blue SI (90), PAR Providers (14), and MA-HMO Blue-23C0 on bcbsma.mrf.bcbs.com (191). Read this one copy. Host has an incomplete TLS chain: needs the DigiCert Global G2 TLS RSA SHA256 2020 CA1 intermediate added."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Massachusetts",
+  "network_label": "Blue High Performance Network (self-insured)",
+  "index_url": "https://transparency-in-coverage.bluecrossma.com/2026-10-01_Blue-Cross-and-Blue-Shield-of-Massachusetts-Inc_index.json",
+  "sample_file_url": "https://transparency-in-coverage.bluecrossma.com/2026-10-01_Blue-Cross-and-Blue-Shield-of-Massachusetts-Inc_Blue-High-Performance_Third-Party-in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.086,
+  "plan_ids": 7,
+  "status": "Works",
+  "note": "Narrower network: 57,974 NPIs vs 82,219 in the main copy."
+ },
+ {
+  "insurer": "Harvard Pilgrim (Point32Health)",
+  "network_label": "Harvard Pilgrim HMO (A008-P1) - one shared copy for all HP networks",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_Harvard-Pilgrim-Health-Care-Inc-HPHC_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_A008-P1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.111,
+  "plan_ids": 43,
+  "status": "Works",
+  "note": "zip, 3.64 GB unzipped. Every HP network file checked (HMO, Focus MA, Maine's Choice Plus, PPO Access, Ocean State Access America, Access America, NH Local) has ~96,970 NPIs and the same 17,092 codes; prices within 0.5% of this one except NH Local. Store once and use for MA, ME, NH, RI. Plans: 6 plan ids in the issuer indexes + 37 employer plans on the -FS copy (A008-FS, near-copy)."
+ },
+ {
+  "insurer": "Tufts Health Plan (Point32Health)",
+  "network_label": "Tufts Health Direct - non-subsidized (group copy)",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/thp/2026-10-01_TuftsHealthPublicPlansInc_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/thp/2026-10-01_TuftsHealthPublicPlans_DirectNonSubsidizedGroup_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.011,
+  "plan_ids": 18404,
+  "status": "Works",
+  "note": "zip, 0.065 GB unzipped; 63,067 NPIs but only 1,715 billing codes. Direct NonSubsidized Individual file is a near-copy (62,935 NPIs, 1,692 codes): skip it. 18,404 employer EINs."
+ },
+ {
+  "insurer": "Tufts Health Plan (Point32Health)",
+  "network_label": "Tufts Health Direct - subsidized individual (ConnectorCare)",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/thp/2026-10-01_TuftsHealthPublicPlansInc_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/thp/2026-10-01_TuftsHealthPublicPlans_DirectSubsidizedIndividual_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.007,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Narrower: 47,962 NPIs, 1,398 codes. 39 plans listed, all under the one id 59763 (issuer id, not plan ids)."
+ },
+ {
+  "insurer": "Mass General Brigham Health Plan",
+  "network_label": "Commercial HMO",
+  "index_url": "https://awhpmrfeptprod-hqfydsghh6gzcpae.z01.azurefd.net/pricetransparency/MRF/Base/TOC/2026-10-01_AHP_index.json",
+  "sample_file_url": "https://awhpmrfprodstorage.blob.core.windows.net/pricetransparency/MRF/Base/INN/AWHP/INN_COMMERCIAL_HMO_2026-09-27.json.gz",
+  "parts": 1,
+  "gb": 0.063,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "6,668 NPIs, 18,957 codes. Its capitation file (CAP_COMMERCIAL_HMO_2026-09-26) is 404. Landing link https://massgeneralbrighamhealthplan.org/pricetransparency/MRF/Base redirects to the current index."
+ },
+ {
+  "insurer": "Mass General Brigham Health Plan",
+  "network_label": "Commercial PPO",
+  "index_url": "https://awhpmrfeptprod-hqfydsghh6gzcpae.z01.azurefd.net/pricetransparency/MRF/Base/TOC/2026-10-01_AHP_index.json",
+  "sample_file_url": "https://awhpmrfprodstorage.blob.core.windows.net/pricetransparency/MRF/Base/INN/AWHP/INN_COMMERCIAL_PPO_2026-09-27.json.gz",
+  "parts": 1,
+  "gb": 0.036,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "2,669 NPIs. Out-of-area uses MultiPlan PHCS and UnitedHealthcare Options PPO files (left out)."
+ },
+ {
+  "insurer": "Mass General Brigham Health Plan",
+  "network_label": "Select HMO (individual / Health Connector)",
+  "index_url": "https://awhpmrfeptprod-hqfydsghh6gzcpae.z01.azurefd.net/pricetransparency/MRF/Base/TOC/2026-10-01_AHP_index.json",
+  "sample_file_url": "https://awhpmrfprodstorage.blob.core.windows.net/pricetransparency/MRF/Base/INN/AWHP/INN_SELECT_HMO_2026-09-27.json.gz",
+  "parts": 1,
+  "gb": 0.047,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "5,738 NPIs. Capitation file CAP_SELECT_HMO_2026-09-26 is 404."
+ },
+ {
+  "insurer": "Mass General Brigham Health Plan",
+  "network_label": "MGB ASO (self-funded MGB plans)",
+  "index_url": "https://awhpmrfeptprod-hqfydsghh6gzcpae.z01.azurefd.net/pricetransparency/MRF/Base/TOC/2026-10-01_AHP_index.json",
+  "sample_file_url": "https://awhpmrfprodstorage.blob.core.windows.net/pricetransparency/MRF/Base/INN/AWHP/INN_MGB_ASO_2026-09-27.json.gz",
+  "parts": 1,
+  "gb": 0.077,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "6,656 NPIs; 8.13M prices (more than Commercial HMO 6.62M), so not a copy."
+ },
+ {
+  "insurer": "Health New England",
+  "network_label": "HNE commercial (fully insured copy)",
+  "index_url": "https://mrf.healthsparq.com/hne-egress.nophi.kyruushsq.com/prd/mrf/HNE_I/HNE/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hne-egress.nophi.kyruushsq.com/prd/mrf/HNE_I/HNE/2026-09-02/inNetworkRates/2026-09-02_MA_HEALTH-NEW-ENGLAND.json.gz",
+  "parts": 1,
+  "gb": 0.0008,
+  "plan_ids": 68,
+  "status": "Old file (2026-09-02)",
+  "note": "Only 0.8 MB: 14,566 NPIs, 5,051 codes, 38,750 prices. Self-funded file HS_HEALTH-NEW-ENGLAND is a near-copy (8 plans): skip. No October folder (2026-10-01..08 all 404)."
+ },
+ {
+  "insurer": "Health New England",
+  "network_label": "HNE ConnectorCare",
+  "index_url": "https://mrf.healthsparq.com/hne-egress.nophi.kyruushsq.com/prd/mrf/HNE_I/HNE/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hne-egress.nophi.kyruushsq.com/prd/mrf/HNE_I/HNE/2026-09-02/inNetworkRates/2026-09-02_CONNECTORCARE_HEALTH-NEW-ENGLAND.json.gz",
+  "parts": 1,
+  "gb": 0.0008,
+  "plan_ids": 1,
+  "status": "Old file (2026-09-02)",
+  "note": "14,595 NPIs, 5,174 codes, 40,914 prices. Close to the commercial copy; optional."
+ },
+ {
+  "insurer": "WellSense Health Plan (Boston Medical Center Health Plan)",
+  "network_label": "WellSense commercial / Health Connector",
+  "index_url": "https://connect.wellsense.org:8443/mrf-files/MH5IA40DR6M47R9LANI5YN4SHMB822S2HKKXJ9NV594MNUOYJ3TOVC0VVQXO7RCJJJAHXX5QSDX5F779MFG2OUAHSXUGOJPWPGNFWNP33D59DR5OPXDWFQIO2MOFWM3RSUDMJJ8DDGUCR1V3VH0M3C1IDCE2VPYNGY59NCHY47A92LU9LJ7HXJ6XUBKSQ2D3MYN9SK33",
+  "sample_file_url": "",
+  "parts": null,
+  "gb": null,
+  "plan_ids": null,
+  "status": "Not opened (connection reset)",
+  "note": "Port 8443 host resets the TLS connection from our workspace (3 tries). Oct 14 search found a TOC here. Needs a retry from another network."
+ }
+]

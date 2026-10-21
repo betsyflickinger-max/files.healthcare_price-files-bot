@@ -1,0 +1,90 @@
+[
+ {
+  "insurer": "Blue Cross and Blue Shield of Nebraska",
+  "network_label": "BCBSNE NEtwork BLUE (statewide PPO)",
+  "index_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/2026-10-01/inNetworkRates/2026-10-01_NETWORKBLUE_BCBSNE.json.gz",
+  "parts": 1,
+  "gb": 0.003635,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Plans listed only by issuer HIOS 29678 (group + individual). ~14,800 codes, CPT/HCPCS/CSTM-ALL; no DRG codes."
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Nebraska",
+  "network_label": "BCBSNE Premier Select BlueChoice",
+  "index_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/2026-10-01/inNetworkRates/2026-10-01_PREMIERSELECTBLUECHOICE_BCBSNE.json.gz",
+  "parts": 1,
+  "gb": 0.005764,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Plans listed only by issuer HIOS 29678 (group + individual). ~14,800 codes, CPT/HCPCS/CSTM-ALL; no DRG codes."
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Nebraska",
+  "network_label": "BCBSNE Blueprint Health",
+  "index_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsne-egress.nophi.kyruushsq.com/prd/mrf/BCBSNE_I/BCBSNE/2026-10-01/inNetworkRates/2026-10-01_BLUEPRINTHEALTH_BCBSNE.json.gz",
+  "parts": 1,
+  "gb": 0.005255,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Plans listed only by issuer HIOS 29678 (group + individual). ~14,800 codes, CPT/HCPCS/CSTM-ALL; no DRG codes."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Choice National-NE",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Choice_National-NE_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.001805,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica with CHI Health-NE-Grp",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_with_CHI_Health-NE-Grp_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000394,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Insure-NE",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Insure-NE_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000939,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica with CHI Health-NE-Ind",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_with_CHI_Health-NE-Ind_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.00048,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Elevate by Medica-NE",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Elevate_by_Medica-NE_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000627,
+  "plan_ids": 2,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ }
+]

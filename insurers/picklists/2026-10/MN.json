@@ -1,0 +1,200 @@
+[
+ {
+  "insurer": "HealthPartners",
+  "network_label": "HealthPartners Open Access + Simplica",
+  "index_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners-INN_index.json",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_Open-Access+Simplica_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.703,
+  "plan_ids": 228,
+  "status": "Works",
+  "note": "ZIP holding one ~3.2 GB JSON; size is the zip. Markets group,individual"
+ },
+ {
+  "insurer": "HealthPartners",
+  "network_label": "HealthPartners Achieve Small Employer + Peak",
+  "index_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners-INN_index.json",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_Achieve-Small-Employer+Peak_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.704,
+  "plan_ids": 70,
+  "status": "Works",
+  "note": "ZIP holding one ~3.2 GB JSON; size is the zip. Markets group,individual"
+ },
+ {
+  "insurer": "HealthPartners",
+  "network_label": "HealthPartners HP Select",
+  "index_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners-INN_index.json",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_HP-Select_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.703,
+  "plan_ids": 45,
+  "status": "Works",
+  "note": "ZIP holding one ~3.2 GB JSON; size is the zip. Markets group,individual"
+ },
+ {
+  "insurer": "HealthPartners",
+  "network_label": "HealthPartners Cornerstone",
+  "index_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners-INN_index.json",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_Cornerstone_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.703,
+  "plan_ids": 37,
+  "status": "Works",
+  "note": "ZIP holding one ~3.2 GB JSON; size is the zip. Markets group,individual"
+ },
+ {
+  "insurer": "HealthPartners",
+  "network_label": "HealthPartners State of MN (SEGIP)",
+  "index_url": "https://www.healthpartners.com/insurance/members/health-care-price-transparency/",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_State-of-MN_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.705,
+  "plan_ids": 0,
+  "status": "Works (not in index)",
+  "note": "File answers (704,919,885 bytes) but no index lists it, so no plans are tied to it."
+ },
+ {
+  "insurer": "UCare",
+  "network_label": "UCare (individual plans, main network)",
+  "index_url": "https://ucm-p-001.sitecorecontenthub.cloud/api/public/content/ucare_toc.json?download=true",
+  "sample_file_url": "https://ucm-p-001.sitecorecontenthub.cloud/api/public/content/UCare_InNetwork.json?download=true",
+  "parts": 1,
+  "gb": 0.05,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Uncompressed JSON, last_updated_on 2026-09-16. TOC is invalid JSON (missing comma) and lists one plan id, 85736MN023 (UCare IFP)."
+ },
+ {
+  "insurer": "UCare",
+  "network_label": "UCare M Health Fairview network",
+  "index_url": "https://ucm-p-001.sitecorecontenthub.cloud/api/public/content/ucare_toc.json?download=true",
+  "sample_file_url": "https://ucm-p-001.sitecorecontenthub.cloud/api/public/content/UCare_InNetwork_Fairview.json?download=true",
+  "parts": 1,
+  "gb": 0.012,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Uncompressed JSON, last_updated_on 2026-09-16. TOC is invalid JSON (missing comma) and lists one plan id, 85736MN023 (UCare IFP)."
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Minnesota (incl. Blue Plus)",
+  "network_label": "Blue Cross MN Aware network (0011)",
+  "index_url": "https://mktg.bluecrossmn.com/mrf/2026/2026-10-01_Blue_Cross_and_Blue_Shield_of_Minnesota_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/720/mn/inbound/local/2026-09-30_000000011_in-network-rates_01_of_25.json.gz",
+  "parts": 25,
+  "gb": 0.416,
+  "plan_ids": 536,
+  "status": "Works",
+  "note": "Files dated 2026-09-30. Markets group"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Minnesota (incl. Blue Plus)",
+  "network_label": "Blue Cross MN 'MN Advantage' / PEIP (5015_M31)",
+  "index_url": "https://mktg.bluecrossmn.com/mrf/2026/2026-10-01_Blue_Cross_and_Blue_Shield_of_Minnesota_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/720/mn/inbound/local/2026-09-30_000005015_M31_in-network-rates_01_of_25.json.gz",
+  "parts": 25,
+  "gb": 0.468,
+  "plan_ids": 266,
+  "status": "Works",
+  "note": "Files dated 2026-09-30. Markets group"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Minnesota (incl. Blue Plus)",
+  "network_label": "Blue Cross MN High Value (5044)",
+  "index_url": "https://mktg.bluecrossmn.com/mrf/2026/2026-10-01_Blue_Cross_and_Blue_Shield_of_Minnesota_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/720/mn/inbound/local/2026-09-30_000005044_in-network-rates_01_of_25.json.gz",
+  "parts": 25,
+  "gb": 0.331,
+  "plan_ids": 105,
+  "status": "Works",
+  "note": "Files dated 2026-09-30. Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Minnesota (incl. Blue Plus)",
+  "network_label": "Blue Plus Metro MN (5031, individual)",
+  "index_url": "https://mktg.bluecrossmn.com/mrf/2026/2026-10-01_Blue_Cross_and_Blue_Shield_of_Minnesota_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/720/mn/inbound/local/2026-09-30_000005031_in-network-rates_01_of_24.json.gz",
+  "parts": 24,
+  "gb": 0.15,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Files dated 2026-09-30. Markets individual"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Minnesota (incl. Blue Plus)",
+  "network_label": "Blue Plus Easy Compare (5022, individual)",
+  "index_url": "https://mktg.bluecrossmn.com/mrf/2026/2026-10-01_Blue_Cross_and_Blue_Shield_of_Minnesota_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/720/mn/inbound/local/2026-09-30_000005022_in-network-rates_01_of_22.json.gz",
+  "parts": 22,
+  "gb": 0.029,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Files dated 2026-09-30. Markets individual"
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Choice Passport-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Choice_Passport-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.00863,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Elect-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Elect-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.001257,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "VantagePlus with Medica-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_VantagePlus_with_Medica-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.00186,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Essential-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Essential-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.001702,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Applause-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Applause-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.00142,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Bold by M Health Fairview and Medica-MN",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Bold_by_M_Health_Fairview_and_Medica-MN_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 2e-06,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ }
+]

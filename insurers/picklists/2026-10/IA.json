@@ -1,0 +1,101 @@
+[
+ {
+  "insurer": "Wellmark Blue Cross and Blue Shield",
+  "network_label": "Wellmark BCBS of Iowa Alliance Select PPO (13B0)",
+  "index_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/2026-10-01/inNetworkRates/2026-10-01_WMK_I_PLAN2_13B0_Wellmark.json.gz",
+  "parts": 1,
+  "gb": 0.00584,
+  "plan_ids": 1173,
+  "status": "Works",
+  "note": "Small files (3-14 MB gz) but full: ~19,700 codes incl. APR-DRG/EAPG. Markets {\"group\": 5943, \"individual\": 170}"
+ },
+ {
+  "insurer": "Wellmark Blue Cross and Blue Shield",
+  "network_label": "Wellmark Health Plan of Iowa HMO/POS, Blue Access (13A0)",
+  "index_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/2026-10-01/inNetworkRates/2026-10-01_WMK_I_PLAN1_13A0_Wellmark.json.gz",
+  "parts": 1,
+  "gb": 0.013993,
+  "plan_ids": 471,
+  "status": "Works",
+  "note": "Small files (3-14 MB gz) but full: ~19,700 codes incl. APR-DRG/EAPG. Markets {\"group\": 2077, \"individual\": 40}"
+ },
+ {
+  "insurer": "Wellmark Blue Cross and Blue Shield",
+  "network_label": "Wellmark BCBS of Iowa Participating Providers (13C0)",
+  "index_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/2026-10-01/inNetworkRates/2026-10-01_WMK_I_PLAN3_13C0_Wellmark.json.gz",
+  "parts": 1,
+  "gb": 0.005819,
+  "plan_ids": 20,
+  "status": "Works",
+  "note": "Small files (3-14 MB gz) but full: ~19,700 codes incl. APR-DRG/EAPG. Markets {\"group\": 52, \"individual\": 12}"
+ },
+ {
+  "insurer": "HealthPartners UnityPoint Health",
+  "network_label": "HealthPartners UIHC Tier 1 (Iowa)",
+  "index_url": "https://www.healthpartners.com/insurance/members/health-care-price-transparency/",
+  "sample_file_url": "https://mrfproddestinationdata.blob.core.windows.net/mrf-output/2026-10-01_HealthPartners_UIHC-Tier1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.703,
+  "plan_ids": 0,
+  "status": "Works (not in index)",
+  "note": "Iowa-named HealthPartners file (702,741,394 bytes). Not in any index; can't confirm it is HealthPartners UnityPoint Health (HIOS 45720), whose plans appear nowhere."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Choice National-IA",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Choice_National-IA_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.00011,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica with CHI Health-IA-Grp",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_with_CHI_Health-IA-Grp_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 3.8e-05,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica Insure-IA",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_Insure-IA_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000281,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Inspire by Medica-IA",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Inspire_by_Medica-IA_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 0.000238,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ },
+ {
+  "insurer": "Medica",
+  "network_label": "Medica with CHI Health-IA-Ind",
+  "index_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/medica-egress.nophi.kyruushsq.com/prd/mrf/MEDICA_I/MEDICA/2026-03-01/inNetworkRates/2025-11-20_Medica_with_CHI_Health-IA-Ind_Medica_In_Network.json.gz",
+  "parts": 1,
+  "gb": 5.9e-05,
+  "plan_ids": 1,
+  "status": "Old file (2025-11-20)",
+  "note": "Newest Medica posting found (folder 2026-03-01, file last_updated_on 2025-11-20). medica.com page blocked (Cloudflare 403). Hold until a current file is found."
+ }
+]

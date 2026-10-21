@@ -1,0 +1,68 @@
+[
+ {
+  "insurer": "Medical Mutual of Ohio",
+  "network_label": "Medical Mutual SuperMed Plus (file 01)",
+  "index_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/tableOfContents/2026-10-01_Medical-Mutual-Of-Ohio_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/inNetworkRates/2026-10-01_01_Medical-Mutual-Of-Ohio.json.gz",
+  "parts": 1,
+  "gb": 0.00271,
+  "plan_ids": 14820,
+  "status": "Works",
+  "note": "Main network: 14,820 group plan ids. 2.7 MB gz, 5,763 codes incl. 224 MS-DRG, 152,415 prices. Group plans only."
+ },
+ {
+  "insurer": "Medical Mutual of Ohio",
+  "network_label": "Medical Mutual MedFlex HMO (file QQ)",
+  "index_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/tableOfContents/2026-10-01_Medical-Mutual-Of-Ohio_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/inNetworkRates/2026-10-01_QQ_Medical-Mutual-Of-Ohio.json.gz",
+  "parts": 1,
+  "gb": 0.0004,
+  "plan_ids": 90,
+  "status": "Works",
+  "note": "0.4 MB gz."
+ },
+ {
+  "insurer": "Medical Mutual of Ohio",
+  "network_label": "Medical Mutual HMO Narrow Network (file DD)",
+  "index_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/tableOfContents/2026-10-01_Medical-Mutual-Of-Ohio_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/inNetworkRates/2026-10-01_DD_Medical-Mutual-Of-Ohio.json.gz",
+  "parts": 1,
+  "gb": 6e-05,
+  "plan_ids": 46,
+  "status": "Works",
+  "note": "0.06 MB gz."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace OH - specific (provider-specific) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXOH_specific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 1.003,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of JSON parts, but not the CMS layout: key \"in_networks\" (not \"in_network\"), version \"2.0.0.0\", no last_updated_on at the top, provider_references at item level. The reader needs a CareSource adapter before this can load. Zip Last-Modified 2026-10-20. OH specific file has billing_code_type \"033\" on some items."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace OH - non-specific (fee schedule) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXOH_nonspecific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.013,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of 5 zips. \"Price\" instead of negotiated_rate, key \"expiration_date,\" (with a comma), version \"0.0.0.0\". Zip Last-Modified 2026-10-11. OH specific file has billing_code_type \"033\" on some items."
+ },
+ {
+  "insurer": "Medical Mutual of Ohio",
+  "network_label": "Medical Health Insuring Corp. of Ohio (individual) / Paramount",
+  "index_url": "https://mrf.healthsparq.com/mmo-egress.nophi.kyruushsq.com/prd/mrf/MMO_I/MMO/2026-10-01/tableOfContents/2026-10-01_Medical-Mutual-Of-Ohio_index.json.gz",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": 0,
+  "status": "Not found",
+  "note": "MMO HealthSparq index lists group plans only. The only individual-looking file found, medmutual.com/-/media/MedMutual/Files/Machine-Readable-File/CleCareMedicalMutualOfOhioINNjson.json, says last_updated_on 2023-10-01 (version 1.3.1)."
+ }
+]

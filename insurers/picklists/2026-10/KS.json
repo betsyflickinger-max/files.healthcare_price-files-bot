@@ -1,0 +1,145 @@
+[
+ {
+  "insurer": "Blue Cross and Blue Shield of Kansas",
+  "network_label": "BCBSKS Blue Choice (150_20B0)",
+  "index_url": "https://mrf.secure.bcbsks.com/api/filedownloadhttptrigger?name=table-of-contents&ext=json",
+  "sample_file_url": "https://bcbsks.mrf.bcbs.com/2026-10_150_20B0_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.15,
+  "plan_ids": 8087,
+  "status": "Works",
+  "note": "Signed link (expires 2026-11-21); re-read the index for a live link. Index blocks non-browser User-Agents (Cloudflare 403). Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Kansas",
+  "network_label": "BCBSKS Traditional Providers (150_20D0)",
+  "index_url": "https://mrf.secure.bcbsks.com/api/filedownloadhttptrigger?name=table-of-contents&ext=json",
+  "sample_file_url": "https://bcbsks.mrf.bcbs.com/2026-10_150_20D0_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.151,
+  "plan_ids": 3302,
+  "status": "Works",
+  "note": "Signed link (expires 2026-11-21); re-read the index for a live link. Index blocks non-browser User-Agents (Cloudflare 403). Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Kansas",
+  "network_label": "BCBSKS Solutions Choice (Slcho) (150_20L0)",
+  "index_url": "https://mrf.secure.bcbsks.com/api/filedownloadhttptrigger?name=table-of-contents&ext=json",
+  "sample_file_url": "https://bcbsks.mrf.bcbs.com/2026-10_150_20L0_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.153,
+  "plan_ids": 846,
+  "status": "Works",
+  "note": "Signed link (expires 2026-11-21); re-read the index for a live link. Index blocks non-browser User-Agents (Cloudflare 403). Markets group,individual"
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Kansas",
+  "network_label": "BCBSKS Solutions Cap (Slcap) (150_20K0)",
+  "index_url": "https://mrf.secure.bcbsks.com/api/filedownloadhttptrigger?name=table-of-contents&ext=json",
+  "sample_file_url": "https://bcbsks.mrf.bcbs.com/2026-10_150_20K0_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.147,
+  "plan_ids": 54,
+  "status": "Works",
+  "note": "Signed link (expires 2026-11-21); re-read the index for a live link. Index blocks non-browser User-Agents (Cloudflare 403). Markets individual"
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blueselect Epo (QBSLC0002)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_QBSLC0002_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.051,
+  "plan_ids": 44,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 21 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Preferred-Care Blue (JPCBC0002)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_JPCBC0002_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.102,
+  "plan_ids": 20,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 4 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blueselect Plus With Spira Care (QBSPC0001)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_QBSPC0001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.069,
+  "plan_ids": 13,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 6 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blueselect Plus Epo (QBSPC0002)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_QBSPC0002_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.057,
+  "plan_ids": 11,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 7 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Preferred-Care Blue (JPCBC0001)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_JPCBC0001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.126,
+  "plan_ids": 7,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 3 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blue Metro Epo (GBMTC0002)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_GBMTC0002_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.009,
+  "plan_ids": 6,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. 3 of its plan ids are Kansas HIOS 94248KS."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blue-Access (NBACC0001)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_NBACC0001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.056,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. No Kansas HIOS id on it (EIN plans only); same KC-metro network."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC Blue Care (CBCRC0001)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_CBCRC0001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.229,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. No Kansas HIOS id on it (EIN plans only); same KC-metro network."
+ },
+ {
+  "insurer": "Blue KC (BCBS of Kansas City)",
+  "network_label": "Blue KC High Performance (WHPNC0001)",
+  "index_url": "https://bcbskc.sapphiremrfhub.com/tocs/202610/2026-10-01_blue-cross-and-blue-shield-of-kansas-city_index.json",
+  "sample_file_url": "https://bcbskc.sapphiremrfhub.com/mrfs/202610/2026-09-03_BKC_WHPNC0001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.009,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Already in networks_s7.csv (Missouri) - reuse, don't read twice. No Kansas HIOS id on it (EIN plans only); same KC-metro network."
+ }
+]

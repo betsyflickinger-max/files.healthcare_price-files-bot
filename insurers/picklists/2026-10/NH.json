@@ -1,0 +1,35 @@
+[
+ {
+  "insurer": "Harvard Pilgrim (Point32Health)",
+  "network_label": "Harvard Pilgrim HMO (A008-P1) - one shared copy for all HP networks",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_Harvard-Pilgrim-Health-Care-of-New-England-HPHCNE_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_A008-P1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.111,
+  "plan_ids": null,
+  "status": "Works",
+  "note": "Shared with MA/ME/RI: store once. HPHCNE index lists A008-P1 with 3 plan ids."
+ },
+ {
+  "insurer": "Harvard Pilgrim (Point32Health)",
+  "network_label": "NH Local HMO (A088-P1)",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_Harvard-Pilgrim-Health-Care-of-New-England-HPHCNE_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_A088-P1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.122,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "zip. Same 96,968 NPIs and codes as the HMO copy but 6.50M prices vs 6.06M (+7%), so it carries rates the shared copy lacks. NH Local Choice HMO (A087-P1, 0.122 GB, 2 plan ids) not checked; likely a sibling."
+ },
+ {
+  "insurer": "Anthem (Elevance)",
+  "network_label": "from the Anthem catalog, filled in separately",
+  "index_url": "",
+  "sample_file_url": "",
+  "parts": null,
+  "gb": null,
+  "plan_ids": null,
+  "status": "From catalog",
+  "note": "Top insurer in NH (176,158 insured lives)."
+ }
+]

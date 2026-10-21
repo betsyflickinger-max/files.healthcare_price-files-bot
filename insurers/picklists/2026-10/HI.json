@@ -1,0 +1,46 @@
+[
+ {
+  "insurer": "HMSA",
+  "network_label": "HMSA PPO (in-network-file-ppo)",
+  "index_url": "https://hmsa-cost-transparency-west2.s3.us-west-2.amazonaws.com/2026-10-01_hmsa_index.json",
+  "sample_file_url": "https://hmsa-cost-transparency-west2.s3.us-west-2.amazonaws.com/in-network-file-ppo.json.gz",
+  "parts": 1,
+  "gb": 0.116,
+  "plan_ids": 25,
+  "status": "Works",
+  "note": "last_updated_on 2026-09-04 inside; file name has no date (overwritten monthly). Plans: HMSA's own employee PPO plus small-business PPO plans."
+ },
+ {
+  "insurer": "HMSA",
+  "network_label": "HMSA HMO (in-network-file-hmo)",
+  "index_url": "https://hmsa-cost-transparency-west2.s3.us-west-2.amazonaws.com/2026-10-01_hmsa_index.json",
+  "sample_file_url": "https://hmsa-cost-transparency-west2.s3.us-west-2.amazonaws.com/in-network-file-hmo.json.gz",
+  "parts": 1,
+  "gb": 0.194,
+  "plan_ids": 8,
+  "status": "Works",
+  "note": "last_updated_on 2026-09-04."
+ },
+ {
+  "insurer": "University Health Alliance (UHA)",
+  "network_label": "UHA Participating Providers (46 zipped parts: cpt, hcpcs, rc, pob; ndc parts left out)",
+  "index_url": "https://app.uhahealth.com/mrf/2026-10-01_uha_index.json",
+  "sample_file_url": "https://app.uhahealth.com/mrf/2026-10-01_uha_in-network-rates_cpt_1_of_46.zip",
+  "parts": 36,
+  "gb": 0.008,
+  "plan_ids": 13,
+  "status": "Works (ZIP parts)",
+  "note": "Each part is a .zip holding one JSON (part 1: 0.26 MB zipped, 3.06 MB unzipped). Bot must unzip. 13 group plan ids. 10 ndc parts are drug-code rates (left out)."
+ },
+ {
+  "insurer": "Hawaii Management Alliance Association (HMAA)",
+  "network_label": "HMAA in-network rates (2 parts, 4.63 GB unzipped)",
+  "index_url": "https://hmaa.com/NSA/MRF",
+  "sample_file_url": "https://www.hmaa.com/wp-content/uploads/2022/06/MRF_HMAA.zip",
+  "parts": 2,
+  "gb": 0.116,
+  "plan_ids": 3003,
+  "status": "BROKEN (ZIP only)",
+  "note": "Only a single 115.6 MB ZIP (Last-Modified 2026-10-02) holding 2026-09-01_HMAA_index.json and in-network-rates_1/_2 (2.32 GB each unzipped). The index inside points to www.hmaa.com/NSA/MRF/...json without https://, and those URLs return 404. Size shown is the ZIP. Part 2 is linked with no plans."
+ }
+]

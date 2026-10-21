@@ -1,0 +1,57 @@
+[
+ {
+  "insurer": "Hometown Health (Renown)",
+  "network_label": "Hometown Health Nevada EPO Network (HMO/EPO plans)",
+  "index_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PLAN_index.json",
+  "sample_file_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PLAN_110103-A-1-STEEL-INC-EPO-GOLD-PLUS_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.756,
+  "plan_ids": 1447,
+  "status": "Works",
+  "note": "Index links point to /about-us/transparency-in-coverage/... and return 404; the file is under /documents/Transparency-in-Coverage/ (link from the page). Uncompressed JSON; server sends no Content-Length (size measured by full download)."
+ },
+ {
+  "insurer": "Hometown Health (Renown)",
+  "network_label": "Hometown Health Renown HMO Network 2026 (individual plans)",
+  "index_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PLAN_index.json",
+  "sample_file_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PLAN_5800369-IFP-R2-SENSIBLE-GOLD-HMO-OFF-EXCHANGE_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.691,
+  "plan_ids": 22,
+  "status": "Works",
+  "note": "Same index-link problem as above."
+ },
+ {
+  "insurer": "Hometown Health (Renown)",
+  "network_label": "Hometown Health PPO Network",
+  "index_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PROVIDERS_index.json",
+  "sample_file_url": "https://www.hometownhealth.com/documents/Transparency-in-Coverage/2026-10-08_HOMETOWN-HEALTH-PROVIDERS_232702-CARSON-VALLEY-HEALTH-PPO_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.717,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "Insured PPO company copy. The same network name appears in 8 more employer/TPA files (0.55-0.76 GB each, not byte-identical; Carson Tahoe Health copy has 1,064 plan ids). Not compared rate by rate."
+ },
+ {
+  "insurer": "SelectHealth (Intermountain)",
+  "network_label": "SelectHealth Med network, Nevada (indexes 3202 SE POS + 3203 individual HMO)",
+  "index_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/2026-10-01_SE-ACA-MED-NV-POS_3202_index.json",
+  "sample_file_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/MRF/S-N32A00000NVX-innetwork-1.json.gz",
+  "parts": 1448,
+  "gb": 5.147,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Network is split into per-contract files; read the union of both indexes (1,069 of 3203s 1,094 files are also in 3202). Each index has one plan id (EIN 870409820) used for all plans, including individual ones."
+ },
+ {
+  "insurer": "SelectHealth (Intermountain)",
+  "network_label": "SelectHealth Value network, Nevada (indexes 4207 individual HMO + 4201 group HMO)",
+  "index_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/2026-10-01_INDIVIDUAL-ACA-VALUE-NV-HMO_4207_index.json",
+  "sample_file_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/MRF/G-C42A00000NVX-innetwork-1.json.gz",
+  "parts": 1113,
+  "gb": 4.677,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "4201s 1,091 files are all in 4207. 999 files (3.678 GB) are shared with the Med network: all four indexes together are 1,562 files, 6.147 GB."
+ }
+]

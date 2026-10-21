@@ -1,0 +1,68 @@
+[
+ {
+  "insurer": "HCSC (Blue Cross and Blue Shield of Montana)",
+  "network_label": "BCBSMT networks",
+  "index_url": "from the HCSC catalog, filled in separately",
+  "sample_file_url": null,
+  "parts": null,
+  "gb": null,
+  "plan_ids": null,
+  "status": "from the HCSC catalog, filled in separately",
+  "note": ""
+ },
+ {
+  "insurer": "Montana Health Cooperative (Mountain Health CO-OP)",
+  "network_label": "Mountain Health CO-OP network (all contract files)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/spyglass/mountain-health-co-op/2026-09-05_mountain-health-co-op_master_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/spyglass/mountain-health-co-op/2026/9/0/2026-09-02_mountain-health-co-op_9818_in-network-rates.json.gz",
+  "parts": 463,
+  "gb": 0.308,
+  "plan_ids": 72,
+  "status": "Old file (2026-09-05)",
+  "note": "463 per-contract files; Montana plans link 439-463 of them, so read all 463. No October index posted (toclist.json lists only the Sept 5 index). Plan ids = Montana plan entries (MT HIOS ids)."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Navigator (group plans; largest plan copy: MT Navigator Silver HSA)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00026-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53030-25.c000.json",
+  "parts": 9,
+  "gb": 1.208,
+  "plan_ids": 31,
+  "status": "Works",
+  "note": "PacificSource posts one 9-file set per plan, no network-level file; the 31 Montana plans of this product have sets of different sizes, so this copy may not hold every plan's rates. Uncompressed JSON. PacificSource is leaving Montana; reading all 115 Montana plan sets would be 1,035 files, 26.632 GB."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Navigator (individual plans; largest plan copy: MT Navigator Bronze HSA)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00000-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53135-14.c000.json",
+  "parts": 9,
+  "gb": 0.094,
+  "plan_ids": 64,
+  "status": "Works",
+  "note": "PacificSource posts one 9-file set per plan, no network-level file; the 64 Montana plans of this product have sets of different sizes, so this copy may not hold every plan's rates. Uncompressed JSON. PacificSource is leaving Montana; reading all 115 Montana plan sets would be 1,035 files, 26.632 GB."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Voyager (largest plan copy: MT Voyager)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00044-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53090-26.c000.json",
+  "parts": 9,
+  "gb": 0.74,
+  "plan_ids": 16,
+  "status": "Works",
+  "note": "PacificSource posts one 9-file set per plan, no network-level file; the 16 Montana plans of this product have sets of different sizes, so this copy may not hold every plan's rates. Uncompressed JSON. PacificSource is leaving Montana; reading all 115 Montana plan sets would be 1,035 files, 26.632 GB."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource SmartHealth (largest plan copy: MT SmartHealth Value Silver)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00001-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53202-13.c000.json",
+  "parts": 9,
+  "gb": 0.033,
+  "plan_ids": 4,
+  "status": "Works",
+  "note": "PacificSource posts one 9-file set per plan, no network-level file; the 4 Montana plans of this product have sets of different sizes, so this copy may not hold every plan's rates. Uncompressed JSON. PacificSource is leaving Montana; reading all 115 Montana plan sets would be 1,035 files, 26.632 GB."
+ }
+]

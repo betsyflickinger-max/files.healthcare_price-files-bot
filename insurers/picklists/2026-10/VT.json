@@ -1,0 +1,24 @@
+[
+ {
+  "insurer": "Blue Cross and Blue Shield of Vermont",
+  "network_label": "VT-BCBSVT Par Providers (415_63B0, BCBSA host copy)",
+  "index_url": "https://www.bluecrossvt.org/documents/toc-json",
+  "sample_file_url": "https://bcbsvt.mrf.bcbs.com/2026-10_415_63B0_in-network-rates.json.gz?&Expires=1795269681&Signature=vRHfzjjiqzDVdFRAryGbmsbDFR2ZlamwWS1r9D0cyxzuU2NNTpeYTH9~jseLispWUGnCdaA6~mKVJk4Rckk70bM67YLLT85zjE963e~dI9oO7bRsXxwLHZO-26GXxQpPljXZULP26u8gT-OTQFc6zDP~dXptX1Zu2Pdxk741y73H4QgEwdEcHubzlku~mXJZBRCcMLyX~OjPpQqTvjuUilg7vJNXvIi8lb29a0UnmJLW6nc~w3Df~UZtmPmUGb~UZoZIzblIBIQVvNS~u8gVOQdCVZC7QC1StRsQRaCZMB7NdNzlV0f~06zV9ISlF3-MtSf2H4V4MU1kp0dwGbO4vg__&Key-Pair-Id=K27TQMT39R1C8A",
+  "parts": 1,
+  "gb": 0.0046,
+  "plan_ids": 314,
+  "status": "Works (signed URL, expires 2026-11-21); own files BROKEN",
+  "note": "BCBSVT's own network as posted to the national Blue host. 8,300 NPIs, 14,690 codes, 347k prices. 415_63A0 (VHP, 3 plans) is a near-copy. The 7 own files on mrfhosting.bcbsvt.nasco.com (EPO, QHP EPO, VFP, Indemnity, VHP...) all 404. TOC says last_updated_on 2026-09-01."
+ },
+ {
+  "insurer": "MVP Health Care",
+  "network_label": "MVP VT / VT Plus / VT Secure (one plan copy)",
+  "index_url": "https://mrf.healthsparq.com/mvp-egress.nophi.kyruushsq.com/prd/mrf/MVP_I/MVP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/mvp-egress.nophi.kyruushsq.com/prd/mrf/MVP_I/MVP/2026-10-01/inNetworkRates/2026-10-01_77566VT0040001_MVP-Health-Care,-Inc.json.gz",
+  "parts": 1,
+  "gb": 0.118,
+  "plan_ids": 41,
+  "status": "Works",
+  "note": "MVP posts one file per plan: 41 VT files (34 HIOS 77566VT plans + 7 VT employers), each ~0.118 GB. Three checked are identical in content (5,218 NPIs, 20,943 codes, 3,218,263 prices). Read one. Same metadata covers NY (582 files total, 58.6 GB)."
+ }
+]

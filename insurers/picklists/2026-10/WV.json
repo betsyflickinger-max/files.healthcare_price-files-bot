@@ -1,0 +1,79 @@
+[
+ {
+  "insurer": "Highmark BCBS West Virginia",
+  "network_label": "Highmark BCBS West Virginia - WV PPO (Non Product) (000000647)",
+  "index_url": "https://mrfdata.hmhs.com/files/443/wv/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_West_Virginia_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/443/wv/inbound/local/2026-09-21_000000647_in-network-rates_01_of_02.json.gz",
+  "parts": 2,
+  "gb": 0.003,
+  "plan_ids": 94,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-16. Highmark-hosted local file (WV PPO), reporting entity \"Highmark WV\"; part 2 has the facility rates."
+ },
+ {
+  "insurer": "Highmark BCBS West Virginia",
+  "network_label": "Highmark BCBS West Virginia - SUPERBLUE PLUS (WVSBP) (000000649)",
+  "index_url": "https://mrfdata.hmhs.com/files/443/wv/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_West_Virginia_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/443/wv/inbound/local/2026-09-21_000000649_in-network-rates_01_of_02.json.gz",
+  "parts": 2,
+  "gb": 0.0,
+  "plan_ids": 94,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-16. Local Super Blue Plus file (1,151 provider groups in part 1)."
+ },
+ {
+  "insurer": "Highmark BCBS West Virginia",
+  "network_label": "Highmark BCBS West Virginia - Super Blue Plus (443_69B0)",
+  "index_url": "https://mrfdata.hmhs.com/files/443/wv/inbound/local/2026-10-01_Highmark_Blue_Cross_Blue_Shield_of_West_Virginia_index.json",
+  "sample_file_url": "https://highmarkbcbswv.mrf.bcbs.com/2026-10_443_69B0_in-network-rates_01_of_02.json.gz?&Expires=1795269681&Signature=rd6Ew7Qkc2wyUelDk0Rz05y3GHRidIy4J-KFNFjUQ0uLTyTh8Klf0Mp4P1TVmU8fsw5RUFwbztPsDY7rYgbxZ17d3Nkl3sCfF6smYP6HcuUCGdAsngFSNUW48aDdzh5kQDHpXnqrzC3NveufYGuHRwsp6CxiNSrhlFncy1fZGq8wrTSBsLOIjGytWO1phdBeZdOExZmsMqdMmaPmhQ~m1jUPtae4ckqFbyZFPODHzFn5pR6VqCbeN4mVylX2roCyEhQpV86pbXrpR0EkUiHp9cTKOtnML0yqrom6B~OIo1e8BTAL3slS6gbOZ5f9MfdGTWD5mVOjfH1aFmpWs8IIbA__&Key-Pair-Id=K27TQMT39R1C8A",
+  "parts": 2,
+  "gb": 0.004,
+  "plan_ids": 94,
+  "status": "Works",
+  "note": "file last_updated_on 2026-09-01. West Virginia home network (plan code 443) in BlueCard format, highmarkbcbswv.mrf.bcbs.com copy (39,013 provider groups in part 1, vs 1,151 in the local Super Blue Plus file). Read this WV copy once."
+ },
+ {
+  "insurer": "The Health Plan (WV)",
+  "network_label": "THP Network - Commercial / ASO",
+  "index_url": "https://www.healthplan.org/mrf/thp/2026-10-01_The-Health-Plan-of-WV-Inc_index.json",
+  "sample_file_url": "https://www.healthplan.org/mrf/thp/2026-10-01_The-Health-Plan-of-WV-Inc_THP-Network_Commercial_ASO_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.006,
+  "plan_ids": 573,
+  "status": "Works",
+  "note": "Zip (6.2 MB) holding one 26.4 MB JSON. Only 141 billing codes (140 CPT, 1 HCPCS); 4,783 of 34,121 prices are 0.00. Group plans only (971 plan links)."
+ },
+ {
+  "insurer": "The Health Plan (WV)",
+  "network_label": "THP Network - PEIA",
+  "index_url": "https://www.healthplan.org/mrf/thp/2026-10-01_The-Health-Plan-of-WV-Inc_index.json",
+  "sample_file_url": "https://www.healthplan.org/mrf/thp/2026-10-01_The-Health-Plan-of-WV-Inc_THP-Network_PEIA_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.0002,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Zip (0.23 MB). West Virginia public employees (PEIA) plans, 6 plan links."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace WV - specific (provider-specific) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXWV_specific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.27,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of JSON parts, but not the CMS layout: key \"in_networks\" (not \"in_network\"), version \"2.0.0.0\", no last_updated_on at the top, provider_references at item level. The reader needs a CareSource adapter before this can load. Zip Last-Modified 2026-10-15. The WV non-specific file names Ohio plan id 77552OH001022202."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace WV - non-specific (fee schedule) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXWV_nonspecific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.009,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of 5 zips. \"Price\" instead of negotiated_rate, key \"expiration_date,\" (with a comma), version \"0.0.0.0\". Zip Last-Modified 2026-09-02. The WV non-specific file names Ohio plan id 77552OH001022202."
+ }
+]

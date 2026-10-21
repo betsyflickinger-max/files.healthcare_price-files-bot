@@ -1,0 +1,145 @@
+[
+ {
+  "insurer": "Blue Cross Blue Shield of Michigan",
+  "network_label": "BCBSM PPO (HIOS 15560)",
+  "index_url": "https://bcbsm.sapphiremrfhub.com/tocs/202610/2026-10-01_blue_cross_blue_shield_of_michigan_index.json",
+  "sample_file_url": "https://bcbsm.sapphiremrfhub.com/mrfs/202610/2026-09-01_BCBSMI_Blue-Cross-Blue-Shield-of-Michigan_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.136,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Index lists plans only by issuer HIOS id (15560 BCBSM, 98185 BCN), so plan count is 1; markets Group,Individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Michigan",
+  "network_label": "Blue Care Network Preferred HMO (HIOS 98185)",
+  "index_url": "https://bcbsm.sapphiremrfhub.com/tocs/202610/2026-10-01_blue_cross_blue_shield_of_michigan_index.json",
+  "sample_file_url": "https://bcbsm.sapphiremrfhub.com/mrfs/202610/2026-09-03_BLUE-CARE-NETWORK_HMO_in-network.json.gz",
+  "parts": 1,
+  "gb": 6.277,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Index lists plans only by issuer HIOS id (15560 BCBSM, 98185 BCN), so plan count is 1; markets Group,Individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Michigan",
+  "network_label": "Blue Care Network Select HMO (PCP Focus)",
+  "index_url": "https://bcbsm.sapphiremrfhub.com/tocs/202610/2026-10-01_blue_cross_blue_shield_of_michigan_index.json",
+  "sample_file_url": "https://bcbsm.sapphiremrfhub.com/mrfs/202610/2026-09-03_BLUE-CARE-NETWORK_PCP-Focus-Select-HMO_in-network.json.gz",
+  "parts": 1,
+  "gb": 6.275,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Index lists plans only by issuer HIOS id (15560 BCBSM, 98185 BCN), so plan count is 1; markets Group,Individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Michigan",
+  "network_label": "Blue Care Network Local HMO (individual only)",
+  "index_url": "https://bcbsm.sapphiremrfhub.com/tocs/202610/2026-10-01_blue_cross_blue_shield_of_michigan_index.json",
+  "sample_file_url": "https://bcbsm.sapphiremrfhub.com/mrfs/202610/2026-09-03_BLUE-CARE-NETWORK_Local-HMO_in-network.json.gz",
+  "parts": 1,
+  "gb": 5.603,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Index lists plans only by issuer HIOS id (15560 BCBSM, 98185 BCN), so plan count is 1; markets Individual"
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Michigan",
+  "network_label": "Blue Care Network Metro Detroit HMO",
+  "index_url": "https://bcbsm.sapphiremrfhub.com/tocs/202610/2026-10-01_blue_cross_blue_shield_of_michigan_index.json",
+  "sample_file_url": "https://bcbsm.sapphiremrfhub.com/mrfs/202610/2026-09-03_BLUE-CARE-NETWORK_Metro-Detroit-HMO_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.064,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Index lists plans only by issuer HIOS id (15560 BCBSM, 98185 BCN), so plan count is 1; markets Group,Individual"
+ },
+ {
+  "insurer": "Priority Health (Corewell Health)",
+  "network_label": "Priority Health HMO",
+  "index_url": "https://priorityhealthtransparencymrfs.s3.us-east-1.amazonaws.com/2026_10_01_priority_health_index.zip",
+  "sample_file_url": "https://priorityhealthtransparencymrfs.s3.amazonaws.com/2026_10_01_priority_health_HMO_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.154,
+  "plan_ids": 2145,
+  "status": "Works",
+  "note": "ZIP, one JSON inside. Size is the zip (153,766,517 bytes). Group + individual; EIN and HIOS ids."
+ },
+ {
+  "insurer": "Priority Health (Corewell Health)",
+  "network_label": "Priority Health PPO (also the EPO page's file)",
+  "index_url": "https://priorityhealthtransparencymrfs.s3.us-east-1.amazonaws.com/2026_10_01_priority_health_index.zip",
+  "sample_file_url": "https://priorityhealthtransparencymrfs.s3.amazonaws.com/2026_10_01_priority_health_PPO_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.144,
+  "plan_ids": 489,
+  "status": "Works",
+  "note": "ZIP (144,249,635 bytes). PPO plans also link Cigna national files (out-of-state wrap) - not read."
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code OPEN",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_OPEN_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.028134,
+  "plan_ids": 2587,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 2586, \"individual\": 1}"
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code AHLD",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_AHLD_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.032885,
+  "plan_ids": 1761,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 1760, \"individual\": 1}"
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code EXTA",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_EXTA_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.033058,
+  "plan_ids": 677,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 677}"
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code AHL",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_AHL_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.033392,
+  "plan_ids": 486,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 486}"
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code ASR1",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_ASR1_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.032842,
+  "plan_ids": 253,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 253}"
+ },
+ {
+  "insurer": "Health Alliance Plan (Henry Ford Health)",
+  "network_label": "HAP network code ASR3",
+  "index_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/hap-egress.nophi.kyruushsq.com/prd/mrf/HAP_I/HAP/2026-10-01/inNetworkRates/2026-10-01_ASR3_Health-Alliance-Plan.json.gz",
+  "parts": 1,
+  "gb": 0.033912,
+  "plan_ids": 248,
+  "status": "Works",
+  "note": "Listed in HealthSparq latest_metadata.json (the hap.org page only links the JavaScript portal). Markets {\"group\": 248}"
+ }
+]

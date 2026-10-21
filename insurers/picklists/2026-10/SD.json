@@ -1,0 +1,79 @@
+[
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 4 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-4_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.07,
+  "plan_ids": 1362,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group 1347 + individual 15. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 6 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-6_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.07,
+  "plan_ids": 1236,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group 1206 + individual 30. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Sanford Health Plan",
+  "network_label": "Sanford file 3 (Sanford Broad Network)",
+  "index_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN_index.json.zip",
+  "sample_file_url": "https://downloads.sanfordhealthplan.com/2026-10-20_SHP-SANFORD-HEALTH-PLAN-3_in-network-rates.json.zip",
+  "parts": 1,
+  "gb": 0.072,
+  "plan_ids": 456,
+  "status": "Works",
+  "note": "ZIP; size is the zip. group. Index has no network names or states; plan ids are Sanford internal numbers labeled HIOS. One copy covers ND and SD - store once."
+ },
+ {
+  "insurer": "Wellmark Blue Cross and Blue Shield",
+  "network_label": "Wellmark BCBS of South Dakota Blue Select PPO (57A0)",
+  "index_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/2026-10-01/inNetworkRates/2026-10-01_WMK_I_PLAN6_57A0_Wellmark.json.gz",
+  "parts": 1,
+  "gb": 0.003166,
+  "plan_ids": 477,
+  "status": "Works",
+  "note": "Small files (3-14 MB gz) but full: ~19,700 codes incl. APR-DRG/EAPG. Markets {\"group\": 2725, \"individual\": 35}"
+ },
+ {
+  "insurer": "Wellmark Blue Cross and Blue Shield",
+  "network_label": "Wellmark BCBS of South Dakota Participating Providers (57B0)",
+  "index_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/latest_metadata.json",
+  "sample_file_url": "https://mrf.healthsparq.com/wmrk-egress.nophi.kyruushsq.com/prd/mrf/WMRK_I/WELLMARK/2026-10-01/inNetworkRates/2026-10-01_WMK_I_PLAN7_57B0_Wellmark.json.gz",
+  "parts": 1,
+  "gb": 0.003163,
+  "plan_ids": 16,
+  "status": "Works",
+  "note": "Small files (3-14 MB gz) but full: ~19,700 codes incl. APR-DRG/EAPG. Markets {\"group\": 15, \"individual\": 1}"
+ },
+ {
+  "insurer": "Avera Health Plans",
+  "network_label": "Avera Health Plans AHP Network",
+  "index_url": "https://portaldocs.avera.org/machinereadablefiles/InNetwork/2026-08-01_avera-health-plans_index.json",
+  "sample_file_url": "https://portaldocs.avera.org/machinereadablefiles/InNetwork/2026-08-01_avera-health-plans_ahp-network_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.073,
+  "plan_ids": 998,
+  "status": "Old file (2026-06-30)",
+  "note": "Uncompressed JSON. Index links point to dead host portaldocs.dakotacare.com; read the portaldocs.avera.org copy. Server sends no intermediate certificate."
+ },
+ {
+  "insurer": "Avera Health Plans",
+  "network_label": "Avera Health Plans Direct Network",
+  "index_url": "https://portaldocs.avera.org/machinereadablefiles/InNetwork/2026-08-01_avera-health-plans_index.json",
+  "sample_file_url": "https://portaldocs.avera.org/machinereadablefiles/InNetwork/2026-08-01_avera-health-plans_avera-direct-network_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.025,
+  "plan_ids": 282,
+  "status": "Old file (2026-06-30)",
+  "note": "Uncompressed JSON. Index links point to dead host portaldocs.dakotacare.com; read the portaldocs.avera.org copy. Server sends no intermediate certificate."
+ }
+]

@@ -1,0 +1,460 @@
+{
+ "anthem-IN": {
+  "total_emp": 169153.0,
+  "share": 0.9914574379407992,
+  "pick": [
+   {
+    "net": "131_17B0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 132308.0,
+    "plans": 606081.0,
+    "parts": "31/31",
+    "gb": 14.1,
+    "date": "2026-10-01",
+    "sample": "MC SALES INC; TDBBS LLC; CUSTOM INDUSTRIES INC",
+    "prob": ""
+   },
+   {
+    "net": "131_17D0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 18389.0,
+    "plans": 112218.0,
+    "parts": "18/18",
+    "gb": 16.34,
+    "date": "2026-09-01",
+    "sample": "PRECISION TAX INC; LARS BJORN JONSSON DDS MS; MX HOLDINGS US INC",
+    "prob": ""
+   },
+   {
+    "net": "IN_AHPEMEDINUD",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 17011.0,
+    "plans": 78483.0,
+    "parts": "6/6",
+    "gb": 4.76,
+    "date": "2026-10-01",
+    "sample": "GRYB USA INC; PELCHERS SHOOTERS SUPPLY; Indy Earth Works, Inc.",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "131_18N0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "5/5",
+    "gb": 2.59,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "IN_HXCBMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "4/4",
+    "gb": 2.34,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "IN_HXCZMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 2.53,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "IN_JBGLMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.43,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "anthem-KY": {
+  "total_emp": 27828.0,
+  "share": 0.9528173063101911,
+  "pick": [
+   {
+    "net": "KY_AHPNMEDKY00",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 26515.0,
+    "plans": 130470.0,
+    "parts": "4/4",
+    "gb": 2.16,
+    "date": "2026-10-01",
+    "sample": "GRYB USA INC; Indy Earth Works, Inc.; INDY EARTH WORKS, INC.",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "KY_HXAPMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 1.56,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "KY_HXDCMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "4/4",
+    "gb": 1.55,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "KY_HXJMMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 2.12,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "KY_HXTYMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 1.54,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "KY_HYNLMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.18,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "anthem-ME": {
+  "total_emp": 154745.0,
+  "share": 0.9547125916830915,
+  "pick": [
+   {
+    "net": "182_25E0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 129841.0,
+    "plans": 594449.0,
+    "parts": "2/2",
+    "gb": 0.44,
+    "date": "2026-10-01",
+    "sample": "MC SALES INC; TDBBS LLC; CUSTOM INDUSTRIES INC",
+    "prob": ""
+   },
+   {
+    "net": "182_25B0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 17896.0,
+    "plans": 109198.0,
+    "parts": "3/3",
+    "gb": 0.56,
+    "date": "2026-10-01",
+    "sample": "PRECISION TAX INC; LARS BJORN JONSSON DDS MS; MX HOLDINGS US INC",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "ME_HXAXMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.1,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "anthem-NH": {
+  "total_emp": 156749.0,
+  "share": 0.9398018488156225,
+  "pick": [
+   {
+    "net": "271_35B0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 131167.0,
+    "plans": 600552.0,
+    "parts": "6/6",
+    "gb": 0.42,
+    "date": "2026-10-01",
+    "sample": "MC SALES INC; TDBBS LLC; CUSTOM INDUSTRIES INC",
+    "prob": ""
+   },
+   {
+    "net": "271_35E0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 16146.0,
+    "plans": 102083.0,
+    "parts": "6/6",
+    "gb": 0.4,
+    "date": "2026-10-01",
+    "sample": "PRECISION TAX INC; LARS BJORN JONSSON DDS MS; MX HOLDINGS US INC",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "NH_HXABMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "2/2",
+    "gb": 0.04,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "anthem-NV": {
+  "total_emp": 151900.0,
+  "share": 0.9656023699802502,
+  "pick": [
+   {
+    "net": "266_38B0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 129256.0,
+    "plans": 592126.0,
+    "parts": "3/3",
+    "gb": 0.29,
+    "date": "2026-10-01",
+    "sample": "MC SALES INC; TDBBS LLC; CUSTOM INDUSTRIES INC",
+    "prob": ""
+   },
+   {
+    "net": "266_38F0",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 17419.0,
+    "plans": 107159.0,
+    "parts": "2/2",
+    "gb": 0.25,
+    "date": "2026-10-01",
+    "sample": "PRECISION TAX INC; LARS BJORN JONSSON DDS MS; MX HOLDINGS US INC",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "NV_HYMGMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.0,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "NV_JBGCMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.0,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "NV_JBNPMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.01,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "NV_JBNPMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 0.01,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "anthem-OH": {
+  "total_emp": 22788.0,
+  "share": 0.9540986484114446,
+  "pick": [
+   {
+    "net": "OH_AHPNMEDOH00",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 21742.0,
+    "plans": 98207.0,
+    "parts": "13/13",
+    "gb": 4.35,
+    "date": "2026-10-01",
+    "sample": "CUSTOM INDUSTRIES INC; GRYB USA INC; Indy Earth Works, Inc.",
+    "prob": ""
+   }
+  ],
+  "nonemp": [
+   {
+    "net": "OH_HXALMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 3.06,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "OH_HXDGMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 3.06,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "OH_HXKQMED0001",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 2.87,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "OH_HXKRMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 2.88,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   },
+   {
+    "net": "OH_HYNWMED0000",
+    "name": "In-Network Negotiated Rates Files",
+    "cov": "medical",
+    "emp": 0.0,
+    "plans": 11348.0,
+    "parts": "1/1",
+    "gb": 2.92,
+    "date": "2026-10-01",
+    "sample": "",
+    "prob": ""
+   }
+  ]
+ },
+ "hcsc-MT": {
+  "total_emp": 6173.0,
+  "share": 0.957395107727199,
+  "pick": [
+   {
+    "net": "250_31H0",
+    "name": "MT PPO Network in-network file",
+    "cov": "medical",
+    "emp": 5910.0,
+    "plans": 21261.0,
+    "parts": "1/1",
+    "gb": 0.03,
+    "date": "2026-09-07",
+    "sample": "SEAHORSE TRANSPORTATION, INC.; RESCUE HER, INC.; LIDDELL INDUSTRIES INC",
+    "prob": ""
+   }
+  ],
+  "nonemp": []
+ },
+ "hcsc-NM": {
+  "total_emp": 6197.0,
+  "share": 0.959980635791512,
+  "pick": [
+   {
+    "net": "290_37B0",
+    "name": "NM New Mexico BlueCard PPO in-network file",
+    "cov": "medical",
+    "emp": 5949.0,
+    "plans": 21442.0,
+    "parts": "1/1",
+    "gb": 0.05,
+    "date": "2026-09-07",
+    "sample": "SEAHORSE TRANSPORTATION, INC.; RESCUE HER, INC.; LIDDELL INDUSTRIES INC",
+    "prob": ""
+   }
+  ],
+  "nonemp": []
+ }
+}

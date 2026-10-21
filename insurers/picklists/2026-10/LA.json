@@ -1,0 +1,123 @@
+[
+ {
+  "insurer": "Blue Cross and Blue Shield of Louisiana",
+  "network_label": "BCBSLA network set P019 (Preferred Care PPO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_lahsic_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_P019_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.274,
+  "plan_ids": 37,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Louisiana",
+  "network_label": "BCBSLA network set P036 (Preferred Care PPO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_lahsic_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_P036_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.144,
+  "plan_ids": 26,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "Blue Cross and Blue Shield of Louisiana",
+  "network_label": "BCBSLA network set P001 (Preferred Care PPO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_lahsic_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_P001_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.274,
+  "plan_ids": 22,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H010 (Blue Connect HMO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H010_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.378,
+  "plan_ids": 46,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H008 (HMO (HMO Louisiana))",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H008_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.78,
+  "plan_ids": 24,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H027 (Precision Blue HMO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H027_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.357,
+  "plan_ids": 21,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H032 (HMO (HMO Louisiana))",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H032_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.396,
+  "plan_ids": 14,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H017 (Signature Blue)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H017_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.366,
+  "plan_ids": 12,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H009 (Community Blue HMO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H009_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.373,
+  "plan_ids": 12,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "HMO Louisiana (BCBSLA)",
+  "network_label": "BCBSLA network set H023 (Blue Connect HMO)",
+  "index_url": "https://bcbsla.sapphiremrfhub.com/tocs/202610/2026-10-01_hmola_index.json",
+  "sample_file_url": "https://bcbsla.sapphiremrfhub.com/mrfs/202610/2026-09-01_bcbsla_H023_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.195,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "One file per network set; path rolls monthly (tocs/YYYYMM, mrfs/YYYYMM). Not a byte copy of the other sets (different size and content hash)."
+ },
+ {
+  "insurer": "CHRISTUS Health Plan Louisiana",
+  "network_label": "CHRISTUS Health Plan Louisiana marketplace (LA HIX)",
+  "index_url": "(no index; directory listing https://chppayment.christushealth.org/documents/ATEX/)",
+  "sample_file_url": "https://chppayment.christushealth.org/documents/ATEX/2026-10-05_chp_la_hix_in-network-rates.json",
+  "parts": 1,
+  "gb": 0.545,
+  "plan_ids": null,
+  "status": "Works",
+  "note": "Same host and template as the Texas rows in networks.csv: add url_template https://chppayment.christushealth.org/documents/ATEX/{date}_chp_la_hix_in-network-rates.json. last_updated_on 2026-10-05. File has plan_name CHP LA HIX but no plan_id, so no plan count."
+ }
+]

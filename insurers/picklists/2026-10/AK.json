@@ -1,0 +1,46 @@
+[
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera Alaska Global network - A00005 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_A00005_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.042,
+  "plan_ids": 594,
+  "status": "Works",
+  "note": "Linked from 553 of Premera's 554 October indexes (Premera's own + employer indexes); 594 plan ids. "
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera Alaska Heritage network - A00008 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_A00008_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.044,
+  "plan_ids": 519,
+  "status": "Works",
+  "note": "Linked from 475 of Premera's 554 October indexes (Premera's own + employer indexes); 519 plan ids. "
+ },
+ {
+  "insurer": "Premera Blue Cross",
+  "network_label": "Premera Yukon network - A00022 ffs",
+  "index_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/tableOfContents/2026-10-02_PREMERA-BLUE-CROSS_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/premera-egress.nophi.kyruushsq.com/prd/mrf/PREMERA_I/PREMERA/2026-10-02/inNetworkRates/2026-08-22_A00022_ffs_in-network.json.gz",
+  "parts": 1,
+  "gb": 0.042,
+  "plan_ids": 76,
+  "status": "Works",
+  "note": "Linked from 79 of Premera's 554 October indexes (Premera's own + employer indexes); 76 plan ids. "
+ },
+ {
+  "insurer": "Moda Health Plan (Moda Select)",
+  "network_label": "Moda Select - file moda_0280 (AK group + individual)",
+  "index_url": "https://mrf.modahealth.com/mrf/Moda/2026-10-01_moda_ModaSelect_index.json",
+  "sample_file_url": "https://mrf.modahealth.com/mrf/Moda/InNetwork/2026-10-01_moda_0280_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 5.669,
+  "plan_ids": 53,
+  "status": "Works",
+  "note": "53 plan ids (24 AK HIOS individual + group). Files 0286 (26 AK group plans, 5.667 GB) and 0281 (3 AK individual HIX plans, 5.661 GB) carry the same network name 'Moda Select' and are within 0.15% in size: treat as near-copies, read 0280 only unless a check shows different rates."
+ }
+]

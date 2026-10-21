@@ -1,0 +1,57 @@
+[
+ {
+  "insurer": "BlueCross BlueShield of South Carolina",
+  "network_label": "Preferred Blue (AI) + hospital supplement (AI_CB)",
+  "index_url": "https://d2vbl1kcu4hfid.cloudfront.net/bcbssc_index.json",
+  "sample_file_url": "https://d2vbl1kcu4hfid.cloudfront.net/2026-10-01_bluecross_AI_in-network-rates_1_of_1.json.gz",
+  "parts": 2,
+  "gb": 0.226,
+  "plan_ids": 2360,
+  "status": "Works (browser User-Agent required)",
+  "note": "226,380,068 + 345,629 bytes. 8,519 NPIs, 20,115 codes, 2.03M prices. Supplement file 2026-10-01_bluecross_AI_in-network-rates_CB_1_of_1.json.gz is part of the same network."
+ },
+ {
+  "insurer": "BlueChoice HealthPlan of South Carolina",
+  "network_label": "BlueChoice Advantage Network (CG) + supplement (CG_CB)",
+  "index_url": "https://d2vbl1kcu4hfid.cloudfront.net/bcbssc_index.json",
+  "sample_file_url": "https://d2vbl1kcu4hfid.cloudfront.net/2026-10-01_bluechoice_CG_in-network-rates_1_of_1.json.gz",
+  "parts": 2,
+  "gb": 0.248,
+  "plan_ids": 510,
+  "status": "Works (browser User-Agent required)",
+  "note": "247,571,094 + 144,609 bytes. 8,511 NPIs, 2.13M prices (5% more than Preferred Blue), so kept separate."
+ },
+ {
+  "insurer": "BlueCross BlueShield of South Carolina",
+  "network_label": "Blue Essentials (IE, marketplace) + supplement",
+  "index_url": "https://d2vbl1kcu4hfid.cloudfront.net/bcbssc_index.json",
+  "sample_file_url": "https://d2vbl1kcu4hfid.cloudfront.net/2026-10-01_bluecross_IE_in-network-rates_1_of_1.json.gz",
+  "parts": 2,
+  "gb": 0.071,
+  "plan_ids": 353,
+  "status": "Works (browser User-Agent required)",
+  "note": "7,568 NPIs, 1.71M prices. BlueChoice Blue Option (BE, 26 plans, 7,564 NPIs, 1.71M prices) is a near-copy: skip it."
+ },
+ {
+  "insurer": "BlueCross BlueShield of South Carolina",
+  "network_label": "Regional marketplace networks: Pee Dee Blue, Lowcountry Blue, Upstate Blue, Congaree Blue, Blue Beaufort",
+  "index_url": "https://d2vbl1kcu4hfid.cloudfront.net/bcbssc_index.json",
+  "sample_file_url": "https://d2vbl1kcu4hfid.cloudfront.net/2026-10-01_bluecross_EC_in-network-rates_1_of_1.json.gz",
+  "parts": 5,
+  "gb": 0.041,
+  "plan_ids": 77,
+  "status": "Works (browser User-Agent required)",
+  "note": "5 files (EP 9.2 MB, LB 9.3, UB 9.6, EC 8.7, EB 4.5; 77 plan ids each, Beaufort 48). Congaree checked: 1,751 NPIs, 271k prices, a real narrow network."
+ },
+ {
+  "insurer": "BlueCross BlueShield of South Carolina",
+  "network_label": "State Group Network (State of South Carolina plan)",
+  "index_url": "https://d2vbl1kcu4hfid.cloudfront.net/bcbssc_index.json",
+  "sample_file_url": "https://d2vbl1kcu4hfid.cloudfront.net/2026-10-01_bluecross_ST_in-network-rates_1_of_1.json.gz",
+  "parts": 1,
+  "gb": 0.008,
+  "plan_ids": 1,
+  "status": "Works (browser User-Agent required)",
+  "note": "One plan id (STATE OF SOUTH CAROLINA), self-funded, not in MLR counts. 8,499 NPIs, 171,504 prices."
+ }
+]

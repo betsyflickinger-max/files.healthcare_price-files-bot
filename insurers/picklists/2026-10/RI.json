@@ -1,0 +1,46 @@
+[
+ {
+  "insurer": "Blue Cross & Blue Shield of Rhode Island",
+  "network_label": "BCBSRI PPO / HealthMate (370_PPO1) - main copy",
+  "index_url": "https://steu2prdpblic01.blob.core.windows.net/price-transparency/index/2026-10_BCBSRI_index.json",
+  "sample_file_url": "https://api.bcbsri.com/public/price-transparency/2026-10_370_PPO1_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.04,
+  "plan_ids": 113,
+  "status": "Works (GET only; HEAD returns 404)",
+  "note": "15,990 NPIs, 19,744 codes, 7.91M prices. Near-copies: NEH1 Network Blue New England (12 plans, same price count), DRP1 Direct individual (10), BCH1 BlueCHiP group (7), BCD1 BlueCHiP Direct (3): all 15,99x NPIs, prices within 1.3%. Read PPO1 only."
+ },
+ {
+  "insurer": "Blue Cross & Blue Shield of Rhode Island",
+  "network_label": "BlueCHiP Direct Advance (370_BDA1) - narrow individual network",
+  "index_url": "https://steu2prdpblic01.blob.core.windows.net/price-transparency/index/2026-10_BCBSRI_index.json",
+  "sample_file_url": "https://api.bcbsri.com/public/price-transparency/2026-10_370_BDA1_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.018,
+  "plan_ids": 1,
+  "status": "Works (GET only; HEAD returns 404)",
+  "note": "4,596 NPIs, 3.38M prices: a real narrow network."
+ },
+ {
+  "insurer": "Neighborhood Health Plan of Rhode Island",
+  "network_label": "NHPRI commercial medical",
+  "index_url": "https://files.nhpri.org/mrf/nhp/TOC/2026-09-22_Neighborhood-Health-Plan-Of-Rhode-Island_Index.json",
+  "sample_file_url": "https://files.nhpri.org/mrf/NHP/InNetwork/2026-06-14_Issuer_Neighborhood-Health-Plan-Of-Rhode-Island-Medical_in-network_rates.json",
+  "parts": 1,
+  "gb": null,
+  "plan_ids": 4,
+  "status": "BROKEN (main medical file 404; no October index)",
+  "note": "Newest index is Sept 22. Its only medical file with plans (June 14) is 404. Unindexed October files in https://files.nhpri.org/mrf/nhp/InNetwork/ are small: Medical-Facility (Oct 14, 8.2 MB, 1,507 codes, 15,070 prices) and MedicalDental (Oct 15, 51 MB, 529 codes, 2,074 prices). Hold until fixed."
+ },
+ {
+  "insurer": "Harvard Pilgrim (Point32Health)",
+  "network_label": "Harvard Pilgrim (shared A008-P1 copy; RI plans use Ocean State Access America A091, an exact copy of PPO Access A094)",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_HPHC-Insurance-Company-HPIC_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_A008-P1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.111,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "Store once (same file as MA/NH/ME). A091-P1 has the same rate hash as A094-P1; both within 0.3% of A008-P1. HP has 6,388 RI insured lives."
+ }
+]

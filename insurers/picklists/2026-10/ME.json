@@ -1,0 +1,35 @@
+[
+ {
+  "insurer": "Harvard Pilgrim (Point32Health)",
+  "network_label": "Harvard Pilgrim HMO (A008-P1) - one shared copy for all HP networks",
+  "index_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_Harvard-Pilgrim-Health-Care-Inc-HPHC_index.json",
+  "sample_file_url": "https://eusprdtransparencymrfp32.blob.core.windows.net/hphc/2026-10-01_A008-P1_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.111,
+  "plan_ids": null,
+  "status": "Works",
+  "note": "Shared with MA/NH/RI: store once. Maine's Choice Plus HMO (A081-P1) is a near-copy: 96,968 NPIs, 6,060,558 prices vs 6,060,570."
+ },
+ {
+  "insurer": "Maine Community Health Options",
+  "network_label": "Community Health Options in-network (single file, no index)",
+  "index_url": "https://www.healthoptions.org/policies-notices/",
+  "sample_file_url": "https://www.healthoptions.org/machinereadable/InNetwork.zip",
+  "parts": 1,
+  "gb": 0.005,
+  "plan_ids": null,
+  "status": "Old file (2025-12-01)",
+  "note": "zip, 0.037 GB unzipped; schema 1.3.0; last_updated_on 2025-12-01, Last-Modified Dec 3, 2025. Only 709 codes, 29,630 prices. No table of contents, so no plan list."
+ },
+ {
+  "insurer": "Anthem (Elevance)",
+  "network_label": "from the Anthem catalog, filled in separately",
+  "index_url": "",
+  "sample_file_url": "",
+  "parts": null,
+  "gb": null,
+  "plan_ids": null,
+  "status": "From catalog",
+  "note": "Top insurer in ME (159,167 insured lives)."
+ }
+]

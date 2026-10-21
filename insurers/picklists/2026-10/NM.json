@@ -1,0 +1,24 @@
+[
+ {
+  "insurer": "HCSC (Blue Cross and Blue Shield of New Mexico)",
+  "network_label": "BCBSNM networks",
+  "index_url": "from the HCSC catalog, filled in separately",
+  "sample_file_url": null,
+  "parts": null,
+  "gb": null,
+  "plan_ids": null,
+  "status": "from the HCSC catalog, filled in separately",
+  "note": ""
+ },
+ {
+  "insurer": "Presbyterian Health Plan",
+  "network_label": "Presbyterian in-network negotiated rates (one file for all plans)",
+  "index_url": "(no index; linked from https://www.phs.org/tools-resources/member/applicable-rates)",
+  "sample_file_url": "https://onbaseext.phs.org/PEL/DisplayDocument?ContentID=OB_000000007649",
+  "parts": 1,
+  "gb": 0.174,
+  "plan_ids": null,
+  "status": "Old file (2026-07-17)",
+  "note": "Reporting entity Presbyterian Network, Inc; last_updated_on 2026-07-17, server Last-Modified Jul 28, 2026. No plan names or ids in the file, so no plan count. Uncompressed JSON, 174,055,010 bytes."
+ }
+]

@@ -1,0 +1,90 @@
+[
+ {
+  "insurer": "SelectHealth (Intermountain)",
+  "network_label": "All 83 Utah product indexes (Med, Value, Care, Signature, Share/Accountability, tiered and custom employer POS/HMO) - read the union of their files once",
+  "index_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/2026-10-01_MED-UT-POS_3006_index.json",
+  "sample_file_url": "https://ebu.intermountainhealthcare.org/selecthealth/transparencyincoverage/MRF/S-NG1A0000208X-innetwork-1.json.gz",
+  "parts": 1619,
+  "gb": 6.38,
+  "plan_ids": null,
+  "status": "Works",
+  "note": "Per-provider-contract files shared across products: 1,619 Utah files, 0 missing. Biggest products by distinct employer sponsors: SE ACA Med UT POS 3032 and SE ACA Value UT HMO 4032 (5,878 each), Med UT POS 3006 (467), GM Med UT POS 3071 (459), GM Value UT HMO 4071 (458), GM Care UT POS 2071 (455), Value UT HMO 4006 (418), Value/Med Tiered POS UT 4012 (259). Individual: ACA Med UT HMO 3040, ACA Value UT HMO 4040, Signature 6101. Plan ids are SelectHealth EINs, so plan counts are not meaningful. All 124 indexes, 0 of 1,917 in-network files missing."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Regence Participating - Utah providers (UPAR)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UPAR_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.319,
+  "plan_ids": 4542,
+  "status": "Works",
+  "note": "4542 plan ids across Regence/Asuris indexes link it, 170 of them Regence BlueCross BlueShield of Utah's. File UPAR_NonRLRX, last modified 10 Sep 2026. Each Regence plan links all four Regence states' provider files; this row is the file for providers in this state."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Regence ValueCare / Preferred - Utah providers (UVC)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UVC_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.318,
+  "plan_ids": 4698,
+  "status": "Works",
+  "note": "4698 plan ids across Regence/Asuris indexes link it, 315 of them Regence BlueCross BlueShield of Utah's. File UVC_NonRLRX, last modified 10 Sep 2026. File says 'Utah ValueCare Network'; differs from UPAR in a spot check."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Regence BlueOption - Utah (UPBO)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UPBO_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.3,
+  "plan_ids": 97,
+  "status": "Works",
+  "note": "97 plan ids across Regence/Asuris indexes link it, 97 of them Regence BlueCross BlueShield of Utah's. File UPBO_NonRLRX, last modified 10 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Regence Individual Connect - Utah providers (UTCN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UTCN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.208,
+  "plan_ids": 60,
+  "status": "Works",
+  "note": "60 plan ids across Regence/Asuris indexes link it, 9 of them Regence BlueCross BlueShield of Utah's. File UTCN_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Regence Focal Point - Utah (UFP)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UFP_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.204,
+  "plan_ids": 182,
+  "status": "Works",
+  "note": "182 plan ids across Regence/Asuris indexes link it, 182 of them Regence BlueCross BlueShield of Utah's. File UFP_NonRLRX, last modified 10 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Utah",
+  "network_label": "Blue High Performance Network - Utah providers (UHPN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Utah-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_UHPN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.196,
+  "plan_ids": 9,
+  "status": "Works",
+  "note": "9 plan ids across Regence/Asuris indexes link it, 8 of them Regence BlueCross BlueShield of Utah's. File UHPN_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "University of Utah Health Plans",
+  "network_label": "U of U Health Plans in-network files",
+  "index_url": "https://doc.uhealthplan.utah.edu/machine-readable-data/TIC_MRF/u-of-u-health-plans_index.json",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": null,
+  "status": "Not opened",
+  "note": "Could not open today: landing page fails TLS (self-signed certificate in chain) and the index host resets the connection. Retry from another network before deciding."
+ }
+]

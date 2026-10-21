@@ -1,0 +1,35 @@
+[
+ {
+  "insurer": "CareFirst BlueCross BlueShield",
+  "network_label": "CareFirst Select Preferred Provider network (PPO; file 690_08B0)",
+  "index_url": "https://stmrffilesprod001.blob.core.windows.net/mrf-files/2026-09-29_carefirst%20ppo_index.json",
+  "sample_file_url": "https://carefirstbcbs.mrf.bcbs.com/2026-10_690_08B0_in-network-rates_1_of_35.json.gz",
+  "parts": 35,
+  "gb": 0.326,
+  "plan_ids": 1639,
+  "status": "Works",
+  "note": "Already in networks_n5.csv (slots anthem-dc-690-08b0-part-1..35): reuse, add nothing. Links are signed (Expires= ~Nov 20); take them from the index each month. 690_08D0 and 690_08L0 in the same index are byte-identical copies (decompressed part 35 identical, part sizes identical): do not read them. Plan ids: 1,639 in the PPO index plus 25 (netlease) and 5 (ncas). NPI sample: 20 of 40 sampled providers in MD."
+ },
+ {
+  "insurer": "CareFirst BlueCross BlueShield",
+  "network_label": "CareFirst BlueChoice network (HMO; file 690_08C0)",
+  "index_url": "https://stmrffilesprod001.blob.core.windows.net/mrf-files/2026-09-29_carefirst%20hmo_index.json",
+  "sample_file_url": "https://carefirstbcbs.mrf.bcbs.com/2026-10_690_08C0_in-network-rates_1_of_35.json.gz",
+  "parts": 35,
+  "gb": 0.295,
+  "plan_ids": 26,
+  "status": "Works",
+  "note": "New for MD (not in networks_n5). Provider references are labeled BLUECHOICE NETWORK. The HMO index links it only to HealthyBlue HMO (26 plan ids); most BlueChoice HMO plans in that index link only an allowed-amounts file (see problems). Signed links: take from the index each month."
+ },
+ {
+  "insurer": "CareFirst BlueCross BlueShield",
+  "network_label": "CareFirst BlueEssential (file 690_08Q0)",
+  "index_url": "(networks_n5.csv, from the Anthem/BCBS catalog)",
+  "sample_file_url": "https://anthembcbsga.mrf.bcbs.com/2026-10_690_08Q0_in-network-rates_1_of_35.json.gz",
+  "parts": 35,
+  "gb": null,
+  "plan_ids": null,
+  "status": "Works",
+  "note": "Already in networks_n5.csv: reuse if DC keeps it. Not linked from any CareFirst index I opened, so plan count unknown; part 35 answers (1,457,376 bytes) and differs from 08B0. Size of all parts not measured today."
+ }
+]

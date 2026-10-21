@@ -1,0 +1,24 @@
+[
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace KY - specific (provider-specific) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXKY_specific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 6.693,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema) + Old file (2026-01-29 / 2025-12-08)",
+  "note": "Zip of JSON parts, but not the CMS layout: key \"in_networks\" (not \"in_network\"), version \"2.0.0.0\", no last_updated_on at the top, provider_references at item level. The reader needs a CareSource adapter before this can load. Zip Last-Modified 2026-01-29. Old file: KY zips were last changed Jan 29, 2026 / Dec 8, 2025. The KY specific file has plan_id_type \"\" and no plan id or plan name."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace KY - non-specific (fee schedule) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXKY_nonspecific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.039,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema) + Old file (2026-01-29 / 2025-12-08)",
+  "note": "Zip of 5 zips. \"Price\" instead of negotiated_rate, key \"expiration_date,\" (with a comma), version \"0.0.0.0\". Zip Last-Modified 2025-12-08. Old file: KY zips were last changed Jan 29, 2026 / Dec 8, 2025. The KY specific file has plan_id_type \"\" and no plan id or plan name."
+ }
+]

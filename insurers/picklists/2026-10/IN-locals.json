@@ -1,0 +1,68 @@
+[
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace IN - specific (provider-specific) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXIN_specific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 13.855,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of JSON parts, but not the CMS layout: key \"in_networks\" (not \"in_network\"), version \"2.0.0.0\", no last_updated_on at the top, provider_references at item level. The reader needs a CareSource adapter before this can load. Zip Last-Modified 2026-10-12. Biggest CareSource file: 13.9 GB zip; first 3 of 5 JSON parts alone are 104 GB uncompressed. The IN specific file names Ohio plan id 77552OH001022202 at the top."
+ },
+ {
+  "insurer": "CareSource",
+  "network_label": "CareSource Marketplace IN - non-specific (fee schedule) rates",
+  "index_url": "https://www.caresource.com/vendor/tic/tic-data-index.json",
+  "sample_file_url": "https://www.caresource.com/vendor/tic/data/caresource_HIXIN_nonspecific_in-network-rates.zip",
+  "parts": 1,
+  "gb": 0.002,
+  "plan_ids": 2,
+  "status": "BROKEN (non-CMS schema)",
+  "note": "Zip of 5 zips. \"Price\" instead of negotiated_rate, key \"expiration_date,\" (with a comma), version \"0.0.0.0\". Zip Last-Modified 2026-08-17. Biggest CareSource file: 13.9 GB zip; first 3 of 5 JSON parts alone are 104 GB uncompressed. The IN specific file names Ohio plan id 77552OH001022202 at the top."
+ },
+ {
+  "insurer": "Physicians Health Plan of Northern Indiana (Corewell / Priority Health family)",
+  "network_label": "PHPNI Freedom Encore combined network",
+  "index_url": "https://services.phpni.com/machine-readable-files/getfile/phpni/phpni/2026-10-01_PHPNI_index.json",
+  "sample_file_url": "https://services.phpni.com/machine-readable-files/getfile/phpni/phpni/2026-10-01_PHPNI_Freedom-innetwork-file-1.json",
+  "parts": 1,
+  "gb": 3.712,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Uncompressed JSON, file dated 2026-10-01 in name. Group plans by EIN (1 id)."
+ },
+ {
+  "insurer": "Physicians Health Plan of Northern Indiana (Corewell / Priority Health family)",
+  "network_label": "PHPNI Options Encore combined network",
+  "index_url": "https://services.phpni.com/machine-readable-files/getfile/phpni/phpni/2026-10-01_PHPNI_index.json",
+  "sample_file_url": "https://services.phpni.com/machine-readable-files/getfile/phpni/phpni/2026-10-01_PHPNI_Options-innetwork-file-1.json",
+  "parts": 1,
+  "gb": 3.539,
+  "plan_ids": 1,
+  "status": "Works",
+  "note": "Uncompressed JSON. Group plans by EIN (1 id)."
+ },
+ {
+  "insurer": "Southeastern Indiana Health Organization (SIHO)",
+  "network_label": "SIHO network",
+  "index_url": "https://mrf-search.herculeshealth.com/siho",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": 0,
+  "status": "Portal only",
+  "note": "siho.org/JsonMRF.html links only to a Hercules/Talon search app (redirects to mymedicalshopper.com/mrf-search/siho); no file or index link."
+ },
+ {
+  "insurer": "Indiana University Health Plans",
+  "network_label": "IU Health Plans network",
+  "index_url": "https://www.iuhealthplans.org",
+  "sample_file_url": "",
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": 0,
+  "status": "Not found",
+  "note": "iuhealthplans.org redirects to anthem.com/mcr/indiana-transition; no files found."
+ }
+]

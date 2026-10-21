@@ -1,0 +1,189 @@
+[
+ {
+  "insurer": "Regence BlueCross BlueShield of Oregon",
+  "network_label": "Regence Preferred - Oregon providers (OPPP)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Oregon-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_OPPP_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.771,
+  "plan_ids": 4834,
+  "status": "Works",
+  "note": "4834 plan ids across Regence/Asuris indexes link it, 1472 of them Regence BlueCross BlueShield of Oregon's. File OPPP_NonRLRX, last modified 10 Sep 2026. Each Regence plan links all four Regence states' provider files; this row is the file for providers in this state."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Oregon",
+  "network_label": "Regence Participating - Oregon providers (OPAR)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Oregon-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_OPAR_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.77,
+  "plan_ids": 4542,
+  "status": "Works",
+  "note": "4542 plan ids across Regence/Asuris indexes link it, 1471 of them Regence BlueCross BlueShield of Oregon's. File OPAR_NonRLRX, last modified 10 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Oregon",
+  "network_label": "Regence Individual Connect - Oregon providers (ORCN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Oregon-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_ORCN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.669,
+  "plan_ids": 60,
+  "status": "Works",
+  "note": "60 plan ids across Regence/Asuris indexes link it, 20 of them Regence BlueCross BlueShield of Oregon's. File ORCN_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Oregon",
+  "network_label": "Regence Legacy network - Oregon (OLHP)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Oregon-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_OLHP_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.085,
+  "plan_ids": 23,
+  "status": "Works",
+  "note": "23 plan ids across Regence/Asuris indexes link it, 23 of them Regence BlueCross BlueShield of Oregon's. File OLHP_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Regence BlueCross BlueShield of Oregon",
+  "network_label": "Blue High Performance Network - Oregon providers (OHPN)",
+  "index_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_Regence%20BlueCross%20BlueShield%20of%20Oregon-non-ASO_index.json",
+  "sample_file_url": "https://tic-mrf.regence.com/mrf/current/2026-10-01_OHPN_NonRLRX_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 0.044,
+  "plan_ids": 9,
+  "status": "Works",
+  "note": "9 plan ids across Regence/Asuris indexes link it, 1 of them Regence BlueCross BlueShield of Oregon's. File OHPN_NonRLRX, last modified 11 Sep 2026."
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Signature (group) - read with all 9 Providence indexes as one set",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_1_SIGNATURE_0001_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1129,
+  "gb": 1.544,
+  "plan_ids": 1609,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 1609 plan ids, 1496 employer sponsors, markets {'group': 2142, 'individual': 119}. Union of all 9 Providence October indexes = 1,234 files, 1.71 GB; read that once and tag networks by index."
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Choice (group)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_3_PROVCHOICE_0001_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1127,
+  "gb": 1.535,
+  "plan_ids": 260,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 260 plan ids, 239 employer sponsors, markets {'group': 256, 'individual': 22}. "
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Connect / Neighborhood (group)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_6_NEIGHBORHOOD_0001_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 530,
+  "gb": 0.654,
+  "plan_ids": 183,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 183 plan ids, 153 employer sponsors, markets {'group': 160, 'individual': 30}. "
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence XPPO (group)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_8_XPPO_0001_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1114,
+  "gb": 1.528,
+  "plan_ids": 174,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 174 plan ids, 174 employer sponsors, markets {'group': 232}. "
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Signature (individual)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_2_SIGNATURE_INDI_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1135,
+  "gb": 1.538,
+  "plan_ids": 39,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 39 plan ids, 0 employer sponsors, markets {'individual': 53}. "
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Choice (individual)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_4_PROVCHOICE_INDI_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1143,
+  "gb": 1.558,
+  "plan_ids": 39,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 39 plan ids, 0 employer sponsors, markets {'individual': 54}. "
+ },
+ {
+  "insurer": "Providence Health Plan",
+  "network_label": "Providence Connect (individual)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/facets/providence-health-plan/2026-10-09_providence-health-plan_7_NEIGHBORHOOD_INDI_index.json",
+  "sample_file_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/mrfs/facets/providence-health-plan/2026/10/0/2026-10-01_providence-health-plan_allowed-amounts.json",
+  "parts": 1192,
+  "gb": 1.66,
+  "plan_ids": 43,
+  "status": "Works",
+  "note": "Per-contract files (Talon), shared across Providence's 9 indexes. 43 plan ids, 0 employer sponsors, markets {'individual': 56}. "
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Navigator (PPO) - OR",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00192-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53043-42.c000.json",
+  "parts": 9,
+  "gb": 1.17,
+  "plan_ids": 108,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: OR Navigator (PMN11000). 108 OR Navigator plans; median plan's set is only 0.042 GB. Markets {'group': 28, 'individual': 80}."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource Voyager - OR",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00192-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53043-47.c000.json",
+  "parts": 9,
+  "gb": 1.111,
+  "plan_ids": 19,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: OR Voyager (PMV15000). 19 OR Voyager plans; median plan's set is only 0.495 GB. Markets {'group': 19}."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource SmartHealth - OR (individual)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00196-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53216-23.c000.json",
+  "parts": 9,
+  "gb": 0.026,
+  "plan_ids": 48,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: OR SmartHealth Standard Bronze (PM1S0035). 48 OR SmartHealth plans; median plan's set is only 0.0 GB. Markets {'individual': 48}."
+ },
+ {
+  "insurer": "PacificSource Health Plans",
+  "network_label": "PacificSource SmartChoice - OR (individual)",
+  "index_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/202610_pacificsource_index.json",
+  "sample_file_url": "https://w2bipdmrfsa.blob.core.windows.net/$web/part-00178-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53093-30.c000.json",
+  "parts": 9,
+  "gb": 0.027,
+  "plan_ids": 26,
+  "status": "Works",
+  "note": "No network names in the index: every plan has its own 9 part files. Read the largest plan's set: OR SmartChoice Value Silver (PM1Z1085). 26 OR SmartChoice plans; median plan's set is only 0.001 GB. Markets {'individual': 26}."
+ },
+ {
+  "insurer": "Moda Health Plan",
+  "network_label": "Moda 'Connexus' file moda_0284 (state not stated)",
+  "index_url": "https://mrf.modahealth.com/mrf/Moda/2026-10-01_moda_ModaSelect_index.json",
+  "sample_file_url": "https://mrf.modahealth.com/mrf/Moda/InNetwork/2026-10-01_moda_0284_in-network-rates.json.gz",
+  "parts": 1,
+  "gb": 6.143,
+  "plan_ids": 55,
+  "status": "Works (state unclear)",
+  "note": "Index calls it 'Connexus In Network file' but the file's network_name is 'Moda Select'. 55 group plan ids, all Moda Select-named; sponsors include Idaho employers. No plan in Moda's only index is clearly an Oregon plan. Approve only if Betsy wants Moda in Oregon."
+ }
+]

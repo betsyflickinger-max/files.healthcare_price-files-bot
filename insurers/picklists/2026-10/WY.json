@@ -1,0 +1,68 @@
+[
+ {
+  "insurer": "Blue Cross Blue Shield of Wyoming",
+  "network_label": "BCBSWY Wyoming Total Choice",
+  "index_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-10-01_Blue_Cross_Blue_Shield_of_Wyoming_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-09-25_000005307_in-network-rates_01_of_11.json.gz",
+  "parts": 11,
+  "gb": 0.0136,
+  "plan_ids": 225,
+  "status": "Works",
+  "note": "Near-copy of the national-format file 2026-10_460_70J0 (13 parts, 0.014 GB, 229 plan ids) on bcbswy.mrf.bcbs.com; read this local copy (unsigned link, newer last_updated_on 2026-09-21)."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Wyoming",
+  "network_label": "BCBSWY Participating Provider (PAR)",
+  "index_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-10-01_Blue_Cross_Blue_Shield_of_Wyoming_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-09-25_000005300_in-network-rates_01_of_09.json.gz",
+  "parts": 9,
+  "gb": 0.0102,
+  "plan_ids": 12,
+  "status": "Works",
+  "note": "Near-copy of 2026-10_460_70B0 (PAR Network, 9 parts, 12 plan ids)."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Wyoming",
+  "network_label": "BCBSWY Blue Select (individual)",
+  "index_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-10-01_Blue_Cross_Blue_Shield_of_Wyoming_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-09-25_000005303_in-network-rates_01_of_09.json.gz",
+  "parts": 9,
+  "gb": 0.0132,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "Near-copy of 2026-10_460_70G0 (Blue Select, 9 parts, 2 plan ids)."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Wyoming",
+  "network_label": "BCBSWY Wyoming Select",
+  "index_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-10-01_Blue_Cross_Blue_Shield_of_Wyoming_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-09-25_000005308_in-network-rates_01_of_09.json.gz",
+  "parts": 9,
+  "gb": 0.0132,
+  "plan_ids": 4,
+  "status": "Works",
+  "note": "Local file only."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Wyoming",
+  "network_label": "BCBSWY Wyoming Choice (large group)",
+  "index_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-10-01_Blue_Cross_Blue_Shield_of_Wyoming_index.json",
+  "sample_file_url": "https://mrfdata.hmhs.com/files/460/wy/inbound/local/2026-09-25_000005302_in-network-rates_01_of_09.json.gz",
+  "parts": 9,
+  "gb": 0.0053,
+  "plan_ids": 2,
+  "status": "Works",
+  "note": "Local file only."
+ },
+ {
+  "insurer": "Mountain Health CO-OP",
+  "network_label": "Mountain Health CO-OP (Wyoming plans)",
+  "index_url": "https://mrf.mmsanalytics.com/talon-mrf-generation/tocs/spyglass/mountain-health-co-op/2026-09-05_mountain-health-co-op_master_index.json",
+  "sample_file_url": null,
+  "parts": 0,
+  "gb": 0,
+  "plan_ids": 0,
+  "status": "Not found",
+  "note": "The only index (toclist.json lists just this one) has Montana and Idaho plans only; no Wyoming (HIOS 38576) plan appears."
+ }
+]

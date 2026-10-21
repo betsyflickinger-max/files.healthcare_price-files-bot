@@ -1,0 +1,79 @@
+[
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ BluePreferred PPO & Mayo",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_010552589PP2_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 2.647,
+  "plan_ids": 233,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ Statewide PPO",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_53901PPO_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 2.688,
+  "plan_ids": 94,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ Alliance Network",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_113412303ALN_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 1.499,
+  "plan_ids": 79,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ Statewide/National PPO + Prosano",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_201257286PRS_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 2.652,
+  "plan_ids": 36,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ PimaConnect",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_260446321PMA_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 0.34,
+  "plan_ids": 31,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ HMO",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_53901HMO_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 2.809,
+  "plan_ids": 11,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ },
+ {
+  "insurer": "Blue Cross Blue Shield of Arizona",
+  "network_label": "BCBSAZ Neighborhood Network (individual marketplace)",
+  "index_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/tableOfContents/2026-09-01_blue-cross-blue-shield-of-arizona_index.json.gz",
+  "sample_file_url": "https://mrf.healthsparq.com/bcbsaz-egress.nophi.kyruushsq.com/prd/mrf/BCBSAZ_I/BCBSAZ/2026-09-01/inNetworkRates/2026-09-01_53901NBR_Blue-Cross-Blue-Shield-of-Arizona.json.gz",
+  "parts": 1,
+  "gb": 1.9,
+  "plan_ids": 2,
+  "status": "Old file (2026-09-01)",
+  "note": "October 2026 set is BROKEN (each file ~3 MB, 28 providers); read the September 1, 2026 set until a full month is posted. Per-employer files of the same network are near-copies: read this one. Plan ids = plan entries (per-employer files) using this network in the Sep index."
+ }
+]
