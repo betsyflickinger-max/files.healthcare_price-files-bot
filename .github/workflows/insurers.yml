@@ -98,7 +98,7 @@ jobs:
           python insurers/bot.py --scope il $FILL || echo "::warning::Illinois (il) pass failed"
           python insurers/bot.py --scope n5 $FILL || echo "::warning::next five states (n5) pass failed"
           python insurers/bot.py --scope nyhf $FILL || echo "::warning::Healthfirst NY (nyhf) pass failed"
-          python insurers/bot.py --scope skipil $FILL || echo "::warning::skipped-network check (skipil) pass failed"
+          python insurers/bot.py --scope skipil || echo "::warning::skipped-network check (skipil) pass failed"   # full check, not --fill: manual runs get replaced by the 10-minute pass; 20 small checks. Remove after the check is done.
           [ -f out/insurer_alerts_tx.md ] && cat out/insurer_alerts_tx.md >> out/insurer_alerts.md || true
           cat out/insurer_summary_tx.md >> "$GITHUB_STEP_SUMMARY"
           cat out/insurer_summary_dfw.md >> "$GITHUB_STEP_SUMMARY"
