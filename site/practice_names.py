@@ -47,6 +47,18 @@ def same_spelling(prac):
     for v in prac.values():
         if v[0] and v[2] != 's' and (w := pick.get(spell_key(v[0]))) and w != v[0]: v[0] = w; n += 1
     return n
+def same_spelling_fac(fac):
+    """Same rule for the page's place list (D.fac: [name, city, kind]): organizations only (kinds G, A, H), never people.
+    Oct 21, 2026: the Compare table's rows are organization NPIs, so "Northland Hearing Centers Inc / , Inc / , Inc." showed
+    there even after the practice list was fixed. Changes fac in place; returns how many names changed."""
+    by = collections.defaultdict(collections.Counter)
+    for v in fac:
+        if v and v[0] and len(v) > 2 and v[2] != 'P': by[spell_key(v[0])][v[0]] += 1
+    pick = {k: min(c.items(), key=lambda kv: (-kv[1], -len(kv[0]), kv[0]))[0] for k, c in by.items() if len(c) > 1}
+    n = 0
+    for v in fac:
+        if v and v[0] and len(v) > 2 and v[2] != 'P' and (w := pick.get(spell_key(v[0]))) and w != v[0]: v[0] = w; n += 1
+    return n
 def tidy(name):
     """IRS and CMS names are upper case: title-case them the way the page does provider names."""
     if not name or not name.isupper(): return name
