@@ -142,6 +142,28 @@ def label_tables(st):
     return key
 
 
+def practice_for(st, slug):
+    """Oct 22, 2026: a new build uses the practice view when build_defaults.json says so (st['practice']). An update build
+    matches the build it will be merged into (merge_build.py stops on a mix): practice view if that build has a practice
+    table. Decided once per state and kept in state.json."""
+    if not UPDATE: return bool(st.get('practice'))
+    bp = st.setdefault('base_practice', {})
+    if slug not in bp:
+        base = f"site/every-st/{slug}/{REBUILD['from']}/" if REBUILD.get('from') else None
+        if not base:
+            best = None
+            for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=f'site/every-st/{slug}/', Delimiter='/'):
+                for c in pg.get('CommonPrefixes', []):
+                    try: t = s3.head_object(Bucket=B, Key=c['Prefix'] + 'embed.json')['LastModified']
+                    except Exception: continue
+                    if best is None or t > best[0]: best = (t, c['Prefix'])
+            base = best[1] if best else None
+        try: bp[slug] = bool(base) and 'prac' in json.loads(s3.get_object(Bucket=B, Key=base + 'embed.json')['Body'].read())
+        except Exception as e: log(slug, ': could not read the base build to pick its mode:', repr(e)[:120]); return False
+        log(slug, ': update build', 'with' if bp[slug] else 'without', 'the practice view, to match', base)
+    return bp[slug]
+
+
 def merge_step(st, left):
     """update mode: one small machine per state whose add build is finished merges it into the state's finished build"""
     def newest(slug):   # same rule as hosp_area.newest_build: the newest folder whose embed.json exists
@@ -479,10 +501,10 @@ def main():
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
                 bd = build_defaults(); ps = bd.get('per_state', {}).get(slug, {})   # per-state settings win
-                if st.get('practice'):
+                if practice_for(st, slug):
                     env.update(PRACTICE='1', SLICE_ROWS=str(ps.get('slice_rows', bd.get('slice_rows', 30000000))))
                 ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
-                if st.get('practice') and i == 0 and build_defaults().get('big_machine', True):
+                if practice_for(st, slug) and i == 0 and build_defaults().get('big_machine', True):
                     # one big-memory machine per state: it builds only the batches the others mark as too big (one huge code)
                     big = {k_: v_ for k_, v_ in env.items() if k_ not in ('BCLAIM', 'BCLAIM_H', 'SPLIT')}
                     big.update(BIG='1', WORKERS='1', WMEM=ps.get('big_mem', '24GB'), WTHREADS='8', STALL_MIN='240', OUTP=f'{SP}{slug}-big/')

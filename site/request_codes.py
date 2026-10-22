@@ -101,6 +101,7 @@ def run_area(s3, B, area, reqs, log):
            'WK': f"{benv['wk']}req/{stamp}/", 'FP_WK': benv['wk'], 'OUTP': f'{pre}req/{stamp}/', 'WORK': work, 'NOXPART': '1',
            'SPLIT': '1', 'MEM': E.get('REQ_MEM', '8GB'), 'THREADS': '4', 'WORKERS': '2', 'WMEM': E.get('REQ_WMEM', '4GB'), 'WTHREADS': '2',
            'ROLE': f'req-{stamp}'}
+    if emb.get('prac'): env['PRACTICE'] = '1'   # Oct 22, 2026: a practice-view build gets its requested codes the same way (older build_env.json files don't record it)
     for k in ('ACLAIM', 'BCLAIM', 'ALSO_WK', 'PRIORITY_KEY', 'ONLY', 'ONLY_KEY', 'ASTART', 'BSTART', 'BORDER', 'AORDER', 'MAXPIECES'):
         env.pop(k, None)
     log(area, f': building {len(codes)} requested codes into {pre}:', ', '.join(codes))

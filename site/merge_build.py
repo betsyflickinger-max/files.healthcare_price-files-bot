@@ -54,8 +54,10 @@ def looks_placeholder(v, median):
     return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 
 
-def decode(body): return json.loads(gzip.decompress(base64.b64decode(body)))['f']
-def encode(f): return base64.b64encode(gzip.compress(json.dumps({'f': f}, separators=(',', ':')).encode(), 6))
+def decode(body):
+    """a page file: {'f': {provider: rows}} and, in a practice-view build, 'p': {practice: [[row, [doctor ids]], ...]}"""
+    return json.loads(gzip.decompress(base64.b64decode(body)))
+def encode(d): return base64.b64encode(gzip.compress(json.dumps({k: d[k] for k in ('f', 'p') if k in d}, separators=(',', ':')).encode(), 6))
 
 
 # ---------- pure merge logic (tested in site/merge_build_test.py) ----------
@@ -92,11 +94,11 @@ def remap_row(r, P):
     return r
 
 
-def medians(f):
-    """{fee: (median, count)} of headline rates: t=0, no modifier label, a real price (flag 4 = only $0 listed)"""
+def medians(f, extra=()):
+    """{fee: (median, count)} of headline rates: t=0, no modifier label, a real price (flag 4 = only $0 listed).
+    extra: more rows (a practice-view build's practice rows)"""
     by = {}
-    for rows in f.values():
-        for r in rows:
+    for r in [r for rows in f.values() for r in rows] + list(extra):
             if r[2] == 0 and r[10] == -1 and r[3] > 0 and not (r[4] & 4): by.setdefault(r[1], []).append(r[3])
     out = {}
     for fee, vs in by.items():
@@ -109,6 +111,17 @@ def merge_code(bf, af, P, base_md=None, keep_flags=False):
     """BASE rows (minus replaced networks) + remapped ADD rows; returns (f, row count, set of network indexes).
     base_md = {fee: [median, n]} from the BASE build's md/ files (every_code.py, from Oct 18, 2026): the same typical rate
     BASE's own rows were flagged against. Without it, the median of the merged code's headline rates is used."""
+    d, n, nets = merge_doc({'f': bf} if bf is not None else None, {'f': af} if af is not None else None, P, base_md, keep_flags)
+    return d['f'], n, nets
+
+
+def merge_doc(bd, ad, P, base_md=None, keep_flags=False):
+    """merge_code for whole page files. Oct 22, 2026: practice-view builds also carry 'p' (practice -> [[row, doctor ids]]).
+    Its rows follow the same rules as 'f' (replaced networks dropped, ADD rows remapped, flags 2/8 recomputed) and doctor
+    ids are remapped like provider ids. Before this, a merge kept only 'f', so a practice-view state lost its practice rows.
+    Returns ({'f': ..., ['p': ...]}, rows + practice entries, network indexes)."""
+    bf, af = (bd or {}).get('f'), (ad or {}).get('f')
+    bp, ap = (bd or {}).get('p'), (ad or {}).get('p')
     rep = set(P['replaced'])
     f = {}
     for pi, rows in (bf or {}).items():
@@ -119,7 +132,16 @@ def merge_code(bf, af, P, base_md=None, keep_flags=False):
         npi_i = str(P['pmap'][int(pi)])
         for r in rows:
             r2 = remap_row(r, P); f.setdefault(npi_i, []).append(r2); added.append(r2)
-    md = {} if keep_flags else medians(f)
+    p = None
+    if bp is not None or ap is not None:
+        p = {}
+        for pid, ents in (bp or {}).items():
+            keep = [e for e in ents if e[0][0] not in rep]
+            if keep: p[pid] = keep
+        for pid, ents in (ap or {}).items():
+            for r, docs in ents:
+                r2 = remap_row(r, P); p.setdefault(pid, []).append([r2, sorted(P['pmap'][i] for i in docs)]); added.append(r2)
+    md = {} if keep_flags else medians(f, [e[0] for ents in (p or {}).values() for e in ents])
     for r in ([] if keep_flags else added):   # flags 2 and 8 against the merged code (see header)
         m = (base_md or {}).get(str(r[1]))
         if not m or m[1] < 5: m = md.get(r[1])
@@ -128,7 +150,27 @@ def merge_code(bf, af, P, base_md=None, keep_flags=False):
             if r[3] < 0.2 * m[0]: r[4] |= 2
             if looks_placeholder(r[3], m[0]): r[4] |= 8
     for pi in f: f[pi].sort(key=lambda r: (r[0], r[1], r[2]))
-    return f, sum(len(v) for v in f.values()), {r[0] for rows in f.values() for r in rows}
+    out = {'f': f}
+    if p is not None:
+        for pid in p: p[pid].sort(key=lambda e: (e[0][0], e[0][1], e[0][2], e[0][3]))
+        out['p'] = p
+    nets = {r[0] for rows in f.values() for r in rows} | {e[0][0] for ents in (p or {}).values() for e in ents}
+    return out, sum(len(v) for v in f.values()) + sum(len(v) for v in (p or {}).values()), nets
+
+
+def prac_check(be, ae, BASE, ADD):
+    """Oct 22, 2026: both builds must be practice-view builds, or neither. A mix would show some networks' doctors grouped by
+    practice and others one by one on the same page (or drop the practice table). ALLOW_MIX=1 overrides (tests only)."""
+    if ('prac' in be) != ('prac' in ae) and not E.get('ALLOW_MIX'):
+        raise SystemExit(f"STOP: {BASE} {'is' if 'prac' in be else 'is not'} a practice-view build but {ADD} "
+                         f"{'is' if 'prac' in ae else 'is not'}. Build the add build with PRACTICE=1 to match (or neither); nothing written.")
+
+
+def merged_prac(be, ae, P):
+    """the merged practice table (practice_names.merge_prac), or None for builds without one"""
+    if 'prac' not in be and 'prac' not in ae: return None
+    import practice_names
+    return practice_names.merge_prac(be.get('prac') or {}, ae.get('prac') or {}, P['pmap'])
 
 
 # ---------- R2 work ----------
@@ -142,11 +184,11 @@ def _one(args):
     code, in_base, in_add, BASE, ADD, OUT, Bk, bmd = args
     P = GP
     keep = bool(P.get('keep_flags'))
-    bf = decode(S3.get_object(Bucket=Bk, Key=f'{BASE}t/{code}.txt')['Body'].read()) if in_base else None
-    af = decode(S3.get_object(Bucket=Bk, Key=f'{ADD}t/{code}.txt')['Body'].read()) if in_add else None
-    f, n, nets = merge_code(bf, af, P, bmd, keep)
+    bd = decode(S3.get_object(Bucket=Bk, Key=f'{BASE}t/{code}.txt')['Body'].read()) if in_base else None
+    ad = decode(S3.get_object(Bucket=Bk, Key=f'{ADD}t/{code}.txt')['Body'].read()) if in_add else None
+    d, n, nets = merge_doc(bd, ad, P, bmd, keep)
     if n:
-        S3.put_object(Bucket=Bk, Key=f'{OUT}t/{code}.txt', Body=encode(f), ContentType='text/plain')
+        S3.put_object(Bucket=Bk, Key=f'{OUT}t/{code}.txt', Body=encode(d), ContentType='text/plain')
     return code, n, sorted(nets)
 
 
@@ -157,6 +199,7 @@ def main():
     be, ae = gj(BASE + 'embed.json'), gj(ADD + 'embed.json')
     bn, an = gj(BASE + 'npis.json'), gj(ADD + 'npis.json')
     P = plan(be, bn, ae, an)
+    prac_check(be, ae, BASE, ADD)
     rep_names = [P['nets'][i] for i in P['replaced']]
     log('base', len(be['codes']), 'codes', len(be['nets']), 'networks', len(bn), 'providers |',
         'add', len(ae['codes']), 'codes', len(ae['nets']), 'networks', len(an), 'providers | replacing', rep_names or 'none')
@@ -209,6 +252,8 @@ def main():
         e = dict(be['codes'].get(c) or ae['codes'][c]); e['n'] = n; e['f'] = None; codes[c] = e
     embed = {**be, 'codes': codes, 'fac': P['fac'], 'nets': P['nets'], 'dates': P['dates'], 'urls': P['urls'], 'labs': P['labs'],
              'scope': {k: sorted(v) for k, v in scope.items() if len(v) < len(codes) - 20}}
+    pr = merged_prac(be, ae, P)
+    if pr is not None: embed['prac'] = pr
     if held: embed['coming_adds'] = be.get('coming_adds', []) + [ADD]
     info = dict(at=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), base=BASE, add=ADD, out=OUT, replaced=rep_names,
                 added_networks=[k for k in ae['nets'] if k not in be['nets']], merged=len(touched), copied=len(copy),
@@ -238,6 +283,7 @@ def carry_main():
     be, ae = gj(BASE + 'embed.json'), gj(ADD + 'embed.json')
     bn, an = gj(BASE + 'npis.json'), gj(ADD + 'npis.json')
     P = plan(be, bn, ae, an)
+    prac_check(be, ae, BASE, ADD)
     coming = be.get('coming', {})
     carry = sorted(c for c in coming if c in ae['codes'] and ae['codes'][c].get('n'))
     built = sorted(be['codes'])
@@ -259,6 +305,8 @@ def carry_main():
         e = dict(ae['codes'][c]); e.update(n=n, f=None, carried=when); codes[c] = e
     left = {c: v for c, v in coming.items() if c not in counts}
     embed = {**be, 'codes': codes, 'fac': P['fac'], 'nets': P['nets'], 'dates': P['dates'], 'urls': P['urls'], 'labs': P['labs']}
+    pr = merged_prac(be, ae, P)
+    if pr is not None: embed['prac'] = pr
     if left: embed['coming'] = left
     else: embed.pop('coming', None)
     info = dict(at=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), mode='carry', base=BASE, add=ADD, out=OUT,

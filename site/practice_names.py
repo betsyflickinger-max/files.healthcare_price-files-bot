@@ -59,6 +59,21 @@ def same_spelling_fac(fac):
     for v in fac:
         if v and v[0] and len(v) > 2 and v[2] != 'P' and (w := pick.get(spell_key(v[0]))) and w != v[0]: v[0] = w; n += 1
     return n
+def merge_prac(base, add, pmap=None):
+    """Oct 22, 2026: one practice table from two builds' tables (merge_build.py; requested codes). A practice is its tax ID
+    (the same hashed id in every build), so the same id is the same practice: its doctors are combined (ADD's doctor ids
+    renumbered through pmap). BASE's name stays unless BASE had none ('n') or only a solo doctor ('s') and ADD has a public
+    name ('i', 'b', 'm'). A solo practice that gains doctors and has no public name becomes 'n'. Then one spelling per name."""
+    out = {pid: [v[0], v[1], v[2], list(v[3])] for pid, v in (base or {}).items()}
+    for pid, (nm, city, how, docs) in (add or {}).items():
+        docs = sorted(pmap[i] for i in docs) if pmap is not None else sorted(docs)
+        if pid not in out: out[pid] = [nm, city, how, docs]; continue
+        b = out[pid]; u = sorted(set(b[3]) | set(docs))
+        if b[2] in ('n', 's') and how in ('i', 'b', 'm'): b[0], b[2] = nm, how
+        elif b[2] == 's' and len(u) > 1: b[0], b[2] = '', 'n'
+        b[1] = b[1] or city; b[3] = u
+    same_spelling(out)
+    return out
 def tidy(name):
     """IRS and CMS names are upper case: title-case them the way the page does provider names."""
     if not name or not name.isupper(): return name

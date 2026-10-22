@@ -48,5 +48,31 @@ assert all(r[4] == 0 for k in bf for r in f[k] if r[0] == 0), 'base rows keep th
 f, n, _ = M.merge_code(bf, {'0': [row(1, 1500)]}, P2, {'0': [10000.0, 40]})
 assert [r for r in f['0'] if r[3] == 1500][0][4] & 2
 # round trip of the file format
-assert M.decode(M.encode(f)) == f
+assert M.decode(M.encode({'f': f})) == {'f': f}   # Oct 22: page files are {'f': ..., ['p': ...]}
+
+# Oct 22, 2026: practice-view page files ('p': practice -> [[row, doctor ids]]) and the practice table
+bd = {'f': {'0': [row(0, 1000)]}, 'p': {'pA': [[row(0, 150, fee=1), [1]], [row(1, 140, fee=1, u=1), [1]]]}}
+ad = {'f': {'1': [row(1, 1500, u=1)]}, 'p': {'pA': [[row(0, 130, fee=1), [0]]], 'pB': [[row(1, 175, fee=1, u=1), [0, 1]]]}}
+d, n, nets = M.merge_doc(bd, ad, P)
+assert set(d) == {'f', 'p'}
+assert [e[0][0] for e in d['p']['pA']] == [0, 1], d['p']['pA']   # old Cigna (net 1) dropped; refreshed Cigna added as net 1
+assert [e[1] for e in d['p']['pA']] == [[1], [1]]                # ADD doctor 0 (222) is combined provider 1
+assert d['p']['pB'][0][1] == [1, 2] and d['p']['pB'][0][0][0] == 2   # Anthem (ADD net 1) -> combined net 2; doctors 222, 333
+assert n == 2 + 3, n and nets == {0, 1, 2}
+assert M.decode(M.encode(d)) == d
+# a build without practices round-trips without a 'p'
+assert 'p' not in M.merge_doc({'f': {'0': [row(0, 1)]}}, None, P)[0]
+# practice table: same id = same practice, doctors combined and renumbered, names kept / upgraded, one spelling
+import practice_names as PN
+bp = {'pA': ['Smith Clinic, Inc.', 'Atlanta', 'b', [1]], 'pS': ['Dr B', 'Atlanta', 's', [1]], 'pN': ['', 'Macon', 'n', [0, 1]]}
+ap = {'pA': ['Smith Clinic Inc', 'Atlanta', 'b', [0]], 'pS': ['', 'Atlanta', 'n', [1]], 'pN': ['Macon Group', 'Macon', 'i', [1]],
+      'pC': ['Smith Clinic, Inc', 'Decatur', 'b', [1]]}
+m = PN.merge_prac(bp, ap, P['pmap'])
+assert m['pA'][3] == [1] and m['pS'] == ['', 'Atlanta', 'n', [1, 2]] and m['pN'][:3] == ['Macon Group', 'Macon', 'i'], m
+assert m['pN'][3] == [0, 1, 2] and m['pC'][3] == [2]
+assert len({m[k][0] for k in ('pA', 'pC')}) == 1, m   # punctuation-only variants get one spelling
+# a practice-view build and a normal build are never merged
+try: M.prac_check({'prac': {}}, {}, 'B/', 'A/'); raise AssertionError('mix not stopped')
+except SystemExit as e: assert 'STOP' in str(e)
+M.prac_check({'prac': {}}, {'prac': {}}, 'B/', 'A/'); M.prac_check({}, {}, 'B/', 'A/')
 print('merge_build checks passed')

@@ -749,6 +749,19 @@ with mp.get_context('fork').Pool(int(E.get('WORKERS', '2')), maxtasksperchild=in
         summary.update(summ)
         for kk, v in scp.items(): scope.setdefault(kk, set()).update(v)
         log(f'B {done}/{len(buckets)}', f'bucket {k}', f'{nx:,} rows', len(summary), 'codes so far')
+def _prac_raw(wks):
+    """the practice work files (stage B, PRACTICE=1) of these work folders: {practice id: {'d': doctors, 'o': orgs, 't': tax ID}}"""
+    from collections import Counter
+    raw = {}
+    def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
+    keys = [k_ for wk_ in wks for k_, _ in ls(wk_ + 'P/')]
+    with ThreadPoolExecutor(16) as P_:
+        for m_ in P_.map(_rd, keys):
+            for pid_, v_ in m_.items():
+                r_ = raw.setdefault(pid_, {'d': set(), 'o': Counter(), 't': None})
+                r_['d'].update(v_[0]); r_['o'].update(v_[1])
+                if len(v_) > 2 and v_[2]: r_['t'] = v_[2]
+    return raw
 # Oct 18, 2026: requested codes go straight into the build they were asked from: their t/<code>.txt is already in TOUT
 # (served as soon as it's written), and embed.json moves them from "coming" (or "carried") to built codes. One run per
 # build at a time (the request workflow's concurrency group), so nothing else is writing this embed.json meanwhile.
@@ -766,6 +779,12 @@ if PHASE == 'codes':
     for kk, v in scope.items():   # networks listed with only some codes get the new ones they have
         if kk in emb.get('scope', {}): emb['scope'][kk] = sorted(set(emb['scope'][kk]) | (set(v) & set(got)))
     if 'coming' in emb and not emb['coming']: emb.pop('coming')
+    if PRACTICE and 'prac' in emb:   # Oct 22, 2026: practices in the requested codes join the build's practice table
+        import practice_names
+        c_ = duckdb.connect(); c_.execute(f"set memory_limit='{E.get('MEM','8GB')}'; set temp_directory='{D}/tmp'")
+        new_ = practice_names.name_all(_prac_raw([WK]), ptab, npis, c_, s3, B, str(D))
+        emb['prac'] = practice_names.merge_prac(emb['prac'], new_)
+        log('practices in requested codes', len(new_), 'table now', len(emb['prac']))
     s3.put_object(Bucket=B, Key=ek, Body=json.dumps(emb, separators=(',', ':')).encode())
     log('DONE requested codes', {c_: got.get(c_, 0) for c_ in PRI}, len(emb.get('coming', {})), 'still coming')
     LOGFLUSH(); sys.exit(0)
@@ -818,7 +837,8 @@ embed = {'codes': codes, 'fac': ptab, 'nets': nets, 'dates': dates, 'urls': urls
 if COMING: embed['coming'] = COMING
 # Oct 18, 2026: what a later run needs to add codes to this build (site/request_codes.py; the background fill): the exact
 # insurer tables and settings, so its files fit this embed.json's lookup lists. Written before embed.json.
-KEEP = ('RATES', 'NPIS', 'ACACHE', 'NB', 'NOXPART', 'LABEL_TABLES_KEY', 'NETS_FROM_LABEL', 'SORTV', 'PRIORITY_KEY', 'PHASE', 'ALSO_WK')
+KEEP = ('RATES', 'NPIS', 'ACACHE', 'NB', 'NOXPART', 'LABEL_TABLES_KEY', 'NETS_FROM_LABEL', 'SORTV', 'PRIORITY_KEY', 'PHASE', 'ALSO_WK',
+        'PRACTICE', 'SLICE_ROWS')   # Oct 22: requested codes are built the same way (practice view)
 s3.put_object(Bucket=B, Key=TOUT + 'build_env.json', Body=json.dumps(dict(
     made=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), wk=WK, fp=FP, files=[list(f_) for f_ in files],
     label_keys=sorted(LABEL_KEYS), env={k_: E[k_] for k_ in KEEP if E.get(k_)}), indent=1).encode())
@@ -827,14 +847,7 @@ if PRACTICE:
     # 'i' IRS tax-exempt list, 'b' organization NPI + Medicare directory agree, 'm' Medicare directory majority, 's' solo, 'n' none)
     from collections import Counter
     import practice_names
-    raw = {}
-    def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
-    with ThreadPoolExecutor(16) as P_:
-        for m_ in P_.map(_rd, [k_ for k_, _ in ls(WK + 'P/')]):
-            for pid_, v_ in m_.items():
-                r_ = raw.setdefault(pid_, {'d': set(), 'o': Counter(), 't': None})
-                r_['d'].update(v_[0]); r_['o'].update(v_[1])
-                if len(v_) > 2 and v_[2]: r_['t'] = v_[2]
+    raw = _prac_raw([WK] + [w_ for w_ in E.get('ALSO_WK', '').split(',') if w_])   # Oct 22: an earlier phase's practices too
     c_ = duckdb.connect(); c_.execute(f"set memory_limit='{E.get('MEM','12GB')}'; set temp_directory='{D}/tmp'")
     prac = practice_names.name_all(raw, ptab, npis, c_, s3, B, str(D))
     embed['prac'] = prac
