@@ -194,7 +194,7 @@ def held_scopes(s3, b, all_jobs, names):
 
 # Oct 20, 2026 (Betsy: "move it ahead of them"): areas whose new files go to the front of the line, ahead of every
 # other area's new files. Re-reads of unchanged files still come last. Empty the tuple to go back to plain order.
-FIRST_SCOPES = ("ar",)
+FIRST_SCOPES = ("ar", "b1")   # Oct 22, 2026: Maryland, New Mexico, Montana next (Betsy OK'd batches 1-2)
 
 
 def order(js):

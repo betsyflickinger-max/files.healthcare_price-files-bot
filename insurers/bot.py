@@ -55,12 +55,15 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     # Arkansas (Oct 20, 2026; Betsy: ahead of CT, IL and n5): own provider list ("Build provider list" with AR and ar);
     # pick list claude/arkansas-pick-list.md. Arkansas Blue Cross is left out while every part 1 of its files is missing (404).
     "ar": ("bot/insurers/ar/", "data/scope/ar_npis_all.parquet", "data/ar/"),
+    # Maryland, New Mexico and Montana (Oct 22, 2026; Betsy OK'd batches 1-2 of claude/pick-lists-oct21.md): one area so the
+    # national files are read once for all three. Provider list "Build provider list" with MD,NM,MT and b1.
+    "b1": ("bot/insurers/b1/", "data/scope/b1_npis_all.parquet", "data/b1/"),
     # Skipped-network check (Oct 21, 2026; Betsy OK'd the full 102 GB sample): 20 UnitedHealthcare/Aetna networks the pick
     # lists leave out, read with Illinois's provider list into their own folder (no state build reads data/skipil/);
     # insurers/skip_check.py compare checks their prices against Illinois's kept networks.
     "skipil": ("bot/insurers/skipil/", "data/scope/il_npis_all.parquet", "data/skipil/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",

@@ -13,5 +13,10 @@
  },
  "ar": {
   "AR": "arkansas"
+ },
+ "b1": {
+  "MD": "maryland",
+  "NM": "new-mexico",
+  "MT": "montana"
  }
 }
