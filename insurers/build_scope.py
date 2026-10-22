@@ -40,7 +40,13 @@ def main():
     label = sys.argv[2].lower() if len(sys.argv) > 2 and sys.argv[2].strip() else "_".join(sorted(states)).lower()
     st = ",".join(sorted(states))
     page = requests.get(INDEX, timeout=60).text
-    name = re.findall(r"NPPES_Data_Dissemination_[A-Za-z]+_\d{4}_V2\.zip", page)[0]
+    names = re.findall(r"NPPES_Data_Dissemination_[A-Za-z]+_\d{4}_V2\.zip", page)
+    if not names:
+        # Oct 22, 2026: the NPPES download page said "down for maintenance until further notice" and listed no files
+        # (the files themselves returned 404). Build from the NPI Registry API instead (insurers/npi_api.py), and leave
+        # lists that already exist alone: they came from the full NPPES file, which also has deactivated NPIs.
+        return from_api(states, label, st)
+    name = names[0]
     url = f"https://download.cms.gov/nppes/{name}"
     zp = Path("nppes.zip")
     print("downloading", url, flush=True)
@@ -84,6 +90,27 @@ def main():
     s3.upload_file(str(out), b, key)
     s3.put_object(Bucket=b, Key=key + ".source.txt", Body=f"{url}\n{seen} NPIs read, {kept} in {st}\n".encode())
     print(f"done: {kept:,} {st} providers of {seen:,} -> R2 {key} (from {name})")
+
+
+def from_api(states, label, st):
+    import npi_api
+    s3, b = store.r2()
+    key = f"data/scope/{label}_npis_all.parquet"
+    try:
+        s3.head_object(Bucket=b, Key=key)
+        print(f"NPPES file not available; {key} already exists (from NPPES), kept as is")
+        return
+    except Exception:
+        pass
+    print(f"NPPES file not available (download page down); building {st} from the NPI Registry API", flush=True)
+    rows, info = npi_api.build(states)
+    out = Path(f"{label}_npis_all.parquet")
+    pq.write_table(pa.table({k: pa.array(v, pa.string()) for k, v in rows.items()}), out, compression="zstd")
+    s3.upload_file(str(out), b, key)
+    note = (f"{npi_api.API} (NPI Registry API; the NPPES download page was down)\n{len(rows['npi'])} active NPIs in {st}; "
+            f"{info['requests']} API requests; {len(info['still_full'])} searches still at the 1,200 cap\n")
+    s3.put_object(Bucket=b, Key=key + ".source.txt", Body=note.encode())
+    print(f"done: {len(rows['npi']):,} {st} providers -> R2 {key} (NPI Registry API)")
 
 
 if __name__ == "__main__":
