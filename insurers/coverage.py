@@ -214,7 +214,7 @@ def main():
                 link = (src or {}).get("url", "")
             elif src and src["result"] == "portal only":
                 status, how, link = "portal only", f"{src['issuer']} (name match {score:.0f})", src.get("url", "")
-            elif src and src["result"] in ("not found", "held", "error"):
+            elif src and src["result"] in ("not found", "held"):   # Oct 22: "error" (the API failed) is not a search
                 status, how = "not found", f"searched {src.get('searched_at', '')}: {src['result']} ({src['issuer']})"
             page = r.get("tic_landing_page") or (parents.get(r["parent_group"]) or {}).get("tic_landing_page", "")
             if status in ("not searched", "not found") and page:
@@ -283,7 +283,7 @@ def main():
             s = res.get(norm(x["name"]))
             if s and x["status"] == "not searched":
                 x["status"] = ("files found" if s["result"] in FOUND else s["result"] if s["result"] in ("portal only", "not found")
-                               else "not found" if s["result"] in ("held", "error") else x["status"])
+                               else "not found" if s["result"] == "held" else x["status"])   # "error": the API failed, still not searched
                 x["link"] = s.get("url", "")
         with open(f"{a.out}/admins.csv", "w", newline="") as f:
             w = csv.DictWriter(f, list(ad[0]))
