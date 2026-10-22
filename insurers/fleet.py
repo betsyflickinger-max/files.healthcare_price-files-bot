@@ -157,11 +157,14 @@ def held_scopes(s3, b, all_jobs, names):
     - an area's hold.txt is set (e.g. while a website build reads its tables)
     - a website build is running that reads that area's tables: the seven-state build (upfront-site-st-*) reads only
       s7; any other build reads DFW and Texas tables (same rule the launcher has used since Oct 14)."""
-    held = {}
+    held, seen = {}, set()
     for j in all_jobs.values():
         sc = j["scope"]
-        if sc in held:
+        # Oct 22, 2026: each area's hold file is read once per pass. It was read again for every job of an area that
+        # isn't held: 5,100+ reads (~14 minutes) per pass with Healthfirst's files in the queue.
+        if sc in held or (sc, j.get("kind", "insurer")) in seen:
             continue
+        seen.add((sc, j.get("kind", "insurer")))
         try:
             txt = s3.get_object(Bucket=b, Key=j["hold_key"])["Body"].read().decode().strip()
         except ClientError:
