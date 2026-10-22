@@ -62,7 +62,7 @@ jobs:
               print(d["created_at"][:16], d["name"], d["size_slug"], d["status"], d["region"]["slug"])
           PY
           python - <<'PY'
-          import sys, json, collections; sys.path.insert(0, "insurers")
+          import sys, json, collections; sys.path[:0] = ["insurers", "bot"]
           import store, fleet
           s3, b = store.r2()
           js, cl = fleet.jobs(s3, b), fleet.claims(s3, b)
