@@ -38,7 +38,10 @@ def _session():
 
 
 def _page(params, skip):
-    for i in range(6):
+    """One page. Oct 22: GitHub's machines got throttled (8 at once failed after ~40 s of retries), so back off longer:
+    up to 8 tries, waiting 5, 10, 20, 40, then 60 s."""
+    last = ""
+    for i in range(8):
         try:
             r = _session().get(API, params=dict(params, version="2.1", limit=200, skip=skip, address_purpose="LOCATION"),
                                timeout=90)
@@ -46,10 +49,11 @@ def _page(params, skip):
                 with _lock:
                     _stats["requests"] += 1
                 return r.json().get("results", []) or []
-        except (requests.RequestException, ValueError):
-            pass
-        time.sleep(2 * (i + 1))
-    raise RuntimeError(f"NPI API kept failing for {params}")
+            last = f"HTTP {r.status_code}"
+        except (requests.RequestException, ValueError) as e:
+            last = type(e).__name__
+        time.sleep(min(60, 5 * 2 ** i))
+    raise RuntimeError(f"NPI API kept failing ({last}) for {params}")
 
 
 def _search(params):
@@ -85,8 +89,22 @@ def _split(params, level):
     return [], None
 
 
+MAX_FAILED = 25   # deepest-level searches that may fail (logged, counted in the list's source note) before the build stops
+
+
 def _run(params, level, found, pool_depth=0):
-    res, full = _search(params)
+    try:
+        res, full = _search(params)
+    except RuntimeError as e:
+        if level != "name":
+            raise
+        with _lock:
+            _stats.setdefault("failed", []).append(dict(params))
+            n = len(_stats["failed"])
+        print(f"  ! {e} ({n} failed so far)", flush=True)
+        if n > MAX_FAILED:
+            raise
+        return
     found.update(res)
     if not full:
         return
@@ -114,7 +132,7 @@ def _row(r, st):
                 phone=loc.get("telephone_number") or None, deactivated=None, state=(loc.get("state") or st).upper())
 
 
-def build(states, workers=8):
+def build(states, workers=4):
     """{column: [values]} for every active NPI whose practice location is in one of the states."""
     rows = {k: [] for k in ("npi", "entity_type", "name", "credential", "taxonomy_1", "address", "city", "zip5", "phone",
                             "deactivated", "state")}
@@ -137,7 +155,7 @@ def build(states, workers=8):
                 rows[k].append(v)
         print(f"{st}: {kept:,} providers ({len(found):,} found, {_stats['requests']:,} API requests so far, "
               f"{time.time() - t0:.0f}s)", flush=True)
-    return rows, dict(requests=_stats["requests"], still_full=_stats["full"])
+    return rows, dict(requests=_stats["requests"], still_full=_stats["full"], failed=_stats.get("failed", []))
 
 
 if __name__ == "__main__":

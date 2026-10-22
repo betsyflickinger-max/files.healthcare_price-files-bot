@@ -108,7 +108,8 @@ def from_api(states, label, st):
     pq.write_table(pa.table({k: pa.array(v, pa.string()) for k, v in rows.items()}), out, compression="zstd")
     s3.upload_file(str(out), b, key)
     note = (f"{npi_api.API} (NPI Registry API; the NPPES download page was down)\n{len(rows['npi'])} active NPIs in {st}; "
-            f"{info['requests']} API requests; {len(info['still_full'])} searches still at the 1,200 cap\n")
+            f"{info['requests']} API requests; {len(info['still_full'])} searches still at the 1,200 cap; "
+            f"{len(info['failed'])} searches failed after retries: {info['failed'][:10]}\n")
     s3.put_object(Bucket=b, Key=key + ".source.txt", Body=note.encode())
     print(f"done: {len(rows['npi']):,} {st} providers -> R2 {key} (NPI Registry API)")
 
