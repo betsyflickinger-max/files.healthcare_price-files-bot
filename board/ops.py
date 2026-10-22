@@ -111,7 +111,7 @@ free = max(0, limit - len(machines) - 1)
 # ---------- insurer manifests: counts + failures ----------
 AREAS = {"dfw": ("Dallas-Fort Worth", "bot/insurers/manifest.csv"), "tx": ("Texas", "bot/insurers/tx/manifest.csv"),
          "s7": ("Seven states", "bot/insurers/s7/manifest.csv"), "nc": ("North Carolina", "bot/insurers/nc/manifest.csv"),
-         "ct": ("Connecticut", "bot/insurers/ct/manifest.csv"), "il": ("Illinois", "bot/insurers/il/manifest.csv"), "n5": ("NY, CA, VA, DC, FL, WI", "bot/insurers/n5/manifest.csv"), "ar": ("Arkansas", "bot/insurers/ar/manifest.csv"), "b1": ("MD, NM, MT", "bot/insurers/b1/manifest.csv")}
+         "ct": ("Connecticut", "bot/insurers/ct/manifest.csv"), "il": ("Illinois", "bot/insurers/il/manifest.csv"), "n5": ("NY, CA, VA, DC, FL, WI", "bot/insurers/n5/manifest.csv"), "ar": ("Arkansas", "bot/insurers/ar/manifest.csv"), "b1": ("MD, NM, MT", "bot/insurers/b1/manifest.csv"), "la": ("Louisiana", "bot/insurers/la/manifest.csv")}
 def reason(detail):
     d = (detail or "").lower()
     for pat, why in (("premature eof|incompletejson|unexpected end", "Download was cut off before the end of the file"),
@@ -159,7 +159,7 @@ new = [k for k in keys if k not in cache]
 def one(k):
     try: d = json.loads(get(k))
     except Exception: return k, None
-    sc = "s7" if "/s7/" in k else "nc" if "/nc/" in k else "ct" if "/ct/" in k else "il" if "/il/" in k else "n5" if "/n5/" in k else "ar" if "/ar/" in k else "b1" if "/b1/" in k else "tx" if "/tx/" in k else "dfw"
+    sc = "s7" if "/s7/" in k else "nc" if "/nc/" in k else "ct" if "/ct/" in k else "il" if "/il/" in k else "n5" if "/n5/" in k else "ar" if "/ar/" in k else "b1" if "/b1/" in k else "la" if "/la/" in k else "tx" if "/tx/" in k else "dfw"
     mem = re.search(r"-(\d+)g-", d.get("machine", "") or ""); mem = int(mem.group(1)) if mem else 16
     return k, {"area": AREAS[sc][0], "file": d.get("slot", ""), "ok": bool(d.get("ok")), "fields_only": bool(d.get("fields_only")),
                "secs": d.get("secs"), "machine": d.get("machine", ""), "mem_gb": mem, "finished": d.get("finished_at", ""),
@@ -223,8 +223,8 @@ def tot(*scs, f): return sum(counts.get(s, {}).get(f, 0) for s in scs)
 BOTS = [
     ("insurers", "Insurer file reader", "Downloads every insurer's price file and keeps the prices for the area's providers",
      "insurers.yml", "Checks every 6 hours; starts waiting files every 10 min", "insurer files",
-     tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", f="total"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", f="done"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", f="running"),
-     tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", f="failed"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", f="waiting"),
+     tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", "la", f="total"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", "la", f="done"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", "la", f="running"),
+     tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", "la", f="failed"), tot("dfw", "tx", "s7", "nc", "ct", "il", "n5", "ar", "b1", "la", f="waiting"),
      "Dallas, Texas and seven-state files together (Molina left out: it posts no Texas files). Machines also take oversized hospital files."),
     ("hospitals", "Hospital price file bot", "Checks each hospital's own price file and saves it", "hospitals.yml",
      "Daily, 4:17am CT (each hospital about once a week)", "hospitals", hosp.get("total"), hosp.get("have_file"), (hosp.get("status") or {}).get("queued for a rented machine"),

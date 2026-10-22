@@ -26,8 +26,8 @@ E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_AC
 B = E["R2_BUCKET"] or "upfrontdfwdata"
 MONTH = sys.argv[1] if len(sys.argv) > 1 else date.today().strftime("%Y-%m")
 TODAY = date.today()
-SCOPES = {"dfw": ("bot/insurers/", "data_full"), "tx": ("bot/insurers/tx/", "data_tx"), "s7": ("bot/insurers/s7/", "data_s7"), "nc": ("bot/insurers/nc/", "data_nc"), "ct": ("bot/insurers/ct/", "data_ct"), "il": ("bot/insurers/il/", "data_il"), "n5": ("bot/insurers/n5/", "data_n5"), "ar": ("bot/insurers/ar/", "data_ar"), "b1": ("bot/insurers/b1/", "data_b1")}
-AREA = {"dfw": "Dallas-Fort Worth", "tx": "Texas", "s7": "TN, CO, OK, AL, MS, MO, GA", "nc": "North Carolina", "ct": "Connecticut", "il": "Illinois", "n5": "NY, CA, VA, DC, FL, WI", "ar": "Arkansas", "b1": "MD, NM, MT"}
+SCOPES = {"dfw": ("bot/insurers/", "data_full"), "tx": ("bot/insurers/tx/", "data_tx"), "s7": ("bot/insurers/s7/", "data_s7"), "nc": ("bot/insurers/nc/", "data_nc"), "ct": ("bot/insurers/ct/", "data_ct"), "il": ("bot/insurers/il/", "data_il"), "n5": ("bot/insurers/n5/", "data_n5"), "ar": ("bot/insurers/ar/", "data_ar"), "b1": ("bot/insurers/b1/", "data_b1"), "la": ("bot/insurers/la/", "data_la")}
+AREA = {"dfw": "Dallas-Fort Worth", "tx": "Texas", "s7": "TN, CO, OK, AL, MS, MO, GA", "nc": "North Carolina", "ct": "Connecticut", "il": "Illinois", "n5": "NY, CA, VA, DC, FL, WI", "ar": "Arkansas", "b1": "MD, NM, MT", "la": "Louisiana"}
 UP_TO_DATE_DAYS = 45
 OUT = Path(__file__).resolve().parent.parent / "reports" / "insurer_report_cards"
 
@@ -49,7 +49,7 @@ def days_old(s):
 
 
 HERE = Path(__file__).resolve().parent
-NETS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv"}  # dfw and tx use networks.csv
+NETS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv"}  # dfw and tx use networks.csv
 
 
 def main():

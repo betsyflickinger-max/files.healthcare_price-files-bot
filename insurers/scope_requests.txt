@@ -3,3 +3,5 @@
 AR ar
 # Oct 22, 2026: Maryland, New Mexico, Montana (one area)
 MD,NM,MT b1
+# Oct 22, 2026: Louisiana
+LA la
