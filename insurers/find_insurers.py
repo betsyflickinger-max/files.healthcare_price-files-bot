@@ -149,6 +149,42 @@ def puf_issuers():
     return []
 
 
+def mlr_targets():
+    """Oct 22, 2026 (Betsy: "close the biggest coverage gap"): every company on the federal MLR list with members, biggest
+    first. Most were never searched because they sell only to employers (off the marketplace)."""
+    rows = []
+    for r in csv.DictReader(open(ROOT / "insurers" / "mlr" / "master_insurers.csv", encoding="utf-8")):
+        try:
+            lives = float(r.get("total_lives") or 0)
+        except ValueError:
+            lives = 0
+        if lives > 0:
+            rows.append(dict(state=r["state"], issuer_id=r.get("hios_issuer_id") or "",
+                             issuer=(r.get("dba_marketing_name") or r["issuer_name"]).strip(), source="MLR filing",
+                             _size=lives))
+    return sorted(rows, key=lambda x: -x["_size"])
+
+
+def admin_targets(min_plans):
+    """Oct 22, 2026: independent claims administrators (TPAs) named on Form 5500 health plans (insurers/coverage.py
+    --admins, R2 bot/coverage/admins.csv), status "not searched", on min_plans+ plans, most participants first. Self-funded
+    employer plans publish their Transparency in Coverage files through these administrators."""
+    src = E.get("ADMINS_CSV")
+    if src:
+        text = open(src, encoding="utf-8").read()
+    else:
+        import store
+        s3, b = store.r2()
+        text = s3.get_object(Bucket=b, Key="bot/coverage/admins.csv")["Body"].read().decode("utf-8")
+    out = []
+    for r in csv.DictReader(io.StringIO(text)):
+        if r.get("status") != "not searched" or int(r.get("health_plans") or 0) < min_plans or not r.get("name"):
+            continue
+        out.append(dict(state=(r.get("state") or "US").upper(), issuer_id="", issuer=r["name"].strip(),
+                        source="Form 5500 administrator", _kind="admin", _size=int(float(r.get("participants") or 0))))
+    return sorted(out, key=lambda x: -x["_size"])
+
+
 NET_URLS = {}   # (state, issuer_id) -> network web links from CMS's network file
 
 
@@ -352,7 +388,10 @@ ESCALATE = E.get("ESCALATE_MODEL") or "claude-sonnet-5-5"
 def search_one(t):
     model = ESCALATE if t.get("_escalate") else MODEL
     prior = t.get("_prior", "")
-    ans, ns = call_model(model, PROMPT, f"Insurer: {t['issuer']}\nState: {t['state']}\n"
+    kind = ("Kind: third-party claims administrator (TPA) for self-funded employer health plans. It must post "
+            "Transparency in Coverage files for the plans it administers, often one index per employer or a search page "
+            "on its own site; give its own index/page, not an insurer's.\n") if t.get("_kind") == "admin" else ""
+    ans, ns = call_model(model, PROMPT, kind + f"Insurer: {t['issuer']}\nState: {t['state']}\n"
                          + (f"CMS issuer ID: {t['issuer_id']}\n" if t["issuer_id"] else "")
                          + (f"An earlier search found: {prior}\nLook harder: the insurer's own site, its parent company's "
                             "site, and file hosts such as HealthSparq, Sapphire, Azure/S3 buckets and CloudFront.\n" if prior else ""))
@@ -405,16 +444,24 @@ def main():
     ap.add_argument("--no-sbe", action="store_true")
     ap.add_argument("--retry-not-found", action="store_true", help="search again insurers not found / portal only")
     ap.add_argument("--escalate", action="store_true", help="use the stronger model (ESCALATE_MODEL) for those retries")
+    ap.add_argument("--who", default="marketplace", choices=("marketplace", "mlr", "admins"),
+                    help="marketplace insurers (default), every MLR company with members, or Form 5500 administrators")
+    ap.add_argument("--min-plans", type=int, default=5, help="--who admins: administrators on at least this many plans")
     a = ap.parse_args()
     if not E.get("ANTHROPIC_API_KEY"):
         sys.exit("ANTHROPIC_API_KEY is not set")
     want = {s.strip().upper() for s in a.states.split(",") if s.strip()}
     prev = {(r["state"], r["issuer"].lower()): r for r in csv.DictReader(open(OUT, encoding="utf-8"))} if OUT.exists() else {}
-    targets = puf_issuers()
-    puf_network_urls()
-    sbe = [s for s in SBE if not want or s in want]
-    if not a.no_sbe:
-        targets += sbe_issuers(sbe)
+    if a.who == "mlr":
+        targets = mlr_targets()
+    elif a.who == "admins":
+        targets = admin_targets(a.min_plans)
+    else:
+        targets = puf_issuers()
+        puf_network_urls()
+        sbe = [s for s in SBE if not want or s in want]
+        if not a.no_sbe:
+            targets += sbe_issuers(sbe)
     if want:
         targets = [t for t in targets if t["state"] in want]
     seen, uniq = set(), []

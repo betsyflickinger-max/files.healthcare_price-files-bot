@@ -22,6 +22,9 @@ on:
         description: "Use a stronger model for those retries (costs more)"
         type: boolean
         default: false
+      who:
+        description: "Who to search: marketplace insurers, every MLR company with members (mlr), or Form 5500 claims administrators (admins)"
+        default: "marketplace"
       model:
         description: "Claude model"
         default: "claude-haiku-5-5"
@@ -40,6 +43,10 @@ jobs:
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       MODEL: ${{ inputs.model || 'claude-haiku-5-5' }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}           # --who admins reads bot/coverage/admins.csv
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -50,7 +57,7 @@ jobs:
       - name: Search
         run: |
           python insurers/find_insurers.py --states "${{ inputs.states }}" --limit "${{ inputs.limit || '0' }}" \
-            ${{ inputs.retry_not_found && '--retry-not-found' || '' }} ${{ inputs.escalate && '--escalate' || '' }} | tee out.txt
+            ${{ inputs.retry_not_found && '--retry-not-found' || '' }} ${{ inputs.escalate && '--escalate' || '' }} --who "${{ inputs.who || 'marketplace' }}" | tee out.txt
           grep "^done" out.txt >> "$GITHUB_STEP_SUMMARY" || true
       - name: Save to main
         if: always()

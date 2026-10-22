@@ -276,6 +276,15 @@ def main():
     if a.admins:
         names = sorted({r["parent_group"] for r in master} | {r["issuer_name"] for r in master})
         ad, meta = admins(a, names)
+        # Oct 22, 2026: administrators searched by find_insurers.py --who admins (rows with source "Form 5500 administrator")
+        res = {norm(s["issuer"]): s for s in sources if s.get("source") == "Form 5500 administrator"}
+        for x in ad:
+            x.setdefault("link", "")
+            s = res.get(norm(x["name"]))
+            if s and x["status"] == "not searched":
+                x["status"] = ("files found" if s["result"] in FOUND else s["result"] if s["result"] in ("portal only", "not found")
+                               else "not found" if s["result"] in ("held", "error") else x["status"])
+                x["link"] = s.get("url", "")
         with open(f"{a.out}/admins.csv", "w", newline="") as f:
             w = csv.DictWriter(f, list(ad[0]))
             w.writeheader()
