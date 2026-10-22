@@ -141,6 +141,18 @@ def compare(a):
     con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='9GB'; set threads=4")
     con.execute(f"create secret r2 (type r2, key_id '{E['R2_ACCESS_KEY_ID']}', secret '{E['R2_SECRET_ACCESS_KEY']}', account_id '{E['R2_ACCOUNT_ID']}')")
     out_k, out_s = f"data/{a.area}/", f"data/{skip}/"
+    con.execute("set http_retries=8; set http_retry_wait_ms=2000; set http_retry_backoff=2")
+
+    def run(sql):   # Oct 22, 2026: R2 answered one read with 502 Bad Gateway and the whole run stopped; try again
+        import time as _t
+        for i in range(4):
+            try:
+                return con.execute(sql)
+            except duckdb.HTTPException as e:
+                if i == 3:
+                    raise
+                print(f"  R2 read failed ({str(e)[:120]}); retrying in {30 * (i + 1)}s", flush=True)
+                _t.sleep(30 * (i + 1))
 
     def select(key):
         return (f"select hash(npi, coalesce(tin,''), lower(coalesce(billing_code_type,'')), billing_code, "
@@ -163,7 +175,7 @@ def compare(a):
         kt = [t for t in kt if t]
         if not kt:
             md.append(f"- {ins}: no kept tables read for {a.area.upper()} yet"); continue
-        con.execute("create or replace table kept as " + " union all ".join(select(f"{out_k}rates/{t}.parquet") for t in kt))
+        run("create or replace table kept as " + " union all ".join(select(f"{out_k}rates/{t}.parquet") for t in kt))
         con.execute("create or replace table kept_rates as select distinct k, rate from kept")
         con.execute("create or replace table kept_npi as select distinct npi from kept")
         print(f"{ins}: kept rows loaded", con.execute("select count(*) from kept").fetchone()[0], flush=True)
@@ -179,7 +191,7 @@ def compare(a):
             tabs = [table_of(p, man_s) for p in parts]
             if not all(tabs):
                 md.append(f"| {label} | not read yet ({sum(1 for t in tabs if t)} of {len(tabs)} parts) | | | | |"); continue
-            con.execute("create or replace table s as select distinct * from (" + " union all ".join(select(f"{out_s}rates/{t}.parquet") for t in tabs) + ")")
+            run("create or replace table s as select distinct * from (" + " union all ".join(select(f"{out_s}rates/{t}.parquet") for t in tabs) + ")")
             res = con.execute("""
                 with j as (
                   select s.k, s.npi, s.rate, min(abs(k.rate - s.rate) / nullif(k.rate, 0)) gap, count(k.rate) nk
@@ -192,6 +204,7 @@ def compare(a):
                 from j""").fetchone()
             n, same, diff, new, med, only = res
             print(f"  {label}: {n:,} rows", flush=True)
+            print("RESULT", ins, label, n, same, diff, new, med, only, flush=True)
             tot.update(rows=tot["rows"] + n, same=tot["same"] + same, diff=tot["diff"] + diff, new=tot["new"] + new)
             pct = (lambda x: f"{100 * x / n:.1f}%") if n else (lambda x: "-")
             md.append(f"| {label} | {n:,} | {pct(same)} | {pct(diff)}" + (f" ({100 * med:.0f}%)" if med is not None else "") +
