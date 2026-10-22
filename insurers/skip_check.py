@@ -135,14 +135,17 @@ def compare(a):
     lst = ",".join(f"'{c}'" for c in codes)
     E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
     con = duckdb.connect()
-    con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false")
+    # Oct 22, 2026: the first run lost its runner (out of memory) holding every kept Illinois row with all its text
+    # columns. Each row is now one 64-bit key (provider + tax ID + code + price type/class/setting/modifier) plus its
+    # price, with a memory cap so DuckDB spills to disk instead of starving the runner.
+    con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='9GB'; set threads=4")
     con.execute(f"create secret r2 (type r2, key_id '{E['R2_ACCESS_KEY_ID']}', secret '{E['R2_SECRET_ACCESS_KEY']}', account_id '{E['R2_ACCOUNT_ID']}')")
     out_k, out_s = f"data/{a.area}/", f"data/{skip}/"
 
     def select(key):
-        return (f"select npi, coalesce(tin,'') tin, lower(coalesce(billing_code_type,'')) bct, billing_code bc, "
-                f"lower(coalesce(negotiated_type,'')) nt, lower(coalesce(billing_class,'')) cls, lower(coalesce(setting,'')) sett, "
-                f"coalesce(cast(billing_code_modifier as varchar),'') md, round(try_cast(negotiated_rate as double), 2) rate "
+        return (f"select hash(npi, coalesce(tin,''), lower(coalesce(billing_code_type,'')), billing_code, "
+                f"lower(coalesce(negotiated_type,'')), lower(coalesce(billing_class,'')), lower(coalesce(setting,'')), "
+                f"coalesce(cast(billing_code_modifier as varchar),'')) k, npi, round(try_cast(negotiated_rate as double), 2) rate "
                 f"from read_parquet('r2://{E['R2_BUCKET']}/{key}') where billing_code in ({lst}) and try_cast(negotiated_rate as double) > 0")
 
     def table_of(row, man):
@@ -161,8 +164,10 @@ def compare(a):
         if not kt:
             md.append(f"- {ins}: no kept tables read for {a.area.upper()} yet"); continue
         con.execute("create or replace table kept as " + " union all ".join(select(f"{out_k}rates/{t}.parquet") for t in kt))
-        con.execute("create or replace table kept_rates as select distinct * from kept")
+        con.execute("create or replace table kept_rates as select distinct k, rate from kept")
         con.execute("create or replace table kept_npi as select distinct npi from kept")
+        print(f"{ins}: kept rows loaded", con.execute("select count(*) from kept").fetchone()[0], flush=True)
+        con.execute("drop table kept")
         md += [f"### {ins} (kept: {len(kt)} tables)", "",
                "| network | price rows | same | different (median gap) | new | providers only here |",
                "|---|---:|---:|---:|---:|---:|"]
@@ -177,8 +182,8 @@ def compare(a):
             con.execute("create or replace table s as select distinct * from (" + " union all ".join(select(f"{out_s}rates/{t}.parquet") for t in tabs) + ")")
             res = con.execute("""
                 with j as (
-                  select s.*, min(abs(k.rate - s.rate) / nullif(k.rate, 0)) gap, count(k.rate) nk
-                  from s left join kept_rates k using (npi, tin, bct, bc, nt, cls, sett, md)
+                  select s.k, s.npi, s.rate, min(abs(k.rate - s.rate) / nullif(k.rate, 0)) gap, count(k.rate) nk
+                  from s left join kept_rates k using (k)
                   group by all)
                 select count(*), count(*) filter (where nk > 0 and gap < 0.0001),
                        count(*) filter (where nk > 0 and gap >= 0.0001), count(*) filter (where nk = 0),
@@ -186,6 +191,7 @@ def compare(a):
                        (select count(distinct npi) from s where npi not in (select npi from kept_npi))
                 from j""").fetchone()
             n, same, diff, new, med, only = res
+            print(f"  {label}: {n:,} rows", flush=True)
             tot.update(rows=tot["rows"] + n, same=tot["same"] + same, diff=tot["diff"] + diff, new=tot["new"] + new)
             pct = (lambda x: f"{100 * x / n:.1f}%") if n else (lambda x: "-")
             md.append(f"| {label} | {n:,} | {pct(same)} | {pct(diff)}" + (f" ({100 * med:.0f}%)" if med is not None else "") +
