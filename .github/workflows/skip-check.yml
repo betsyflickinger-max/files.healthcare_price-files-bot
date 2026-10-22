@@ -74,6 +74,22 @@ jobs:
               t = s3.get_object(Bucket=b, Key=k)["Body"].read().decode(errors="replace").splitlines()
               print("==", k); print("\n".join(t[-15:]))
           PY
+      # Oct 22, 2026: one-time swap of queue machines started before the queue speed fixes (fleet.py 9129fae, 6da31f7).
+      # They keep the old code (~30 min of queue reading per file) until they shut down, which with Healthfirst's
+      # 5,100 files waiting is never. Only machines reading nothing are deleted; the next 10-minute pass rents new ones.
+      - if: ${{ inputs.cmd == 'recycle' }}
+        run: |
+          python - <<'PY'
+          import sys; sys.path[:0] = ["insurers", "bot"]
+          import store, fleet, droplets
+          s3, b = store.r2()
+          busy = {str(c.get("droplet_id")) for c in fleet.claims(s3, b).values()}
+          for did, name, created, size in droplets.fleet():
+              if created < "2026-10-22T14:00" and str(did) not in busy:
+                  print("delete", name, created, size, droplets.delete(did))
+              else:
+                  print("keep", name, created, "busy" if str(did) in busy else "new code")
+          PY
       - if: ${{ inputs.cmd == 'compare' }}
         run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
       - uses: actions/upload-artifact@v4
