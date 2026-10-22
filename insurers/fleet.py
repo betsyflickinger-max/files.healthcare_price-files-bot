@@ -19,6 +19,7 @@ line (twice at most, then it is reported as failed so a file that crashes machin
 import json
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 from botocore.exceptions import ClientError
@@ -79,24 +80,25 @@ def _get(s3, b, key):
         return None
 
 
+# Oct 22, 2026: read the queue's job files 32 at a time. One at a time, the 5,100+ Healthfirst jobs took ~15 minutes
+# to read, and every machine read the whole queue before each file: 25 machines spent most of their time listing
+# (one file being read at a time), and the 10-minute insurer pass ran out its 60 minutes before reaching most areas.
+GET_THREADS = 32
+
+
+def _get_many(s3, b, keys):
+    with ThreadPoolExecutor(GET_THREADS) as ex:
+        return list(zip(keys, ex.map(lambda k: _get(s3, b, k), keys)))
+
+
 def jobs(s3, b):
     """Every job in the queue: {id: job}."""
-    out = {}
-    for k in _keys(s3, b, Q):
-        j = _get(s3, b, k)
-        if j:
-            out[j["id"]] = j
-    return out
+    return {j["id"]: j for _, j in _get_many(s3, b, _keys(s3, b, Q)) if j}
 
 
 def claims(s3, b):
     """Every current claim: {id: claim}."""
-    out = {}
-    for k in _keys(s3, b, C):
-        c = _get(s3, b, k)
-        if c:
-            out[k[len(C):-len(".json")]] = c
-    return out
+    return {k[len(C):-len(".json")]: c for k, c in _get_many(s3, b, _keys(s3, b, C)) if c}
 
 
 def put_job(s3, b, job):
