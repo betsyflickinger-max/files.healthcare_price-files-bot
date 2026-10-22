@@ -633,7 +633,7 @@ def main():
     todo = []
     for r in targets(rows, a, log):
         L = log.get(r["ccn"], {})
-        if L.get("searched_at", "") < cut:
+        if L.get("searched_at", "") < cut or L.get("result") == "error":   # Oct 22: an API error is not a search
             todo.append(r)
         elif not a.no_deep_again and L.get("result") in ("not found", "error", "reported closed") and (
                 a.retry_not_found or a.escalate or "deep" not in L.get("model", "")):
