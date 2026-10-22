@@ -27,6 +27,7 @@ const JOBS = [
   ['41 13 * * *', 'index-watch.yml'],                                           // every insurer index + page, daily
   ['51 14 3 * *', 'index-watch.yml', { deep: 'true' }],                        // monthly deep check: every rate file link (receipts)
   ['23 12 7 * *', 'receipts.yml'],                                             // national file receipts, after catalogs + deep check
+  ['33 15 * * *', 'ia-backfill.yml'],                                         // daily: send anything archive.org is missing
 ];
 
 function part(spec, v, min, max) {
