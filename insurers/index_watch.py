@@ -116,7 +116,7 @@ def index_links(path):
     op = gzip.open if open(path, "rb").read(2) == b"\x1f\x8b" else open
     links = []
     with op(path, "rb") as f:
-        for prefix, event, value in ijson.parse(f):
+        for prefix, event, value in ijson.parse(f, multiple_values=True):  # Oct 22, 2026: Regence indexes hold two JSON documents back to back
             if event == "string" and prefix.endswith(".location"):
                 links.append(value)
     return list(dict.fromkeys(links))

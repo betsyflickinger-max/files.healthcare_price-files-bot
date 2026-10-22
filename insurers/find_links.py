@@ -40,7 +40,11 @@ def _get(url, tries=3, **kw):
     if url not in _CACHE:
         for i in range(tries):
             try:
-                r = requests.get(url, headers={"User-Agent": check.UA}, timeout=600, **kw)
+                fixed = url.replace("://molinahealthcare.com/", "://www.molinahealthcare.com/")   # Oct 22: bare host -> home page
+                try:
+                    r = requests.get(fixed, headers={"User-Agent": check.UA}, timeout=600, **kw)
+                except requests.exceptions.SSLError:   # Oct 22: BCBS Massachusetts sends an incomplete certificate chain
+                    r = requests.get(fixed, headers={"User-Agent": check.UA}, timeout=600, verify=False, **kw)
                 r.raise_for_status()
                 _CACHE[url] = r.text
                 break

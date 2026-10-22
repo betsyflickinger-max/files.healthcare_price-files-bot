@@ -32,7 +32,7 @@ from pathlib import Path
 
 import duckdb
 
-from common import DATA, USER_AGENT
+from common import DATA, USER_AGENT, download
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("s6", HERE / "06_filter_payer_file.py")
@@ -330,11 +330,7 @@ def run(source, ctx):
         print(f"Downloading {name} ...", flush=True)
         for attempt in range(5):
             try:
-                with requests.get(source, stream=True, timeout=300, headers={"User-Agent": USER_AGENT}) as r:
-                    r.raise_for_status()
-                    with open(tmp, "wb") as f:
-                        for chunk in r.iter_content(8 << 20):
-                            f.write(chunk)
+                download(source, tmp)   # Oct 22, 2026: host swap, browser user agent, certificate chain (common.py)
                 break
             except Exception as e:
                 print(f"  retry {attempt + 1}: {e}", flush=True)
