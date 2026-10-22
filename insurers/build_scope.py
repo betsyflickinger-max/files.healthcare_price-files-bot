@@ -102,6 +102,14 @@ def from_api(states, label, st):
         return
     except Exception:
         pass
+    pre = Path(__file__).resolve().parent.parent / "data" / "scope_prebuilt" / f"{label}_npis_all.parquet"
+    if pre.exists():   # Oct 22, 2026: built with insurers/npi_api.py elsewhere (GitHub's runners were throttled) and committed
+        s3.upload_file(str(pre), b, key)
+        src = pre.with_suffix(".source.txt")
+        s3.put_object(Bucket=b, Key=key + ".source.txt",
+                      Body=(src.read_text() if src.exists() else "NPI Registry API, built outside GitHub\n").encode())
+        print(f"done: uploaded the prebuilt {pre.name} -> R2 {key}")
+        return
     print(f"NPPES file not available (download page down); building {st} from the NPI Registry API", flush=True)
     rows, info = npi_api.build(states)
     out = Path(f"{label}_npis_all.parquet")
