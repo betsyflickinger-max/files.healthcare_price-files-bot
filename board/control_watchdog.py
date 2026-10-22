@@ -4,6 +4,7 @@ Checks how old each part's files are in R2 control/data/ and writes a plain-Engl
 stale.txt (empty file = all fresh). The workflow then opens a GitHub issue (which emails Betsy) or closes it.
 Limits are about twice each part's normal schedule.
 """
+import json
 import os
 from datetime import datetime, timezone
 
@@ -37,6 +38,16 @@ def main():
         print(f"{label}: last updated {age:.1f} hours ago (limit {hours})")
         if age > hours:
             stale.append(f"- **{label}**: last updated {age:.0f} hours ago; it normally updates {how}.")
+    # Oct 22, 2026: bots that found the Anthropic API credit used up (bot/api_credit.py); they stay switched off until it's topped up
+    names = {"hospital_web_search": "Hospital web search", "insurer_search": "Insurer file search", "plain_names": "Plain-English code names"}
+    for o in s3.list_objects_v2(Bucket=env("R2_BUCKET"), Prefix="bot/alerts/anthropic_credit_").get("Contents", []):
+        try:
+            f = json.loads(s3.get_object(Bucket=env("R2_BUCKET"), Key=o["Key"])["Body"].read())
+        except Exception:
+            f = {}
+        bot = o["Key"].rsplit("_credit_", 1)[-1][:-5]
+        stale.append(f"- **{names.get(bot, bot)}**: the Anthropic API credit ran out ({f.get('at', '')}), so it runs without Claude "
+                     f"until credit is added at console.anthropic.com (Billing, same organization as the bot's key). {f.get('run', '')}")
     open("stale.txt", "w").write("\n".join(stale))
     print("stale:" if stale else "all fresh", *stale, sep="\n")
 

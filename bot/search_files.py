@@ -54,6 +54,7 @@ import discover  # noqa: E402
 import identity  # noqa: E402
 import find_sites as fs  # noqa: E402
 import store  # noqa: E402
+import api_credit  # noqa: E402
 from name_ok import distinct as name_distinct, name_ok  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -118,6 +119,7 @@ def ask(h, extra, model=None):
         if r.status_code in (429, 529, 500, 502, 503):
             time.sleep(min(float(r.headers.get("retry-after") or 15 * (attempt + 1)), 120)); continue
         if r.status_code == 400 and "credit balance" in r.text:
+            api_credit.out("hospital_web_search")   # Oct 22: shows on the control-center watchdog issue (emails Betsy)
             if not STATE.get("no_credit"):
                 print("::warning::Anthropic API credit ran out; no more Claude searches this run (free layers continue)", flush=True)
             STATE["no_credit"] = True

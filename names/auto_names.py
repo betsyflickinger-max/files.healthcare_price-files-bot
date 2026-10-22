@@ -9,6 +9,8 @@ env: MAX_CODES (default 20000), WORKERS (default 6), STOP_AFTER_MIN (default 300
 """
 import io, json, os, re, sys, tarfile, time, urllib.request
 import boto3
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'bot'))
+import api_credit  # noqa: E402
 
 E = {k: v.strip() for k, v in os.environ.items()}
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
@@ -44,12 +46,20 @@ def ask(lines):
             r = urllib.request.Request("https://api.anthropic.com/v1/messages", data=body, headers={
                 "x-api-key": E["ANTHROPIC_API_KEY"], "anthropic-version": "2023-06-01", "content-type": "application/json"})
             out = json.load(urllib.request.urlopen(r, timeout=300))
+            api_credit.ok("plain_names")
             txt = "".join(c.get("text", "") for c in out["content"])
             m = re.search(r"\{.*\}", txt, re.S)
             if not m:
                 raise ValueError(f"no JSON in reply (stop={out.get('stop_reason')}, model={out.get('model')}): {txt[:300]!r}")
             return json.loads(m.group(0)), out.get("usage", {})
         except urllib.error.HTTPError as e:
+            if e.code == 400:
+                msg = e.read()[:600]
+                if b"credit balance" in msg:   # Oct 22: stop instead of retrying 8 times per batch, and raise the flag
+                    api_credit.out("plain_names")
+                    print("  Anthropic API credit ran out; no names this run", flush=True)
+                    return {}, {}
+                print("  retry", attempt + 1, e.code, msg[:300], flush=True); time.sleep(10 * (attempt + 1)); continue
             wait = float(e.headers.get("retry-after") or 10 * (attempt + 1)) if e.code in (429, 529) else 10 * (attempt + 1)
             if e.code not in (429, 529): print("  retry", attempt + 1, e.code, e.read()[:300], flush=True)
             time.sleep(min(wait, 120))

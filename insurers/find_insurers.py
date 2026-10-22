@@ -42,6 +42,7 @@ from rapidfuzz import fuzz
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "bot"))
+import api_credit  # noqa: E402
 import deep_find as deep  # noqa: E402
 import fetch_plus  # noqa: E402
 import discover  # noqa: E402
@@ -104,6 +105,7 @@ def call(system, user, tools=True, max_tokens=2500, model=None):
         if r.status_code in (429, 500, 502, 503, 529):
             time.sleep(min(float(r.headers.get("retry-after") or 15 * (attempt + 1)), 120)); continue
         if r.status_code == 400 and "credit balance" in r.text:
+            api_credit.out("insurer_search")   # Oct 22: shows on the control-center watchdog issue (emails Betsy)
             if not STATE.get("no_credit"):
                 print("::warning::Anthropic API credit ran out; no more Claude searches this run (free layers continue)", flush=True)
             STATE["no_credit"] = True
@@ -111,6 +113,7 @@ def call(system, user, tools=True, max_tokens=2500, model=None):
         if r.status_code != 200:
             print("  API error", r.status_code, r.text[:200], flush=True)
             return None, 0
+        api_credit.ok("insurer_search")
         out = r.json(); u = out.get("usage", {}); st = u.get("server_tool_use", {})
         with LOCK:
             USE["in"] += u.get("input_tokens", 0) + u.get("cache_read_input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
