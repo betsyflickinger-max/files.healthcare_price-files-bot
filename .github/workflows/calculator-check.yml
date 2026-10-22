@@ -35,12 +35,15 @@ jobs:
         run: |
           Y="${{ inputs.year }}"; [ -z "$Y" ] && Y=2026
           set +e
-          python calculator/api_to_dfw.py $Y --out work --check calculator/data/$Y > check.txt 2>&1
+          # Crosswalk test: pretend this year's PUF plan table is last year's, and ignore same-ID matches,
+          # so every network name has to come through the API's plan crosswalk.
+          mkdir -p prev && cp calculator/data/$Y/dfw_exchange_plans_$Y.csv prev/dfw_exchange_plans_$((Y-1)).csv
+          python calculator/api_to_dfw.py $Y --out work --prev prev --force-crosswalk --check calculator/data/$Y > check.txt 2>&1
           rc=$?
           set -e
           cat check.txt
           { echo "Marketplace API build of $Y compared with the CMS plan files (PUF) build in \`calculator/data/$Y/\`. Exit code $rc."
-            echo; echo "Network names are blank in this test (no $((Y-1)) tables to copy them from), so network differences are expected."
+            echo; echo "Crosswalk test: network names come only from the API plan crosswalk ($((Y-1)) to $Y), so plans new in $Y may differ."
             echo; echo '```'; tail -c 60000 check.txt; echo '```'
           } > issue.md
           gh issue create --title "Marketplace API check: $Y (exit $rc)" --body-file issue.md

@@ -44,13 +44,15 @@ class Client:
     def __init__(self, key):
         self.s, self.key = requests.Session(), key
 
-    def call(self, method, path, **kw):
+    def call(self, method, path, ok404=False, **kw):
         params = {"apikey": self.key, **kw.pop("params", {})}
         for i in range(6):
             r = self.s.request(method, API + path, params=params, timeout=60, **kw)
             if r.status_code in (429, 500, 502, 503, 504):
                 time.sleep(2 ** i)
                 continue
+            if r.status_code == 404 and ok404:
+                return None
             if r.status_code >= 400:
                 raise SystemExit(f"{method} {path} -> HTTP {r.status_code}: {r.text[:300]}")
             return r.json()
@@ -96,6 +98,25 @@ def raw_strings(c):
     return copay, coins
 
 
+COUNTY_PLACE = {}   # county name -> one ZIP/FIPS in it (filled by discover, used by the crosswalk)
+
+
+def crosswalk(cl, year, pv):
+    """{new plan_id14: last year's plan_id14} from the Marketplace API crosswalk, for last year's DFW plans."""
+    out = {}
+    for old, counties in pv.assign(b=pv.plan_id.str[:14]).drop_duplicates("b")[["b", "dfw_counties"]].itertuples(index=False):
+        for c in [x.strip() for x in counties.split(";") if x.strip() in COUNTY_PLACE][:2]:
+            pl = COUNTY_PLACE[c]
+            r = cl.call("GET", "/crosswalk", ok404=True, params={"year": year - 1, "plan_id": old, "state": "TX",
+                                                                 "zipcode": pl["zipcode"], "fips": pl["countyfips"]})
+            time.sleep(0.2)
+            new = ((r or {}).get("new_plan_id") or "")[:14]
+            if new:
+                out.setdefault(new, old)
+                break
+    return out
+
+
 def discover(cl, year):
     """Every on-exchange individual plan sold in a DFW county: {plan_id14: (place, set(counties))}."""
     found = {}
@@ -105,6 +126,7 @@ def discover(cl, year):
             if not name or cty.get("zipcode", z) != z:
                 continue
             place = {"countyfips": cty["fips"], "state": "TX", "zipcode": z}
+            COUNTY_PLACE.setdefault(name, place)
             off, total = 0, 1
             while off < total:
                 r = cl.call("POST", "/plans/search", json={"household": HOUSEHOLD, "place": place, "market": "Individual",
@@ -133,7 +155,7 @@ def details(cl, year, ids_places, csr=None):
     return out
 
 
-def build(cl, year, prev):
+def build(cl, year, prev, force_crosswalk=False):
     found = discover(cl, year)
     if not found:
         raise SystemExit(f"The API returned no {year} DFW plans (not available yet?)")
@@ -148,6 +170,8 @@ def build(cl, year, prev):
     by_url = (pv.groupby(["insurer", "network_url"]).filter(lambda g: g.network_name.nunique() == 1)
               .drop_duplicates(["insurer", "network_url"]).set_index(["insurer", "network_url"])) if pv is not None else None
 
+    xw = crosswalk(cl, year, pv) if pv is not None else {}
+    how = {"same plan ID": 0, "crosswalk": 0, "network URL": 0, "none": 0}
     rows, cs = [], []
     want = {" ".join(n.lower().split()): n for n in BENEFITS}   # match names ignoring case/spacing
     seen_other, moop_kinds = {}, set()
@@ -155,15 +179,24 @@ def build(cl, year, prev):
     for pid, sfx, label, csr_word, p in variants:
         iss = (p.get("issuer") or {}).get("name", "").strip()
         metal, net_name, net_id = p.get("metal_level", ""), "", ""
-        if by_id is not None and pid in by_id.index:
-            o = by_id.loc[pid]
+        old = None
+        if by_id is not None and pid in by_id.index and not force_crosswalk:
+            old, kind = pid, "same plan ID"
+        elif by_id is not None and xw.get(pid) in by_id.index and (not iss or by_id.loc[xw[pid]].insurer == iss):
+            old, kind = xw[pid], "crosswalk"   # renumbered plan: same insurer, so same network
+        if old is not None:
+            o = by_id.loc[old]
             net_name, net_id = o.network_name, o.network_id
             iss = iss if iss else o.insurer
             if metal == "Bronze" and o.metal == "Expanded Bronze":
                 metal = "Expanded Bronze"
+            how[kind] += sfx == "01"
         elif by_url is not None and (iss, p.get("network_url", "")) in by_url.index:
             o = by_url.loc[(iss, p.get("network_url", ""))]
             net_name, net_id = o.network_name, o.network_id
+            how["network URL"] += sfx == "01"
+        else:
+            how["none"] += sfx == "01"
         t_ded = money(pick(p.get("deductibles"), "combined", csr_word))
         m_ded = money(pick(p.get("deductibles"), "medical ehb", csr_word)) if not t_ded else ""
         rows.append(dict(
@@ -189,6 +222,8 @@ def build(cl, year, prev):
             copay, coins = raw_strings(c)
             cs.append(dict(plan_id=f"{pid}-{sfx}", benefit=b["name"], is_covered="Covered" if b.get("covered") else "Not Covered",
                            copay_raw=copay, coinsurance_raw=coins, **parse(copay, coins), notes=(b.get("explanation") or "").strip()))
+    print(f"Network names for {sum(how.values())} standard plans, by source:", how,
+          f"(crosswalk pairs found: {len(xw)})")
     print("API benefit names not used (name: plans):", dict(sorted(seen_other.items())))
     print("API moop kinds (type, family, family_cost, tier):", sorted(moop_kinds, key=str))
     pl = pd.DataFrame(rows).sort_values("plan_id").reset_index(drop=True)
@@ -224,6 +259,7 @@ if __name__ == "__main__":
     ap.add_argument("year", type=int)
     ap.add_argument("--out", default=".")
     ap.add_argument("--prev", default="", help="folder with last year's tables (for network names); default calculator/data/<year-1>")
+    ap.add_argument("--force-crosswalk", action="store_true", help="test only: ignore same-ID matches so the crosswalk is used")
     ap.add_argument("--check", default="", help="folder with a PUF build of the same year to compare against")
     a = ap.parse_args()
     key = os.environ.get("MARKETPLACE_API_KEY")
@@ -233,7 +269,7 @@ if __name__ == "__main__":
     years = cl.call("GET", "/market-years")
     print("API market years:", years)
     prev = a.prev or str(Path(__file__).resolve().parent / "data" / str(a.year - 1))
-    pl, cs = build(cl, a.year, prev if Path(prev, f"dfw_exchange_plans_{a.year - 1}.csv").exists() else "")
+    pl, cs = build(cl, a.year, prev if Path(prev, f"dfw_exchange_plans_{a.year - 1}.csv").exists() else "", a.force_crosswalk)
     Path(a.out).mkdir(parents=True, exist_ok=True)
     pl.to_csv(Path(a.out) / f"dfw_exchange_plans_{a.year}.csv", index=False)
     cs.to_csv(Path(a.out) / f"dfw_exchange_cost_sharing_{a.year}.csv", index=False)
