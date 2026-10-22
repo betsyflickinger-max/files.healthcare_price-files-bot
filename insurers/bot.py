@@ -395,7 +395,7 @@ def fill(s3, b, now):
     except Exception as e:
         print("could not read machines or the account limit:", e)
         return []
-    if any(n.startswith("upfront-site-st-") for n in everyone):
+    if any(n.startswith("upfront-site-") for n in everyone):   # Oct 22: any page build (was the seven-state build only)
         free -= ST_ROOM
     else:   # Oct 18, 2026: a state build is waiting to start (orchestrate_states.py asks within the last 2 hours)
         try:

@@ -162,7 +162,13 @@ def ensure(st, role, size, script, env, done):
     if done or alive(role): return
     n = st['launches'].get(role, 0)
     if n >= 8: st['problems'].append(f'{role} failed 8 times'); return   # Oct 14: 4 -> 6 (hand relaunches during the Georgia fixes used up tries)
-    if free_slots() < 1: log('no free machine for', role); return
+    if free_slots() < 1:
+        # Oct 22, 2026: ask the insurer reader for room at every step, not only when a build starts (Arkansas and Illinois
+        # sat in their build step for 30+ hours while the reader's machines held all 25 slots). insurers/bot.py fill()
+        # leaves fleet.ST_ROOM slots free for 2 hours after this note.
+        try: putj('bot/fleet/build_wants_room.json', {'build': f'{BID} {role}', 'at': time.time()})
+        except Exception: pass
+        log('no free machine for', role, '(asked the insurer reader to leave room)'); return
     if launch(role, size, script, env): st['launches'][role] = n + 1
 
 
