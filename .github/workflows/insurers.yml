@@ -96,6 +96,7 @@ jobs:
           python insurers/bot.py --scope ar $FILL || echo "::warning::Arkansas (ar) pass failed"   # Oct 20, 2026: ahead of CT, IL and n5 (Betsy)
           python insurers/bot.py --scope b1 $FILL || echo "::warning::Maryland, New Mexico, Montana (b1) pass failed"   # Oct 22, 2026: batches 1-2 (Betsy)
           python insurers/bot.py --scope la $FILL || echo "::warning::Louisiana (la) pass failed"   # Oct 22, 2026: batch 3 (Betsy)
+          python insurers/bot.py --scope b4 $FILL || echo "::warning::Indiana, Kentucky, Ohio (b4) pass failed"   # Oct 22, 2026: batch 4 (Betsy)
           python insurers/bot.py --scope ct $FILL || echo "::warning::Connecticut (ct) pass failed"
           python insurers/bot.py --scope il $FILL || echo "::warning::Illinois (il) pass failed"
           python insurers/bot.py --scope n5 $FILL || echo "::warning::next five states (n5) pass failed"

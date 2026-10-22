@@ -60,12 +60,15 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "b1": ("bot/insurers/b1/", "data/scope/b1_npis_all.parquet", "data/b1/"),
     # Louisiana (Oct 22, 2026; Betsy OK'd batch 3). Provider list "Build provider list" with LA and la.
     "la": ("bot/insurers/la/", "data/scope/la_npis_all.parquet", "data/la/"),
+    # Indiana, Kentucky, Ohio (Oct 22, 2026; Betsy OK'd batch 4): one area so the national files are read once for all three.
+    # Provider list "Build provider list" with IN,KY,OH and b4.
+    "b4": ("bot/insurers/b4/", "data/scope/b4_npis_all.parquet", "data/b4/"),
     # Skipped-network check (Oct 21, 2026; Betsy OK'd the full 102 GB sample): 20 UnitedHealthcare/Aetna networks the pick
     # lists leave out, read with Illinois's provider list into their own folder (no state build reads data/skipil/);
     # insurers/skip_check.py compare checks their prices against Illinois's kept networks.
     "skipil": ("bot/insurers/skipil/", "data/scope/il_npis_all.parquet", "data/skipil/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
