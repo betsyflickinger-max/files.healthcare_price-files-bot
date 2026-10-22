@@ -144,7 +144,9 @@ def bundle():
     p = '/tmp/site_bundle.tgz'
     with tarfile.open(p, 'w:gz') as t:
         for f in os.listdir(HERE):
-            if f.endswith(('.py', '.csv', '.tsv')): t.add(os.path.join(HERE, f), arcname=f)
+            # Oct 22, 2026: .json too. state_scopes.json (which states each new area has) was left out, so tx_split.py on
+            # the machines fell back to Texas tables (404) and Arkansas and Illinois never split (builds stuck since Oct 19-20)
+            if f.endswith(('.py', '.csv', '.tsv', '.json')): t.add(os.path.join(HERE, f), arcname=f)
         t.add(os.path.join(HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv'), arcname='tx_zip_metro.csv')   # Texas metro areas (tx_split.py)
     s3.upload_file(p, B, SP + 'bundle.tgz')
 

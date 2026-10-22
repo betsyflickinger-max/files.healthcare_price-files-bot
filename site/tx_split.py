@@ -12,7 +12,7 @@ pages the same way; done markers data/tx/metro/_done_rest/<table>.json. The rest
 SCOPE=s7 (Oct 13, 2026): split the first national batch (data/s7/) by the provider's practice state instead, into
 data/s7/state/<state slug>/rates|membership/<table>.parquet, done markers data/s7/state/_done/<table>.json. Same filters.
 Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=rest]; [SCOPE=s7|nc]; MEM; THREADS; WORK."""
-import json, os, time, glob, shutil, duckdb, boto3
+import json, os, sys, time, glob, shutil, duckdb, boto3
 E = os.environ
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
 s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
@@ -34,6 +34,8 @@ try:
 except Exception: pass
 SC = E.get('SCOPE', '')
 ST = SC in SCOPE_STATES
+if SC and not ST and SC not in ('tx', 'dfw') and not REST:   # Oct 22, 2026: never fall back to Texas tables for another area
+    sys.exit(f'STOP: area {SC!r} is not in state_scopes.json here (was the file bundled?); nothing split')
 STATES = SCOPE_STATES.get(SC, {})
 RIN, MIN, DONE = (('data/tx/metro/rest/rates/', 'data/tx/metro/rest/membership/', 'data/tx/metro/_done_rest/') if REST else
                   (f'data/{SC}/rates/', f'data/{SC}/membership/', f'data/{SC}/state/_done/') if ST else
