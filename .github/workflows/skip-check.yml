@@ -61,6 +61,19 @@ jobs:
           for d in sorted(ds, key=lambda d: d["created_at"]):
               print(d["created_at"][:16], d["name"], d["size_slug"], d["status"], d["region"]["slug"])
           PY
+          python - <<'PY'
+          import sys, json, collections; sys.path.insert(0, "insurers")
+          import store, fleet
+          s3, b = store.r2()
+          js, cl = fleet.jobs(s3, b), fleet.claims(s3, b)
+          print("jobs by scope/mem:", collections.Counter((j["scope"], j.get("mem")) for j in js.values()).most_common(12))
+          print("claims:", len(cl)); [print(" ", k, json.dumps(v)[:200]) for k, v in list(cl.items())[:5]]
+          print("skipil jobs left:", [(k, j.get("mem"), j.get("size")) for k, j in js.items() if j["scope"] == "skipil"])
+          keys = sorted(fleet._keys(s3, b, fleet.L))[-3:]
+          for k in keys:
+              t = s3.get_object(Bucket=b, Key=k)["Body"].read().decode(errors="replace").splitlines()
+              print("==", k); print("\n".join(t[-15:]))
+          PY
       - if: ${{ inputs.cmd == 'compare' }}
         run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
       - uses: actions/upload-artifact@v4
