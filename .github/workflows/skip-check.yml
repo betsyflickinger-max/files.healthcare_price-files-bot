@@ -48,6 +48,19 @@ jobs:
       # spends ~50 minutes per area and hits its 60-minute limit before reaching skipil.
       - if: ${{ inputs.cmd == 'queue' || inputs.cmd == 'compare' }}
         run: python insurers/bot.py --scope "skip${{ inputs.area }}"
+      # Read-only look at the DigitalOcean account (Oct 22, 2026): why new machines are refused with "exceed your droplet limit".
+      - if: ${{ inputs.cmd == 'machines' }}
+        run: |
+          python - <<'PY'
+          import os, requests, collections
+          h = {"Authorization": "Bearer " + "".join(os.environ["DIGITALOCEAN_TOKEN"].split())}
+          a = requests.get("https://api.digitalocean.com/v2/account", headers=h, timeout=60).json()["account"]
+          print("account:", {k: a.get(k) for k in ("droplet_limit", "status", "status_message", "volume_limit")})
+          ds = requests.get("https://api.digitalocean.com/v2/droplets", params={"per_page": 200}, headers=h, timeout=60).json()["droplets"]
+          print("machines:", len(ds), "vCPUs:", sum(d["vcpus"] for d in ds), "GB memory:", sum(d["memory"] for d in ds) // 1024)
+          for d in sorted(ds, key=lambda d: d["created_at"]):
+              print(d["created_at"][:16], d["name"], d["size_slug"], d["status"], d["region"]["slug"])
+          PY
       - if: ${{ inputs.cmd == 'compare' }}
         run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
       - uses: actions/upload-artifact@v4
