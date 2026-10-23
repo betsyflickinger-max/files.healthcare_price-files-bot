@@ -10,3 +10,4 @@ IN,KY,OH b4
 # Oct 23, 2026: Arizona
 AZ az
 # Oct 23, 2026: b4 provider list prebuilt (681588 NPIs)
+# Oct 23, 2026: az provider list prebuilt (177931 NPIs)
