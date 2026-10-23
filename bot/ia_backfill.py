@@ -112,10 +112,13 @@ def main():
     ap.add_argument("--months", default=",".join(months_default()))
     ap.add_argument("--check-only", action="store_true")
     ap.add_argument("--max-gb", type=float, default=60, help="stop sending after this much; tomorrow's run continues")
+    ap.add_argument("--max-minutes", type=float, default=280,
+                    help="stop sending after this long, so the summary is always written before the job's time limit")
     a = ap.parse_args()
     s3, b = store.r2()
     today = date.today().isoformat()
     rows, total, sent_bytes = [], 0, 0
+    t0 = time.time()
     for month in [m.strip() for m in a.months.split(",") if m.strip()]:
         for key, size, item, name, kind, meta in wanted(s3, b, month):
             total += 1
@@ -123,7 +126,8 @@ def main():
             if have is None or name in have:
                 continue
             row = dict(checked_on=today, month=month, kind=kind, item=item, name=name, r2_key=key, bytes=size, result="missing")
-            if not a.check_only and store.ia_enabled() and sent_bytes + size <= a.max_gb * 1e9:
+            if (not a.check_only and store.ia_enabled() and sent_bytes + size <= a.max_gb * 1e9
+                    and time.time() - t0 < a.max_minutes * 60):
                 err = send(s3, b, key, item, name, kind, meta, month)
                 sent_bytes += size if not err else 0
                 row["result"] = f"failed: {err}" if err else "sent"
