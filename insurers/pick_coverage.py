@@ -41,6 +41,14 @@ try:
 except Exception:
     pass
 LISTS = {"dfw": "networks.csv", "tx": "networks.csv"}
+# Networks shown to carry the same prices as one we read (claude/skipped-network-check.md, Illinois, Oct 22-23, 2026:
+# 100% of price rows identical). Reading the first covers the employers of the others.
+SAME_AS = {("uhc", "Choice-Plus_C2"): ["Choice-Plus_8", "PS1-50_C2"],
+           ("aetna", "pl-1s7-tr25_Aetna-Life-Insurance-Company"): ["pl-31e-tr25_Aetna-Life-Insurance-Company",
+                                                                   "pl-1gp-tr25_Aetna-Life-Insurance-Company"]}
+# Cigna's regional partner networks (Priority Health in Michigan, Upper Midwest partners) are listed on most national
+# Cigna plans with "national" providers in the catalog; they aren't Cigna's own network outside those regions.
+PARTNER = re.compile(r"priority_health|upper-midwest-affiliation|sagamore", re.I)
 MANIFEST = {"dfw": "bot/insurers/manifest.csv"}
 ANCILLARY = re.compile(r"chiro|acupunct|speech|behavior|optum|ohph|therap|transplant|pharm|vision|dental|hearing|\blab\b|\bdme\b|\beap\b", re.I)
 VALUE = re.compile(r"\baco\b|nexusaco|accountable|whole[- _]?health|collaborative|\bcaa\b|high[- _]?performance|value[- _]?based|"
@@ -121,18 +129,29 @@ def coverage(a):
             picked = picked_for(rows, ins, cat)
             if not picked:
                 continue
+            for (i2, k), same in SAME_AS.items():
+                if i2 == ins and k in picked:
+                    for x in same:
+                        picked.setdefault(x, picked[k] + " (same prices)")
             med = set()
             for n in cat["networks"]:
                 stt = (n.get("state") or "").upper()
                 in_area = stt in states or stt == "NATIONAL"
                 medical = n.get("coverage", "medical") == "medical" and not ANCILLARY.search(f"{n['network']} {n.get('description', '')}")
+                if PARTNER.search(n["network"]) and n["network"] not in picked:
+                    medical = False
                 if n["network"] in picked:
-                    s = (man.get(picked[n["network"]]) or {}).get("status") or "new"
+                    slot = picked[n["network"]]
+                    s = (man.get(slot.replace(" (same prices)", "")) or {}).get("status") or "new"
                     status = {"processed": "read", "new": "listed, not yet checked"}.get(s, s)
+                    if slot.endswith("(same prices)"):
+                        status = "covered: same prices as a network we read"
                 elif not in_area:
                     continue
                 elif n.get("coverage", "medical") != "medical":
                     status = f"skipped: {n.get('coverage')}"
+                elif PARTNER.search(n["network"]):
+                    status = "skipped: regional partner network"
                 elif not medical:
                     status = "skipped: add-on or ancillary network"
                 elif n["problems"]:
