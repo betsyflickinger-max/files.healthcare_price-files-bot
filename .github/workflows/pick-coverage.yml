@@ -6,7 +6,7 @@ name: Pick-list coverage
 
 on:
   schedule:
-    - cron: "17 14 3 * *"   # the 3rd of each month, after the monthly catalogs (2nd)
+    - cron: "17 12 * * *"   # daily, 7:17am CT, after the daily insurer file check (Betsy, Oct 23: keep it current)
   workflow_dispatch:
     inputs:
       cmd:
