@@ -90,8 +90,16 @@ jobs:
               else:
                   print("keep", name, created, "busy" if str(did) in busy else "new code")
           PY
+      # Oct 22, 2026: one step per insurer with its own time limit, so a stalled read can't use up the whole job
+      # (the second run sat 4 hours with no output).
       - if: ${{ inputs.cmd == 'compare' }}
-        run: python insurers/skip_check.py compare --area "${{ inputs.area }}"
+        timeout-minutes: 75
+        continue-on-error: true
+        run: python insurers/skip_check.py compare --area "${{ inputs.area }}" --insurer UnitedHealthcare
+      - if: ${{ inputs.cmd == 'compare' }}
+        timeout-minutes: 75
+        continue-on-error: true
+        run: python insurers/skip_check.py compare --area "${{ inputs.area }}" --insurer Aetna
       - uses: actions/upload-artifact@v4
         with:
           name: skip-check-${{ inputs.cmd }}-${{ inputs.area }}

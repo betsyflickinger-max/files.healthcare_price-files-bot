@@ -171,10 +171,13 @@ def compare(a):
                       f"Prices compared: the site's {len(codes)} procedures. \"Same\" = the kept networks have that provider, tax ID, code and price type "
                       f"at the same price; \"different\" = same row, other price; \"new\" = no such row in the kept networks.", ""]
     for ins, srows in by_ins.items():
+        if a.insurer and not ins.lower().startswith(a.insurer.lower()):
+            continue
         kt = [table_of(r, man_k) for r in rows_k if r["insurer"].split(" ")[0] == ins.split(" ")[0]]
         kt = [t for t in kt if t]
         if not kt:
             md.append(f"- {ins}: no kept tables read for {a.area.upper()} yet"); continue
+        print(f"{ins}: reading {len(kt)} kept tables", flush=True)
         run("create or replace table kept as " + " union all ".join(select(f"{out_k}rates/{t}.parquet") for t in kt))
         con.execute("create or replace table kept_rates as select distinct k, rate from kept")
         con.execute("create or replace table kept_npi as select distinct npi from kept")
@@ -191,6 +194,7 @@ def compare(a):
             tabs = [table_of(p, man_s) for p in parts]
             if not all(tabs):
                 md.append(f"| {label} | not read yet ({sum(1 for t in tabs if t)} of {len(tabs)} parts) | | | | |"); continue
+            print(f"  reading {label} ({len(tabs)} tables)", flush=True)
             run("create or replace table s as select distinct * from (" + " union all ".join(select(f"{out_s}rates/{t}.parquet") for t in tabs) + ")")
             res = con.execute("""
                 with j as (
@@ -221,12 +225,13 @@ def compare(a):
     buf = io.StringIO()
     if report:
         cw = csv.DictWriter(buf, fieldnames=list(report[0])); cw.writeheader(); cw.writerows(report)
-    base = f"bot/skipcheck/{a.area}/{date.today().isoformat()}/"
+    base = f"bot/skipcheck/{a.area}/{date.today().isoformat()}/" + (f"{a.insurer.lower()}_" if a.insurer else "")
     st.put(base + "summary.md", text, "text/markdown")
     st.put(base + "networks.csv", buf.getvalue(), "text/csv")
     os.makedirs("out", exist_ok=True)
-    open("out/summary.md", "w").write(text)
-    open("out/networks.csv", "w").write(buf.getvalue())
+    sfx = f"_{a.insurer.lower()}" if a.insurer else ""
+    open(f"out/summary{sfx}.md", "w").write(text)
+    open(f"out/networks{sfx}.csv", "w").write(buf.getvalue())
 
 
 if __name__ == "__main__":
@@ -241,5 +246,6 @@ if __name__ == "__main__":
     p.add_argument("--max-gb", type=float, default=20)
     c = sub.add_parser("compare")
     c.add_argument("--area", default="il")
+    c.add_argument("--insurer", default="", help="only this insurer (e.g. UnitedHealthcare, Aetna)")
     a = ap.parse_args()
     pick(a) if a.cmd == "pick" else compare(a)
