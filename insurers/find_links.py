@@ -159,7 +159,8 @@ def find(row, today, since):
     except Exception as e:
         return dict(url=row["current_url"], how=f"could not read the file list: {_why(e)}", http="",
                     error=str(e)[:200], found=False)
-    t = row["url_template"]
+    t = row["url_template"] or row.get("current_url", "")   # Oct 23, 2026: rows with only a fixed link (Molina KY/OH, PacificSource MT,
+    # Presbyterian NM) have no template; checking "" gave "Invalid URL ''" and the file was never read
     if "{" not in t:
         h = check.headers(t)
         if h["ok"] and h.get("html"):
