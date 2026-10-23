@@ -80,6 +80,25 @@ jobs:
       # Oct 22, 2026: one-time swap of queue machines started before the queue speed fixes (fleet.py 9129fae, 6da31f7).
       # They keep the old code (~30 min of queue reading per file) until they shut down, which with Healthfirst's
       # 5,100 files waiting is never. Only machines reading nothing are deleted; the next 10-minute pass rents new ones.
+      # Oct 23, 2026: find UMR's Choice Plus networks in the UnitedHealthcare catalog (read-only)
+      - if: ${{ inputs.cmd == 'umr' }}
+        run: |
+          python - <<'PY'
+          import sys; sys.path[:0] = ["insurers"]
+          import catalog
+          st = catalog.Store()
+          m = st.get("bot/catalog/uhc/latest.json")["month"]
+          cat = st.get(f"bot/catalog/uhc/{m}/catalog.json")
+          rows = [r for r in cat["networks"] if "umr" in (r.get("description", "") + r["network"] + r.get("reporting_entity", "")).lower()]
+          print("UMR networks:", len(rows), "month", m)
+          rows.sort(key=lambda r: -(r.get("employers") or 0))
+          for r in rows[:60]:
+              print(f'{r.get("employers") or 0:>7} emp | {r["gb"]:>6} GB | {r["state"]:>8} | {r["coverage"]} | {r["network"]} | {r.get("description","")[:50]} | parts {r["parts"]} | {"; ".join(r["problems"])}')
+          cp = [r for r in cat["networks"] if "choice-plus" in r["network"].lower() or "choice plus" in r["network"].lower()]
+          print("\nAll Choice Plus networks:", len(cp))
+          for r in sorted(cp, key=lambda r: -(r.get("employers") or 0))[:40]:
+              print(f'{r.get("employers") or 0:>7} emp | {r["gb"]:>6} GB | {r["state"]:>8} | {r["network"]} | {r.get("description","")[:50]}')
+          PY
       - if: ${{ inputs.cmd == 'sizes' }}
         run: |
           python - <<'PY'
