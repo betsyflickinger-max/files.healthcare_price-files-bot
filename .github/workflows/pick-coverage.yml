@@ -1,0 +1,43 @@
+name: Pick-list coverage
+
+# Oct 23, 2026 (Betsy: yes): for every area and big insurer, the share of employers whose plans use a network we read,
+# and the status of every relevant network (read / queued / skipped and why). Also lists accountable-care and value
+# networks in each catalog. insurers/pick_coverage.py; output R2 bot/pickcoverage/<date>/.
+
+on:
+  schedule:
+    - cron: "17 14 3 * *"   # the 3rd of each month, after the monthly catalogs (2nd)
+  workflow_dispatch:
+    inputs:
+      cmd:
+        description: "coverage or aco"
+        default: "coverage"
+      areas:
+        description: "coverage: areas, comma separated (blank = all)"
+        default: ""
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - if: ${{ (inputs.cmd || 'coverage') == 'coverage' }}
+        run: python insurers/pick_coverage.py coverage --areas "${{ inputs.areas }}"
+      - if: ${{ (inputs.cmd || 'coverage') == 'coverage' || inputs.cmd == 'aco' }}
+        run: python insurers/pick_coverage.py aco
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pick-coverage
+          path: out/
+          if-no-files-found: ignore
