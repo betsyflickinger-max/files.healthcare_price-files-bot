@@ -42,6 +42,15 @@ def ia_files(item, cache={}):
     if item not in cache:
         try:
             d = requests.get(f"https://archive.org/metadata/{item}", timeout=120).json()
+            if not d.get("files"):
+                # Oct 22: archive.org briefly answered {} for items that hold hundreds of files. Only treat an item as
+                # empty if archive.org's search doesn't know it either; otherwise skip it today rather than re-send it all.
+                q = requests.get("https://archive.org/advancedsearch.php", timeout=120,
+                                 params={"q": f"identifier:{item}", "fl[]": "identifier", "output": "json"}).json()
+                if q["response"]["numFound"]:
+                    print(f"  {item}: archive.org didn't list its files just now; checking it tomorrow", flush=True)
+                    cache[item] = None
+                    return None
             cache[item] = {f["name"]: int(f.get("size") or 0) for f in d.get("files", [])}
         except Exception as e:
             print(f"! could not list {item}: {e}", flush=True)
