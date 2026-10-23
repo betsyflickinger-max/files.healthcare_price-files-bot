@@ -1,0 +1,19 @@
+{
+ "base": "2026-10",
+ "build": "2026-10b",
+ "why": "Oct 23, 2026 (Betsy: set up the DFW update): add the networks added Oct 23 to the live DFW Price Finder before open enrollment (Nov 1) instead of waiting for the Nov 8 monthly build.",
+ "wait_for": [
+  "uhc-national-umr-choice-plus-0l-part-1",
+  "uhc-national-nexusaco-oa-453-part-1",
+  "uhc-national-core-579-part-1",
+  "uhc-national-core-epo-578-part-1",
+  "uhc-national-select-plus-657-part-1",
+  "uhc-navigate-epo-636-part-1",
+  "aetna-national-pl-1s7-tr25-aetna-life-insurance-company-part-1",
+  "aetna-national-pl-2hl-tr25-aetna-life-insurance-company-part-1",
+  "aetna-national-pl-41i-tr25-aetna-life-insurance-company-part-1",
+  "aetna-national-pl-vk-tr25-aetna-life-insurance-company-part-1",
+  "anthem-400-59t0-part-1"
+ ],
+ "go_by": "2026-10-29T12:00"
+}

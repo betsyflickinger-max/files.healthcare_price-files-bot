@@ -22,6 +22,18 @@ s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflar
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
 HERE = os.path.dirname(os.path.abspath(__file__))
 BID = E.get('BUILD') or time.strftime('%Y-%m')
+# Oct 23, 2026 (Betsy: "set up the DFW update"): a mid-month DFW rebuild, so networks added after the month's build
+# (UMR, NEXUS ACO, UnitedHealthcare Core / Core EPO / Select Plus / Navigate, Aetna's 4 national networks, Anthem Blue High
+# Performance) reach the live page before open enrollment (Nov 1) instead of at the Nov 8 build. Named in
+# site/dfw_rebuild.json and used only while "base" is this month and no build id was given by hand. Stage A results are
+# cached per table, so it reads only tables it hasn't seen; the publish step's checks still run against the live page.
+REBUILD = {}
+if not E.get('BUILD'):
+    try:
+        REBUILD = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dfw_rebuild.json')))
+        if REBUILD.get('paused') or REBUILD.get('base') != BID or not REBUILD.get('build'): REBUILD = {}
+        else: BID = REBUILD['build']
+    except Exception: REBUILD = {}
 SP = f'site/builds/{BID}/'
 TOUT = f'site/every/{BID}/'
 HPFX = 'data/hosp_every/'
@@ -190,6 +202,13 @@ def main():
         if int(time.strftime('%d')) < 8 and not E.get('FORCE'): log('waiting for the 8th'); return
         busy = insurer_bot_busy()
         if busy and not E.get('FORCE'): log(busy, 'insurer files still being read; waiting'); return
+        if REBUILD and not E.get('FORCE'):
+            # wait until every network named in dfw_rebuild.json is read (or has failed), or until "go_by" (UTC)
+            man = {r['slot']: r for r in csv.DictReader(io.StringIO(s3.get_object(Bucket=B, Key='bot/insurers/manifest.csv')['Body'].read().decode()))}
+            left = [n for n in REBUILD.get('wait_for', []) if man.get(n, {}).get('status', 'new') in ('new', 'queued', 'running')]
+            if left and time.strftime('%Y-%m-%dT%H:%M', time.gmtime()) < REBUILD.get('go_by', '9999'):
+                log(len(left), 'new networks not read yet; waiting (or until', REBUILD.get('go_by'), 'UTC):', ', '.join(left)); return
+            if left: log('go_by reached: building without', ', '.join(left))
         if free_slots() < 2: log('not enough free machines; waiting'); return
         jobs, todo = hospital_jobs()
         putj(SP + 'hosp_jobs.json', jobs); putj(SP + 'hosp_todo.json', todo)
