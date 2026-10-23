@@ -65,12 +65,17 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "b4": ("bot/insurers/b4/", "data/scope/b4_npis_all.parquet", "data/b4/"),
     # Arizona (Oct 23, 2026; Betsy OK'd batch 5). Provider list "Build provider list" with AZ and az.
     "az": ("bot/insurers/az/", "data/scope/az_npis_all.parquet", "data/az/"),
+    # Oct 23, 2026 (Betsy OK'd batches 6-11 together): 3 groups instead of 6 so the national files are read 3 times, not 6.
+    # Provider lists prebuilt with npi_api.py (data/scope_prebuilt/): GitHub's runners get HTTP 403 from the NPI Registry.
+    "c1": ("bot/insurers/c1/", "data/scope/c1_npis_all.parquet", "data/c1/"),   # MI, ND, SD, IA, MN, NE, KS
+    "c2": ("bot/insurers/c2/", "data/scope/c2_npis_all.parquet", "data/c2/"),   # PA, DE, WV, NJ, MA, RI, VT, NH, ME, SC
+    "c3": ("bot/insurers/c3/", "data/scope/c3_npis_all.parquet", "data/c3/"),   # WA, OR, ID, UT, AK, NV, HI, WY
     # Skipped-network check (Oct 21, 2026; Betsy OK'd the full 102 GB sample): 20 UnitedHealthcare/Aetna networks the pick
     # lists leave out, read with Illinois's provider list into their own folder (no state build reads data/skipil/);
     # insurers/skip_check.py compare checks their prices against Illinois's kept networks.
     "skipil": ("bot/insurers/skipil/", "data/scope/il_npis_all.parquet", "data/skipil/"),
 }
-NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "az": "networks_az.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
+NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "az": "networks_az.csv", "c1": "networks_c1.csv", "c2": "networks_c2.csv", "c3": "networks_c3.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
 REPO = "https://github.com/betsyflickinger-max/price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",

@@ -26,8 +26,8 @@ E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_AC
 B = E["R2_BUCKET"] or "upfrontdfwdata"
 MONTH = sys.argv[1] if len(sys.argv) > 1 else date.today().strftime("%Y-%m")
 TODAY = date.today()
-SCOPES = {"dfw": ("bot/insurers/", "data_full"), "tx": ("bot/insurers/tx/", "data_tx"), "s7": ("bot/insurers/s7/", "data_s7"), "nc": ("bot/insurers/nc/", "data_nc"), "ct": ("bot/insurers/ct/", "data_ct"), "il": ("bot/insurers/il/", "data_il"), "n5": ("bot/insurers/n5/", "data_n5"), "ar": ("bot/insurers/ar/", "data_ar"), "b1": ("bot/insurers/b1/", "data_b1"), "la": ("bot/insurers/la/", "data_la"), "b4": ("bot/insurers/b4/", "data_b4"), "az": ("bot/insurers/az/", "data_az")}
-AREA = {"dfw": "Dallas-Fort Worth", "tx": "Texas", "s7": "TN, CO, OK, AL, MS, MO, GA", "nc": "North Carolina", "ct": "Connecticut", "il": "Illinois", "n5": "NY, CA, VA, DC, FL, WI", "ar": "Arkansas", "b1": "MD, NM, MT", "la": "Louisiana", "b4": "IN, KY, OH", "az": "Arizona"}
+SCOPES = {"dfw": ("bot/insurers/", "data_full"), "tx": ("bot/insurers/tx/", "data_tx"), "s7": ("bot/insurers/s7/", "data_s7"), "nc": ("bot/insurers/nc/", "data_nc"), "ct": ("bot/insurers/ct/", "data_ct"), "il": ("bot/insurers/il/", "data_il"), "n5": ("bot/insurers/n5/", "data_n5"), "ar": ("bot/insurers/ar/", "data_ar"), "b1": ("bot/insurers/b1/", "data_b1"), "la": ("bot/insurers/la/", "data_la"), "b4": ("bot/insurers/b4/", "data_b4"), "az": ("bot/insurers/az/", "data_az"), "c1": ("bot/insurers/c1/", "data_c1"), "c2": ("bot/insurers/c2/", "data_c2"), "c3": ("bot/insurers/c3/", "data_c3")}
+AREA = {"dfw": "Dallas-Fort Worth", "tx": "Texas", "s7": "TN, CO, OK, AL, MS, MO, GA", "nc": "North Carolina", "ct": "Connecticut", "il": "Illinois", "n5": "NY, CA, VA, DC, FL, WI", "ar": "Arkansas", "b1": "MD, NM, MT", "la": "Louisiana", "b4": "IN, KY, OH", "az": "Arizona", "c1": "MI, ND, SD, IA, MN, NE, KS", "c2": "PA, DE, WV, NJ, MA, RI, VT, NH, ME, SC", "c3": "WA, OR, ID, UT, AK, NV, HI, WY"}
 UP_TO_DATE_DAYS = 45
 OUT = Path(__file__).resolve().parent.parent / "reports" / "insurer_report_cards"
 
@@ -49,7 +49,7 @@ def days_old(s):
 
 
 HERE = Path(__file__).resolve().parent
-NETS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "az": "networks_az.csv"}  # dfw and tx use networks.csv
+NETS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "az": "networks_az.csv", "c1": "networks_c1.csv", "c2": "networks_c2.csv", "c3": "networks_c3.csv"}  # dfw and tx use networks.csv
 
 
 def main():

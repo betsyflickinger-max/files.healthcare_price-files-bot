@@ -29,5 +29,36 @@
  },
  "az": {
   "AZ": "arizona"
+ },
+ "c1": {
+  "MI": "michigan",
+  "ND": "north-dakota",
+  "SD": "south-dakota",
+  "IA": "iowa",
+  "MN": "minnesota",
+  "NE": "nebraska",
+  "KS": "kansas"
+ },
+ "c2": {
+  "PA": "pennsylvania",
+  "DE": "delaware",
+  "WV": "west-virginia",
+  "NJ": "new-jersey",
+  "MA": "massachusetts",
+  "RI": "rhode-island",
+  "VT": "vermont",
+  "NH": "new-hampshire",
+  "ME": "maine",
+  "SC": "south-carolina"
+ },
+ "c3": {
+  "WA": "washington",
+  "OR": "oregon",
+  "ID": "idaho",
+  "UT": "utah",
+  "AK": "alaska",
+  "NV": "nevada",
+  "HI": "hawaii",
+  "WY": "wyoming"
  }
 }

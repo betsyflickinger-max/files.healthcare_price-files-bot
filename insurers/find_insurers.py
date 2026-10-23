@@ -246,7 +246,7 @@ NATIONAL = {"UnitedHealthcare": r"united ?health", "Cigna": r"cigna", "Aetna": r
 def known_networks():
     """(scope states, reading-list insurer) the bot already reads."""
     known = []
-    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"}), ("networks_n5.csv", {"NY", "CA", "VA", "DC", "FL", "WI"}), ("networks_ar.csv", {"AR"}), ("networks_b1.csv", {"MD", "NM", "MT"}), ("networks_la.csv", {"LA"}), ("networks_b4.csv", {"IN", "KY", "OH"}), ("networks_az.csv", {"AZ"}), ("networks_nyhf.csv", {"NY"})):
+    for f, states in (("networks.csv", {"TX"}), ("networks_s7.csv", {"TN", "CO", "OK", "AL", "MS", "MO", "GA"}), ("networks_nc.csv", {"NC"}), ("networks_ct.csv", {"CT"}), ("networks_il.csv", {"IL"}), ("networks_n5.csv", {"NY", "CA", "VA", "DC", "FL", "WI"}), ("networks_ar.csv", {"AR"}), ("networks_b1.csv", {"MD", "NM", "MT"}), ("networks_la.csv", {"LA"}), ("networks_b4.csv", {"IN", "KY", "OH"}), ("networks_az.csv", {"AZ"}), ("networks_c1.csv", {"MI", "ND", "SD", "IA", "MN", "NE", "KS"}), ("networks_c2.csv", {"PA", "DE", "WV", "NJ", "MA", "RI", "VT", "NH", "ME", "SC"}), ("networks_c3.csv", {"WA", "OR", "ID", "UT", "AK", "NV", "HI", "WY"}), ("networks_nyhf.csv", {"NY"})):
         p = ROOT / "insurers" / f
         if p.exists():
             for r in csv.DictReader(open(p, encoding="utf-8")):

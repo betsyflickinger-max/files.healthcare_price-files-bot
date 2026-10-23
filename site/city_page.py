@@ -55,8 +55,10 @@ CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest
 STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA',
             'north-carolina': 'NC', 'connecticut': 'CT', 'illinois': 'IL', 'arkansas': 'AR',
             'maryland': 'MD', 'new-mexico': 'NM', 'montana': 'MT', 'louisiana': 'LA',
-            'indiana': 'IN', 'kentucky': 'KY', 'ohio': 'OH', 'arizona': 'AZ'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
-SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct', 'illinois': 'il', 'arkansas': 'ar', 'maryland': 'b1', 'new-mexico': 'b1', 'montana': 'b1', 'louisiana': 'la', 'indiana': 'b4', 'kentucky': 'b4', 'ohio': 'b4', 'arizona': 'az'}   # state pages not listed here are in the seven-state scope (data/s7/)
+            'indiana': 'IN', 'kentucky': 'KY', 'ohio': 'OH', 'arizona': 'AZ',
+            'michigan': 'MI', 'north-dakota': 'ND', 'south-dakota': 'SD', 'iowa': 'IA', 'minnesota': 'MN', 'nebraska': 'NE', 'kansas': 'KS', 'pennsylvania': 'PA', 'delaware': 'DE', 'west-virginia': 'WV', 'new-jersey': 'NJ', 'massachusetts': 'MA', 'rhode-island': 'RI', 'vermont': 'VT', 'new-hampshire': 'NH', 'maine': 'ME', 'south-carolina': 'SC', 'washington': 'WA', 'oregon': 'OR', 'idaho': 'ID', 'utah': 'UT', 'alaska': 'AK', 'nevada': 'NV', 'hawaii': 'HI', 'wyoming': 'WY'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
+SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct', 'illinois': 'il', 'arkansas': 'ar', 'maryland': 'b1', 'new-mexico': 'b1', 'montana': 'b1', 'louisiana': 'la', 'indiana': 'b4', 'kentucky': 'b4', 'ohio': 'b4', 'arizona': 'az',
+            'michigan': 'c1', 'north-dakota': 'c1', 'south-dakota': 'c1', 'iowa': 'c1', 'minnesota': 'c1', 'nebraska': 'c1', 'kansas': 'c1', 'pennsylvania': 'c2', 'delaware': 'c2', 'west-virginia': 'c2', 'new-jersey': 'c2', 'massachusetts': 'c2', 'rhode-island': 'c2', 'vermont': 'c2', 'new-hampshire': 'c2', 'maine': 'c2', 'south-carolina': 'c2', 'washington': 'c3', 'oregon': 'c3', 'idaho': 'c3', 'utah': 'c3', 'alaska': 'c3', 'nevada': 'c3', 'hawaii': 'c3', 'wyoming': 'c3'}   # state pages not listed here are in the seven-state scope (data/s7/)
 STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colorado', '01', 'Colorado'),
                'oklahoma': ('Oklahoma', '00', 'Oklahoma'), 'alabama': ('Alabama', '00', 'Alabama'),
                'mississippi': ('Mississippi', '00', 'Mississippi'), 'missouri': ('Missouri', '01', 'Metropolitan St. Louis'),
@@ -66,7 +68,32 @@ STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colo
                'maryland': ('Maryland', '01', 'Baltimore and surrounding counties'), 'new-mexico': ('New Mexico', '05', 'New Mexico'),
                'montana': ('Montana', '01', 'Montana'), 'louisiana': ('Louisiana', '01', 'New Orleans'),
                'indiana': ('Indiana', '00', 'Indiana'), 'kentucky': ('Kentucky', '00', 'Kentucky'), 'ohio': ('Ohio', '00', 'Ohio'),
-               'arizona': ('Arizona', '00', 'Arizona')}   # Oct 22: MD has 2 localities (01 Baltimore/surr. counties, 99 rest of MD); the page uses 01 and says so. NM 05, MT 01 statewide (GPCI2026.csv checked)   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
+               'arizona': ('Arizona', '00', 'Arizona'),
+               'michigan': ('Michigan', '01', 'Detroit'),
+               'north-dakota': ('North Dakota', '01', 'North Dakota'),
+               'south-dakota': ('South Dakota', '02', 'South Dakota'),
+               'iowa': ('Iowa', '00', 'Iowa'),
+               'minnesota': ('Minnesota', '00', 'Minnesota'),
+               'nebraska': ('Nebraska', '00', 'Nebraska'),
+               'kansas': ('Kansas', '00', 'Kansas'),
+               'pennsylvania': ('Pennsylvania', '01', 'Metropolitan Philadelphia'),
+               'delaware': ('Delaware', '01', 'Delaware'),
+               'west-virginia': ('West Virginia', '16', 'West Virginia'),
+               'new-jersey': ('New Jersey', '01', 'Northern New Jersey'),
+               'massachusetts': ('Massachusetts', '01', 'Metropolitan Boston'),
+               'rhode-island': ('Rhode Island', '01', 'Rhode Island'),
+               'vermont': ('Vermont', '50', 'Vermont'),
+               'new-hampshire': ('New Hampshire', '40', 'New Hampshire'),
+               'maine': ('Maine', '03', 'Southern Maine'),
+               'south-carolina': ('South Carolina', '01', 'South Carolina'),
+               'washington': ('Washington', '02', 'Seattle (King County)'),
+               'oregon': ('Oregon', '01', 'Portland'),
+               'idaho': ('Idaho', '00', 'Idaho'),
+               'utah': ('Utah', '09', 'Utah'),
+               'alaska': ('Alaska', '01', 'Alaska'),
+               'nevada': ('Nevada', '00', 'Nevada'),
+               'hawaii': ('Hawaii', '01', 'Hawaii'),
+               'wyoming': ('Wyoming', '21', 'Wyoming')}   # Oct 23: localities checked against GPCI2026.csv (rvu26d). MI, PA, NJ, MA, ME, WA, OR have 2; the page uses the metro one (Detroit, Philadelphia, Northern NJ, Boston, Southern Maine, Seattle, Portland) and says so   # Oct 22: MD has 2 localities (01 Baltimore/surr. counties, 99 rest of MD); the page uses 01 and says so. NM 05, MT 01 statewide (GPCI2026.csv checked)   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
 for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
 def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
 def npis_key(slug): return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
@@ -87,7 +114,8 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'alabama': '-88.7,29.9,-84.7,35.3', 'mississippi': '-91.9,29.9,-87.9,35.3', 'missouri': '-96.0,35.7,-88.9,40.9',
             'georgia': '-85.9,30.1,-80.6,35.3', 'north-carolina': '-84.6,33.5,-75.2,36.9', 'connecticut': '-74.0,40.7,-71.5,42.3', 'illinois': '-91.7,36.8,-87.3,42.7', 'arkansas': '-94.7,32.9,-89.6,36.6',
             'maryland': '-79.5,37.9,-75.0,39.8', 'new-mexico': '-109.1,31.3,-103.0,37.0', 'montana': '-116.1,44.3,-104.0,49.0', 'louisiana': '-94.1,28.9,-88.8,33.1',
-            'indiana': '-88.1,37.7,-84.7,41.8', 'kentucky': '-89.6,36.4,-81.9,39.2', 'ohio': '-84.9,38.4,-80.5,42.3', 'arizona': '-114.9,31.3,-109.0,37.0'}
+            'indiana': '-88.1,37.7,-84.7,41.8', 'kentucky': '-89.6,36.4,-81.9,39.2', 'ohio': '-84.9,38.4,-80.5,42.3', 'arizona': '-114.9,31.3,-109.0,37.0',
+            'michigan': '-90.5,41.6,-82.1,48.4', 'north-dakota': '-104.1,45.9,-96.5,49.0', 'south-dakota': '-104.1,42.4,-96.4,45.95', 'iowa': '-96.7,40.3,-90.1,43.6', 'minnesota': '-97.3,43.4,-89.4,49.4', 'nebraska': '-104.1,39.9,-95.3,43.1', 'kansas': '-102.1,36.9,-94.5,40.1', 'pennsylvania': '-80.6,39.7,-74.6,42.3', 'delaware': '-75.8,38.4,-75.0,39.9', 'west-virginia': '-82.7,37.2,-77.7,40.7', 'new-jersey': '-75.6,38.9,-73.8,41.4', 'massachusetts': '-73.6,41.2,-69.9,42.9', 'rhode-island': '-71.9,41.1,-71.1,42.1', 'vermont': '-73.5,42.7,-71.4,45.1', 'new-hampshire': '-72.6,42.6,-70.6,45.4', 'maine': '-71.1,42.9,-66.9,47.5', 'south-carolina': '-83.4,32.0,-78.5,35.3', 'washington': '-124.8,45.5,-116.9,49.1', 'oregon': '-124.6,41.9,-116.4,46.3', 'idaho': '-117.3,41.9,-111.0,49.1', 'utah': '-114.1,36.9,-109.0,42.1', 'alaska': '-179.2,51.2,-129.9,71.5', 'nevada': '-120.1,35.0,-114.0,42.1', 'hawaii': '-160.3,18.9,-154.8,22.3', 'wyoming': '-111.1,40.9,-104.0,45.1'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
