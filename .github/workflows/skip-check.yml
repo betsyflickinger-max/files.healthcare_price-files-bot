@@ -77,6 +77,18 @@ jobs:
       # Oct 22, 2026: one-time swap of queue machines started before the queue speed fixes (fleet.py 9129fae, 6da31f7).
       # They keep the old code (~30 min of queue reading per file) until they shut down, which with Healthfirst's
       # 5,100 files waiting is never. Only machines reading nothing are deleted; the next 10-minute pass rents new ones.
+      - if: ${{ inputs.cmd == 'sizes' }}
+        run: |
+          python - <<'PY'
+          import sys; sys.path[:0] = ["insurers", "bot"]
+          import store
+          s3, b = store.r2()
+          for pre in ("data/il/rates/", "data/skipil/rates/"):
+              for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=pre):
+                  for o in page.get("Contents", []):
+                      if "etna" in o["Key"] or "pl-" in o["Key"]:
+                          print(o["Key"], round(o["Size"] / 1e9, 2), "GB")
+          PY
       - if: ${{ inputs.cmd == 'recycle' }}
         run: |
           python - <<'PY'
