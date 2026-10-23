@@ -23,6 +23,9 @@ on:
       insurer:
         description: "compare: only this insurer (UnitedHealthcare or Aetna; blank = both)"
         default: ""
+      nets:
+        description: "compare: only these sampled networks (comma separated, e.g. pl-3hp,pl-ks; blank = all)"
+        default: ""
 
 jobs:
   check:
@@ -134,7 +137,7 @@ jobs:
       - if: ${{ inputs.cmd == 'compare' && inputs.insurer != 'UnitedHealthcare' }}
         timeout-minutes: 340
         continue-on-error: true
-        run: python insurers/skip_check.py compare --area "${{ inputs.area }}" --insurer Aetna
+        run: python insurers/skip_check.py compare --area "${{ inputs.area }}" --insurer Aetna --nets "${{ inputs.nets }}"
       - uses: actions/upload-artifact@v4
         with:
           name: skip-check-${{ inputs.cmd }}-${{ inputs.area }}

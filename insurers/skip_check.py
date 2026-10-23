@@ -191,6 +191,8 @@ def compare(a):
             nets.setdefault(r["network_label"], []).append(r)
         tot = dict(rows=0, same=0, diff=0, new=0)
         for label, parts in nets.items():
+            if a.nets and not any(x.strip() and x.strip() in label for x in a.nets.split(",")):
+                continue
             tabs = [table_of(p, man_s) for p in parts]
             if not all(tabs):
                 md.append(f"| {label} | not read yet ({sum(1 for t in tabs if t)} of {len(tabs)} parts) | | | | |"); continue
@@ -247,5 +249,6 @@ if __name__ == "__main__":
     c = sub.add_parser("compare")
     c.add_argument("--area", default="il")
     c.add_argument("--insurer", default="", help="only this insurer (e.g. UnitedHealthcare, Aetna)")
+    c.add_argument("--nets", default="", help="only sampled networks whose label contains one of these (comma separated)")
     a = ap.parse_args()
     pick(a) if a.cmd == "pick" else compare(a)
