@@ -92,3 +92,12 @@ moda-tx-0166,Moda,Moda Select Texas marketplace (standard plans),https://mrf.mod
 moda-tx-select,Moda,Moda Select Texas network,https://mrf.modahealth.com/mrf/RentalNetworks/MSELECT/ModaTXPriceTrans_20261001.json.gz,https://mrf.modahealth.com/mrf/RentalNetworks/MSELECT/ModaTXPriceTrans_20261001.json.gz,,,small,yes,toc_match,https://mrf.modahealth.com/mrf/Moda/{date}_moda_ModaSelect_index.json|MSELECT/ModaTXPriceTrans_\d+\.json\.gz$
 uhc-national-umr-choice-plus-0l-part-1,UnitedHealthcare,UMR UnitedHealthcare Choice Plus,,,,,bcbstx,yes,catalog,uhc|UNITEDHEALTHCARE-CHOICE-PLUS_0L|1
 uhc-national-nexusaco-oa-453-part-1,UnitedHealthcare,UnitedHealthcare NEXUS ACO Open Access,,,,,bcbstx,yes,catalog,uhc|NEXUSACO-OA_453|1
+uhc-national-core-epo-578-part-1,UnitedHealthcare,UnitedHealthcare Core EPO,,,,2026-10-01,bcbstx,yes,catalog,uhc|Core-EPO_578|1
+uhc-national-core-579-part-1,UnitedHealthcare,UnitedHealthcare Core,,,,2026-10-01,bcbstx,yes,catalog,uhc|Core_579|1
+uhc-national-select-plus-657-part-1,UnitedHealthcare,UnitedHealthcare Select Plus,,,,2026-10-01,bcbstx,yes,catalog,uhc|Select-Plus_657|1
+aetna-national-pl-1s7-tr25-aetna-life-insurance-company-part-1,Aetna,Aetna Life Insurance Company (pl-1s7),,,,2026-10-05,bcbs,yes,catalog,aetna|pl-1s7-tr25_Aetna-Life-Insurance-Company|1
+aetna-national-pl-2hl-tr25-aetna-life-insurance-company-part-1,Aetna,Aetna Life Insurance Company (pl-2hl),,,,2026-10-05,bcbs,yes,catalog,aetna|pl-2hl-tr25_Aetna-Life-Insurance-Company|1
+aetna-national-pl-41i-tr25-aetna-life-insurance-company-part-1,Aetna,Aetna Life Insurance Company (pl-41i),,,,2026-10-05,bcbs,yes,catalog,aetna|pl-41i-tr25_Aetna-Life-Insurance-Company|1
+aetna-national-pl-vk-tr25-aetna-life-insurance-company-part-1,Aetna,Aetna Life Insurance Company (pl-vk),,,,2026-10-05,bcbs,yes,catalog,aetna|pl-vk-tr25_Aetna-Life-Insurance-Company|1
+uhc-navigate-epo-636-part-1,UnitedHealthcare,United-HealthCare-Services--Inc- (Navigate-EPO_636),,,,2026-10-01,bcbstx,yes,catalog,uhc|Navigate-EPO_636|1
+anthem-400-59t0-part-1,Anthem,HCSC: BCBS Texas : Blue High Performance (400_59T0),,,,2026-09-07,small,yes,catalog,anthem|400_59T0|1
