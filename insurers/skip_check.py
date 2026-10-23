@@ -134,11 +134,11 @@ def compare(a):
     codes = [r["code"].strip() for r in csv.DictReader(open(os.path.join(HERE, "..", "site", "codes89.csv"))) if r["code"].strip()]
     lst = ",".join(f"'{c}'" for c in codes)
     E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
-    con = duckdb.connect()
+    con = duckdb.connect('/tmp/skipcheck.duckdb')   # on disk: Aetna's kept rows don't fit in memory
     # Oct 22, 2026: the first run lost its runner (out of memory) holding every kept Illinois row with all its text
     # columns. Each row is now one 64-bit key (provider + tax ID + code + price type/class/setting/modifier) plus its
     # price, with a memory cap so DuckDB spills to disk instead of starving the runner.
-    con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='9GB'; set threads=4")
+    con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='9GB'; set threads=8")
     con.execute(f"create secret r2 (type r2, key_id '{E['R2_ACCESS_KEY_ID']}', secret '{E['R2_SECRET_ACCESS_KEY']}', account_id '{E['R2_ACCOUNT_ID']}')")
     out_k, out_s = f"data/{a.area}/", f"data/{skip}/"
     con.execute("set http_retries=8; set http_retry_wait_ms=2000; set http_retry_backoff=2")
