@@ -7,3 +7,5 @@ MD,NM,MT b1
 LA la
 # Oct 22, 2026: Indiana, Kentucky, Ohio (one area)
 IN,KY,OH b4
+# Oct 23, 2026: Arizona
+AZ az

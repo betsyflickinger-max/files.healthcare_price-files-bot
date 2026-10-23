@@ -21,7 +21,7 @@ import duckdb
 sys.path.insert(0, str(Path(__file__).resolve().parent / "pipeline"))
 import inventory  # noqa: E402
 
-OUTS = {"dfw": "data/full/", "tx": "data/tx/", "s7": "data/s7/", "nc": "data/nc/", "ct": "data/ct/", "il": "data/il/", "n5": "data/n5/", "ar": "data/ar/", "b1": "data/b1/", "la": "data/la/", "b4": "data/b4/"}
+OUTS = {"dfw": "data/full/", "tx": "data/tx/", "s7": "data/s7/", "nc": "data/nc/", "ct": "data/ct/", "il": "data/il/", "n5": "data/n5/", "ar": "data/ar/", "b1": "data/b1/", "la": "data/la/", "b4": "data/b4/", "az": "data/az/"}
 E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
 B = E["R2_BUCKET"] or "upfrontdfwdata"
 MONTH = date.today().strftime("%Y-%m")

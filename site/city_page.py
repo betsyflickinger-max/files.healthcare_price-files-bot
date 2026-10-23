@@ -55,8 +55,8 @@ CITIES = {'el-paso': ('El Paso', 'in a ZIP code starting 798–799', '99', 'Rest
 STATE_OF = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL', 'mississippi': 'MS', 'missouri': 'MO', 'georgia': 'GA',
             'north-carolina': 'NC', 'connecticut': 'CT', 'illinois': 'IL', 'arkansas': 'AR',
             'maryland': 'MD', 'new-mexico': 'NM', 'montana': 'MT', 'louisiana': 'LA',
-            'indiana': 'IN', 'kentucky': 'KY', 'ohio': 'OH'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
-SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct', 'illinois': 'il', 'arkansas': 'ar', 'maryland': 'b1', 'new-mexico': 'b1', 'montana': 'b1', 'louisiana': 'la', 'indiana': 'b4', 'kentucky': 'b4', 'ohio': 'b4'}   # state pages not listed here are in the seven-state scope (data/s7/)
+            'indiana': 'IN', 'kentucky': 'KY', 'ohio': 'OH', 'arizona': 'AZ'}   # Oct 16, 2026: North Carolina (data/nc/) and Connecticut (data/ct/), each its own scope
+SCOPE_OF = {'north-carolina': 'nc', 'connecticut': 'ct', 'illinois': 'il', 'arkansas': 'ar', 'maryland': 'b1', 'new-mexico': 'b1', 'montana': 'b1', 'louisiana': 'la', 'indiana': 'b4', 'kentucky': 'b4', 'ohio': 'b4', 'arizona': 'az'}   # state pages not listed here are in the seven-state scope (data/s7/)
 STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colorado', '01', 'Colorado'),
                'oklahoma': ('Oklahoma', '00', 'Oklahoma'), 'alabama': ('Alabama', '00', 'Alabama'),
                'mississippi': ('Mississippi', '00', 'Mississippi'), 'missouri': ('Missouri', '01', 'Metropolitan St. Louis'),
@@ -65,7 +65,8 @@ STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colo
                'illinois': ('Illinois', '16', 'Chicago'), 'arkansas': ('Arkansas', '13', 'Arkansas'),
                'maryland': ('Maryland', '01', 'Baltimore and surrounding counties'), 'new-mexico': ('New Mexico', '05', 'New Mexico'),
                'montana': ('Montana', '01', 'Montana'), 'louisiana': ('Louisiana', '01', 'New Orleans'),
-               'indiana': ('Indiana', '00', 'Indiana'), 'kentucky': ('Kentucky', '00', 'Kentucky'), 'ohio': ('Ohio', '00', 'Ohio')}   # Oct 22: MD has 2 localities (01 Baltimore/surr. counties, 99 rest of MD); the page uses 01 and says so. NM 05, MT 01 statewide (GPCI2026.csv checked)   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
+               'indiana': ('Indiana', '00', 'Indiana'), 'kentucky': ('Kentucky', '00', 'Kentucky'), 'ohio': ('Ohio', '00', 'Ohio'),
+               'arizona': ('Arizona', '00', 'Arizona')}   # Oct 22: MD has 2 localities (01 Baltimore/surr. counties, 99 rest of MD); the page uses 01 and says so. NM 05, MT 01 statewide (GPCI2026.csv checked)   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
 for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
 def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
 def npis_key(slug): return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
@@ -86,7 +87,7 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'alabama': '-88.7,29.9,-84.7,35.3', 'mississippi': '-91.9,29.9,-87.9,35.3', 'missouri': '-96.0,35.7,-88.9,40.9',
             'georgia': '-85.9,30.1,-80.6,35.3', 'north-carolina': '-84.6,33.5,-75.2,36.9', 'connecticut': '-74.0,40.7,-71.5,42.3', 'illinois': '-91.7,36.8,-87.3,42.7', 'arkansas': '-94.7,32.9,-89.6,36.6',
             'maryland': '-79.5,37.9,-75.0,39.8', 'new-mexico': '-109.1,31.3,-103.0,37.0', 'montana': '-116.1,44.3,-104.0,49.0', 'louisiana': '-94.1,28.9,-88.8,33.1',
-            'indiana': '-88.1,37.7,-84.7,41.8', 'kentucky': '-89.6,36.4,-81.9,39.2', 'ohio': '-84.9,38.4,-80.5,42.3'}
+            'indiana': '-88.1,37.7,-84.7,41.8', 'kentucky': '-89.6,36.4,-81.9,39.2', 'ohio': '-84.9,38.4,-80.5,42.3', 'arizona': '-114.9,31.3,-109.0,37.0'}
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
