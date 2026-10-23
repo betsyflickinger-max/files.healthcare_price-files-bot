@@ -242,10 +242,38 @@ def aco(a):
     print(text)
 
 
+def rows(a):
+    """Network-list rows (one per file part) for chosen catalog networks: --pairs anthem:400_59T0,uhc:Navigate-EPO_636"""
+    st = catalog.Store()
+    cols = ["slot", "insurer", "network_label", "url_template", "current_url", "current_table", "last_updated_on",
+            "machine_group", "enabled", "finder", "finder_arg"]
+    w = csv.DictWriter(sys.stdout, fieldnames=cols); w.writeheader()
+    cats = {}
+    for pair in a.pairs.split(","):
+        ins, key = pair.strip().split(":", 1)
+        if ins not in cats:
+            cats[ins] = latest(st, ins)[1]
+        n = next((n for n in (cats[ins] or {}).get("networks", []) if n["network"] == key), None)
+        if not n:
+            print(f"NOT IN CATALOG: {pair}", file=sys.stderr); continue
+        label = (n.get("description") or n.get("reporting_entity") or key)
+        if "in-network file" in label.lower() or "In-Network Negotiated" in label:
+            label = label.split(" in-network")[0]
+        for f in n["files"]:
+            grp = "bcbstx" if (f.get("bytes") or 0) > 5e9 else "bcbs" if (f.get("bytes") or 0) > 1e9 else "small"
+            slot = re.sub(r"[^a-z0-9]+", "-", f"{ins}-{key}-part-{f['part']}".lower()).strip("-")
+            w.writerow(dict(slot=slot, insurer=NAMES[ins].split(" (")[0], network_label=f"{label} ({key})", url_template="",
+                            current_url=f["url"], current_table=re.sub(r"\.json(\.gz)?$", "", f["fname"]),
+                            last_updated_on=n.get("file_date", ""), machine_group=grp, enabled="yes", finder="catalog",
+                            finder_arg=f"{ins}|{key}|{f['part']}"))
+        print(f"{pair}: {len(n['files'])} parts, {n.get('gb')} GB, {n.get('employers')} employers, problems: {n['problems']}", file=sys.stderr)
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("coverage"); c.add_argument("--areas", default="")
     sub.add_parser("aco")
+    r = sub.add_parser("rows"); r.add_argument("--pairs", required=True)
     a = ap.parse_args()
-    coverage(a) if a.cmd == "coverage" else aco(a)
+    {"coverage": coverage, "aco": aco, "rows": rows}[a.cmd](a)
