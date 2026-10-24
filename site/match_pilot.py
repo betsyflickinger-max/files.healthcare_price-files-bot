@@ -40,7 +40,7 @@ B = g('R2_BUCKET')
 OUT = E.get('OUT') or f"reports/match-pilot/{time.strftime('%Y-%m')}"
 W = E.get('WORK', '/tmp/mp')
 TH = int(E.get('THREADS', '32'))
-os.makedirs(OUT, exist_ok=True); shutil.rmtree(W, ignore_errors=True); os.makedirs(W)
+os.makedirs(OUT, exist_ok=True); shutil.rmtree(W, ignore_errors=True); os.makedirs(W, exist_ok=True)
 
 # ---- bands (decided before looking at results)
 MATCH_ABS, MATCH_PCT, CLOSE_PCT, DATE_DAYS = 1.0, 0.005, 0.05, 60
