@@ -187,10 +187,11 @@ con.execute("create table npis as select distinct npi from hn")
 con.execute("create table ins (ins varchar, net varchar, code varchar, npi varchar, tin varchar, fee int, t int, v double, modi varchar, st varchar, nt varchar, dt varchar, url varchar, tbl varchar)")
 got_tags, nfiles, nbytes = set(), 0, 0
 for b in bk:
-    keys = [(k, s) for k, s in ls(f'{AC}xpart/bucket={b}/') if k.rsplit('/', 1)[1][:-8].split('_')[0] in TAG]
+    keys = [(k, s) for k, s in ls(f'{AC}xpart/bucket={b}/') if benv.get('fallback') or k.rsplit('/', 1)[1][:-8].split('_')[0] in TAG]
     d = f'{W}/b{b}'; os.makedirs(d, exist_ok=True)
     with ThreadPoolExecutor(TH) as P: list(P.map(lambda ks: s3.download_file(B, ks[0], f"{d}/{ks[0].rsplit('/', 1)[1]}"), keys))
     nfiles += len(keys); nbytes += sum(s for _, s in keys)
+    if bk.index(b) % 10 == 0: log(f'bucket {bk.index(b)+1}/{len(bk)}: {len(keys)} files, {sum(s for _, s in keys)/1e9:.2f} GB; so far {nbytes/1e9:.1f} GB')
     got_tags |= {k.rsplit('/', 1)[1][:-8].split('_')[0] for k, _ in keys}
     if keys:
         con.execute(f"""insert into ins select x.ins, x.net, x.code, x.npi, x.tin, x.fee, x.t, x.v, x.modi, x.st, x.nt, x.dt::varchar, x.url,
@@ -199,7 +200,15 @@ for b in bk:
     shutil.rmtree(d)
 log('insurer stage-A files read', nfiles, f'({nbytes/1e9:.1f} GB) from', len(bk), 'buckets |', len({TAG[t] for t in got_tags}), 'of', len(set(TAG.values())), 'tables found',
     '| rows at hospital NPIs', con.execute('select count(*) from ins').fetchone()[0])
-missing_tables = sorted(k.rsplit('/', 1)[1] for k in set(TAG.values()) - {TAG[t] for t in got_tags})
+if benv.get('fallback'):
+    # Oct 24: without the build's table list, every cached insurer table was read (older months too). Keep, for each insurer
+    # network, only the rows from its newest file date: the prices in force now. Nothing is averaged or mixed across months.
+    n0 = con.execute('select count(*) from ins').fetchone()[0]
+    con.execute("create table ins2 as select i.* from ins i join (select ins, net, max(dt) mdt from ins group by all) m on m.ins=i.ins and m.net=i.net and m.mdt=i.dt")
+    con.execute("drop table ins; alter table ins2 rename to ins")
+    log('newest file per network kept:', con.execute('select count(*) from ins').fetchone()[0], 'of', n0, 'rows |',
+        con.execute("select count(distinct ins||'|'||net) from ins").fetchone()[0], 'networks')
+missing_tables = [] if benv.get('fallback') else sorted(k.rsplit('/', 1)[1] for k in set(TAG.values()) - {TAG[t] for t in got_tags})
 
 # ---- compare
 NUM = lambda c: f"try_cast(replace(replace(trim({c}),'$',''),',','') AS DOUBLE)"
@@ -223,9 +232,16 @@ for sha, code, st, bc, modi, pn, pl, ins, prod, dol, pct, alg, meth, row, lu, ur
     elif not (dol and dol > 0):
         why = 'percent of billed charges' if (pct and pct > 0) else 'formula only (no dollar amount)' if alg else 'no dollar amount'
     elif 'per diem' in meth: why = 'per diem (a daily rate, not a price for the service)'
+    elif DRG(code) and dol < 100: why = 'under $100 for a hospital stay: looks like a DRG weight, not a dollar price'
     elif 'percent' in meth: why = 'percent of billed charges'
     if why: G['hx'][why] += 1; continue
-    G['h'].append(dict(v=dol, st=st_norm(st, code), plan=f'{pn} · {pl}'.strip(' ·'), meth=meth, row=row, date=lu or '', url=url or ''))
+    G['h'].append(dict(prod=prod, v=dol, st=st_norm(st, code), plan=f'{pn} · {pl}'.strip(' ·'), meth=meth, row=row, date=lu or '', url=url or ''))
+
+def is_mkt(net):
+    n = (net or '').lower()
+    return any(w in n for w in ('marketplace', 'exchange', 'individual', 'ifp')) or n.startswith('ifp')
+# an NPI listed for more than one hospital file can't say which hospital an insurer rate is for: flagged on the row
+shared = {n: c for n, c in con.execute("select npi, count(distinct sha16) from hn group by 1 having count(distinct sha16) > 1").fetchall()}
 ins_rows = con.execute("""select n.sha16, i.ins, i.code, i.net, i.npi, i.tin, i.fee, i.t, i.v, i.modi, i.st, i.nt, i.dt, i.url
   from ins i join hn n using (npi)""").fetchall()
 for sha, ins, code, net, npi, tin, fee, t, v, modi, st, nt, dt, url in ins_rows:
@@ -236,7 +252,7 @@ for sha, ins, code, net, npi, tin, fee, t, v, modi, st, nt, dt, url in ins_rows:
     elif t == 1: why = 'percent of billed charges'
     elif not (v and v > 0): why = '$0 listed'
     if why: G['ix'][why] += 1; continue
-    G['i'].append(dict(v=v, st=st_norm(st, code), net=net, npi=npi, nt=nt, date=dt or '', url=url or ''))
+    G['i'].append(dict(mkt=is_mkt(net), v=v, st=st_norm(st, code), net=net, npi=npi, nt=nt, date=dt or '', url=url or ''))
 log('groups (hospital file x insurer x code)', len(groups))
 
 def pdate(s):
@@ -245,6 +261,7 @@ def pdate(s):
         except Exception: pass
     return None
 def fits(a, b): return not a or not b or a == b
+def prod_fits(h, i): return not h['prod'] or (h['prod'] == 'marketplace') == i['mkt']
 name_of = {x[5]: x[0] for x in src}
 url_of = {x[5]: x[4] for x in src}
 rows = []
@@ -254,7 +271,7 @@ for (sha, ins, code), G in groups.items():
     best = None
     for a in H_:
         for b in I_:
-            if not fits(a['st'], b['st']): continue
+            if not fits(a['st'], b['st']) or not prod_fits(a, b): continue
             d = abs(a['v'] - b['v'])
             if best is None or d < best[0]: best = (d, a, b)
     if best:
@@ -266,10 +283,11 @@ for (sha, ins, code), G in groups.items():
                  diff=round(b['v'] - a['v'], 2), diff_pct=round(100 * (b['v'] - a['v']) / max(a['v'], b['v']), 1),
                  hospital_plan=a['plan'], hospital_row=a['row'], hospital_methodology=a['meth'], hospital_file_date=a['date'],
                  insurer_network=b['net'], insurer_npi=b['npi'], insurer_rate_type=b['nt'], insurer_file=b['url'], insurer_file_date=b['date'],
+                 npi_shared_by=shared.get(b['npi'], ''), hospital_product=a['prod'],
                  dates_far_apart='yes' if (da and db and abs((da - db).days) > DATE_DAYS) else '',
                  hospital_range=f"{hv[0]:,.2f}-{hv[-1]:,.2f} ({len(H_)} rows)", insurer_range=f"{iv[0]:,.2f}-{iv[-1]:,.2f} ({len(I_)} rows)", reason='')
     elif H_ and I_:
-        r.update(result='not comparable', reason='hospital and insurer files give it for different settings (inpatient vs outpatient)')
+        r.update(result='not comparable', reason='different settings (inpatient vs outpatient) or plan types (marketplace vs employer)')
     elif (H_ or G['hx']) and (I_ or G['ix']):
         why = [f'hospital file: {k} ({n})' for k, n in G['hx'].most_common(2)] if not H_ else []
         why += [f'insurer file: {k} ({n})' for k, n in G['ix'].most_common(2)] if not I_ else []
@@ -282,7 +300,7 @@ for (sha, ins, code), G in groups.items():
 
 COLS = ['result', 'hospital', 'insurer', 'code', 'procedure', 'setting', 'hospital_price', 'insurer_price', 'diff', 'diff_pct',
         'hospital_plan', 'hospital_row', 'hospital_methodology', 'hospital_file_date', 'hospital_file', 'hospital_range',
-        'insurer_network', 'insurer_npi', 'insurer_rate_type', 'insurer_file_date', 'insurer_file', 'insurer_range', 'dates_far_apart', 'reason']
+        'insurer_network', 'insurer_npi', 'insurer_rate_type', 'insurer_file_date', 'insurer_file', 'insurer_range', 'npi_shared_by', 'hospital_product', 'dates_far_apart', 'reason']
 rows.sort(key=lambda r: (r['hospital'], r['insurer'], r['code']))
 with open(f'{OUT}/pairs.csv', 'w', newline='', encoding='utf-8') as f:
     w = csv.DictWriter(f, COLS, extrasaction='ignore'); w.writeheader(); w.writerows(rows)
@@ -316,7 +334,12 @@ md = [f"# Hospital file vs insurer file: DFW pilot ({time.strftime('%b %d, %Y')}
       f"- Match: {tot['match']:,} ({pc(tot['match'])})", f"- Close: {tot['close']:,} ({pc(tot['close'])})", f"- Files disagree: {tot['files disagree']:,} ({pc(tot['files disagree'])})",
       f"- Not comparable (percent of charges, per diem, formula, professional fee only...): {tot['not comparable']:,}",
       f"- Only the hospital file has it: {tot['hospital file only']:,} · only the insurer file has it: {tot['insurer file only']:,}",
-      f"- File dates more than {DATE_DAYS} days apart: {far:,}", '',
+      f"- File dates more than {DATE_DAYS} days apart: {far:,}",
+      f"- Compared at an NPI that more than one hospital file lists (can't tell which campus the insurer rate is for): {sum(1 for r in rows if r.get('npi_shared_by'))}", '',
+      "Rules added after the first run (Oct 24, data-type rules, not the bands): a hospital-stay (MS-DRG) amount under $100 is a DRG weight,",
+      "not a dollar price (not comparable); a hospital row for a marketplace plan is compared only with marketplace networks, and an",
+      "employer-plan row only with the others. If the build's insurer table list isn't recorded, every saved insurer table is read and",
+      "each network keeps only its newest file.", '',
       "Note (Oct 24, 2026): UnitedHealthcare Core / Core EPO / Select Plus / Navigate and Aetna's four national networks are being added to DFW this week;",
       "their prices reach this comparison at the next DFW build, so UnitedHealthcare and Aetna results may shift. Re-run: push a change to",
       "site/match_pilot.py or run the \"Match pilot\" workflow by hand (it also runs on the 10th of each month).", '',
@@ -325,7 +348,7 @@ md = [f"# Hospital file vs insurer file: DFW pilot ({time.strftime('%b %d, %Y')}
       '| Hospital | Insurer | Procedure | Hospital file says | Insurer file says | Dates (hospital / insurer) |', '|---|---|---|---:|---:|---|']
 for r in dis[:15]:
     md.append(f"| {r['hospital']} | {r['insurer']} ({r['insurer_network']}) | {r['code']} {r['procedure']} ({r['setting'] or 'setting not given'}) | "
-              f"${r['hospital_price']:,.2f} ({r['hospital_plan']}; row {r['hospital_row']}) | ${r['insurer_price']:,.2f} | {r['hospital_file_date']} / {r['insurer_file_date']}{' ⚑' if r['dates_far_apart'] else ''} |")
+              f"${r['hospital_price']:,.2f} ({r['hospital_plan']}; row {r['hospital_row']}) | ${r['insurer_price']:,.2f} | {r['hospital_file_date']} / {r['insurer_file_date']}{' ⚑' if r['dates_far_apart'] else ''}{' (NPI shared by ' + str(r['npi_shared_by']) + ' files)' if r.get('npi_shared_by') else ''} |")
 nc = Counter(x for r in rows if r['result'] == 'not comparable' for x in [r['reason'].split(' (')[0]])
 md += ['', '## Why rows were not comparable (most common)', ''] + [f"- {k}: {n:,}" for k, n in nc.most_common(8)]
 md += ['', '## Data notes', '', f"- Hospital files without saved rows: {len(missing_h)}" + (f" ({', '.join(missing_h[:8])})" if missing_h else ''),
