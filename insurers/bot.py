@@ -447,11 +447,47 @@ def launch(s3, b, man, now, dry):
     return fill(s3, b, now)
 
 
+# Oct 24, 2026 (Betsy OK'd): machines booted before 91a7800 can't pull new bot code, so they never got the shared
+# national-file reads (7c46849). Each one is retired as soon as it finishes the file it was on: once it holds no claim,
+# or only claims it took after RETIRE_FROM, it is deleted and those new claims go back in line (at most one fill pass
+# of reading lost). Its slot is refilled with a machine running current code. Remove after these machines are gone.
+RETIRE_BOOTED_BEFORE = "2026-10-24T15:35:00Z"
+RETIRE_FROM = "2026-10-24T20:40:00Z"
+
+
+def retire_old(s3, b, ours, qclaims):
+    """Delete pre-91a7800 queue machines that have finished their current file. Returns the names deleted."""
+    gone = []
+    for did, name, created, _size in ours:
+        if created >= RETIRE_BOOTED_BEFORE:
+            continue
+        held = [(jid, c) for jid, c in qclaims.items()
+                if str(c.get("droplet_id")) == str(did) or c.get("name") == name]
+        if any(c.get("claimed_at", "") < RETIRE_FROM for _, c in held):
+            continue   # still on the file it had before the switch: let it finish
+        try:
+            droplets.delete(did)
+        except Exception as e:
+            print(f"retire: could not delete {name}: {str(e)[:150]}")
+            continue
+        for jid, _ in held:
+            fleet.release(s3, b, jid)
+            qclaims.pop(jid, None)
+        gone.append(name)
+        print(f"retire: {name} (old code) deleted after finishing its file"
+              + (f"; {len(held)} new claim(s) back in line" if held else ""))
+    return gone
+
+
 def fill(s3, b, now):
     """Rent machines for unclaimed queue jobs, up to the account's live limit. Returns [(machine name, job id)]."""
     try:
-        everyone = droplets.names()
         ours = droplets.fleet()
+        if time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()) >= RETIRE_FROM and \
+                any(c < RETIRE_BOOTED_BEFORE for _, _, c, _ in ours):
+            if retire_old(s3, b, ours, fleet.claims(s3, b)):
+                ours = droplets.fleet()
+        everyone = droplets.names()
         free = droplets.room() - RESERVE
     except Exception as e:
         print("could not read machines or the account limit:", e)
