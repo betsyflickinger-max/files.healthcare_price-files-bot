@@ -1,0 +1,51 @@
+name: Match pilot
+
+# Oct 24, 2026 (Betsy OK'd Oct 23, moved up Oct 24): hospital price file vs insurer price file for the same hospital,
+# insurer and procedure, DFW, the 89 core procedures. site/match_pilot.py. No rented machines: reads the live DFW build's
+# saved work in R2. Output committed to reports/match-pilot/<YYYY-MM>/ (summary.md, pairs.csv) and shown on the run page.
+# Re-run: by hand ("Run workflow"), on any change to site/match_pilot.py, and monthly on the 10th (after the DFW build).
+
+on:
+  schedule:
+    - cron: "37 14 10 * *"
+  push:
+    branches: [main]
+    paths: [site/match_pilot.py, .github/workflows/match-pilot.yml]
+  workflow_dispatch:
+    inputs:
+      bid:
+        description: "DFW build id (blank = the live one)"
+        required: false
+
+concurrency:
+  group: match-pilot
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  match:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      BID: ${{ github.event.inputs.bid }}
+      WORK: /mnt/mp
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo mkdir -p /mnt/mp && sudo chown $USER /mnt/mp && df -h / /mnt
+      - run: pip install boto3==1.35.36 duckdb==1.1.3
+      - run: python site/match_pilot.py
+      - run: cat reports/match-pilot/*/summary.md >> "$GITHUB_STEP_SUMMARY"
+        if: always()
+      - name: Commit the report
+        run: |
+          git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
+          git add reports/match-pilot && git commit -m "Match pilot report $(date -u +%F)" && git pull --rebase -q origin main && git push origin HEAD:main || echo "nothing to commit"
