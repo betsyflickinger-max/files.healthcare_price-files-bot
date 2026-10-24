@@ -3,3 +3,6 @@ work/
 out/
 __pycache__/
 *.pyc
+
+# BMAD plans stay private (they live in the Healthcare folder on the Mac)
+_bmad-output/
