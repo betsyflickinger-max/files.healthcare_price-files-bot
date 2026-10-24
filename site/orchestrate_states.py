@@ -490,6 +490,18 @@ def main():
                               for s in STATES.values()}
             st['stage'] = 'build'
             log('providers per state', st['providers'], 'machines', st['machines'])
+    if st['stage'] == 'build' and st.get('split_failed') and st.get('split_restarts', 0) < 1 and \
+            not any(sizes(f'data/{SCOPE}/state/{s}/rates/') for s in STATES.values()):
+        # Oct 24, 2026 (Betsy): n5's split failed on Oct 22 (every table in its job list had been replaced) and every state
+        # machine then found no tables and failed 8 times. Start the split again from a fresh listing, once.
+        log('split produced no state tables (', len(st['split_failed']), 'failed): splitting again from a fresh table list')
+        st['split_restarts'] = st.get('split_restarts', 0) + 1
+        for k in ('split_jobs', 'back_jobs', 'split_failed', 'machines'): st.pop(k, None)
+        for r in [r for r in st.get('launches', {}) if r.startswith(('split-',) + tuple(f'{s}-' for s in STATES.values()))]:
+            st['launches'].pop(r)
+        st['problems'] = [p for p in st.get('problems', []) if not any(p.startswith(s + '-') for s in STATES.values())]
+        O.bundle()   # n5's Oct 22 bundle lacked state_scopes.json (fixed e08cb5f): machines get today's code
+        st['stage'] = 'split'
     if st['stage'] == 'build':
         left = [slug for slug in STATES.values() if not exists(tout(slug) + 'embed.json')]
         final_left = left

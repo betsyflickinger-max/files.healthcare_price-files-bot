@@ -282,6 +282,7 @@ def redo(areas):
 
 
 IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
+H2_RETRIES = 1             # Oct 24, 2026: a page live without hospitals (machine failed twice) gets this many more tries
 PUBLISH_TRIES = 3          # Oct 21, 2026: how many times a state page's publish step is tried before it is left failed
 
 
@@ -329,6 +330,15 @@ def state_by_state(O, st):
                 st['published'].pop(a, None)
             else:
                 O.log(a, 'STILL NOT PUBLISHED after', PUBLISH_TRIES, 'tries: see the publish step in earlier runs')
+    # Oct 24, 2026 (Betsy): Arizona went live with insurer rates only after its hospital machine hit the same bug twice
+    # (h2_build.py temp folder). A page published that way is tried once more on a later run, with fresh machines.
+    h2r = st.setdefault('h2_retries', {})
+    for a in areas:
+        if 'hospital machine failed twice' in str(st['published'].get(a, '')) and h2r.get(a, 0) < H2_RETRIES:
+            h2r[a] = h2r.get(a, 0) + 1
+            O.log(a, 'went live without hospitals: building its hospital files again (retry', h2r[a], 'of', H2_RETRIES, ')')
+            st['published'].pop(a, None); st['launches'].pop(f'h2-{a}', None); st['stage'] = 'h2'
+            O.bundle()   # the machines' code bundle was made when this build started: send them today's fixes
     ready = [a for a in areas if O.exists(f'site/every-st/{a}/{month}/embed.json')]
     done = {k.rsplit('/', 1)[1][:-5] for k in O.ls(SP + 'h2/')}
     busy = 0

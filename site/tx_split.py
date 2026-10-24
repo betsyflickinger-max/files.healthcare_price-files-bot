@@ -55,7 +55,12 @@ for t in tables:
     try: s3.head_object(Bucket=B, Key=f'{DONE}{t}.json'); print('skip', t, flush=True); continue
     except Exception: pass
     t0 = time.time(); src = f'{W}/in.parquet'
-    s3.download_file(B, f'{RIN}{t}.parquet', src)
+    # Oct 24, 2026: the job list is fixed when a build starts; a table replaced since then (newer file, new name) used to
+    # crash the machine on its first missing table, 3 times, so n5 (NY CA VA DC FL WI) split nothing and its build failed
+    try: s3.download_file(B, f'{RIN}{t}.parquet', src)
+    except Exception as e:
+        if '404' in str(e) or 'Not Found' in str(e): print('gone (replaced since the job list was made):', t, flush=True); continue
+        raise
     c = duckdb.connect()
     c.execute(f"set memory_limit='{E.get('MEM', '12GB')}'; set threads={E.get('THREADS', '8')}; set preserve_insertion_order=false; set temp_directory='{W}/tmp'; set enable_progress_bar=false")
     c.execute(f"create table g as select zip5, slug from read_csv('{GEO}', all_varchar=true)")

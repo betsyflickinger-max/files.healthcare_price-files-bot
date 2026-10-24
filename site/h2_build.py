@@ -13,6 +13,9 @@ import duckdb
 
 rows_glob, map_path, page_path, out = sys.argv[1:5]
 os.makedirs(f'{out}/h', exist_ok=True)
+# Oct 24, 2026: each hospital file's DuckDB spills to {out}/duck/<tag>; DuckDB creates only the last folder, so without
+# {out}/duck a big file (Arizona) failed with 'Failed to create directory' and the state went live without hospitals
+os.makedirs(f'{out}/duck', exist_ok=True)
 
 # ---- existing page: keep the 79 current hospital files at the same index (quality ratings are keyed by it)
 s = open(page_path).read()
