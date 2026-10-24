@@ -31,6 +31,7 @@ import check  # noqa: E402
 import droplets  # noqa: E402
 import find_links  # noqa: E402
 import fleet  # noqa: E402
+import stall_watch  # noqa: E402
 import store  # noqa: E402
 
 P = "bot/insurers/"
@@ -524,6 +525,7 @@ def fill(s3, b, now):
     waiting = len([j for jid, j in qjobs.items() if jid not in qclaims])
     print(f"queue: {len(qjobs)} jobs, {len(qclaims)} being read, {waiting} waiting; "
           f"{len(ours)} queue machines running, {max(free, 0)} free slots, rented {len(launched)}")
+    stall_watch.check(s3, b, qclaims)   # Oct 24, 2026: email Betsy (GitHub issue) when a machine looks stuck
     return launched
 
 
