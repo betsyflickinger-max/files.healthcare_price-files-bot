@@ -198,7 +198,7 @@ for b in bk:
           regexp_extract(x.filename, '([^/]+)\\.parquet$', 1)
           from read_parquet('{d}/*.parquet', filename=true, union_by_name=true) x join npis using (npi) where x.code in ({CODE_LIST})""")
     shutil.rmtree(d)
-log('insurer stage-A files read', nfiles, f'({nbytes/1e9:.1f} GB) from', len(bk), 'buckets |', len({TAG[t] for t in got_tags}), 'of', len(set(TAG.values())), 'tables found',
+log('insurer stage-A files read', nfiles, f'({nbytes/1e9:.1f} GB) from', len(bk), 'buckets |', len(got_tags), 'cached tables read (', len({TAG[t] for t in got_tags if t in TAG}), 'of', len(set(TAG.values())), 'current tables by name)',
     '| rows at hospital NPIs', con.execute('select count(*) from ins').fetchone()[0])
 if benv.get('fallback'):
     # Oct 24: without the build's table list, every cached insurer table was read (older months too). Keep, for each insurer
