@@ -26,7 +26,7 @@ for did, name, created in droplets.mine():
     except Exception as e:
         print("  no log:", e)
 
-for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x]:   # e.g. stn5-2026-10: a page build's saved state
+for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith("tables:")]:   # e.g. stn5-2026-10: a page build's saved state
     try:
         st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
@@ -44,3 +44,22 @@ for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x]:   # e.g. s
 for d in droplets.names() if hasattr(droplets, "names") else []:
     if d.startswith("upfront-site-"):
         print("site machine:", d)
+
+# Oct 24: insurer tables an area's page build reads (data/<scope>/rates/, the per-state split, split markers)
+def _count(prefix):
+    n = sz = 0
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=prefix):
+        for o in page.get("Contents", []): n += 1; sz += o["Size"]
+    return n, round(sz / 1e9, 1)
+for sc in [x[7:] for x in os.environ.get("BUILDS", "").split(",") if x.startswith("tables:")]:   # builds input "tables:n5"
+    print(f"=== tables for {sc}: rates {_count(f'data/{sc}/rates/')} (files, GB); split markers {_count(f'data/{sc}/state/_done/')}")
+    states = sorted({k.split('/')[3] for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"data/{sc}/state/", Delimiter="/") for k in [c["Prefix"] + "x" for c in page.get("CommonPrefixes", [])]})
+    for slug in states:
+        print(f"  {slug}: rates {_count(f'data/{sc}/state/{slug}/rates/')}, npis {_count(f'data/{sc}/state/{slug}/npis.parquet')}")
+    try:
+        st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/st{sc}-2026-10/state.json")["Body"].read())
+        print("  split_failed:", len(st.get("split_failed") or []), (st.get("split_failed") or [])[:10])
+        print("  split_jobs:", [len(j) for j in st.get("split_jobs", [])], "back_jobs:", [len(j) for j in st.get("back_jobs", [])])
+        print("  problems:", (st.get("problems") or [])[-8:])
+    except Exception as e:
+        print("  no build state:", e)
