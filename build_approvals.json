@@ -38,5 +38,21 @@
  "stc3-2026-11": {
   "usd": 150,
   "why": "Betsy OK'd up to $150 per new-state page build (Oct 23, 2026) so builds keep running while she's away"
+ },
+ "stn5-2026-10": {
+  "usd": 150,
+  "why": "Betsy OK'd up to $150 per new-state page build (Oct 24, 2026), same as the other new areas"
+ },
+ "stn5-2026-11": {
+  "usd": 150,
+  "why": "Betsy OK'd up to $150 per new-state page build (Oct 24, 2026), same as the other new areas"
+ },
+ "stb1-2026-10": {
+  "usd": 150,
+  "why": "Betsy OK'd up to $150 per new-state page build (Oct 24, 2026), same as the other new areas"
+ },
+ "stb1-2026-11": {
+  "usd": 150,
+  "why": "Betsy OK'd up to $150 per new-state page build (Oct 24, 2026), same as the other new areas"
  }
 }
