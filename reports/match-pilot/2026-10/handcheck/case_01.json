@@ -1,0 +1,206 @@
+{
+ "case": 1,
+ "label": "1a Texas Health x UHC (~92% pattern)",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "Texas Health Arlington Memorial Hospital",
+  "insurer": "UnitedHealthcare",
+  "code": "27447",
+  "procedure": "",
+  "setting": "outpatient",
+  "hospital_price": "19497.0",
+  "insurer_price": "21154.0",
+  "diff": "1657.0",
+  "diff_pct": "7.8",
+  "hospital_plan": "United Healthcare \u00b7 All Payer",
+  "hospital_row": "5754304",
+  "hospital_methodology": "case rate",
+  "hospital_file_date": "2026-04-21",
+  "hospital_file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13786/750972805_texas-health-arlington-memorial-hospital_standardcharges.csv",
+  "hospital_range": "19,497.00-24,806.00 (2 rows)",
+  "insurer_network": "Choice Plus",
+  "insurer_npi": "1174533343",
+  "insurer_rate_type": "negotiated",
+  "insurer_file_date": "2026-10-01",
+  "insurer_file": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+  "insurer_range": "21,154.00-21,154.00 (1 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "commercial",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13786/750972805_texas-health-arlington-memorial-hospital_standardcharges.csv",
+  "name": "Texas Health Arlington Memorial Hospital",
+  "sha16": "85152de07093e997",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/85152de07093e997.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-10/TX/85152de07093_750972805_texas-health-arlington-memorial-hospital_standardcharges.csv.zst",
+    "source_url": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13786/750972805_texas-health-arlington-memorial-hospital_standardcharges.csv",
+    "sha256": "85152de07093e9973b3efacf0bc0be1e74b6b76cb05754dd905064429feb514c",
+    "source_row": "5754304",
+    "hospital_name": "Texas Health Arlington Memorial Hospital",
+    "location_name": "Texas Health Arlington Memorial Hospital",
+    "last_updated_on": "2026-04-21",
+    "type_2_npi": "1174533343",
+    "hospital_address": "800 W Randol Mill Rd, Arlington, TX 76012",
+    "description": "TOTAL KNEE ARTHROPLASTY",
+    "code": "27447",
+    "code_type": "CPT",
+    "all_codes": "CPT:27447;RC:0360",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "gross_charge": null,
+    "discounted_cash": null,
+    "min_charge": "14351.00",
+    "max_charge": "99442.33",
+    "payer_name": "United Healthcare",
+    "plan_name": "All Payer",
+    "negotiated_dollar": "19497.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "methodology": "case rate",
+    "median_amount": null,
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-10/TX/85152de07093_750972805_texas-health-arlington-memorial-hospital_standardcharges.csv.zst",
+   "first_lines": [
+    "hospital_name,last_updated_on,version,location_name,hospital_address,license_number|TX,type_2_npi,\"To the best of its knowledge and belief, this hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50, and the information encoded is true, accurate, and complete as of the date in the file. This hospital has included all payer-specific negotiated charges in dollars that can be expressed as a dollar amount. For payer-specific negotiated charges that cannot be expressed as a dollar amount in the machine-readable file or not knowable in advance, the hospital attests that the payer-specific negotiated charge is based on a contractual algorithm, percentage or formula that precludes the provision of a dollar amount and has provided all necessary information available to the hospital for the public to be able to derive the dollar amount, including, but not limited to, the specific fee schedule or components referenced in such percentage, algorithm or formula.\",attester_name,general_contract_provisions,financial_aid_policy",
+    "Texas Health Arlington Memorial Hospital,2026-04-21,3.0.0,\"Texas Health Arlington Memorial Hospital \",\"800 W Randol Mill Rd, Arlington, TX 76012\",000422,1174533343,TRUE,Jeff Mincher,,",
+    "description,code|1,code|1|type,code|2,code|2|type,code|3,code|3|type,code|4,code|4|type,modifiers,setting,drug_unit_of_measurement,drug_type_of_measurement,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|negotiated_percentage,standard_charge|negotiated_algorithm,median_amount,10th_percentile,90th_percentile,count,standard_charge|methodology,standard_charge|min,standard_charge|max,additional_generic_notes,additional_payer_notes,billing_class"
+   ],
+   "lines": {
+    "5754303": "REVISION OF KNEE JOINT,27446,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,19497.00,,,,,,,case rate,14351.00,99442.33,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility",
+    "5754304": "TOTAL KNEE ARTHROPLASTY,27447,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,19497.00,,,,,,,case rate,14351.00,99442.33,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility",
+    "5754305": "INCISION OF THIGH,27448,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,16982.00,,,,,,,case rate,1013.38,21607.00,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility"
+   }
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "4353990",
+    "payer_name": "United Healthcare Options",
+    "plan_name": "PPO",
+    "code": "27447",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "24806.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "TOTAL KNEE ARTHROPLASTY",
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   },
+   {
+    "source_row": "4560216",
+    "payer_name": "United Healthcare",
+    "plan_name": "Medicare Advantage PPO",
+    "code": "27447",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "14339.46",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "TOTAL KNEE ARTHROPLASTY",
+    "notes": null,
+    "payer_notes": null
+   },
+   {
+    "source_row": "5754304",
+    "payer_name": "United Healthcare",
+    "plan_name": "All Payer",
+    "code": "27447",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "19497.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "TOTAL KNEE ARTHROPLASTY",
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   },
+   {
+    "source_row": "6549669",
+    "payer_name": "United Healthcare",
+    "plan_name": "Medicare Advantage HMO",
+    "code": "27447",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "14597.83",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "TOTAL KNEE ARTHROPLASTY",
+    "notes": null,
+    "payer_notes": null
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+  "file_date": "2026-10-01",
+  "network": "Choice Plus",
+  "npi": "1174533343",
+  "tables_tried": [
+   "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet"
+  ],
+  "tables_read": [
+   "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "UHIC",
+    "file_label": "UnitedHealthcare Choice Plus",
+    "last_updated_on": "2026-10-01",
+    "billing_code_type": "CPT",
+    "billing_code": "27447",
+    "name": "ARTHRP KNE CONDYLE&PLATU MEDIAL&LAT COMPARTMENTS",
+    "negotiation_arrangement": "ffs",
+    "npi": "1174533343",
+    "tin": "750972805",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "21154",
+    "billing_class": "institutional",
+    "setting": "outpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "source_file": "2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "source_url": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "checked_on": "2026-09-29",
+    "_table": "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Choice Plus",
+      "tin": "750972805"
+     }
+    ]
+   }
+  ]
+ }
+}

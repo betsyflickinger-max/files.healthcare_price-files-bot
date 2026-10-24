@@ -1,0 +1,187 @@
+{
+ "case": 5,
+ "label": "3 Methodist x Aetna heart valve",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "Methodist Hospitals of Dallas",
+  "insurer": "Aetna",
+  "code": "216",
+  "procedure": "",
+  "setting": "inpatient",
+  "hospital_price": "123128.72",
+  "insurer_price": "230678.0",
+  "diff": "107549.28",
+  "diff_pct": "46.6",
+  "hospital_plan": "AETNA [3000] \u00b7 MHS HB AETNA CVS MCMC",
+  "hospital_row": "340850",
+  "hospital_methodology": "other",
+  "hospital_file_date": "2026-03-21",
+  "hospital_file": "https://www.methodisthealthsystem.org/sites/default/files/Price%20Transparency/750800661_MethodistCharltonMedicalCenter_standardcharges.zip",
+  "hospital_range": "123,128.72-123,128.72 (2 rows)",
+  "insurer_network": "Open Access Select",
+  "insurer_npi": "1275592131",
+  "insurer_rate_type": "negotiated",
+  "insurer_file_date": "2026-10-05",
+  "insurer_file": "https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICSI/2026-10-05/inNetworkRates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.json.gz",
+  "insurer_range": "230,678.00-230,678.00 (4 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "commercial",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://www.methodisthealthsystem.org/sites/default/files/Price%20Transparency/750800661_MethodistCharltonMedicalCenter_standardcharges.zip",
+  "name": "Methodist Hospitals of Dallas",
+  "sha16": "7afb7e77ec25ed83",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/7afb7e77ec25ed83.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-03-21/750800661_MethodistCharltonMedicalCenter_standardcharges.zip.zst",
+    "source_url": "https://www.methodisthealthsystem.org/sites/default/files/Price%20Transparency/750800661_MethodistCharltonMedicalCenter_standardcharges.zip",
+    "sha256": "7afb7e77ec25ed83309e3c8f8a59d2ad45c016c867240fd0c4e961bf0a70c571",
+    "source_row": "340850",
+    "hospital_name": "Methodist Hospitals of Dallas",
+    "location_name": "Methodist Charlton Medical Center",
+    "last_updated_on": "2026-03-21",
+    "type_2_npi": "1275592131",
+    "hospital_address": "3500 W Wheatland Road, Dallas, TX 75237",
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "all_codes": "MS-DRG:216",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "gross_charge": "349070.47",
+    "discounted_cash": "174535.23",
+    "min_charge": "174535.24",
+    "max_charge": "526637.25",
+    "payer_name": "AETNA [3000]",
+    "plan_name": "MHS HB AETNA CVS MCMC",
+    "negotiated_dollar": "123128.72",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": "Case rate ($76,005.38). If operating cost, defined as billed amount less exclusions * an operating cost-to-charge ratio of 0.187, exceeds $70,985.56, add-ons for qualifying new technology services are included. If operating cost exceeds $107,554.85 plus the cost of any qualifying new technology services, the stay qualifies for an operating outlier of 80% of the excess amount. If capital cost, defined as billed amount less exclusions * a capital cost-to-charge ratio of 0.016, exceeds $8,558.16, the stay qualifies for a capital outlier of 80% of the excess amount. For transfer cases, the transfer adjustment factor is defined as (length of stay + 1) / 10.6. For special-pay transfer cases, the transfer adjustment factor is instead defined as (1 + ((length of stay + 1) / 10.6)) / 2. The base transfer operating payment is the transfer adjustment factor * $66,857.75 + an uncompensated DSH payment of $3,712.34. The transfer operating threshold is the transfer adjustment factor * $67,273.21 + an uncompensated DSH payment of $3,712.34. If operating cost exceeds the transfer operating threshold, add-ons for qualifying new technology services are included. If operating cost exceeds the transfer operating threshold + the cost of any qualifying new technology services, the stay qualifies for a transfer operating outlier of 80% of the excess amount. The base transfer capital payment is the transfer adjustment factor * $5,435.30. The transfer capital threshold is the transfer adjustment factor * $5,435.30. If the capital cost exceeds the transfer capital threshold, the stay qualifies for a transfer capital outlier of 80% of the excess amount. For stays with condition code 49 or 50, reimbursement is reduced by any reported device reduction amounts. Final payment is multiplied by 162%.",
+    "methodology": "other",
+    "median_amount": null,
+    "notes": "Re-evaluated: HLB.61062461; Using new claim; Scope: All Financial Classes; Cases: 18; Inpatient DRG; FSC: XR MC DRG WEIGHTS, Value: 9.78, and; Pricing Extension - MHS HB XR PRC AETNA EXCHANGE IP PPS CY26; Note: Transfer payment: $76,005.38; Percentage applied: 162.00%; Total: $123,128.72; Estimated Allowed Amount: 123128.72",
+    "payer_notes": null
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-03-21/750800661_MethodistCharltonMedicalCenter_standardcharges.zip.zst",
+   "first_lines": [
+    "PK\u0003\u0004\u0014\u0000\u0000\u0000\b\u0000\ufffdpu\\\ufffd\ufffdK\ufffd=\u0298\u0001\ufffd\ufffd*\u0016<\u0000\u0000\u0000750800661_MethodistCharltonMedicalCenter_standardcharges.csv\ufffd\ufffdn\ufffdJ\ufffd\u01ffG\ufffd;\ufffd\"\ufffd\ufffd\u03cc\u3e2a|\ufffd\ufffd\ufffd\u0018\ufffd\ufffd7`\ufffdm\ufffd\u0013\ufffdF\u0011;\ufffd\ufffdAC ",
+    "\ufffd>\ufffdy\ufffd\ufffd0\ufffd4\ufffd0\ufffd\ufffd|#`\ufffdek4",
+    "nu7\ufffdP\u007f\ufffd\ufffd\u05aaU\ufffd.\ufffd\ufffd\ufffd\ufffd\ufffd\ufffd\ufffdm\ufffd\ufffd\ufffd\u001f\u0017\ufffd\ufffdX\ufffdO\u05db\ufffd\ufffd\ufffd\ufffd\ufffd&~~\\.\ufffd\ufffd\ufffd\ufffdz\u0006\ufffd\ufffd\ufffd\ufffdt\u0003o\u0127\ufffd\ufffd\ufffd>?\ufffd\ufffd\ufffdZ\ufffd\u03de\ufffd\ufffd:~\\\ufffd\ufffd~\ufffdW\u007fF\ufffd\ufffd\u63f7\ufffd\ufffd<.\ufffdf\ufffdE\ufffdD\ufffd\ufffd\u0018}\ufffd\ufffd\u001b\ufffd\ufffd\ufffdf\ufffd5\ufffd\ufffd\ufffd\ufffd\ufffdy\ufffd\ufffd3F\ufffd\ufffd3\ufffdf>\ufffd\u007fH\ufffd\ufffd\u001a\ufffd_\ufffd^\ufffdk4[<\ufffd\u07df\ufffdg4\ufffd\ufffd\ufffd\ufffd\ufffd"
+   ],
+   "lines": {}
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "108156",
+    "payer_name": "AETNA MEDICARE MANAGED CARE [7000]",
+    "plan_name": "MHS HB AETNA GOLDEN MCMC",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "methodology": "other",
+    "negotiated_dollar": "76005.38",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": "Case rate ($76,005.38). If operating cost, defined as billed amount less exclusions * an operating cost-to-charge ratio of 0.187, exceeds $70,985.56, add-ons for qualifying new technology services are included. If operating cost exceeds $107,554.85 plus the cost of any qualifying new technology services, the stay qualifies for an operating outlier of 80% of the excess amount. If capital cost, defined as billed amount less exclusions * a capital cost-to-charge ratio of 0.016, exceeds $8,558.16, the stay qualifies for a capital outlier of 80% of the excess amount. For transfer cases, the transfer adjustment factor is defined as (length of stay + 1) / 10.6. For special-pay transfer cases, the transfer adjustment factor is instead defined as (1 + ((length of stay + 1) / 10.6)) / 2. The base transfer operating payment is the transfer adjustment factor * $66,857.75 + an uncompensated DSH payment of $3,712.34. The transfer operating threshold is the transfer adjustment factor * $67,273.21 + an uncompensated DSH payment of $3,712.34. If operating cost exceeds the transfer operating threshold, add-ons for qualifying new technology services are included. If operating cost exceeds the transfer operating threshold + the cost of any qualifying new technology services, the stay qualifies for a transfer operating outlier of 80% of the excess amount. The base transfer capital payment is the transfer adjustment factor * $5,435.30. The transfer capital threshold is the transfer adjustment factor * $5,435.30. If the capital cost exceeds the transfer capital threshold, the stay qualifies for a transfer capital outlier of 80% of the excess amount. For stays with condition code 49 or 50, reimbursement is reduced by any reported device reduction amounts.",
+    "gross_charge": "349070.47",
+    "discounted_cash": "174535.23",
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Re-evaluated: HLB.61062461; Using new claim; Scope: All Financial Classes; Cases: 18; Inpatient DRG; FSC: XR MC DRG WEIGHTS, Value: 9.78, and; Pricing Extension - HB XR PRC MANAGED MEDICARE IP PPS FY20; Note: Transfer payment: $76,005.38; Total: $76,005.38; Estimated Allowed Amount: 76005.38",
+    "payer_notes": null
+   },
+   {
+    "source_row": "340849",
+    "payer_name": "AETNA [3000]",
+    "plan_name": "MHS HB AETNA EXCHANGE MCMC",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "methodology": "other",
+    "negotiated_dollar": "123128.72",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": "Case rate ($76,005.38). If operating cost, defined as billed amount less exclusions * an operating cost-to-charge ratio of 0.187, exceeds $70,985.56, add-ons for qualifying new technology services are included. If operating cost exceeds $107,554.85 plus the cost of any qualifying new technology services, the stay qualifies for an operating outlier of 80% of the excess amount. If capital cost, defined as billed amount less exclusions * a capital cost-to-charge ratio of 0.016, exceeds $8,558.16, the stay qualifies for a capital outlier of 80% of the excess amount. For transfer cases, the transfer adjustment factor is defined as (length of stay + 1) / 10.6. For special-pay transfer cases, the transfer adjustment factor is instead defined as (1 + ((length of stay + 1) / 10.6)) / 2. The base transfer operating payment is the transfer adjustment factor * $66,857.75 + an uncompensated DSH payment of $3,712.34. The transfer operating threshold is the transfer adjustment factor * $67,273.21 + an uncompensated DSH payment of $3,712.34. If operating cost exceeds the transfer operating threshold, add-ons for qualifying new technology services are included. If operating cost exceeds the transfer operating threshold + the cost of any qualifying new technology services, the stay qualifies for a transfer operating outlier of 80% of the excess amount. The base transfer capital payment is the transfer adjustment factor * $5,435.30. The transfer capital threshold is the transfer adjustment factor * $5,435.30. If the capital cost exceeds the transfer capital threshold, the stay qualifies for a transfer capital outlier of 80% of the excess amount. For stays with condition code 49 or 50, reimbursement is reduced by any reported device reduction amounts. Final payment is multiplied by 162%.",
+    "gross_charge": "349070.47",
+    "discounted_cash": "174535.23",
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Re-evaluated: HLB.61062461; Using new claim; Scope: All Financial Classes; Cases: 18; Inpatient DRG; FSC: XR MC DRG WEIGHTS, Value: 9.78, and; Pricing Extension - MHS HB XR PRC AETNA EXCHANGE IP PPS CY26; Note: Transfer payment: $76,005.38; Percentage applied: 162.00%; Total: $123,128.72; Estimated Allowed Amount: 123128.72",
+    "payer_notes": null
+   },
+   {
+    "source_row": "340850",
+    "payer_name": "AETNA [3000]",
+    "plan_name": "MHS HB AETNA CVS MCMC",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "methodology": "other",
+    "negotiated_dollar": "123128.72",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": "Case rate ($76,005.38). If operating cost, defined as billed amount less exclusions * an operating cost-to-charge ratio of 0.187, exceeds $70,985.56, add-ons for qualifying new technology services are included. If operating cost exceeds $107,554.85 plus the cost of any qualifying new technology services, the stay qualifies for an operating outlier of 80% of the excess amount. If capital cost, defined as billed amount less exclusions * a capital cost-to-charge ratio of 0.016, exceeds $8,558.16, the stay qualifies for a capital outlier of 80% of the excess amount. For transfer cases, the transfer adjustment factor is defined as (length of stay + 1) / 10.6. For special-pay transfer cases, the transfer adjustment factor is instead defined as (1 + ((length of stay + 1) / 10.6)) / 2. The base transfer operating payment is the transfer adjustment factor * $66,857.75 + an uncompensated DSH payment of $3,712.34. The transfer operating threshold is the transfer adjustment factor * $67,273.21 + an uncompensated DSH payment of $3,712.34. If operating cost exceeds the transfer operating threshold, add-ons for qualifying new technology services are included. If operating cost exceeds the transfer operating threshold + the cost of any qualifying new technology services, the stay qualifies for a transfer operating outlier of 80% of the excess amount. The base transfer capital payment is the transfer adjustment factor * $5,435.30. The transfer capital threshold is the transfer adjustment factor * $5,435.30. If the capital cost exceeds the transfer capital threshold, the stay qualifies for a transfer capital outlier of 80% of the excess amount. For stays with condition code 49 or 50, reimbursement is reduced by any reported device reduction amounts. Final payment is multiplied by 162%.",
+    "gross_charge": "349070.47",
+    "discounted_cash": "174535.23",
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Re-evaluated: HLB.61062461; Using new claim; Scope: All Financial Classes; Cases: 18; Inpatient DRG; FSC: XR MC DRG WEIGHTS, Value: 9.78, and; Pricing Extension - MHS HB XR PRC AETNA EXCHANGE IP PPS CY26; Note: Transfer payment: $76,005.38; Percentage applied: 162.00%; Total: $123,128.72; Estimated Allowed Amount: 123128.72",
+    "payer_notes": null
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICSI/2026-10-05/inNetworkRates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.json.gz",
+  "file_date": "2026-10-05",
+  "network": "Open Access Select",
+  "npi": "1275592131",
+  "tables_tried": [
+   "data/full/rates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.parquet"
+  ],
+  "tables_read": [
+   "data/full/rates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "Aetna Life Insurance Company",
+    "file_label": "Open Access Aetna Select",
+    "last_updated_on": "2026-10-05",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "216",
+    "name": "CARDIAC VALVE & OTH MAJ CAR",
+    "negotiation_arrangement": "ffs",
+    "npi": "1275592131",
+    "tin": "750800661",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "230678",
+    "billing_class": "institutional",
+    "setting": "both",
+    "service_code": "21,31,32,33,34,51,54,55,56,61",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "billing_code_type_version": "39.1",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.json.gz",
+    "source_url": "https://mrf.healthsparq.com/aetnacvs-egress.nophi.kyruushsq.com/prd/mrf/AETNACVS_I/ALICSI/2026-10-05/inNetworkRates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "data/full/rates/2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "AHF Choice POS II | Aetna Choice POS II",
+      "tin": "750800661"
+     }
+    ]
+   }
+  ]
+ }
+}

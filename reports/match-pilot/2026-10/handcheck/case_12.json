@@ -1,0 +1,153 @@
+{
+ "case": 12,
+ "label": "10 UT Southwestern x Cigna neck fusion (DRG 473)",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "The University of Texas Southwestern Medical Center at Dallas",
+  "insurer": "Cigna",
+  "code": "473",
+  "procedure": "",
+  "setting": "inpatient",
+  "hospital_price": "47939.85",
+  "insurer_price": "77909.21",
+  "diff": "29969.36",
+  "diff_pct": "38.5",
+  "hospital_plan": "Cigna \u00b7 HMO-PPO",
+  "hospital_row": "2202036",
+  "hospital_methodology": "case rate",
+  "hospital_file_date": "2026-03-10",
+  "hospital_file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+  "hospital_range": "47,939.85-47,939.85 (1 rows)",
+  "insurer_network": "Pathwell OAP",
+  "insurer_npi": "1285798918",
+  "insurer_rate_type": "fee schedule",
+  "insurer_file_date": "2026-10-01",
+  "insurer_file": "https://d25kgz5rikkq4n.cloudfront.net/cost_transparency/mrf/in-network-rates/reporting_month=2026-10/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.json.gz",
+  "insurer_range": "77,909.21-77,909.21 (2 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "commercial",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+  "name": "The University of Texas Southwestern Medical Center at Dallas",
+  "sha16": "1e42992b25d55650",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/1e42992b25d55650.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-10/TX/1e42992b25d5_753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv.zst",
+    "source_url": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+    "sha256": "1e42992b25d55650fb5c972c6824f94694f05d6586509e2d2776c1b7e8ef36a8",
+    "source_row": "2202036",
+    "hospital_name": "The University of Texas Southwestern Medical Center at Dallas",
+    "location_name": "UT Southwestern University Hospital | William P. Clements Jr. University Hospital",
+    "last_updated_on": "2026-03-10",
+    "type_2_npi": "1285798918",
+    "hospital_address": "6201 Harry Hines Blvd, Dallas, TX 75390",
+    "description": "CERVICAL SPINAL FUSION WITHOUT CC/MCC",
+    "code": "473",
+    "code_type": "MS-DRG",
+    "all_codes": "MS-DRG:473",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "gross_charge": null,
+    "discounted_cash": null,
+    "min_charge": "20070.83",
+    "max_charge": "79324.87",
+    "payer_name": "Cigna",
+    "plan_name": "HMO-PPO",
+    "negotiated_dollar": "47939.85",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "methodology": "case rate",
+    "median_amount": null,
+    "notes": "Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded",
+    "payer_notes": "Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded"
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-10/TX/1e42992b25d5_753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv.zst",
+   "first_lines": [
+    "hospital_name,last_updated_on,version,location_name,hospital_address,license_number|TX,type_2_npi,\"To the best of its knowledge and belief, this hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50, and the information encoded is true, accurate, and complete as of the date in the file. This hospital has included all payer-specific negotiated charges in dollars that can be expressed as a dollar amount. For payer-specific negotiated charges that cannot be expressed as a dollar amount in the machine-readable file or not knowable in advance, the hospital attests that the payer-specific negotiated charge is based on a contractual algorithm, percentage or formula that precludes the provision of a dollar amount and has provided all necessary information available to the hospital for the public to be able to derive the dollar amount, including, but not limited to, the specific fee schedule or components referenced in such percentage, algorithm or formula.\",attester_name,general_contract_provisions,financial_aid_policy",
+    "The University of Texas Southwestern Medical Center at Dallas,2026-03-10,3.0.0,UT Southwestern University Hospital | William P. Clements Jr. University Hospital,\"6201 Harry Hines Blvd, Dallas, TX 75390\",1285798918,1285798918,TRUE,Mark Meyer,,",
+    "description,code|1,code|1|type,code|2,code|2|type,code|3,code|3|type,code|4,code|4|type,modifiers,setting,drug_unit_of_measurement,drug_type_of_measurement,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|negotiated_percentage,standard_charge|negotiated_algorithm,median_amount,10th_percentile,90th_percentile,count,standard_charge|methodology,standard_charge|min,standard_charge|max,additional_generic_notes,additional_payer_notes,billing_class"
+   ],
+   "lines": {
+    "2202035": "MAJOR GASTROINTESTINAL DISORDERS AND PERITONEAL INFECTIONS WITHOUT CC/MCC,373,MS-DRG,,,,,,,,inpatient,,,,,Cigna,HMO-PPO,17119.44,,,,,,,case rate,7656.18,24304.80,\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",facility",
+    "2202036": "CERVICAL SPINAL FUSION WITHOUT CC/MCC,473,MS-DRG,,,,,,,,inpatient,,,,,Cigna,HMO-PPO,47939.85,,,,,,,case rate,20070.83,79324.87,\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",facility",
+    "2202037": "HIP AND FEMUR PROCEDURES EXCEPT MAJOR JOINT WITH MCC,480,MS-DRG,,,,,,,,inpatient,,,,,Cigna,HMO-PPO,69407.60,,,,,,,case rate,23784.00,98552.91,\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",\"Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded\",facility"
+   }
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "2202036",
+    "payer_name": "Cigna",
+    "plan_name": "HMO-PPO",
+    "code": "473",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "47939.85",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CERVICAL SPINAL FUSION WITHOUT CC/MCC",
+    "notes": "Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded",
+    "payer_notes": "Accounts receive 63.93% of total billed charges when stop loss threshold of $208,159 is exceeded"
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://d25kgz5rikkq4n.cloudfront.net/cost_transparency/mrf/in-network-rates/reporting_month=2026-10/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.json.gz",
+  "file_date": "2026-10-01",
+  "network": "Pathwell OAP",
+  "npi": "1285798918",
+  "tables_tried": [
+   "data/full/rates/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.parquet"
+  ],
+  "tables_read": [
+   "data/full/rates/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "Cigna Health Life Insurance Company",
+    "file_label": "Cigna Pathwell OAP",
+    "last_updated_on": "2026-10-01",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "473",
+    "name": "CERVICAL SPINAL FUSION WITHOUT CC/MCC",
+    "negotiation_arrangement": "ffs",
+    "npi": "1285798918",
+    "tin": "753175630",
+    "tin_type": "ein",
+    "negotiated_type": "fee schedule",
+    "negotiated_rate": "77909.21",
+    "billing_class": "institutional",
+    "setting": "inpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "billing_code_type_version": "43",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.json.gz",
+    "source_url": "https://d25kgz5rikkq4n.cloudfront.net/cost_transparency/mrf/in-network-rates/reporting_month=2026-10/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "data/full/rates/2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "PATHWELL OAP",
+      "tin": "753175630"
+     }
+    ]
+   }
+  ]
+ }
+}

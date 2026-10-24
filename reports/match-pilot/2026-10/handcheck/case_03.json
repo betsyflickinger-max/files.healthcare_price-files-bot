@@ -1,0 +1,295 @@
+{
+ "case": 3,
+ "label": "1c Texas Health x UHC (~92% pattern)",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "Texas Health Harris Methodist Hospital Fort Worth",
+  "insurer": "UnitedHealthcare",
+  "code": "19120",
+  "procedure": "",
+  "setting": "outpatient",
+  "hospital_price": "5023.0",
+  "insurer_price": "5473.0",
+  "diff": "450.0",
+  "diff_pct": "8.2",
+  "hospital_plan": "United Healthcare \u00b7 All Payer",
+  "hospital_row": "3004377",
+  "hospital_methodology": "case rate",
+  "hospital_file_date": "2026-04-21",
+  "hospital_file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13793/756001743_texas-health-harris-methodist-hospital-fort-worth_standardcharges.csv",
+  "hospital_range": "5,023.00-6,494.00 (2 rows)",
+  "insurer_network": "Choice Plus",
+  "insurer_npi": "1336172105",
+  "insurer_rate_type": "negotiated",
+  "insurer_file_date": "2026-10-01",
+  "insurer_file": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+  "insurer_range": "5,473.00-5,473.00 (2 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "commercial",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13793/756001743_texas-health-harris-methodist-hospital-fort-worth_standardcharges.csv",
+  "name": "Texas Health Harris Methodist Hospital Fort Worth",
+  "sha16": "d8428ca8d430c88c",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/d8428ca8d430c88c.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-10/TX/d8428ca8d430_756001743_texas-health-harris-methodist-hospital-fort-worth_standardcharges.csv.zst",
+    "source_url": "https://sthpiprd.blob.core.windows.net/machine-readable-files/13793/756001743_texas-health-harris-methodist-hospital-fort-worth_standardcharges.csv",
+    "sha256": "d8428ca8d430c88c3f0f67098f7a13a0ea418b0246e4c071d503f201c5a8cd82",
+    "source_row": "3004377",
+    "hospital_name": "Texas Health Harris Methodist Hospital Fort Worth",
+    "location_name": "Texas Health Harris Methodist Hospital Fort Worth",
+    "last_updated_on": "2026-04-21",
+    "type_2_npi": "1336172105",
+    "hospital_address": "1301 Pennsylvania Avenue, Fort Worth, TX 76104",
+    "description": "REMOVAL OF BREAST LESION",
+    "code": "19120",
+    "code_type": "CPT",
+    "all_codes": "CPT:19120;RC:0360",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "gross_charge": null,
+    "discounted_cash": null,
+    "min_charge": "3808.14",
+    "max_charge": "25314.92",
+    "payer_name": "United Healthcare",
+    "plan_name": "All Payer",
+    "negotiated_dollar": "5023.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "methodology": "case rate",
+    "median_amount": null,
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-10/TX/d8428ca8d430_756001743_texas-health-harris-methodist-hospital-fort-worth_standardcharges.csv.zst",
+   "first_lines": [
+    "hospital_name,last_updated_on,version,location_name,hospital_address,license_number|TX,type_2_npi,\"To the best of its knowledge and belief, this hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50, and the information encoded is true, accurate, and complete as of the date in the file. This hospital has included all payer-specific negotiated charges in dollars that can be expressed as a dollar amount. For payer-specific negotiated charges that cannot be expressed as a dollar amount in the machine-readable file or not knowable in advance, the hospital attests that the payer-specific negotiated charge is based on a contractual algorithm, percentage or formula that precludes the provision of a dollar amount and has provided all necessary information available to the hospital for the public to be able to derive the dollar amount, including, but not limited to, the specific fee schedule or components referenced in such percentage, algorithm or formula.\",attester_name,general_contract_provisions,financial_aid_policy",
+    "Texas Health Harris Methodist Hospital Fort Worth,2026-04-21,3.0.0,Texas Health Harris Methodist Hospital Fort Worth,\"1301 Pennsylvania Avenue, Fort Worth, TX 76104\",000235,1336172105,TRUE,Jeff Mincher,,",
+    "description,code|1,code|1|type,code|2,code|2|type,code|3,code|3|type,code|4,code|4|type,modifiers,setting,drug_unit_of_measurement,drug_type_of_measurement,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|negotiated_percentage,standard_charge|negotiated_algorithm,median_amount,10th_percentile,90th_percentile,count,standard_charge|methodology,standard_charge|min,standard_charge|max,additional_generic_notes,additional_payer_notes,billing_class"
+   ],
+   "lines": {
+    "3004376": "EXCISE BREAST DUCT FISTULA,19112,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,5023.00,,,,,,,case rate,3808.14,25314.92,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility",
+    "3004377": "REMOVAL OF BREAST LESION,19120,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,5023.00,,,,,,,case rate,3808.14,25314.92,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility",
+    "3004378": "EXCISION BREAST LESION,19125,CPT,0360,RC,,,,,,outpatient,,,,,United Healthcare,All Payer,5023.00,,,,,,,case rate,3808.14,25314.92,\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",\"Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.\u00a0\",facility"
+   }
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "3004377",
+    "payer_name": "United Healthcare",
+    "plan_name": "All Payer",
+    "code": "19120",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "5023.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "REMOVAL OF BREAST LESION",
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   },
+   {
+    "source_row": "7213889",
+    "payer_name": "United Healthcare",
+    "plan_name": "Managed Medicaid",
+    "code": "19120",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "fee schedule",
+    "negotiated_dollar": "963.66",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "REMOVAL OF BREAST LESION",
+    "notes": null,
+    "payer_notes": null
+   },
+   {
+    "source_row": "7312479",
+    "payer_name": "United Healthcare",
+    "plan_name": "Medicare Advantage HMO",
+    "code": "19120",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "4444.60",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "REMOVAL OF BREAST LESION",
+    "notes": null,
+    "payer_notes": null
+   },
+   {
+    "source_row": "7419845",
+    "payer_name": "United Healthcare",
+    "plan_name": "Medicare Advantage PPO",
+    "code": "19120",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "4365.94",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "REMOVAL OF BREAST LESION",
+    "notes": null,
+    "payer_notes": null
+   },
+   {
+    "source_row": "7530946",
+    "payer_name": "United Healthcare Options",
+    "plan_name": "PPO",
+    "code": "19120",
+    "code_type": "CPT",
+    "modifiers": null,
+    "setting": "outpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "6494.00",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "REMOVAL OF BREAST LESION",
+    "notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate.",
+    "payer_notes": "Multiple procedures highest paid case rate will be reimbursed 100%, second highest 50%, no additional surgeries are compensated. Rev Codes 274,275,276,278,343,344,636 and 891 are reimbursed in addition to case rate."
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+  "file_date": "2026-10-01",
+  "network": "Choice Plus",
+  "npi": "1336172105",
+  "tables_tried": [
+   "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet"
+  ],
+  "tables_read": [
+   "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "UHIC",
+    "file_label": "UnitedHealthcare Choice Plus",
+    "last_updated_on": "2026-10-01",
+    "billing_code_type": "CPT",
+    "billing_code": "19120",
+    "name": "EXC CYST/ABERRANT BREAST TISSUE OPEN 1/> LESION",
+    "negotiation_arrangement": "ffs",
+    "npi": "1336172105",
+    "tin": "752678857",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "5473",
+    "billing_class": "institutional",
+    "setting": "outpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "source_file": "2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "source_url": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "checked_on": "2026-09-29",
+    "_table": "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Choice Plus",
+      "tin": "752678857"
+     },
+     {
+      "network_name": "Choice Plus",
+      "tin": "756001743"
+     }
+    ]
+   },
+   {
+    "reporting_entity_name": "UHIC",
+    "file_label": "UnitedHealthcare Choice Plus",
+    "last_updated_on": "2026-10-01",
+    "billing_code_type": "CPT",
+    "billing_code": "19120",
+    "name": "EXC CYST/ABERRANT BREAST TISSUE OPEN 1/> LESION",
+    "negotiation_arrangement": "ffs",
+    "npi": "1336172105",
+    "tin": "756001743",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "573.16",
+    "billing_class": "professional",
+    "setting": "outpatient",
+    "service_code": "CSTM-00",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "source_file": "2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "source_url": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "checked_on": "2026-09-29",
+    "_table": "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Choice Plus",
+      "tin": "752678857"
+     },
+     {
+      "network_name": "Choice Plus",
+      "tin": "756001743"
+     }
+    ]
+   },
+   {
+    "reporting_entity_name": "UHIC",
+    "file_label": "UnitedHealthcare Choice Plus",
+    "last_updated_on": "2026-10-01",
+    "billing_code_type": "CPT",
+    "billing_code": "19120",
+    "name": "EXC CYST/ABERRANT BREAST TISSUE OPEN 1/> LESION",
+    "negotiation_arrangement": "ffs",
+    "npi": "1336172105",
+    "tin": "756001743",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "5473",
+    "billing_class": "institutional",
+    "setting": "outpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "9999-12-31",
+    "source_file": "2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "source_url": "https://transparency-in-coverage.uhc.com/api/v1/uhc/blobs/download/2026-09-01/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz",
+    "checked_on": "2026-09-29",
+    "_table": "data/full/rates/2026-09-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Choice Plus",
+      "tin": "752678857"
+     },
+     {
+      "network_name": "Choice Plus",
+      "tin": "756001743"
+     }
+    ]
+   }
+  ]
+ }
+}

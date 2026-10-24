@@ -1,0 +1,206 @@
+{
+ "case": 8,
+ "label": "6 USMD Arlington x BCBSTX spinal fusion",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "USMD Hospital at Arlington LLC",
+  "insurer": "BCBSTX",
+  "code": "460",
+  "procedure": "",
+  "setting": "inpatient",
+  "hospital_price": "119060.99",
+  "insurer_price": "39153.31",
+  "diff": "-79907.68",
+  "diff_pct": "-67.1",
+  "hospital_plan": "Blue Cross \u00b7 Blue Cross HMO",
+  "hospital_row": "3226",
+  "hospital_methodology": "case rate",
+  "hospital_file_date": "7/13/2026",
+  "hospital_file": "https://assets.usmdarlington.com/Images/Sites/U/USMDArlington/731662763_usmd-hospital-at-arlington-llc_standardcharges.csv",
+  "hospital_range": "119,060.99-132,291.61 (2 rows)",
+  "insurer_network": "Blue Choice PPO",
+  "insurer_npi": "1659352987",
+  "insurer_rate_type": "negotiated",
+  "insurer_file_date": "2026-09-15",
+  "insurer_file": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+  "insurer_range": "39,153.31-39,153.31 (1 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://assets.usmdarlington.com/Images/Sites/U/USMDArlington/731662763_usmd-hospital-at-arlington-llc_standardcharges.csv",
+  "name": "USMD Hospital at Arlington LLC",
+  "sha16": "d58a214852191f1d",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/d58a214852191f1d.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-10/TX/d58a21485219_731662763_usmd-hospital-at-arlington-llc_standardcharges.csv.zst",
+    "source_url": "https://assets.usmdarlington.com/Images/Sites/U/USMDArlington/731662763_usmd-hospital-at-arlington-llc_standardcharges.csv",
+    "sha256": "d58a214852191f1d3b5c5759931b533a18f333916feefbf6554ffffa88a4ae0a",
+    "source_row": "3226",
+    "hospital_name": "USMD Hospital at Arlington LLC",
+    "location_name": "USMD Hospital at Arlington LLC",
+    "last_updated_on": "7/13/2026",
+    "type_2_npi": "1659352987",
+    "hospital_address": "801 West I-20, Arlington, TX 76017",
+    "description": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC",
+    "code": "460",
+    "code_type": "MS-DRG",
+    "all_codes": "MS-DRG:460",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "min_charge": "79815.38",
+    "max_charge": "132291.61",
+    "payer_name": "Blue Cross",
+    "plan_name": "Blue Cross HMO",
+    "negotiated_dollar": "119060.99",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "methodology": "case rate",
+    "median_amount": null,
+    "notes": "DRG Not Used in Last Year",
+    "payer_notes": null
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-10/TX/d58a21485219_731662763_usmd-hospital-at-arlington-llc_standardcharges.csv.zst",
+   "first_lines": [
+    "hospital_name,last_updated_on,version,location_name,hospital_address,license_number|TX,type_2_npi,\"To the best of its knowledge and belief, this hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50, and the information encoded is true, accurate, and complete as of the date in the file. This hospital has included all payer-specific negotiated charges in dollars that can be expressed as a dollar amount. For payer-specific negotiated charges that cannot be expressed as a dollar amount in the machine-readable file or not knowable in advance, the hospital attests that the payer-specific negotiated charge is based on a contractual algorithm, percentage or formula that precludes the provision of a dollar amount and has provided all necessary information available to the hospital for the public to be able to derive the dollar amount, including, but not limited to, the specific fee schedule or components referenced in such percentage, algorithm or formula.\",attester_name,general_contract_provisions,,,,,,,,,,,,",
+    "USMD Hospital at Arlington LLC,7/13/2026,3.0.0,USMD Hospital at Arlington LLC,\"801 West I-20, Arlington, TX 76017\",007990,1659352987,TRUE,Tonya Smith,,,,,,,,,,,,,",
+    "description,code|1,code|1|type,setting,drug_unit_of_measurement,drug_type_of_measurement,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,modifiers,standard_charge|negotiated_dollar,standard_charge|negotiated_percentage,standard_charge|negotiated_algorithm,median_amount,10th_percentile,90th_percentile,count,standard_charge|min,standard_charge|max,standard_charge|methodology,additional_generic_notes"
+   ],
+   "lines": {
+    "3225": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC,460,MS-DRG,inpatient,,,,,Aetna,Aetna,,79815.38,,,,,,0,79815.38,132291.61,case rate,DRG Not Used in Last Year",
+    "3226": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC,460,MS-DRG,inpatient,,,,,Blue Cross,Blue Cross HMO,,119060.99,,,,,,0,79815.38,132291.61,case rate,DRG Not Used in Last Year",
+    "3227": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC,460,MS-DRG,inpatient,,,,,Blue Cross,Blue Cross PPO,,132291.61,,,,,,0,79815.38,132291.61,case rate,DRG Not Used in Last Year"
+   }
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "3226",
+    "payer_name": "Blue Cross",
+    "plan_name": "Blue Cross HMO",
+    "code": "460",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "methodology": "case rate",
+    "negotiated_dollar": "119060.99",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC",
+    "notes": "DRG Not Used in Last Year",
+    "payer_notes": null
+   },
+   {
+    "source_row": "3227",
+    "payer_name": "Blue Cross",
+    "plan_name": "Blue Cross PPO",
+    "code": "460",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": null,
+    "methodology": "case rate",
+    "negotiated_dollar": "132291.61",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC",
+    "notes": "DRG Not Used in Last Year",
+    "payer_notes": null
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+  "file_date": "2026-09-15",
+  "network": "Blue Choice PPO",
+  "npi": "1659352987",
+  "tables_tried": [
+   "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+   "history/insurers/2026-10/data_tx/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet"
+  ],
+  "tables_read": [
+   "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "Blue Cross and Blue Shield of Texas",
+    "file_label": "BCBSTX Blue Choice PPO",
+    "last_updated_on": "2026-09-15",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "460",
+    "name": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC",
+    "negotiation_arrangement": "ffs",
+    "npi": "1659352987",
+    "tin": "731662763",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "39153.31",
+    "billing_class": "institutional",
+    "setting": "inpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "2999-12-31",
+    "billing_code_type_version": "31 ",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "source_url": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "731662763"
+     }
+    ]
+   },
+   {
+    "reporting_entity_name": "Blue Cross and Blue Shield of Texas",
+    "file_label": "BCBSTX Blue Choice PPO",
+    "last_updated_on": "2026-09-15",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "460",
+    "name": "SPINAL FUSION EXCEPT CERVICAL WITHOUT MCC",
+    "negotiation_arrangement": "ffs",
+    "npi": "1659352987",
+    "tin": "731662763",
+    "tin_type": "ein",
+    "negotiated_type": "per diem",
+    "negotiated_rate": "1250",
+    "billing_class": "institutional",
+    "setting": "inpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "2999-12-31",
+    "billing_code_type_version": "31 ",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "source_url": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "731662763"
+     }
+    ]
+   }
+  ]
+ }
+}

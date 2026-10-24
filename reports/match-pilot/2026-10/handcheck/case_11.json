@@ -1,0 +1,271 @@
+{
+ "case": 11,
+ "label": "9 UT Southwestern x BCBSTX heart valve",
+ "pilot_row": {
+  "result": "files disagree",
+  "hospital": "The University of Texas Southwestern Medical Center at Dallas",
+  "insurer": "BCBSTX",
+  "code": "216",
+  "procedure": "",
+  "setting": "inpatient",
+  "hospital_price": "328928.79",
+  "insurer_price": "359281.5",
+  "diff": "30352.71",
+  "diff_pct": "8.4",
+  "hospital_plan": "Blue Cross Blue Shield \u00b7 Traditional",
+  "hospital_row": "2187213",
+  "hospital_methodology": "case rate",
+  "hospital_file_date": "2026-03-10",
+  "hospital_file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+  "hospital_range": "174,501.54-328,928.79 (4 rows)",
+  "insurer_network": "Blue Choice PPO",
+  "insurer_npi": "1285798918",
+  "insurer_rate_type": "negotiated",
+  "insurer_file_date": "2026-09-15",
+  "insurer_file": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+  "insurer_range": "191,883.17-394,710.69 (3 rows)",
+  "npi_shared_by": "",
+  "hospital_product": "commercial",
+  "dates_far_apart": "yes",
+  "reason": ""
+ },
+ "hospital": {
+  "file": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+  "name": "The University of Texas Southwestern Medical Center at Dallas",
+  "sha16": "1e42992b25d55650",
+  "unit": "line",
+  "rows_key": "data/hosp_every/rows/1e42992b25d55650.parquet",
+  "cited_rows": [
+   {
+    "raw_key": "raw/hospitals/2026-10/TX/1e42992b25d5_753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv.zst",
+    "source_url": "https://sthpiprd.blob.core.windows.net/machine-readable-files/10906/753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv",
+    "sha256": "1e42992b25d55650fb5c972c6824f94694f05d6586509e2d2776c1b7e8ef36a8",
+    "source_row": "2187213",
+    "hospital_name": "The University of Texas Southwestern Medical Center at Dallas",
+    "location_name": "UT Southwestern University Hospital | William P. Clements Jr. University Hospital",
+    "last_updated_on": "2026-03-10",
+    "type_2_npi": "1285798918",
+    "hospital_address": "6201 Harry Hines Blvd, Dallas, TX 75390",
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "all_codes": "MS-DRG:216",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "gross_charge": null,
+    "discounted_cash": null,
+    "min_charge": "23784.00",
+    "max_charge": "328928.79",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "Traditional",
+    "negotiated_dollar": "328928.79",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "methodology": "case rate",
+    "median_amount": null,
+    "notes": "Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399",
+    "payer_notes": "Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399"
+   }
+  ],
+  "raw": {
+   "raw_key": "raw/hospitals/2026-10/TX/1e42992b25d5_753175630_the-university-of-texas-southwestern-medical-center-at-dallas_standardcharges.csv.zst",
+   "first_lines": [
+    "hospital_name,last_updated_on,version,location_name,hospital_address,license_number|TX,type_2_npi,\"To the best of its knowledge and belief, this hospital has included all applicable standard charge information in accordance with the requirements of 45 CFR 180.50, and the information encoded is true, accurate, and complete as of the date in the file. This hospital has included all payer-specific negotiated charges in dollars that can be expressed as a dollar amount. For payer-specific negotiated charges that cannot be expressed as a dollar amount in the machine-readable file or not knowable in advance, the hospital attests that the payer-specific negotiated charge is based on a contractual algorithm, percentage or formula that precludes the provision of a dollar amount and has provided all necessary information available to the hospital for the public to be able to derive the dollar amount, including, but not limited to, the specific fee schedule or components referenced in such percentage, algorithm or formula.\",attester_name,general_contract_provisions,financial_aid_policy",
+    "The University of Texas Southwestern Medical Center at Dallas,2026-03-10,3.0.0,UT Southwestern University Hospital | William P. Clements Jr. University Hospital,\"6201 Harry Hines Blvd, Dallas, TX 75390\",1285798918,1285798918,TRUE,Mark Meyer,,",
+    "description,code|1,code|1|type,code|2,code|2|type,code|3,code|3|type,code|4,code|4|type,modifiers,setting,drug_unit_of_measurement,drug_type_of_measurement,standard_charge|gross,standard_charge|discounted_cash,payer_name,plan_name,standard_charge|negotiated_dollar,standard_charge|negotiated_percentage,standard_charge|negotiated_algorithm,median_amount,10th_percentile,90th_percentile,count,standard_charge|methodology,standard_charge|min,standard_charge|max,additional_generic_notes,additional_payer_notes,billing_class"
+   ],
+   "lines": {
+    "2187212": "SUTURE ETHIBOND 1 XLH X190G,0272,RC,90000748,CDM,,,,,,outpatient,,,23.72,11.86,United Healthcare,Managed Medicaid,3.43,14.45,,,,,0,percent of total billed charges,3.43,20.87,No services performed during 15-month lookback period.,,facility",
+    "2187213": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC,216,MS-DRG,,,,,,,,inpatient,,,,,Blue Cross Blue Shield,Traditional,328928.79,,,,,,,case rate,23784.00,328928.79,\"Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399\",\"Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399\",facility",
+    "2187214": "HERNIA PROCEDURES EXCEPT INGUINAL AND FEMORAL WITH MCC,353,MS-DRG,,,,,,,,inpatient,,,,,Blue Cross Blue Shield,Traditional,84470.40,,,,,,,case rate,23784.00,98278.13,\"Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399\",\"Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399\",facility"
+   }
+  },
+  "same_code_and_insurer": [
+   {
+    "source_row": "1831161",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "MyBlueHealth",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "174501.54",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Accounts receive 27.58% of billed charges in excess of stop loss threshold of $273,988",
+    "payer_notes": "Accounts receive 27.58% of billed charges in excess of stop loss threshold of $273,988"
+   },
+   {
+    "source_row": "2187213",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "Traditional",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "328928.79",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399",
+    "payer_notes": "Accounts receive 48.22% of billed charges in excess of stop loss threshold of $270,399"
+   },
+   {
+    "source_row": "2349281",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "PPO",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "296925.74",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Accounts receive 40.71% of billed charges in excess of stop loss threshold of $273,988",
+    "payer_notes": "Accounts receive 40.71% of billed charges in excess of stop loss threshold of $273,988"
+   },
+   {
+    "source_row": "2397336",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "HMO",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "267229.31",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": "Accounts receive 36.68% of billed charges in excess of stop loss threshold of $273,988",
+    "payer_notes": "Accounts receive 36.68% of billed charges in excess of stop loss threshold of $273,988"
+   },
+   {
+    "source_row": "4293854",
+    "payer_name": "Blue Cross Blue Shield",
+    "plan_name": "Medicare Advantage",
+    "code": "216",
+    "code_type": "MS-DRG",
+    "modifiers": null,
+    "setting": "inpatient",
+    "billing_class": "facility",
+    "methodology": "case rate",
+    "negotiated_dollar": "78897.66",
+    "negotiated_percentage": null,
+    "negotiated_algorithm": null,
+    "gross_charge": null,
+    "discounted_cash": null,
+    "description": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "notes": null,
+    "payer_notes": null
+   }
+  ]
+ },
+ "insurer": {
+  "file": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+  "file_date": "2026-09-15",
+  "network": "Blue Choice PPO",
+  "npi": "1285798918",
+  "tables_tried": [
+   "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+   "history/insurers/2026-10/data_tx/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet"
+  ],
+  "tables_read": [
+   "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet"
+  ],
+  "rows": [
+   {
+    "reporting_entity_name": "Blue Cross and Blue Shield of Texas",
+    "file_label": "BCBSTX Blue Choice PPO",
+    "last_updated_on": "2026-09-15",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "216",
+    "name": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "negotiation_arrangement": "ffs",
+    "npi": "1285798918",
+    "tin": "753175630",
+    "tin_type": "ein",
+    "negotiated_type": "per diem",
+    "negotiated_rate": "4536",
+    "billing_class": "institutional",
+    "setting": "inpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "2999-12-31",
+    "billing_code_type_version": "42 ",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "source_url": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "756002868"
+     },
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "753175630"
+     }
+    ]
+   },
+   {
+    "reporting_entity_name": "Blue Cross and Blue Shield of Texas",
+    "file_label": "BCBSTX Blue Choice PPO",
+    "last_updated_on": "2026-09-15",
+    "billing_code_type": "MS-DRG",
+    "billing_code": "216",
+    "name": "CARDIAC VALVE AND OTHER MAJOR CARDIOTHORACIC PROCEDURES WITH CARDIAC CATHETERIZATION WITH MCC",
+    "negotiation_arrangement": "ffs",
+    "npi": "1285798918",
+    "tin": "753175630",
+    "tin_type": "ein",
+    "negotiated_type": "negotiated",
+    "negotiated_rate": "359281.5",
+    "billing_class": "institutional",
+    "setting": "inpatient",
+    "service_code": "",
+    "billing_code_modifier": "",
+    "expiration_date": "2999-12-31",
+    "billing_code_type_version": "42 ",
+    "additional_information": "",
+    "bundled_codes": "",
+    "covered_services": "",
+    "source_file": "2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "source_url": "https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.json.gz",
+    "checked_on": "2026-10-14",
+    "_table": "history/insurers/2026-10/data_full/rates/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Choice-PPO_in-network-rates.parquet",
+    "_networks_for_npi": [
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "756002868"
+     },
+     {
+      "network_name": "Blue Choice PPO",
+      "tin": "753175630"
+     }
+    ]
+   }
+  ]
+ }
+}
