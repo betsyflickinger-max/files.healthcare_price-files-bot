@@ -42,7 +42,7 @@ for did, name, created in droplets.mine():
     except Exception as e:
         print("  no log:", e)
 
-for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:"))]:   # e.g. stn5-2026-10: a page build's saved state
+for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:", "ctl:"))]:   # e.g. stn5-2026-10: a page build's saved state
     try:
         st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
@@ -88,3 +88,18 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("lo
             lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
             print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M}, {len(lines)} lines)")
             print("    " + "\n    ".join(lines[:12] + ["..."] + lines[-30:]))
+
+# Oct 24: "ctl:<text>" prints the lines of the live control center page (site/control/index.html in the deployed site)
+# around each place that text appears, so a change to the page can be written against what is really there
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ctl:")]:
+    import tarfile
+    s3.download_file(b, "site/deploy/current.tgz", "/tmp/current.tgz")
+    with tarfile.open("/tmp/current.tgz") as t:
+        m = next(m for m in t.getmembers() if m.name.lstrip("./").endswith("control/index.html"))
+        page = t.extractfile(m).read().decode("utf-8", errors="replace")
+    lines = page.splitlines(); hit = x[4:]
+    print(f"=== control page {m.name}: {len(page)} chars, {len(lines)} lines; '{hit}':")
+    for i, l in enumerate(lines):
+        if hit in l:
+            for j in range(max(0, i - 3), min(len(lines), i + 4)): print(f"  {j + 1}: {lines[j][:400]}")
+            print("  ...")
