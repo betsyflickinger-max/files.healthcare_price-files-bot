@@ -31,7 +31,14 @@ for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x]:   # e.g. s
         st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
         print("  price check:", json.dumps(st.get("cost_check")))
-        print("  last log:", *(st.get("log") or [])[-3:], sep="\n    ")
+        print("  last log:", *(st.get("log") or [])[-12:], sep="\n    ")
+        print("  full state keys:", {k: (v if len(json.dumps(v)) < 300 else "...") for k, v in st.items() if k != "log"})
+        # Oct 24: each build machine uploads its own log to site/builds/<bid>/logs/<role>.log when it ends
+        for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"site/builds/{bid}/logs/"):
+            for o in sorted(page.get("Contents", []), key=lambda o: o["LastModified"])[-8:]:
+                txt = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace")
+                print(f"  --- {o['Key']} ({o['LastModified']:%m-%d %H:%M}, {o['Size']} bytes)")
+                print("    " + "\n    ".join(txt.strip().splitlines()[-15:]))
     except Exception as e:
         print(f"=== build {bid}: no state ({e})")
 for d in droplets.names() if hasattr(droplets, "names") else []:
