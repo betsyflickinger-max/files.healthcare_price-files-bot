@@ -1687,9 +1687,14 @@ def about_page(site):
         return
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">About</p><h1 class="letters">Who keeps<em> the receipts</em></h1>
 <p class="lead">I'm Betsy Flickinger. I've spent years consulting across economics and healthcare, working with everyone who pays for care: executives, employers, employees and gig workers.</p></div></section><div class="wrap">
+<section class="sec"><p class="kicker">Our mission</p><h2>Every price. From the source. In plain sight.</h2>
+<p class="lede" style="font-size:1.35em;line-height:1.4;font-weight:600;max-width:34em">Make healthcare prices public in practice, not just on paper, so the people paying the bills can see what care costs before they buy it.</p></section>
 <section class="sec"><p class="kicker">Why this exists</p><h2>The last black box in healthcare</h2>
-<p class="lede">From the inside, I watched the prices insurers negotiate with hospitals and doctors stay hidden from the people paying the bills.
-Federal rules now make hospitals and insurers publish those prices. But the files are so big that almost no one can open them, let alone read them.</p>
+<p class="lede">Healthcare prices are public by law but still hidden in practice. Since 2021, hospitals have had to post their prices. Since 2022, insurers have had to publish
+the rates they negotiate with hospitals, doctors and clinics. But those files are enormous, inconsistent and often incomplete, so the people paying the bills
+still can't see the price until it's too late.</p>
+<p class="lede">From the inside, I watched those negotiations stay hidden from the people paying the bills. When an industry answers a transparency rule with files
+nobody can open, that tells you something. Hiding in plain sight is still hiding.</p>
 <p class="lede">Until now, most people learned what care really costs by word of mouth, usually after the bill came. People deserve to know before they go.
 The Healthcare Files reads the files and puts every price in plain view, with a link to the file it came from.</p>
 <blockquote class="lede" style="margin:22px 0 0;padding-left:16px;border-left:3px solid currentColor;font-style:italic">There's a feed full of people narrating the fire.
@@ -1697,6 +1702,21 @@ I want to be the person holding the hose: looking for the receipt, not the hot t
 <section class="sec"><p class="kicker">Not your medical records</p><h2>What &ldquo;the files&rdquo; are</h2>
 <p class="lede">The files are the price lists hospitals and insurers are required by law to publish: what a hospital charges, and what each insurer has agreed to pay
 each hospital, doctor and clinic. Nothing here comes from anyone's medical records, and the site never asks for yours.</p></section>
+<section class="sec"><p class="kicker">What we mean by transparency</p><h2>Disclosure isn't transparency</h2>
+<p class="lede">A price is transparent only when a regular person can, before they get care:</p>
+<ol class="lede" style="margin:10px 0 0;padding-left:1.4em;display:grid;gap:8px">
+<li><b>Find it.</b> Searchable, not buried in a file their computer can't open.</li>
+<li><b>Read it.</b> In plain English, for a named procedure, at a named place.</li>
+<li><b>Compare it.</b> Against other providers, the cash price and Medicare.</li>
+<li><b>Trust it.</b> Linked to its source and dated.</li>
+<li><b>Know what it covers.</b> What's included, what's billed separately, what it leaves out.</li></ol>
+<p class="lede" style="margin-top:16px">If any of these is missing, the price is disclosed, not transparent. A file that is technically compliant but impossible to use is a choice,
+not an accident. We track those choices on the <a href="/price-file-watch/">Price File Watch</a>.</p></section>
+<section class="sec"><p class="kicker">What we stand for</p><h2>Our values</h2><div class="doors" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+<div class="door"><h3>The people paying deserve to see the price</h3><span>Show the receipt, in plain English.</span></div>
+<div class="door"><h3>Independence</h3><span>No one buys a better spot or a better story.</span></div>
+<div class="door"><h3>Accountability</h3><span>Credit the people who do it right and name the ones who don't.</span></div>
+<div class="door"><h3>Do something</h3><span>Complaining isn't a plan.</span></div></div></section>
 <section class="sec"><p class="kicker">House rules</p><h2>Straight from the files</h2><div class="doors" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
 <div class="door"><h3>Every price has a source</h3><span>Each figure links to the insurer, hospital or provider file it came from, with the file's date.</span></div>
 <div class="door"><h3>Nothing is estimated</h3><span>No averages and no modeled prices. Ranges are the lowest and highest published figures.</span></div>
@@ -1706,6 +1726,9 @@ each hospital, doctor and clinic. Nothing here comes from anyone's medical recor
 <section class="sec"><p class="kicker">Independence</p><h2>No one pays to be listed</h2><p class="lede">I pay for this site myself. It's free to use and has no ads.
 Providers can't pay to be listed, to rank higher, or to have a price changed or removed. Prices appear exactly as the insurer, hospital or provider published them.
 If the site ever runs ads, they'll be clearly labeled and announced here first.</p></section>
+<section class="sec"><p class="kicker">Where this goes</p><h2>Transparency as the expectation</h2><p class="lede">A healthcare market where providers post prices
+because that's what honest businesses do, not because a federal rule makes them. We'd rather celebrate the providers doing it right. But we'll keep a light on
+the ones who aren't.</p></section>
 <section class="sec"><p class="kicker">Get in touch</p><h2>Spot something wrong?</h2><p class="lede">If a price looks wrong, the <a href="/corrections/">corrections page</a> says how to report it.
 Hospitals and insurers: if we couldn't find your price file, or it's broken, the <a href="/price-file-watch/">Price File Watch</a> says what we tried. Send us the link.</p>
 <p class="cap" style="margin-top:18px">Betsy Flickinger, Dallas, Texas</p></section>
