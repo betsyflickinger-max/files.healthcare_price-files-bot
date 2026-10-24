@@ -232,6 +232,7 @@ for sha, code, st, bc, modi, pn, pl, ins, prod, dol, pct, alg, meth, row, lu, ur
     elif not (dol and dol > 0):
         why = 'percent of billed charges' if (pct and pct > 0) else 'formula only (no dollar amount)' if alg else 'no dollar amount'
     elif 'per diem' in meth: why = 'per diem (a daily rate, not a price for the service)'
+    elif meth == 'other' and alg: why = 'estimate from a formula (methodology "other" with an algorithm; the dollar amount is an estimate)'
     elif DRG(code) and dol < 100: why = 'under $100 for a hospital stay: looks like a DRG weight, not a dollar price'
     elif 'percent' in meth: why = 'percent of billed charges'
     if why: G['hx'][why] += 1; continue
@@ -339,7 +340,9 @@ md = [f"# Hospital file vs insurer file: DFW pilot ({time.strftime('%b %d, %Y')}
       "Rules added after the first run (Oct 24, data-type rules, not the bands): a hospital-stay (MS-DRG) amount under $100 is a DRG weight,",
       "not a dollar price (not comparable); a hospital row for a marketplace plan is compared only with marketplace networks, and an",
       "employer-plan row only with the others. If the build's insurer table list isn't recorded, every saved insurer table is read and",
-      "each network keeps only its newest file.", '',
+      "each network keeps only its newest file.",
+      "Added Oct 24 after the hand-check (reports/match-pilot/2026-10/handcheck/): a hospital row whose methodology is \"other\" and that gives a",
+      "formula is an estimate, not a set price (not comparable): e.g. Methodist's \"Case rate ($76,005.38). If operating cost ... \".", '',
       "Note (Oct 24, 2026): UnitedHealthcare Core / Core EPO / Select Plus / Navigate and Aetna's four national networks are being added to DFW this week;",
       "their prices reach this comparison at the next DFW build, so UnitedHealthcare and Aetna results may shift. Re-run: push a change to",
       "site/match_pilot.py or run the \"Match pilot\" workflow by hand (it also runs on the 10th of each month).", '',
