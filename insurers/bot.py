@@ -111,11 +111,29 @@ def url_date(u):
     return m.group(1) if len(m.groups()) == 1 else f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
 
 
+BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) "
+              "Chrome/130.0.0.0 Safari/537.36")
+
+
 def peek(url):
     """Headers plus last_updated_on from the first 256 KB. Never downloads the whole file."""
-    h = {"User-Agent": check.UA, "Range": f"bytes=0-{PEEK - 1}"}
-    with requests.get(url, headers=h, stream=True, timeout=60, allow_redirects=True) as r:
-        r.raise_for_status()
+    # Oct 24, 2026: the downloads already retry as a browser (pipeline/common.py), but this check didn't, so files that
+    # refuse the bot's name (Geisinger's 3,291 contract files: HTTP 403) or send an incomplete certificate chain (BCBS
+    # Massachusetts) never got in line. Try as the bot, then as a browser; on a certificate error, without verifying.
+    tries = [({"User-Agent": check.UA}, True), ({"User-Agent": BROWSER_UA}, True), ({"User-Agent": BROWSER_UA}, False)]
+    for i, (h, verify) in enumerate(tries):
+        h = dict(h, Range=f"bytes=0-{PEEK - 1}")
+        try:
+            r = requests.get(url, headers=h, stream=True, timeout=60, allow_redirects=True, verify=verify)
+            if r.status_code in (401, 403, 406, 429) and i < len(tries) - 1:
+                r.close()
+                continue
+            r.raise_for_status()
+            break
+        except requests.exceptions.SSLError:
+            if i == len(tries) - 1:
+                raise
+    with r:
         head = r.raw.read(PEEK, decode_content=False)
         size = ""
         cr = r.headers.get("Content-Range", "")
