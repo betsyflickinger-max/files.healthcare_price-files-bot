@@ -91,9 +91,40 @@ def _get_many(s3, b, keys):
         return list(zip(keys, ex.map(lambda k: _get(s3, b, k), keys)))
 
 
+# Oct 24, 2026: with ~11,000 jobs in line (Healthfirst NY + the western contract files), every machine read every job
+# file before each claim, and each of the 16 area passes did too, so machines spent most of their time reading the queue
+# and a full check ran ~2 hours. A job file only changes when it is rewritten (then its ETag changes), so jobs() now
+# lists the keys with their ETags and fetches only new or changed files. The cache lives in memory (a machine's loop)
+# and in a small file (JOB_CACHE), so the area passes of one GitHub run share it.
+import os as _os
+JOB_CACHE = _os.environ.get("FLEET_JOB_CACHE", "/tmp/fleet_jobs_cache.json")
+_JOBS = {}   # key -> [etag, job]
+
+
 def jobs(s3, b):
     """Every job in the queue: {id: job}."""
-    return {j["id"]: j for _, j in _get_many(s3, b, _keys(s3, b, Q)) if j}
+    global _JOBS
+    if not _JOBS:
+        try:
+            _JOBS = json.load(open(JOB_CACHE))
+        except Exception:
+            _JOBS = {}
+    listed = {}
+    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=Q):
+        for o in page.get("Contents", []):
+            listed[o["Key"]] = o.get("ETag", "")
+    need = [k for k, e in listed.items() if k not in _JOBS or _JOBS[k][0] != e or not e]
+    for k, j in _get_many(s3, b, need):
+        if j:
+            _JOBS[k] = [listed[k], j]
+    _JOBS = {k: v for k, v in _JOBS.items() if k in listed}
+    try:
+        tmp = JOB_CACHE + ".tmp"
+        json.dump(_JOBS, open(tmp, "w"))
+        _os.replace(tmp, JOB_CACHE)
+    except Exception:
+        pass
+    return {v[1]["id"]: v[1] for v in _JOBS.values() if v[1]}
 
 
 def claims(s3, b):
