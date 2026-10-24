@@ -144,13 +144,25 @@ def groups_in_scope(groups, npis):
                 yield n, tin.get("type", ""), str(tin.get("value", "")), tin.get("business_name", "")
 
 
-def roster_items(fb):
+def _py_parse(fb, **kw):
+    """ijson's pure-Python parser. Slower, but it reads integers of any size. Oct 24, 2026: Mountain Health CO-OP's
+    files (Montana/Idaho, 244 of them) label provider groups with ids too long for the fast C parser, which stops with
+    "integer overflow"; those files are read again with this one."""
+    import ijson.backends.python as _ijpy
+    return _ijpy.parse(fb, **kw)
+
+
+def _overflow(e):
+    return "integer overflow" in str(e)
+
+
+def roster_items(fb, parse=None):
     """Yield provider_references entries, and STOP reading once the prices section begins.
     On big insurer files the roster is a small slice at the top, so this avoids a second
     full read of a file that can be hundreds of GB uncompressed. If a file puts the roster
     after the prices (allowed but rare), it still works; it just reads to the end."""
     builder, depth, seen = None, 0, False
-    for prefix, event, value in ijson.parse(fb, use_float=True):
+    for prefix, event, value in (parse or ijson.parse)(fb, use_float=True):
         if prefix == "in_network" and event == "start_array" and seen:
             return  # roster came first and is done; skip the prices
         if prefix == "provider_references" and event == "end_array":
@@ -168,6 +180,27 @@ def roster_items(fb):
             if depth == 0:
                 yield builder.value
                 builder = None
+
+
+def roster_items_any(path):
+    """roster_items over a whole file, falling back to the pure-Python parser when an id is too big for the fast one
+    (Oct 24, 2026, Mountain Health CO-OP). Entries already handed out are skipped on the second read, so none is
+    returned twice; the order is the file's, so the skip is exact."""
+    n = 0
+    try:
+        with open_binary(path) as fb:
+            for pr in roster_items(fb):
+                n += 1
+                yield pr
+        return
+    except ijson.common.IncompleteJSONError as e:
+        if not _overflow(e):
+            raise
+    print(f"  roster ids are too big for the fast reader; reading on from entry {n:,} with the slower one", flush=True)
+    with open_binary(path) as fb:
+        for i, pr in enumerate(roster_items(fb, _py_parse)):
+            if i >= n:
+                yield pr
 
 
 FAST_BIN = Path(__file__).resolve().parent / "mrffilter" / "mrffilter"
@@ -258,10 +291,13 @@ def main(path, ctx):
         return k
 
     # Pass 1: the roster. ref id -> list of member keys.
-    refs = {}
-    remote_ok = remote_fail = 0
-    with open_binary(path) as fb:
-        for pr in roster_items(fb):
+    big_ints = False
+    for parse in (None, _py_parse):
+      try:
+        refs = {}
+        remote_ok = remote_fail = 0
+        with open_binary(path) as fb:
+          for pr in roster_items(fb, parse):
             gid = pr.get("provider_group_id")
             groups, via = pr.get("provider_groups"), "reference"
             if pr.get("location") and not groups:
@@ -282,6 +318,12 @@ def main(path, ctx):
             keys = [note(n, tt, t, b, via, nets) for n, tt, t, b in groups_in_scope(groups, npis)]
             if keys:
                 refs[gid] = keys
+        break
+      except ijson.common.IncompleteJSONError as e:
+        if parse is not None or not _overflow(e):
+            raise
+        big_ints = True
+        print("  roster ids are too big for the fast reader; reading the file again with the slower one", flush=True)
     print(f"  roster: {len(refs)} provider groups include an in-scope provider"
           + (f"; {remote_ok} separate roster files read" if remote_ok else "")
           + (f"; {remote_fail} separate roster files NOT read" if remote_fail else ""))
@@ -290,8 +332,12 @@ def main(path, ctx):
     out = []
     with open_binary(path) as fb:
         t0, n_items = time.time(), 0
-        items = fast_items(path, codes, refs, npis) if use_fast(path, ctx) else \
-            ijson.items(fb, "in_network.item", use_float=True)
+        if big_ints:  # same ids appear in the prices section: read it with the parser that kept them whole
+            import ijson.backends.python as _ijpy
+            items = _ijpy.items(fb, "in_network.item", use_float=True)
+        else:
+            items = fast_items(path, codes, refs, npis) if use_fast(path, ctx) else \
+                ijson.items(fb, "in_network.item", use_float=True)
         for item in items:
             n_items += 1
             if n_items % 200000 == 0:

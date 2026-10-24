@@ -281,6 +281,12 @@ def check_all(man, today, only, force=False):
         n = m["_net"]
         if n.get("enabled", "yes") != "yes" or (only and m["slot"] not in only) or m.get("status") == "running":
             continue
+        # Oct 24, 2026 (Betsy OK'd): a file already waiting in line (queued, link found) isn't checked again within a day.
+        # Areas waiting for a provider list keep thousands of queued files (c2 3,642, c3 4,037); re-checking every link
+        # every 6 hours made each full check run ~2 hours, and the 10-minute fills (machine rentals) pause meanwhile.
+        if not only and m.get("status") == "queued" and m.get("next_url") and m.get("last_checked") \
+                and (today - date.fromisoformat(m["last_checked"])).days < 1:
+            continue
         since = date.fromisoformat(m["url_date"]) if m.get("url_date") else today - timedelta(days=40)
         f = find_links.find(dict(n, current_url=m["url"]), today, since)
         url = f["url"] or m["url"]

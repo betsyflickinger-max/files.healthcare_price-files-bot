@@ -164,8 +164,8 @@ def extract(path, ctx):
     tmp = Path(tempfile.mkdtemp(dir=DATA))
     members = {}
     n_refs = 0
-    with open(tmp / "refmap.tsv", "w") as rm, s6.open_binary(path) as fb:
-        for pr in s6.roster_items(fb):
+    with open(tmp / "refmap.tsv", "w") as rm:
+        for pr in s6.roster_items_any(path):   # Oct 24: falls back to a parser for very long ids (Mountain Health)
             groups = pr.get("provider_groups")
             if pr.get("location") and not groups:
                 try:
@@ -286,8 +286,8 @@ def membership_only(path, ctx):
     label = ctx.get("network") or s6.network_label_from_name(source_file)
     st = stem(source_file)
     members = {}
-    with s6.open_binary(path) as fb:
-        for pr in s6.roster_items(fb):
+    if True:
+        for pr in s6.roster_items_any(path):
             nets = pr.get("network_name") or []
             nets = [nets] if isinstance(nets, str) else nets
             for n, tt, t, biz in s6.groups_in_scope(pr.get("provider_groups"), ctx["npis"]):
