@@ -382,11 +382,15 @@ def cost_hold(st, left):
     # Oct 24, 2026 (Betsy OK'd): until the first batch finishes, wait (no time limit). A build still reading after 6 hours
     # used to be projected at "$inf" and stopped (stn5, stb1); now it is held only if the money already spent passes the OK.
     machines = sum(st['machines'][s] for s in left)
+    # Oct 24, 2026: money already spent counts the machines that really exist (the plan in st['machines'] can be far
+    # more than machine shares let the build run: stn5 planned 14 and had 1)
+    try: live = sum(1 for d in O.droplets() if d['name'].startswith(f'upfront-site-{O.BID}-'))
+    except Exception: live = machines
     since = ck.get('spend_t0', ck['t0'])
     v = None
     if not h and not ck.get('b0'):
         if done_now > ck['done0']: ck.update(t0=time.time(), done0=done_now, b0=True); log('price check: first batches in, measuring from now'); return False
-        v = C.spent_hold(O.BID, (time.time() - since) / 3600, machines, usd_hour(SIZE))
+        v = C.spent_hold(O.BID, (time.time() - since) / 3600, live, usd_hour(SIZE))
         if not v: return False
     if h:   # approved: start again with fresh launch counts and a fresh measurement
         log('price check: approved for $', C.approved_usd(O.BID), '- resuming')
@@ -398,7 +402,7 @@ def cost_hold(st, left):
         proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), machines, usd_hour(SIZE))
         v = C.verdict(O.BID, proj)
         if proj is None and v == 'ok' and ck.get('b0'):   # no new batch since the first: hold only on money already spent
-            v = C.spent_hold(O.BID, (time.time() - since) / 3600, machines, usd_hour(SIZE)) or 'ok'
+            v = C.spent_hold(O.BID, (time.time() - since) / 3600, live, usd_hour(SIZE)) or 'ok'
     if proj: ck['last'] = dict(at=time.strftime('%Y-%m-%d %H:%M'), hours_left=round(proj[0], 1) if proj[0] != float('inf') else None,
                                usd_left=round(proj[1]) if proj[1] != float('inf') else None, units_per_hour=round(proj[2], 2))
     if v == 'ok': return False
