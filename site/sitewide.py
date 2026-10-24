@@ -64,7 +64,21 @@ def units_css(looks_css):
             + '\n'.join(faces + keep) + '\n' + EXTRA_CSS)
 
 
+NAV_RX = re.compile(r'(<nav class="nav"[^>]*>)(.*?)(</nav>)', re.S)
+
+
+def about_link(s):
+    """Oct 24: every page's main menu ends with an About link (the footer already has one)."""
+    m = NAV_RX.search(s)
+    if not m or 'href="/about/"' in m.group(2):
+        return s
+    b = m.group(2).find('<button')   # the homepage's "Ask the Chargemaster" button stays last
+    at = m.start(2) + b if b >= 0 else m.end(2)
+    return s[:at] + '<a href="/about/">About</a>' + s[at:]
+
+
 def bake(s):
+    s = about_link(s)
     m = re.search(r'<html\b([^>]*)>', s[:4000], re.I)
     if not m:
         return s

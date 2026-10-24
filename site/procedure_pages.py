@@ -1686,14 +1686,29 @@ def about_page(site):
     if os.path.isfile(p) and 'procedure_pages.py' not in open(p, encoding='utf-8').read():
         return
     body = f'''<main><section class="board"><div class="wrap"><p class="eyebrow">About</p><h1 class="letters">Who keeps<em> the receipts</em></h1>
-<p class="lead">{esc(AUTHOR['bio'])}</p></div></section><div class="wrap">
-<section class="sec"><p class="kicker">How it works</p><h2>Straight from the files</h2><div class="doors">
+<p class="lead">I'm Betsy Flickinger. I've spent years consulting across economics and healthcare, working with everyone who pays for care: executives, employers, employees and gig workers.</p></div></section><div class="wrap">
+<section class="sec"><p class="kicker">Why this exists</p><h2>The last black box in healthcare</h2>
+<p class="lede">From the inside, I watched the prices insurers negotiate with hospitals and doctors stay hidden from the people paying the bills.
+Federal rules now make hospitals and insurers publish those prices. But the files are so big that almost no one can open them, let alone read them.</p>
+<p class="lede">Until now, most people learned what care really costs by word of mouth, usually after the bill came. People deserve to know before they go.
+The Healthcare Files reads the files and puts every price in plain view, with a link to the file it came from.</p>
+<blockquote class="lede" style="margin:22px 0 0;padding-left:16px;border-left:3px solid currentColor;font-style:italic">There's a feed full of people narrating the fire.
+I want to be the person holding the hose: looking for the receipt, not the hot take.</blockquote></section>
+<section class="sec"><p class="kicker">Not your medical records</p><h2>What &ldquo;the files&rdquo; are</h2>
+<p class="lede">The files are the price lists hospitals and insurers are required by law to publish: what a hospital charges, and what each insurer has agreed to pay
+each hospital, doctor and clinic. Nothing here comes from anyone's medical records, and the site never asks for yours.</p></section>
+<section class="sec"><p class="kicker">House rules</p><h2>Straight from the files</h2><div class="doors" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
 <div class="door"><h3>Every price has a source</h3><span>Each figure links to the insurer, hospital or provider file it came from, with the file's date.</span></div>
 <div class="door"><h3>Nothing is estimated</h3><span>No averages and no modeled prices. Ranges are the lowest and highest published figures.</span></div>
-<div class="door"><h3>Old files are flagged</h3><span>Anything over six months old is marked. Files are re-read every month.</span></div></div>
+<div class="door"><h3>Old files are flagged</h3><span>Anything over six months old is marked. Files are re-read every month.</span></div>
+<div class="door"><h3>What's in, what's out</h3><span>Each price says what it covers and what bills separately, like the doctor's fee or anesthesia.</span></div></div>
 <p class="cap" style="margin-top:18px"><a href="/methodology/">How we read the files</a> · <a href="/corrections/">Corrections</a> · <a href="/price-file-watch/">Who isn't publishing</a></p></section>
-<section class="sec"><p class="kicker">Independence</p><h2>No one pays to be listed</h2><p class="lede">Providers can't pay to rank higher or to have a price removed.
-Prices appear exactly as the insurer, hospital or provider published them. Spot an error? The <a href="/corrections/">corrections page</a> says how to report it.</p></section>
+<section class="sec"><p class="kicker">Independence</p><h2>No one pays to be listed</h2><p class="lede">I pay for this site myself. It's free to use and has no ads.
+Providers can't pay to be listed, to rank higher, or to have a price changed or removed. Prices appear exactly as the insurer, hospital or provider published them.
+If the site ever runs ads, they'll be clearly labeled and announced here first.</p></section>
+<section class="sec"><p class="kicker">Get in touch</p><h2>Spot something wrong?</h2><p class="lede">If a price looks wrong, the <a href="/corrections/">corrections page</a> says how to report it.
+Hospitals and insurers: if we couldn't find your price file, or it's broken, the <a href="/price-file-watch/">Price File Watch</a> says what we tried. Send us the link.</p>
+<p class="cap" style="margin-top:18px">Betsy Flickinger, Dallas, Texas</p></section>
 </div></main><!-- written by procedure_pages.py -->'''
     jsonld = {'@context': 'https://schema.org', '@type': 'AboutPage', 'name': f"About {SITE['name']}", 'url': SITE['origin'] + '/about/',
               'mainEntity': {'@type': 'Person', 'name': AUTHOR['name'], 'jobTitle': AUTHOR['role'], 'description': AUTHOR['bio']}}
