@@ -492,8 +492,11 @@ def fill(s3, b, now):
     except Exception as e:
         print("could not read machines or the account limit:", e)
         return []
-    if any(n.startswith("upfront-site-") for n in everyone):   # Oct 22: any page build (was the seven-state build only)
-        free -= ST_ROOM
+    short = sum(n for n, _ in fleet.build_shortfall(s3, b).values())   # Oct 24, 2026: builds below their machine floor
+    if short:
+        print(f"queue: leaving {max(ST_ROOM, short)} slots for page builds below their machine floor")
+    if any(n.startswith("upfront-site-") for n in everyone) or short:   # Oct 22: any page build (was the seven-state build only)
+        free -= max(ST_ROOM, short)
     else:   # Oct 18, 2026: a state build is waiting to start (orchestrate_states.py asks within the last 2 hours)
         try:
             w = json.loads(s3.get_object(Bucket=b, Key="bot/fleet/build_wants_room.json")["Body"].read())

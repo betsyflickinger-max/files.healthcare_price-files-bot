@@ -225,14 +225,15 @@ def held_scopes(s3, b, all_jobs, names):
 
 # Oct 20, 2026 (Betsy: "move it ahead of them"): areas whose new files go to the front of the line, ahead of every
 # other area's new files. Re-reads of unchanged files still come last. Empty the tuple to go back to plain order.
+TOP_SCOPES = ("c1",)   # Oct 24, 2026 (Betsy OK'd): Upper Midwest (MI ND SD IA MN NE KS) ahead of the Northeast and West groups
 FIRST_SCOPES = ("ar", "b1", "la", "b4", "az", "c1", "c2", "c3")   # Oct 22, 2026: Maryland, New Mexico, Montana next (Betsy OK'd batches 1-2)
 
 
 def order(js):
     """Claim and rent in this order: new files before re-reads of unchanged files, then FIRST_SCOPES' files, then the
     biggest first (they take longest), then the oldest in line."""
-    return sorted(js, key=lambda j: (bool(j.get("backfill")), j.get("scope") not in FIRST_SCOPES, -j.get("mem", 8),
-                                     j.get("enqueued_at", "")))
+    return sorted(js, key=lambda j: (bool(j.get("backfill")), j.get("scope") not in FIRST_SCOPES,
+                                     j.get("scope") not in TOP_SCOPES, -j.get("mem", 8), j.get("enqueued_at", "")))
 
 
 # ---- the launcher's side ----
@@ -307,3 +308,14 @@ def plan(all_jobs, all_claims, held, machines, free, dedicated=()):
                 waiting.remove(j)
                 break
     return [(j["size"], j) for j in waiting[:max(free, 0)]]
+
+
+def build_shortfall(s3, b):
+    """Oct 24, 2026: page builds below their machine floor (orchestrate_states.py writes bot/fleet/build_floor.json each
+    5-minute pass): {build id: (slots short, gen)}. Notes older than 20 minutes are ignored (build stopped)."""
+    try:
+        fs = json.loads(s3.get_object(Bucket=b, Key="bot/fleet/build_floor.json")["Body"].read())
+    except Exception:
+        return {}
+    return {bid: (int(v.get("short", 0)), int(v.get("gen", 0))) for bid, v in fs.items()
+            if time.time() - float(v.get("at", 0)) < 20 * 60 and int(v.get("short", 0)) > 0}

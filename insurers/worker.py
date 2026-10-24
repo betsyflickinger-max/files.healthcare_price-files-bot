@@ -364,6 +364,16 @@ def code_update():
         print("code update check failed (keeping the current code):", e, flush=True)
         return False
 
+def _yield_token(key, who):
+    """True for the one machine whose write created this token (same create-only write as a queue claim, kept apart
+    from bot/fleet/claims/ so it never counts as a file being read)."""
+    try:
+        s3.put_object(Bucket=B, Key=key, Body=json.dumps(dict(who, at=time.time())).encode(), IfNoneMatch="*")
+        return True
+    except Exception:
+        return False
+
+
 def queue_main():
     """Keep claiming the next job this machine can take until none are left."""
     global OUT, SCOPE_FILE, LOG_KEY
@@ -383,6 +393,13 @@ def queue_main():
             if code_update():
                 log(f"new bot code on GitHub: updated, restarting the worker ({done_n} files read so far)")
                 os.execv(sys.executable, [sys.executable] + sys.argv)
+        # Oct 24, 2026 (Betsy OK'd): a page build below its machine floor gets this machine's slot. Between files only,
+        # and at most as many machines as the build is short (one token each per half hour), so nothing is cut off mid-read.
+        if not (os.environ.get("GHA_WORKER") or os.environ.get("WORKER_NAME")):
+            for bid, (short, gen) in fleet.build_shortfall(s3, B).items():
+                if any(_yield_token(f"bot/fleet/yield/{bid}/{gen}/{k}.json", who) for k in range(short)):
+                    log(f"stepping aside for page build {bid} (below its machine floor); {done_n} files read")
+                    return
         if stop_after and time.time() - t_start > stop_after:
             log(f"time limit for new files reached ({done_n} files read); leaving the rest for the next run")
             return

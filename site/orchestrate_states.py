@@ -526,6 +526,20 @@ def main():
                     ensure(st, f'{slug}-big', ps.get('big_size', SIZE), O.RUN_INS, big, False)
         release_finished(left)
         relaunch_old(left)
+        # Oct 24, 2026 (Betsy OK'd): a build with a floor (site/build_floors.json) tells the insurer machines how many
+        # slots it is still short; they step aside between files (insurers/worker.py) and fill() leaves those slots free.
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            import machine_shares
+            fl = machine_shares.floor(O.BID)
+            if fl:
+                live = sum(1 for d in O.droplets() if d['name'].startswith(f'upfront-site-{O.BID}-'))
+                fs = getj('bot/fleet/build_floor.json', {})
+                fs[O.BID] = {'floor': fl, 'live': live, 'short': max(0, fl - live - max(free_slots(), 0)),
+                             'at': time.time(), 'gen': int(time.time() // 1800)}
+                putj('bot/fleet/build_floor.json', fs)
+                log(f'floor: {live} of {fl} machines; asking insurer machines for {fs[O.BID]["short"]} slot(s)')
+        except Exception as e: log('floor note failed:', repr(e)[:150])
         cap, held = build_cap(left)
         make_room(st, left, cap)
         fit_to_work(st, left)

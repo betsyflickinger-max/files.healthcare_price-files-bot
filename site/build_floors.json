@@ -1,0 +1,4 @@
+{
+ "_note": "Oct 24, 2026 (Betsy OK'd): a page build listed here gets at least this many machines while it runs. Insurer queue machines step aside between files (never mid-file) until it has them. Remove a line to drop its floor.",
+ "stn5-2026-10": {"machines": 8, "why": "NY, CA, VA, DC, FL, WI build sat at 1 machine and 0 of 256 batches for 10 hours; its insurer files were 92% read"}
+}
