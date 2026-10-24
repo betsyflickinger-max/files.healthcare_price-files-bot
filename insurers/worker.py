@@ -93,6 +93,8 @@ def exists(key):
         return False
 
 
+SHARE_READS = os.environ.get("SHARE_READS", "1") != "0"   # Oct 24, 2026: one read of a file for every area waiting on it
+SHARE_MAX = 6                                             # at most this many areas per read (memory for the provider lists)
 HISTORY = "history/insurers/"   # every replaced insurer table, by month replaced; kept permanently
 
 
@@ -105,7 +107,9 @@ def move(src, dst):
     s3.delete_object(Bucket=B, Key=src)
 
 
-def one(job):
+def one(job, shared=None):
+    """Read one insurer file. shared (Oct 24, 2026): [(job, scope file, out prefix)] for every area this read serves;
+    the extractor then runs once with all their providers and split_publish() writes each area's own tables."""
     t0 = time.time()
     url, label = job["url"], job["network_label"]
     src, extra = url, []
@@ -135,23 +139,32 @@ def one(job):
             res["error"] = ("insurer's file is cut off: it ends partway through the price list (a problem with the "
                             "insurer's file, not the reader) | " + res["error"])[:1500]
         return res
+    if not shared:
+        return publish(job, OUT, new, res, rates, memb, {s: DATA / s / f"{new}.parquet" for s in ("codes", "ends")},
+                       DATA / "census" / f"{new}.json", t0)
+    return split_publish(shared, new, res, rates, memb, t0)
+
+
+def publish(job, out, new, res, rates, memb, extra_files, census_file, t0):
+    """Upload one area's tables (rates, membership, codes, ends, census) under `out` and move the area's previous table
+    to history. The local files are removed once uploaded. (Split out of one() on Oct 24, 2026 for shared reads.)"""
     con = duckdb.connect()
     res["rows"] = con.execute(f"select count(*) from '{rates}'").fetchone()[0]
     res["roster_rows"] = con.execute(f"select count(*) from '{memb}'").fetchone()[0]
     meta = con.execute(f"select any_value(reporting_entity_name), any_value(last_updated_on) from '{memb}'").fetchone()
     res["reporting_entity_name"], res["file_last_updated_on"] = meta[0] or "", meta[1] or ""
-    put(rates, f"{OUT}rates/{new}.parquet")
-    put(memb, f"{OUT}membership/{new}.parquet")
+    put(rates, f"{out}rates/{new}.parquet")
+    put(memb, f"{out}membership/{new}.parquet")
     rates.unlink(); memb.unlink()
     for sub in ("codes", "ends"):   # code descriptions once per code; per-provider contract end dates
-        f = DATA / sub / f"{new}.parquet"
-        if f.exists():
-            put(f, f"{OUT}{sub}/{new}.parquet")
+        f = extra_files.get(sub)
+        if f and f.exists():
+            put(f, f"{out}{sub}/{new}.parquet")
             f.unlink()
-    cen = DATA / "census" / f"{new}.json"   # "what's in the file" inventory; kept per month so history builds up
-    if cen.exists():
+    cen = census_file   # "what's in the file" inventory; kept per month so history builds up
+    if cen and cen.exists():
         try:
-            put(cen, f"bot/insurers/census/{date.today().strftime('%Y-%m')}/{OUT.strip('/').replace('/', '_')}/{new}.json")
+            put(cen, f"bot/insurers/census/{date.today().strftime('%Y-%m')}/{out.strip('/').replace('/', '_')}/{new}.json")
         except Exception as e:
             log(f"[{job['slot']}] census upload failed: {e}")
         cen.unlink()
@@ -159,12 +172,12 @@ def one(job):
     if old and old != new:
         month = date.today().strftime("%Y-%m")
         for sub in ("rates", "membership", "codes", "ends"):
-            k = f"{OUT}{sub}/{old}.parquet"
+            k = f"{out}{sub}/{old}.parquet"
             if exists(k):
                 # Oct 15, 2026 (Betsy): never delete a table; old months are kept for price history in history/insurers/
                 # (outside work/, which has a 60-day cleanup rule). If archiving keeps failing, the file is reported as
                 # failed and the old table stays where it is until the next try; nothing is removed.
-                dst = f"{HISTORY}{month}/{OUT.strip('/').replace('/', '_')}/{sub}/{old}.parquet"
+                dst = f"{HISTORY}{month}/{out.strip('/').replace('/', '_')}/{sub}/{old}.parquet"
                 for i in range(3):
                     try:
                         move(k, dst)
@@ -177,6 +190,52 @@ def one(job):
         res["retired"] = old
     res.update(ok=True, secs=round(time.time() - t0))
     return res
+
+
+def split_publish(shared, new, res0, rates, memb, t0):
+    """Oct 24, 2026 (Betsy OK'd): one read of a national file serves every area waiting for it. The read used the union
+    of the areas' provider lists; here each area gets exactly the rows whose NPI is on its own list (the same rows a
+    read with only that list writes: rates, membership and contract end dates all carry the NPI; code names are the
+    same for every area). Returns {job id: result}."""
+    out_res = {}
+    con = duckdb.connect()
+    (DATA / "duckdb_spill").mkdir(parents=True, exist_ok=True)
+    con.execute(f"set temp_directory='{DATA / 'duckdb_spill'}'")
+    ends, codes, cen = DATA / "ends" / f"{new}.parquet", DATA / "codes" / f"{new}.parquet", DATA / "census" / f"{new}.json"
+    areas = [j["scope"] for j, _, _ in shared]
+    for j, scope_file, out in shared:
+        d = DATA / "split" / j["scope"]
+        for sub in ("rates", "membership", "ends", "codes", "census"):
+            (d / sub).mkdir(parents=True, exist_ok=True)
+        keep = f"(select distinct cast(npi as varchar) from '{scope_file}')"
+        r_, m_ = d / "rates" / f"{new}.parquet", d / "membership" / f"{new}.parquet"
+        con.execute(f"copy (select * from '{rates}' where cast(npi as varchar) in {keep}) to '{r_}' (format parquet, compression zstd)")
+        con.execute(f"copy (select * from '{memb}' where cast(npi as varchar) in {keep}) to '{m_}' (format parquet, compression zstd)")
+        extra = {}
+        if ends.exists():
+            extra["ends"] = d / "ends" / f"{new}.parquet"
+            con.execute(f"copy (select * from '{ends}' where cast(npi as varchar) in {keep}) to '{extra['ends']}' (format parquet, compression zstd)")
+        if codes.exists():
+            extra["codes"] = d / "codes" / f"{new}.parquet"
+            shutil.copy(codes, extra["codes"])
+        cf = None
+        if cen.exists():
+            try:
+                c = json.loads(cen.read_text())
+                c["shared_read"] = {"areas": areas, "note": "roster counts are for all these areas together"}
+                cf = d / "census" / f"{new}.json"
+                cf.write_text(json.dumps(c))
+            except Exception:
+                cf = None
+        res = dict(res0, slot=j["slot"], url=j["url"], prev_table=j.get("prev_table", ""), shared_read=areas)
+        try:
+            out_res[j["id"]] = publish(j, out, new, res, r_, m_, extra, cf, t0)
+        except Exception as e:
+            out_res[j["id"]] = dict(res, ok=False, error=f"{type(e).__name__}: {str(e)[:400]}")
+        log(f"[{j['id']}] shared read: {out_res[j['id']].get('rows', '')} rows for {j['scope']}")
+    for f in (rates, memb, ends, codes, cen):
+        f.unlink(missing_ok=True)
+    return out_res
 
 
 def fields_only(job, src, label, extra, new, res, t0):
@@ -306,14 +365,34 @@ def queue_main():
             return
         claimed_at = fleet.iso()
         stop = threading.Event()
+        # Oct 24, 2026 (Betsy OK'd): a national file waiting for several areas (e.g. Aetna's for Texas, the seven states,
+        # the Northeast and the West) is read once for all of them instead of once per area on separate machines.
+        sibs = []
+        if (SHARE_READS and job.get("kind", "insurer") == "insurer" and job.get("fields_only") != "1"
+                and not os.environ.get("GHA_WORKER") and who["mem"] >= 16):
+            base = job["url"].split("?")[0]
+            cl2 = fleet.claims(s3, B)
+            for jid2, j2 in js.items():
+                if len(sibs) >= SHARE_MAX - 1:
+                    break
+                if (jid2 != job["id"] and jid2 not in cl2 and j2.get("kind", "insurer") == "insurer"
+                        and j2.get("fields_only") != "1" and j2["url"].split("?")[0] == base
+                        and j2["scope"] != job["scope"] and j2["scope"] not in held
+                        and j2["scope"] not in {x["scope"] for x in sibs} and j2.get("mem", 8) <= who["mem"]
+                        and fleet.claim(s3, B, jid2, who)):
+                    sibs.append(j2)
+        mine = [job] + sibs
 
-        def beat(jid=job["id"], st=stop, at=claimed_at):
+        def beat(jids=tuple(j["id"] for j in mine), st=stop, at=claimed_at):
             while not st.wait(fleet.HEARTBEAT_SECS):
-                try:
-                    fleet.heartbeat(s3, B, jid, who, at)
-                except Exception as e:
-                    print("heartbeat failed:", e, flush=True)
+                for jid in jids:
+                    try:
+                        fleet.heartbeat(s3, B, jid, who, at)
+                    except Exception as e:
+                        print("heartbeat failed:", e, flush=True)
         threading.Thread(target=beat, daemon=True).start()
+        if sibs:
+            log(f"[{job['id']}] same file also claimed for {', '.join(j['scope'] for j in sibs)}: one read for all")
         log(f"[{job['id']}] claimed ({job['size']} job, attempt {int(job.get('attempts', 0)) + 1})")
         try:
             if job.get("kind") == "hospital":  # an oversized hospital file: the hospital bot's own steps (bot/run.py)
@@ -321,16 +400,42 @@ def queue_main():
                 import run as hospital_run
                 res = hospital_run.run_on_machine(job, s3, B, log)
             else:
+                for j in mine:
+                    if j["scope"] not in have_scope:
+                        s3.download_file(B, j["scope_key"], str(DATA / f"scope_{j['scope']}.parquet"))
+                        have_scope[j["scope"]] = True
                 OUT = job["out_prefix"]
                 SCOPE_FILE = DATA / f"scope_{job['scope']}.parquet"
-                if job["scope"] not in have_scope:
-                    s3.download_file(B, job["scope_key"], str(SCOPE_FILE))
-                    have_scope[job["scope"]] = True
-                res = one(job)
+                if sibs:
+                    SCOPE_FILE = DATA / "scope_shared.parquet"
+                    files = ", ".join(f"'{DATA / ('scope_' + j['scope'] + '.parquet')}'" for j in mine)
+                    duckdb.execute(f"copy (select distinct cast(npi as varchar) as npi from read_parquet([{files}])) "
+                                   f"to '{SCOPE_FILE}' (format parquet)")
+                    res = one(job, [(j, DATA / f"scope_{j['scope']}.parquet", j["out_prefix"]) for j in mine])
+                    if isinstance(res, dict) and "slot" in res:   # the read itself failed
+                        # don't count one failure against every area: the others go back in line to be read on their own
+                        for j in sibs:
+                            fleet.release(s3, B, j["id"])
+                        log(f"[{job['id']}] shared read failed; {', '.join(j['scope'] for j in sibs)} back in line")
+                        mine, sibs = [job], []
+                else:
+                    res = one(job)
         except Exception as e:
             res = dict(slot=job["slot"], url=job["url"], ok=False, error=f"{type(e).__name__}: {str(e)[:400]}",
                        kind=job.get("kind", "insurer"), state=job.get("state", ""), ccns=job.get("ccns", []))
+            for j in sibs:
+                fleet.release(s3, B, j["id"])
+            mine, sibs = [job], []
         stop.set()
+        if sibs:   # one result per area
+            for j in mine:
+                r = res.get(j["id"]) or dict(slot=j["slot"], url=j["url"], ok=False, error="shared read gave no result")
+                r.update(finished_at=fleet.iso(), machine=who["name"])
+                s3.put_object(Bucket=B, Key=j["done_key"], Body=json.dumps(r).encode())
+                fleet.finish(s3, B, j["id"])
+                done_n += 1
+                log(f"[{j['id']}] {'ok' if r['ok'] else 'FAILED'} {r.get('rows', '')} rows {r.get('error', '')[:200]}")
+            continue
         err = str(res.get("error", ""))
         if os.environ.get("GHA_WORKER") and not res.get("ok") and any(x in err for x in (
                 "No space left", "MemoryError", "Killed", "exit code -9", "exit code 137", "Out of Memory", "OutOfMemory")):
