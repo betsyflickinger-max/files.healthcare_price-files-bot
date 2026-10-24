@@ -1693,6 +1693,10 @@ def about_page(site):
 <p class="lede">Healthcare prices are public by law but still hidden in practice. Since 2021, hospitals have had to post their prices. Since 2022, insurers have had to publish
 the rates they negotiate with hospitals, doctors and clinics. But those files are enormous, inconsistent and often incomplete, so the people paying the bills
 still can't see the price until it's too late.</p>
+<p class="lede">The gaps are huge. An August 2026 study of four Dallas hospitals by Rice University's Baker Institute found that what an insurer pays for the same
+hospital stay can differ by up to 203% from one hospital to the next
+(<a href="https://www.bakerinstitute.org/research/price-transparency-yields-actionable-data-dallas-employers">Le, Ho and Ahmed, Aug. 12, 2026</a>).
+Nobody can shop around a gap they can't see.</p>
 <p class="lede">From the inside, I watched those negotiations stay hidden from the people paying the bills. When an industry answers a transparency rule with files
 nobody can open, that tells you something. Hiding in plain sight is still hiding.</p>
 <p class="lede">Until now, most people learned what care really costs by word of mouth, usually after the bill came. People deserve to know before they go.
