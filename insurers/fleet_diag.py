@@ -20,6 +20,22 @@ for did, name, created in droplets.mine():
     print("  claims by droplet id:", by_did.get(str(did), "none"))
     print("  claims by name:", [jid for jid, c in cl.items() if c.get("name") == name] or "none")
     print("  idle first seen:", seen or "never")
+    # Oct 24: is it working? CPU busy share and download speed over the last 30 minutes (DigitalOcean monitoring agent)
+    try:
+        import time as _t, requests as _rq
+        end = int(_t.time()); q = dict(host_id=str(did), start=str(end - 1800), end=str(end))
+        cpu = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/cpu", params=q, headers=droplets._h(), timeout=60).json()
+        tot = {}
+        for r in cpu["data"]["result"]:
+            v = r["values"]; tot[r["metric"].get("mode")] = float(v[-1][1]) - float(v[0][1])
+        busy = 1 - (tot.get("idle", 0) + tot.get("iowait", 0)) / max(sum(tot.values()), 1e-9)
+        bw = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/bandwidth", params=dict(q, interface="public", direction="inbound"),
+                     headers=droplets._h(), timeout=60).json()["data"]["result"]
+        pts = [float(x[1]) for x in bw[0]["values"]] if bw else []
+        print(f"  last 30 min: CPU busy {busy:.0%}, iowait {tot.get('iowait', 0) / max(sum(tot.values()), 1e-9):.0%}; "
+              f"download avg {sum(pts) / max(len(pts), 1):.1f} Mbps, last {pts[-1] if pts else 0:.1f} Mbps")
+    except Exception as e:
+        print("  activity: could not read monitoring:", repr(e)[:200])
     try:
         log = s3.get_object(Bucket=b, Key=fleet.L + f"{name}.txt")["Body"].read().decode(errors="replace")
         print("  log tail:\n    " + "\n    ".join(log.strip().splitlines()[-25:]))
