@@ -1,0 +1,1 @@
+NPI Registry API (npiregistry.cms.hhs.gov/api), built state by state in a Claude session Oct 23, 2026 (GitHub runners get HTTP 403): 760604 active NPIs in WA OR ID UT AK NV HI WY

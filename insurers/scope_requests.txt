@@ -13,3 +13,5 @@ AZ az
 # Oct 23, 2026: az provider list prebuilt (177931 NPIs)
 # Oct 23, 2026: c2
 PA,DE,WV,NJ,MA,RI,VT,NH,ME,SC c2
+# Oct 23, 2026: c3
+WA,OR,ID,UT,AK,NV,HI,WY c3
