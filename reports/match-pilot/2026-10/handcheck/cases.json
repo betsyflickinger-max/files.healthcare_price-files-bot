@@ -1,0 +1,98 @@
+[
+ {
+  "label": "1a Texas Health x UHC (~92% pattern)",
+  "hospital": "Texas Health Arlington Memorial Hospital",
+  "insurer": "UnitedHealthcare",
+  "code": "27447",
+  "hospital_price": 19497.0,
+  "insurer_price": 21154.0
+ },
+ {
+  "label": "1b Texas Health x UHC (~92% pattern)",
+  "hospital": "Texas Health Hospital Mansfield",
+  "insurer": "UnitedHealthcare",
+  "code": "216",
+  "hospital_price": 242041.68,
+  "insurer_price": 264820.4
+ },
+ {
+  "label": "1c Texas Health x UHC (~92% pattern)",
+  "hospital": "Texas Health Harris Methodist Hospital Fort Worth",
+  "insurer": "UnitedHealthcare",
+  "code": "19120",
+  "hospital_price": 5023.0,
+  "insurer_price": 5473.0
+ },
+ {
+  "label": "2 Medical City x Aetna hip/knee",
+  "hospital": "MEDICAL CITY DALLAS",
+  "insurer": "Aetna",
+  "code": "27447",
+  "hospital_price": 60934.0,
+  "insurer_price": 3682.0
+ },
+ {
+  "label": "3 Methodist x Aetna heart valve",
+  "hospital": "Methodist Hospitals of Dallas",
+  "insurer": "Aetna",
+  "code": "216",
+  "hospital_price": 123128.72,
+  "insurer_price": 230678.0
+ },
+ {
+  "label": "4 Dallas Medical Center x UHC heart valve",
+  "hospital": "Dallas Medical Center",
+  "insurer": "UnitedHealthcare",
+  "code": "216",
+  "hospital_price": 3310.0,
+  "insurer_price": 92887.69
+ },
+ {
+  "label": "5 Huguley x BCBSTX spinal fusion",
+  "hospital": "Texas Health Huguley Hospital Fort Worth South",
+  "insurer": "BCBSTX",
+  "code": "460",
+  "hospital_price": 142157.7,
+  "insurer_price": 59450.08
+ },
+ {
+  "label": "6 USMD Arlington x BCBSTX spinal fusion",
+  "hospital": "USMD Hospital at Arlington LLC",
+  "insurer": "BCBSTX",
+  "code": "460",
+  "hospital_price": 119060.99,
+  "insurer_price": 39153.31
+ },
+ {
+  "label": "7 Medical City Lewisville x Aetna heart valve",
+  "hospital": "MEDICAL CITY LEWISVILLE",
+  "insurer": "Aetna",
+  "code": "216",
+  "hospital_price": 135158.0,
+  "insurer_price": 81187.0
+ },
+ {
+  "label": "8 Texas Health Mansfield x BCBSTX heart valve",
+  "hospital": "Texas Health Hospital Mansfield",
+  "insurer": "BCBSTX",
+  "code": "216",
+  "hospital_price": 249195.5,
+  "insurer_price": 301259.09
+ },
+ {
+  "label": "9 UT Southwestern x BCBSTX heart valve",
+  "hospital": "The University of Texas Southwestern Medical Center at Dallas",
+  "insurer": "BCBSTX",
+  "code": "216",
+  "hospital_price": 328928.79,
+  "insurer_price": 359281.5
+ },
+ {
+  "label": "10 UT Southwestern x Cigna neck fusion (DRG 473)",
+  "hospital": "The University of Texas Southwestern Medical Center at Dallas",
+  "insurer": "Cigna",
+  "code": "473",
+  "hospital_price": 47939.85,
+  "insurer_price": 77909.21
+ }
+]
