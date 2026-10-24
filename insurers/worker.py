@@ -335,6 +335,35 @@ def machine_names():
         return []
 
 
+
+CODE_CHECK_SECS = 600   # Oct 24, 2026: queue machines look for new bot code between files this often
+
+
+def code_update():
+    """True after pulling newer bot code. Machines clone the repo once at boot and used to keep that code for their
+    whole life, so fixes pushed while they ran (e.g. 496f695, Mountain Health's long ids) never reached them and the
+    same files failed again. Only on rented machines (GitHub runs check out fresh code every time)."""
+    if os.environ.get("GHA_WORKER"):
+        return False
+    import subprocess
+    root = str(HERE.parent)
+    try:
+        here = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30).stdout.strip()
+        there = subprocess.run(["git", "-C", root, "ls-remote", "origin", "refs/heads/main"], capture_output=True, text=True,
+                               timeout=60).stdout.split()[:1]
+        if not here or not there or there[0] == here:
+            return False
+        subprocess.run(["git", "-C", root, "fetch", "-q", "--depth", "1", "origin", "main"], check=True, timeout=300)
+        subprocess.run(["git", "-C", root, "reset", "-q", "--hard", "FETCH_HEAD"], check=True, timeout=60)
+        subprocess.run(["go", "build", "-o", "mrfrows", "."], cwd=root + "/insurers/pipeline/mrfrows", timeout=900,
+                       env=dict(os.environ, PATH=os.environ.get("PATH", "") + ":/usr/local/go/bin"))
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", root + "/insurers/requirements-worker.txt",
+                        "-r", root + "/requirements.txt"], timeout=900)
+        return True
+    except Exception as e:
+        print("code update check failed (keeping the current code):", e, flush=True)
+        return False
+
 def queue_main():
     """Keep claiming the next job this machine can take until none are left."""
     global OUT, SCOPE_FILE, LOG_KEY
@@ -347,7 +376,13 @@ def queue_main():
     (DATA / "membership").mkdir(parents=True, exist_ok=True)
     have_scope, done_n, t_start = {}, 0, time.time()
     stop_after = float(os.environ.get("MAX_CLAIM_MINUTES", "0") or 0) * 60   # GitHub jobs end at 6 hours: stop claiming before
+    last_code_check = time.time()
     while True:
+        if time.time() - last_code_check > CODE_CHECK_SECS:   # between files only: nothing is claimed here
+            last_code_check = time.time()
+            if code_update():
+                log(f"new bot code on GitHub: updated, restarting the worker ({done_n} files read so far)")
+                os.execv(sys.executable, [sys.executable] + sys.argv)
         if stop_after and time.time() - t_start > stop_after:
             log(f"time limit for new files reached ({done_n} files read); leaving the rest for the next run")
             return

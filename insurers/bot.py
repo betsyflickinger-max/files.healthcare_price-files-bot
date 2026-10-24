@@ -374,9 +374,12 @@ def check_all(man, today, only, force=False):
             if m.get("last_changed") and (today - date.fromisoformat(m["last_changed"])).days > STALE_DAYS:
                 notes.append(("stale", m))
             continue
-        if (m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and (m.get("launched_at") or "") < OVERFLOW_FIX
-                and any(s in (m.get("detail") or "") for s in ("roster_it", "integer overflow"))):
-            m["fails"] = "0"   # Oct 24, 2026: failed on an oversized provider_group_id before the parser fix (496f695): one fresh try
+        if (m.get("status") == "failed" and int(m.get("fails") or 0) >= 3
+                and (((m.get("launched_at") or "") < OVERFLOW_FIX and any(s in (m.get("detail") or "") for s in ("roster_it", "integer overflow")))
+                     or 'line 153, in roster_it' in (m.get("detail") or ""))):
+            # Oct 24, 2026: failed on an oversized provider_group_id before the parser fix (496f695). "line 153, in
+            # roster_it" is the OLD code's traceback: a machine started before the fix took it, so it isn't a real failure.
+            m["fails"] = "0"
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
         if m.get("status") == "failed" and url == m["url"]:
