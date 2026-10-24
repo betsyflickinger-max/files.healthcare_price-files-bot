@@ -4,7 +4,9 @@ name: Small insurer files (free GitHub machines)
 # Same shared queue (bot/fleet/queue/) and same worker as the rented DigitalOcean machines (insurers/worker.py with
 # GHA_WORKER=1). The launcher leaves small files to this lane for 90 minutes after they're queued (fleet.GHA_GRACE_MIN),
 # then rents a machine if they're still waiting. A file too big for a GitHub machine goes back in line for a rented one.
-# Kept to 4 machines on purpose: GitHub expects Actions to serve the project, not to be a free compute farm.
+# Kept small on purpose: GitHub expects Actions to serve the project, not to be a free compute farm.
+# Oct 24, 2026 (Betsy OK'd): 4 -> 6 machines to speed up the Northeast and West small files. Watch that fills and page
+# builds still start on time (GitHub runs at most 20 jobs at once for the whole account); go back to 4 if they queue.
 
 on:
   schedule:
@@ -55,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        i: [1, 2, 3, 4]
+        i: [1, 2, 3, 4, 5, 6]
     concurrency:
       group: gha-fleet-${{ matrix.i }}
       cancel-in-progress: false
