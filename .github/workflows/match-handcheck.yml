@@ -36,6 +36,7 @@ jobs:
       - run: cat $DIR/sources.md >> "$GITHUB_STEP_SUMMARY"
         if: always()
       - name: Commit
+        if: always()
         run: |
           git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
           git add $DIR && git commit -m "Match pilot hand-check sources $(date -u +%F)" && git pull --rebase -q origin main && git push origin HEAD:main || echo "nothing to commit"

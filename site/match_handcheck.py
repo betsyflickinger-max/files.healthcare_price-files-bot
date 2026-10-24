@@ -36,6 +36,19 @@ def stem(name):
 con = duckdb.connect()
 con.execute("INSTALL httpfs; LOAD httpfs;")
 con.execute(f"CREATE SECRET r2 (TYPE R2, KEY_ID '{g('R2_ACCESS_KEY_ID')}', SECRET '{g('R2_SECRET_ACCESS_KEY')}', ACCOUNT_ID '{g('R2_ACCOUNT_ID')}')")
+from boto3.s3.transfer import TransferConfig
+TC = TransferConfig(max_concurrency=16, multipart_chunksize=64 * 1024 * 1024)
+_have = {}
+def local(key):
+    """download once (much faster than reading a big table over the network row group by row group)"""
+    if key not in _have:
+        for k_ in list(_have):   # keep at most one big file on disk
+            try: os.remove(_have.pop(k_))
+            except Exception: pass
+        p_ = f"{W}/{abs(hash(key))}.parquet"; t0 = time.time()
+        s3.download_file(B, key, p_, Config=TC); _have[key] = p_
+        log('  downloaded', key.rsplit('/', 1)[1], f'{os.path.getsize(p_)/1e9:.2f} GB in {time.time()-t0:.0f}s')
+    return _have[key]
 def q(sql, *a):
     cur = con.execute(sql, list(a)); cols = [c[0] for c in cur.description]
     return [dict(zip(cols, [str(x) if x is not None else None for x in r])) for r in cur.fetchall()]
@@ -57,7 +70,7 @@ def raw_lines(raw_key, row, unit):
     try:
         n = int(row)
         sz = s3.head_object(Bucket=B, Key=raw_key)['ContentLength']
-        if sz > 8e9: return {'note': f'raw file too big to stream here ({sz/1e9:.1f} GB)'}
+        if sz > 2.5e9: return {'note': f'raw file too big to stream here ({sz/1e9:.1f} GB)'}
         body = s3.get_object(Bucket=B, Key=raw_key)['Body']
         if raw_key.endswith('.zst'):
             import zstandard
@@ -73,12 +86,13 @@ def raw_lines(raw_key, row, unit):
     except Exception as e: return {'note': 'raw line not read: ' + repr(e)[:200]}
 
 md = [f'# Match pilot hand-check: original rows ({time.strftime("%b %d, %Y")})', '']
-for k, c in enumerate(cases, 1):
+def one(k, c):
+    global md
     # the pilot row
     p = next((r for r in pairs if r['hospital'] == c['hospital'] and r['insurer'] == c['insurer'] and r['code'] == c['code']
               and (not c.get('hospital_price') or abs(float(r['hospital_price'] or 0) - c['hospital_price']) < 0.01)
               and (not c.get('insurer_price') or abs(float(r['insurer_price'] or 0) - c['insurer_price']) < 0.01)), None)
-    if not p: log('case', k, 'not found in pairs.csv', c); continue
+    if not p: log('case', k, 'not found in pairs.csv', c); return
     out = {'case': k, 'label': c.get('label', ''), 'pilot_row': p}
     # ---- hospital side
     cand = [x for x in src if x[4] == p['hospital_file'] and x[0] == p['hospital']] or [x for x in src if x[4] == p['hospital_file']]
@@ -86,7 +100,7 @@ for k, c in enumerate(cases, 1):
     for x in cand:
         key = f'data/hosp_every/rows/{x[5]}.parquet'
         try:
-            r = q(f"select * from read_parquet('r2://{B}/{key}') where source_row::varchar = ? and upper(trim(code)) = ?", p['hospital_row'], p['code'])
+            r = q(f"select * from read_parquet('{local(key)}') where source_row::varchar = ? and upper(trim(code)) = ?", p['hospital_row'], p['code'])
         except Exception as e: r = []; log('hospital rows not read', key, repr(e)[:120])
         if r:
             hs.append((x, key, r)); break
@@ -95,7 +109,7 @@ for k, c in enumerate(cases, 1):
         cited = [y for y in r if (y.get('negotiated_dollar') or '').replace(',', '').replace('$', '').strip() not in ('',) ] or r
         same = q(f"""select source_row, payer_name, plan_name, code, code_type, modifiers, setting, billing_class, methodology, negotiated_dollar,
              negotiated_percentage, negotiated_algorithm, gross_charge, discounted_cash, description, notes, payer_notes
-             from read_parquet('r2://{B}/{key}') where upper(trim(code)) = ? and {INS_WORDS.get(p['insurer'], 'true')} order by try_cast(source_row as bigint) limit 60""", p['code'])
+             from read_parquet('{local(key)}') where upper(trim(code)) = ? and {INS_WORDS.get(p['insurer'], 'true')} order by try_cast(source_row as bigint) limit 60""", p['code'])
         out['hospital'] = {'file': x[4], 'name': x[0], 'sha16': x[5], 'unit': x[6], 'rows_key': key, 'cited_rows': r,
                            'raw': raw_lines(r[0].get('raw_key'), p['hospital_row'], x[6]), 'same_code_and_insurer': same}
         log('case', k, 'hospital rows', len(r), '| same code + insurer', len(same))
@@ -104,24 +118,24 @@ for k, c in enumerate(cases, 1):
     # ---- insurer side
     st = stem(p['insurer_file'].rsplit('/', 1)[-1].split('?')[0])
     tk = [kk for kk, _ in RATE_KEYS if kk.rsplit('/', 1)[1].startswith(st[:60])]
-    if not tk:   # name not derived from the file (catalog tables): try tables whose name shares the file's longest word run
-        words = [w for w in re.split(r'[^A-Za-z0-9]+', st) if len(w) > 3]
-        tk = [kk for kk, _ in RATE_KEYS if sum(w.lower() in kk.lower() for w in words) >= max(2, len(words) - 1)]
+    tk.sort(key=lambda kk: (not kk.startswith('data/full/rates/'), kk))   # current table first, then history
     ins_rows, used = [], []
     code_sql = "ltrim(trim(billing_code), '0')" if p['code'].isdigit() and len(p['code']) <= 3 else "upper(trim(billing_code))"
-    for kk in tk[:12]:
+    for kk in tk[:4]:
         try:
-            r = q(f"select * from read_parquet('r2://{B}/{kk}', union_by_name=true) where npi = ? and {code_sql} = ?", p['insurer_npi'], p['code'])
+            r = q(f"select * from read_parquet('{local(kk)}', union_by_name=true) where npi = ? and {code_sql} = ?", p['insurer_npi'], p['code'])
         except Exception as e: log('insurer table not read', kk, repr(e)[:150]); continue
         used.append(kk)
         if r:
             for y in r: y['_table'] = kk
             ins_rows += r
+            if kk.startswith('data/full/rates/'): pass
             try:
                 mk = kk.replace('/rates/', '/membership/')
-                m = q(f"select distinct network_name, tin from read_parquet('r2://{B}/{mk}') where npi = ?", p['insurer_npi'])
+                m = q(f"select distinct network_name, tin from read_parquet('{local(mk)}') where npi = ?", p['insurer_npi'])
                 for y in r: y['_networks_for_npi'] = m
             except Exception: pass
+        if ins_rows: break   # found in the newest table: older copies not needed
     out['insurer'] = {'file': p['insurer_file'], 'file_date': p['insurer_file_date'], 'network': p['insurer_network'], 'npi': p['insurer_npi'],
                       'tables_tried': tk[:12], 'tables_read': used, 'rows': ins_rows}
     log('case', k, 'insurer tables', len(tk), 'read', len(used), '| rows for NPI + code', len(ins_rows))
@@ -147,5 +161,12 @@ for k, c in enumerate(cases, 1):
                   f"· NPI {y.get('npi')} TIN {y.get('tin')} ({y.get('tin_type')}) · table {y['_table'].rsplit('/', 1)[1]}")
     if not ins_rows: md.append(f"- Insurer rows: none found (tables tried: {len(tk)})")
     md.append('')
+for k, c in enumerate(cases, 1):
+    t0 = time.time()
+    try: one(k, c)
+    except Exception as e:
+        import traceback; traceback.print_exc(); md += [f"## Case {k}: {c.get('label')}", '', f"- not read: {repr(e)[:300]}", '']
+    log('case', k, 'done in', round(time.time() - t0), 's')
+    open(f'{D}/sources.md', 'w').write('\n'.join(md) + '\n')
 open(f'{D}/sources.md', 'w').write('\n'.join(md) + '\n')
 print('\n'.join(md))
