@@ -83,6 +83,7 @@ FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date"
 # Reader version (Oct 13, 2026): tables read by an older reader lack the newly kept fields (insurer notes, bundled codes,
 # covered services, code version). When a machine slot is free, the bot re-reads those files, new files always first.
 READER = "2"
+OVERFLOW_FIX = "2026-10-24T05:30:00Z"   # files that failed on "integer overflow" before this get one fresh try
 REREAD_OLD_TABLES = True
 # Oct 15, 2026: such a re-read (an unchanged file, tables from an older reader) only collects the fields kept since Oct 13,
 # so it streams the file once and writes just those to <scope>/fields/ (worker.py fields_only) instead of re-writing
@@ -338,6 +339,9 @@ def check_all(man, today, only, force=False):
             if m.get("last_changed") and (today - date.fromisoformat(m["last_changed"])).days > STALE_DAYS:
                 notes.append(("stale", m))
             continue
+        if (m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and (m.get("launched_at") or "") < OVERFLOW_FIX
+                and any(s in (m.get("detail") or "") for s in ("roster_it", "integer overflow"))):
+            m["fails"] = "0"   # Oct 24, 2026: failed on an oversized provider_group_id before the parser fix (496f695): one fresh try
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
         if m.get("status") == "failed" and url == m["url"]:
