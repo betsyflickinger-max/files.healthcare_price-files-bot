@@ -17,7 +17,11 @@ import json, os, time
 CHECK_AFTER_H = 2      # measure this long before projecting (at 24 machines, at most ~$12 spent before the check)
 LIMIT_USD = 100        # projected remaining spend that needs Betsy's OK
 LIMIT_H = 24           # ...or projected remaining time
-READ_LIMIT_H = 6       # Oct 18: a first step (reading files) longer than this with no batch finished is held too
+READ_LIMIT_H = 6       # Oct 18: a first step (reading files) longer than this with no batch finished was held too.
+                       # Oct 24, 2026 (Betsy OK'd): no longer used to hold. With no batch finished there is no speed to
+                       # project from, so it came out as "projected $inf" (stn5, stb1) and the machines were stopped and
+                       # restarted every 6 hours. Now the build waits for its first finished batch; until then the only
+                       # hold is real money already spent (spent_hold below).
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -37,7 +41,7 @@ def projection(t0, done0, done_now, left, machines, usd_hour, now=None):
         return None
     rate = max(done_now - done0, 0) / hrs
     if rate <= 0:
-        return float("inf"), float("inf"), 0.0
+        return None   # Oct 24: no batch finished since t0, so no speed to project from: keep measuring (was $inf)
     h = left / rate
     return h, h * machines * usd_hour, rate
 
@@ -53,3 +57,13 @@ def verdict(bid, proj):
     if usd > LIMIT_USD or h > LIMIT_H:
         return f"projected ${usd:,.0f} and {h:,.0f} more hours (limits ${LIMIT_USD} / {LIMIT_H} h)"
     return "ok"
+
+
+def spent_hold(bid, hours, machines, usd_hour):
+    """Oct 24, 2026: while no speed can be measured, hold only when the money already spent passes the OK
+    (build_approvals.json, else LIMIT_USD). Returns a short reason, or None."""
+    spent = hours * machines * usd_hour
+    ok_usd = approved_usd(bid) or LIMIT_USD
+    if spent > ok_usd:
+        return f"about ${spent:,.0f} spent over {hours:,.1f} hours with no batch finished yet (OK is ${ok_usd:,.0f})"
+    return None

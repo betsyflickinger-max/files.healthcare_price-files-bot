@@ -373,34 +373,45 @@ def cost_hold(st, left):
     ck = st.setdefault('cost_check', {})
     if 't0' not in ck: ck.update(t0=time.time(), done0=done_now); return False
     h = ck.get('hold')
-    if h and not C.approved_usd(O.BID): log('price check: waiting for Betsy\'s OK:', h); return True
+    # Oct 24, 2026: a hold resumes only when the OK is raised above what it was at the hold (before, any OK on file resumed it
+    # at once, so a build held for going over its OK was stopped and restarted in a loop)
+    if h and C.approved_usd(O.BID) <= ck.get('hold_ok', 0): log('price check: waiting for Betsy\'s OK:', h); return True
     # Oct 18, 2026: the first step (reading the insurer tables, stage A) finishes no batches, so a build still reading at
     # 2 hours looked like "no progress" and was held (st-2026-10c). Now the 2-hour measurement starts with the first
     # finished batch; only a reading step longer than READ_LIMIT_H hours is held.
+    # Oct 24, 2026 (Betsy OK'd): until the first batch finishes, wait (no time limit). A build still reading after 6 hours
+    # used to be projected at "$inf" and stopped (stn5, stb1); now it is held only if the money already spent passes the OK.
+    machines = sum(st['machines'][s] for s in left)
+    since = ck.get('spend_t0', ck['t0'])
+    v = None
     if not h and not ck.get('b0'):
         if done_now > ck['done0']: ck.update(t0=time.time(), done0=done_now, b0=True); log('price check: first batches in, measuring from now'); return False
-        if time.time() - ck['t0'] < C.READ_LIMIT_H * 3600: return False
+        v = C.spent_hold(O.BID, (time.time() - since) / 3600, machines, usd_hour(SIZE))
+        if not v: return False
     if h:   # approved: start again with fresh launch counts and a fresh measurement
         log('price check: approved for $', C.approved_usd(O.BID), '- resuming')
-        st['cost_check'] = {'t0': time.time(), 'done0': done_now, 'approved_after': h}
+        st['cost_check'] = {'t0': time.time(), 'done0': done_now, 'approved_after': h, 'spend_t0': time.time()}
         for k in [k for k in st['launches'] if any(k.startswith(s + '-c') for s in left)]: st['launches'].pop(k)
         return False
-    machines = sum(st['machines'][s] for s in left)
-    proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), machines, usd_hour(SIZE))
-    v = C.verdict(O.BID, proj)
+    proj = None
+    if not v:
+        proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), machines, usd_hour(SIZE))
+        v = C.verdict(O.BID, proj)
+        if proj is None and v == 'ok' and ck.get('b0'):   # no new batch since the first: hold only on money already spent
+            v = C.spent_hold(O.BID, (time.time() - since) / 3600, machines, usd_hour(SIZE)) or 'ok'
     if proj: ck['last'] = dict(at=time.strftime('%Y-%m-%d %H:%M'), hours_left=round(proj[0], 1) if proj[0] != float('inf') else None,
                                usd_left=round(proj[1]) if proj[1] != float('inf') else None, units_per_hour=round(proj[2], 2))
     if v == 'ok': return False
-    ck['hold'] = v
+    ck['hold'] = v; ck['hold_ok'] = C.approved_usd(O.BID)
     for d in O.droplets():
         if d['name'].startswith(f'upfront-site-{O.BID}-'):
             try: O.do('DELETE', f"/droplets/{d['id']}"); log('price check: stopped', d['name'])
             except Exception as e: log('stop failed', d['name'], repr(e)[:150])
     per = ', '.join(f"{NAMES.get(s, s)} {units_total(s) - lefts[s]} of {units_total(s)}" for s in left)
     O.issue(f"Price check: {O.BID} paused, needs your OK",
-            f"The {O.BID} Price Finder build was stopped after its first {C.CHECK_AFTER_H} hours: {v}.\n\n"
+            f"The {O.BID} Price Finder build was stopped: {v}.\n\n"
             f"Work done so far (kept in storage): {per}.\n\n"
-            f"To let it finish, tell Claude the most it may spend (it adds the build to build_approvals.json). "
+            f"To let it finish, tell Claude a new, higher most it may spend (it updates build_approvals.json). "
             f"Or ask Claude to make the data smaller first.")
     log('price check: HOLD', v); return True
 
