@@ -71,7 +71,12 @@ except Exception: pass
 # ---- the live DFW build
 BID = E.get('BID') or s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip()
 TOUT, SP = f'site/every/{BID}/', f'site/builds/{BID}/'
-benv = getj(TOUT + 'build_env.json')
+try: benv = getj(TOUT + 'build_env.json')
+except Exception:
+    # builds made before Oct 18 have no build_env.json: use the DFW insurer tables as they are now (every_code.py defaults:
+    # RATES data/full/rates/, NB 256, stage A in work/every/Acache/); each table's cached work is found under either tag form
+    benv = {'files': [list(x) for x in ls('data/full/rates/') if x[0].endswith('.parquet')], 'env': {}, 'fallback': 1}
+    log('no build_env.json for', BID, '- using the current insurer tables in data/full/rates/:', len(benv['files']))
 hidx = getj(SP + 'hosp_index.json')
 src = hidx['src']   # [name, city, other locations, last updated, url, sha16, unit]
 log('live DFW build', BID, '|', len(benv['files']), 'insurer tables |', len(src), 'hospital files')
@@ -173,6 +178,8 @@ import hashlib
 LABEL_KEYS = set(benv.get('label_keys', []))
 NFL = bool(benv.get('env', {}).get('NETS_FROM_LABEL'))
 TAG = {'t' + hashlib.sha1((f'{k}|{sz}' + ('|label' if (NFL or k in LABEL_KEYS) else '')).encode()).hexdigest()[:12]: k for k, sz in benv['files']}
+if benv.get('fallback'):   # label-named or not isn't recorded: take both tag forms; only one has cached work
+    TAG.update({'t' + hashlib.sha1(f'{k}|{sz}|label'.encode()).hexdigest()[:12]: k for k, sz in benv['files']})
 NB = int(benv.get('env', {}).get('NB', '256'))
 AC = benv.get('env', {}).get('ACACHE', 'work/every/Acache/')
 bk = sorted({con.execute(f'select hash(?::varchar) % {NB}', [c]).fetchone()[0] for c in CODES})
@@ -190,9 +197,9 @@ for b in bk:
           regexp_extract(x.filename, '([^/]+)\\.parquet$', 1)
           from read_parquet('{d}/*.parquet', filename=true, union_by_name=true) x join npis using (npi) where x.code in ({CODE_LIST})""")
     shutil.rmtree(d)
-log('insurer stage-A files read', nfiles, f'({nbytes/1e9:.1f} GB) from', len(bk), 'buckets |', len(got_tags), 'of', len(TAG), 'tables found',
+log('insurer stage-A files read', nfiles, f'({nbytes/1e9:.1f} GB) from', len(bk), 'buckets |', len({TAG[t] for t in got_tags}), 'of', len(set(TAG.values())), 'tables found',
     '| rows at hospital NPIs', con.execute('select count(*) from ins').fetchone()[0])
-missing_tables = sorted(TAG[t].rsplit('/', 1)[1] for t in set(TAG) - got_tags)
+missing_tables = sorted(k.rsplit('/', 1)[1] for k in set(TAG.values()) - {TAG[t] for t in got_tags})
 
 # ---- compare
 NUM = lambda c: f"try_cast(replace(replace(trim({c}),'$',''),',','') AS DOUBLE)"
