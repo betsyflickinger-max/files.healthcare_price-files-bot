@@ -95,6 +95,25 @@ names = [m["name"] for m in machines]
 held = fleet.held_scopes(s3, B, qjobs, names)
 claim_by_machine = {c.get("name"): jid for jid, c in qclaims.items()}
 
+def cpu_pct(did):
+    """Oct 24, 2026 (Betsy): share of the machine's processors busy over the last 30 minutes, from the DigitalOcean
+    monitoring agent every machine is rented with. None when there is no reading (machine too new, agent not up)."""
+    try:
+        end = int(NOW.timestamp())
+        d = do(f"monitoring/metrics/droplet/cpu?host_id={did}&start={end - 1800}&end={end}")
+        tot = {}
+        for r in d["data"]["result"]:
+            v = r["values"]
+            if len(v) >= 2: tot[r["metric"].get("mode")] = float(v[-1][1]) - float(v[0][1])
+        allt = sum(tot.values())
+        return round(100 * (1 - (tot.get("idle", 0) + tot.get("iowait", 0)) / allt)) if allt > 0 else None
+    except Exception:
+        return None
+
+from concurrent.futures import ThreadPoolExecutor
+with ThreadPoolExecutor(8) as _P:
+    CPU = dict(zip([m["id"] for m in machines], _P.map(cpu_pct, [m["id"] for m in machines]))) if machines else {}
+
 mrows = []
 for m in machines:
     bot, det = bot_of(m["name"]); h = hours_since(m["created_at"]); price = m["size"]["price_hourly"]
@@ -102,7 +121,9 @@ for m in machines:
     idle = bot == "insurers" and m["name"].startswith(fleet.NAME) and not job and (h or 0) > 0.5
     mrows.append({"id": m["name"], "bot": bot, "detail": det, "size": m["size_slug"], "usd_hour": price, "started": m["created_at"],
                   "hours": h, "usd_so_far": round(price * (h or 0), 2), "working_on": job.split("__", 1)[-1] if job else "",
-                  "idle": idle})
+                  "idle": idle, "cpu_pct": CPU.get(m["id"]),
+                  # on a file, up over an hour, yet under 5% CPU for 30 minutes: probably stuck (Oct 24, 2026)
+                  "stalled": bool(job) and (h or 0) > 1 and CPU.get(m["id"]) is not None and CPU[m["id"]] < 5})
 save("ops_machines", mrows)
 now_by_bot = defaultdict(lambda: [0, 0.0])
 for r in mrows: now_by_bot[r["bot"]][0] += 1; now_by_bot[r["bot"]][1] += r["usd_hour"]

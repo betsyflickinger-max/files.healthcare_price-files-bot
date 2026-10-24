@@ -733,6 +733,15 @@ def patch_tracking(d):
 
 # ---------------------------------------------------------------- control center: show the tracker's data (Visitors tab)
 CTL = [   # (marker that shows the step is done, anchor, replacement)
+    # Oct 24, 2026 (Betsy): CPU over the last 30 minutes for each machine, so a stuck machine shows without a check by hand
+    ('data-field="cpu"', '<th class="n" data-field="usd_so_far"><button>Cost so far</button></th>',
+     '<th class="n" data-field="usd_so_far"><button>Cost so far</button></th><th class="n" data-field="cpu"><button>CPU (30 min)</button></th>'),
+    ("cpu: r.cpu_pct", "idle: r.idle ? 'yes' : 'no'}))",
+     "idle: r.idle ? 'yes' : 'no', cpu: r.cpu_pct == null ? '—' : r.cpu_pct + '%' + (r.stalled ? ' stalled?' : '')}))"),
+    ("{f: 'cpu'}", "{f: 'usd_so_far', n: 1, fmt: usd}, {f: 'idle'}], 'id', {sort: 'usd_so_far', dir: -1});",
+     "{f: 'usd_so_far', n: 1, fmt: usd}, {f: 'cpu'}, {f: 'idle'}], 'id', {sort: 'usd_so_far', dir: -1});"),
+    ("CPU (30 min) = ", "Idle = an insurer machine with no file for over 30 minutes.",
+     "Idle = an insurer machine with no file for over 30 minutes. CPU (30 min) = how busy its processors were; a machine on a file at under 5% for 30 minutes shows <b>stalled?</b>"),
     ("if (a === '/v2/') return 'Homepage v2';",
      "const sec = (p) => { const a = (p || '/').split('?')[0]; if (a === '/' || a === '') return 'Homepage';",
      "const sec = (p) => { const a = (p || '/').split('?')[0].split('#')[0]; if (a === '/' || a === '') return 'Homepage'; if (a === '/v2/') return 'Homepage v2'; if (a === '/story/') return 'Story';"),
