@@ -5,6 +5,9 @@ on:
       only:
         description: "comma-separated parts of machine names (blank = every queue machine)"
         default: ""
+      builds:
+        description: "comma-separated page build ids to show (e.g. stn5-2026-10)"
+        default: ""
 permissions:
   contents: read
 jobs:
@@ -18,6 +21,7 @@ jobs:
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
       ONLY: ${{ inputs.only }}
+      BUILDS: ${{ inputs.builds }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

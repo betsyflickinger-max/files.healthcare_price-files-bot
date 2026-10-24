@@ -25,3 +25,15 @@ for did, name, created in droplets.mine():
         print("  log tail:\n    " + "\n    ".join(log.strip().splitlines()[-25:]))
     except Exception as e:
         print("  no log:", e)
+
+for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x]:   # e.g. stn5-2026-10: a page build's saved state
+    try:
+        st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
+        print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
+        print("  price check:", json.dumps(st.get("cost_check")))
+        print("  last log:", *(st.get("log") or [])[-3:], sep="\n    ")
+    except Exception as e:
+        print(f"=== build {bid}: no state ({e})")
+for d in droplets.names() if hasattr(droplets, "names") else []:
+    if d.startswith("upfront-site-"):
+        print("site machine:", d)
