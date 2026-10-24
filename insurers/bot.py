@@ -115,6 +115,9 @@ BROWSER_UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.3
               "Chrome/130.0.0.0 Safari/537.36")
 
 
+NOGHA_MARK = "check refused from GitHub (HTTP 403); a rented machine will download it"
+
+
 def peek(url):
     """Headers plus last_updated_on from the first 256 KB. Never downloads the whole file."""
     # Oct 24, 2026: the downloads already retry as a browser (pipeline/common.py), but this check didn't, so files that
@@ -332,6 +335,13 @@ def check_all(man, today, only, force=False):
                     continue
                 if info is None:
                     info = dict(etag="", size="", file_last_updated_on="")
+            elif url == m["url"] and not m.get("table") and getattr(getattr(e, "response", None), "status_code", None) == 403:
+                # Oct 24, 2026: never read, and the server refuses GitHub's machines even as a browser (Geisinger's
+                # mrf.thehealthplan.com answers other networks). Put it in line for a rented machine, which downloads
+                # with its own fallbacks; if that fails too, the file is reported failed after its tries as usual.
+                m.update(status="queued", next_url=url, etag="", size="",
+                         detail=NOGHA_MARK + f" ({type(e).__name__}: {str(e)[:80]})")
+                continue
             elif url == m["url"]:
                 m["detail"] = f"could not check the file: {type(e).__name__}: {str(e)[:150]}"
                 notes.append(("check failed", m))
@@ -412,7 +422,8 @@ def launch(s3, b, man, now, dry):
                    size=size, mem=fleet.mem_gb(size), backfill="1" if m.get("backfill") == "1" else "",
                    fields_only="1" if m.get("backfill") == "1" and REREAD_FIELDS_ONLY else "",
                    run_id=run_id, done_key=f"{P}runs/{run_id}/done/{m['slot']}.json", out_prefix=SCOPES[SCOPE][2],
-                   scope_key=SCOPES[SCOPE][1], hold_key=P + "hold.txt")
+                   scope_key=SCOPES[SCOPE][1], hold_key=P + "hold.txt",
+                   nogha=(m.get("detail") or "").startswith(NOGHA_MARK))
         if dry:
             print(f"[dry run] would queue {job['id']} ({size})")
             continue

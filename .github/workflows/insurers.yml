@@ -154,7 +154,10 @@ jobs:
         run: |
           if [ -f out/insurer_alerts.md ]; then
             gh label create insurer-file-alert --color B22222 --description "Insurer file failed, shrank, or went stale" 2>/dev/null || true
-            gh issue create --title "Insurer file problems $(date -u +%F)" --body-file out/insurer_alerts.md --label insurer-file-alert
+            # Oct 24: an issue body is capped at 65,536 characters (3,291 Geisinger lines broke it); keep the first 60,000
+            head -c 60000 out/insurer_alerts.md > out/insurer_alerts_short.md
+            [ "$(wc -c < out/insurer_alerts.md)" -gt 60000 ] && printf '\n\n(cut: the full list is in this run'"'"'s summary)\n' >> out/insurer_alerts_short.md
+            gh issue create --title "Insurer file problems $(date -u +%F)" --body-file out/insurer_alerts_short.md --label insurer-file-alert
           fi
       - name: Clear the full check lock
         if: always() && !(github.event.schedule == '*/10 * * * *' || inputs.fill)
