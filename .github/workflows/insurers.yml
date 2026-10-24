@@ -96,6 +96,11 @@ jobs:
               echo "waiting for a running fill to end ($i)"; sleep 30
             done
           fi
+      - name: Machines only while a full check runs (shut down idle machines, fill free slots)
+        # Oct 24, 2026: fills used to skip everything while a full check held the file lists (40 in a row on Oct 24), so
+        # idle machines weren't shut down and free slots weren't filled. This touches no file list, only machines.
+        if: steps.gate.outputs.skip == '1'
+        run: python insurers/bot.py --fleet-only
       - name: Check the machines' GitHub token (manual runs)
         if: github.event_name == 'workflow_dispatch' && !inputs.fill
         run: |

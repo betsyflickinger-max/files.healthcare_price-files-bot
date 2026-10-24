@@ -257,6 +257,14 @@ def collect(s3, b, man, now, dry):
         else:
             m.update(status="failed", detail=res.get("error", "unknown error")[:300], fails=str(int(m.get("fails") or 0) + 1))
             notes.append(("failed", m))
+    cleanup_idle(s3, b, now, qclaims, dry)
+    return notes
+
+
+def cleanup_idle(s3, b, now, qclaims, dry):
+    """Delete queue machines seen idle on two passes 20+ minutes apart, and leftover machines older than STUCK_HOURS.
+    Oct 24, 2026: its own function so the 10-minute pass can run it even while a full check holds the file lists
+    (fills skipped then, and two machines sat idle ~21 hours before a full check got to them)."""
     # cost safety net. Old fixed-list machines: any older than STUCK_HOURS is deleted. Queue machines may run as long
     # as there is work, so one is deleted only if it has held no job for an hour (stuck starting up or failed to exit).
     try:
@@ -294,7 +302,6 @@ def collect(s3, b, man, now, dry):
                 print(f"deleted leftover machine {name} ({age:.0f} h old)")
     except Exception as e:
         print("could not list machines:", e)
-    return notes
 
 
 def check_all(man, today, only, force=False):
@@ -484,12 +491,20 @@ def main():
     ap.add_argument("--only", default="", help="comma-separated slots")
     ap.add_argument("--force", action="store_true", help="with --only: re-read those files even if unchanged")
     ap.add_argument("--fill", action="store_true", help="quick pass: collect results and fill free machines, no file check")
+    ap.add_argument("--fleet-only", action="store_true",
+                    help="machines only: shut down idle queue machines and rent for waiting queue jobs; reads and writes no "
+                         "file list (Oct 24, 2026: run by the 10-minute pass while a full check holds the file lists)")
     ap.add_argument("--scope", default="dfw", choices=sorted(SCOPES), help="dfw (default), tx (all of Texas), s7 (first national batch) or nc (North Carolina)")
     a = ap.parse_args()
     global P, SCOPE
     SCOPE, P = a.scope, SCOPES[a.scope][0]
     s3, b = store.r2()
     now = datetime.now(timezone.utc)
+    if a.fleet_only:
+        cleanup_idle(s3, b, now, fleet.claims(s3, b), a.dry_run)
+        if not a.dry_run:
+            fill(s3, b, now)
+        return
     today = now.date()
     man = load(s3, b, a.scope)
     notes = collect(s3, b, man, now, a.dry_run)
