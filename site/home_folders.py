@@ -15,9 +15,12 @@ import json
 import os
 
 MARK = '<!-- FOLDER-VIEW SWITCH (site/home_folders.py) -->'
-SWITCH = (MARK + '<a href="/folders/" style="position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));'
+SWITCH = (MARK + '<style>.fv-sw{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));'
           'z-index:50;background:#F7C925;color:#151515;font:700 14px/1 system-ui,sans-serif;padding:11px 14px;text-decoration:none;'
-          'box-shadow:0 2px 8px rgba(0,0,0,.25)">Try the folder view</a>\n')
+          'box-shadow:0 2px 8px rgba(0,0,0,.25)}'
+          # Oct 24 usability test: on phones the fixed button covered the Popular links, so there it sits at the page foot instead
+          '@media (max-width:700px){.fv-sw{position:static;display:block;width:max-content;margin:16px auto 24px;box-shadow:none}}</style>'
+          '<a class="fv-sw" href="/folders/">Try the folder view</a>\n')
 
 
 def esc(s):
@@ -128,7 +131,12 @@ def build(site, S, money, plan_name, what_word, low, more=()):
         changed = True
     hp = os.path.join(site, 'index.html')
     home = open(hp, encoding='utf-8').read()
-    if MARK not in home and '</body>' in home:
+    if MARK in home:  # swap in the current switch (the Oct 24 phone fix)
+        a = home.index(MARK); b = home.index('</a>\n', a) + 5
+        if home[a:b] != SWITCH:
+            open(hp, 'w', encoding='utf-8').write(home[:a] + SWITCH + home[b:])
+            changed = True
+    elif '</body>' in home:
         open(hp, 'w', encoding='utf-8').write(home.replace('</body>', SWITCH + '</body>', 1))
         changed = True
     return changed

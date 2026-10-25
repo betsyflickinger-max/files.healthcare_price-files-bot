@@ -606,7 +606,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
     hc = h or {'c': [], 'r': []}
     def hsrc(s):
         x = H['src'][s]
-        return {'name': nice(x[0]), 'city': x[1], 'date': x[3], 'url': x[4], 'unit': x[6] or 'row'}
+        return {'name': nice(x[0]), 'city': x[1] or HOSP_CITY.get(x[0], ''), 'date': x[3], 'url': x[4], 'unit': x[6] or 'row'}
     nsrc, nins = len(H.get('src') or []), len(H.get('ins') or [])
     wrong = {i for i, x in enumerate(H.get('src') or []) if WRONG_AREA.search(str(x[4] or ''))}
     hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc and r[0] not in wrong], 'p': hc.get('p'),
@@ -714,6 +714,10 @@ def netname(ins, plan):
     return plan if plan.lower().startswith(ins.lower()) else f'{ins} {plan}'
 
 
+# Oct 24 usability test: a few hospital files give no address, so their cash rows showed no city. Filled from our hospital index.
+HOSP_CITY = {r['name']: r['city'] for r in csv.DictReader(open(os.path.join(HERE, 'hospital_city_manual.csv'), encoding='utf-8'))}
+
+
 def who(e):
     return f"{e['name']}{', ' + e['city'] if e.get('city') else ''}"
 
@@ -738,8 +742,9 @@ def lede(S, area):
     cheapest = cheapest_cash(S)
     if cheapest:
         e, src = cheapest
-        out.append(f"The lowest cash price we found is {money(e['v'])} at {e['name']}" +
-                   (" (the hospital's own fee only)." if src == 'hospital' else '.'))
+        out.append(f"The lowest cash price we found is {money(e['v'])} at {who(e)}" +
+                   ((" (the hospital's own fee only; the hospital's file gives no date)." if not e.get('date') else " (the hospital's own fee only).")
+                    if src == 'hospital' else '.'))
     if not out:
         out.append(f"We haven't found a published price for {lower_name(S)} in {area['name']}'s files yet.")
     return ' '.join(out)
