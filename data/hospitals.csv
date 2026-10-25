@@ -46,7 +46,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 010045,FAYETTE MEDICAL CENTER,FAYETTE,AL,Acute Care Hospitals,dchsystem.com,,,,,,osm 2026-10-18
 010046,RIVERVIEW REGIONAL MEDICAL CENTER,GADSDEN,AL,Acute Care Hospitals,riverviewregional.com,https://riverviewregional.com/wp-content/uploads/2026/09/33411_RiverviewRegionalMedicalCenter_standardcharges.json,raw/hospitals/2026-10/AL/68574016427d_33411_RiverviewRegionalMedicalCenter_standardcharges.json.zst,68574016427d37c122b153ef82c3cf96b76c0c22b012f8a8dc7f1b8390ccf738,26251511,2026-10-04/p2do,
 010049,MEDICAL CENTER ENTERPRISE,ENTERPRISE,AL,Acute Care Hospitals,mcehospital.com,https://www.mcehospital.com/Uploads/Public/Documents/charge-masters/charge-masters-2024/631159023_medical-center-enterprise_standardcharges.csv,raw/hospitals/2026-10/AL/3db1ead152ec_631159023_medical-center-enterprise_standardcharges.csv.zst,3db1ead152ec18340e316e02cf6a3e0a0c4dd88241df362eb6ad82340b8ffe9a,56986790,2026-10-04/p2do,
-010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,,,,,,,
+010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,gcheutaw.com,,,,,,hand check Oct 25 (issue 190)
 010052,LAKE MARTIN COMMUNITY HOSPITAL,DADEVILLE,AL,Acute Care Hospitals,ivycreekhealth.com,https://ivycreekhealth.com/wp-content/uploads/2026/04/631282722_lake-martin-community-hospital_standardcharges.csv,raw/hospitals/2026-10/AL/c7113ab02753_631282722_lake-martin-community-hospital_standardcharges.csv.zst,c7113ab027535962f3b9a066445e904aa03e92c87e2dcf4867dabdecfb62137b,8778357,2026-10-04/p2do,
 010055,FLOWERS HOSPITAL,DOTHAN,AL,Acute Care Hospitals,flowershospital.com,https://www.flowershospital.com/Uploads/Public/Documents/charge-masters/charge-masters-2024/621762412_flowers-hospital_standardcharges.csv,raw/hospitals/2026-10/AL/f5d9696a579f_621762412_flowers-hospital_standardcharges.csv.zst,f5d9696a579fcccfec7c8a8861b04ee8ecda63d907d4709eee3af4bccb17dfff,175885528,2026-10-04/p2do,
 010056,ST VINCENT'S BIRMINGHAM,BIRMINGHAM,AL,Acute Care Hospitals,uabmedicine.org,https://cdn.hs.uab.edu/static/63-0288864_saint-vincents-birmingham_standardcharges.zip,raw/hospitals/2026-10/AL/a209855a5529_63-0288864_saint-vincents-birmingham_standardcharges.zip.zst,a209855a55292a13a582abb5c17ec15e80f795cd6a5139d3d96d49ee50d2156d,24506359,2026-10-08/fill7,
@@ -1730,7 +1730,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 141335,MERCY HARVARD HOSPITAL,HARVARD,IL,Critical Access Hospitals,,https://www.mercyhealthsystem.org/media/2d1cbb17b353441aab7c37d9b22f6c99/311551871-mercyharvardhospital-standardchargers.json,,,,,web 2026-10-19
 141336,ST JOSEPH'S HOSPITAL,HIGHLAND,IL,Critical Access Hospitals,,https://www.hshs.org/getmedia/82ef2075-0317-4f2c-9793-6fe1760568af/371208459_st-josephs-hospital-hospital-sisters-third-order-of-st-francis_standardcharges.zip,raw/hospitals/2026-10/IL/30677a75000d_371208459_st-josephs-hospital-hospital-sisters-third-order-of-st-francis_standardcharges.zip.zst,30677a75000dfab10d543d95dca38b38b10501ec57026a0bab0dc2dc3ff02a62,3411264,2026-10-09/find,
 141337,OSF SAINT CLARE MEDICAL CENTER,PRINCETON,IL,Critical Access Hospitals,osfhealthcare.org,https://osf-p-001.sitecorecontenthub.cloud/api/public/content/370813229_1093308439_osf-healthcare-system_standardcharges.json,raw/hospitals/2026-10/IL/bbf933d3e5b0_370813229_1093308439_osf-healthcare-system_standardcharges.json.zst,bbf933d3e5b030fbeefe55c30ff7203c977744b5fe3da2f7c5b6ec327bc317dc,8346056,2026-10-08/fill11,
-141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,,,,,,,
+141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,mhchester.com,,,,,,hand check Oct 25 (issue 190)
 141339,TAYLORVILLE MEMORIAL HOSPITAL,TAYLORVILLE,IL,Critical Access Hospitals,memorial.health,https://memorial.health/Resources/fa78bf96-0368-4cd1-8b83-ef42eaa4f0ab/370661250_Taylorville_Memorial_Hospital_standardcharges.csv?v=2,,,,,web 2026-10-19
 141340,VALLEY WEST COMMUNITY HOSPITAL,SANDWICH,IL,Critical Access Hospitals,,https://www.nm.org/site_data/364244337_northwestern-medicine-valley-west-hospital_standardcharges.json,,,,,web 2026-10-19
 141341,PANA COMMUNITY HOSPITAL,PANA,IL,Critical Access Hospitals,,https://hospitalpricetransparencyfiles.com/pana-community-hospital-association/370602326_Pana-Community-Hospital-Association_standardcharges.csv,raw/hospitals/2026-10/IL/b14c60c21c6c_370602326_Pana-Community-Hospital-Association_standardcharges.csv.zst,b14c60c21c6c3a8cbe50d983fd6576c94da52e0fdea26ae2896691fcc908a535,2281675,2026-10-05/nat,
@@ -2067,7 +2067,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 171378,KINGMAN HEALTHCARE CENTER,KINGMAN,KS,Critical Access Hospitals,kingmanhc.com,,,,,,web 2026-10-14
 171379,MORRIS COUNTY HOSPITAL,COUNCIL GROVE,KS,Critical Access Hospitals,mrcohosp.com,,,,,,osm 2026-10-10
 171380,NEOSHO MEMORIAL REGIONAL MEDICAL CENTER,CHANUTE,KS,Critical Access Hospitals,,https://nmrmc.com/Documents/486075784_neosho-memorial-regional-medical-center_standardcharges%20(4).csv,raw/hospitals/2026-10/KS/73a57c8d64a8_486075784_neosho-memorial-regional-medical-center_standardcharges_20_4_.csv.zst,73a57c8d64a84754eb9bcb77b7ab491bc14bb664bc26e34197fc53aedfae2fe6,42485160,2026-10-05/nat,
-171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,,,,,,,
+171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,mhsks.org,,,,,,hand check Oct 25 (issue 190)
 171382,AMBERWELL ATCHISON ASSOCIATION,ATCHISON,KS,Critical Access Hospitals,,,,,,,
 171383,WILLIAM NEWTON HOSPITAL,WINFIELD,KS,Critical Access Hospitals,wnhcares.org,,,,,,osm 2026-10-10
 171384,NEWMAN REGIONAL HEALTH,EMPORIA,KS,Critical Access Hospitals,newmanrh.org,,,,,,osm 2026-10-10
@@ -2169,7 +2169,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 181318,THE MEDICAL CENTER AT FRANKLIN,FRANKLIN,KY,Critical Access Hospitals,medcenterhealth.org,https://medcenterhealth.org/charges/mcf/,,,,,web 2026-10-14
 181319,BRECKINRIDGE MEMORIAL HOSPITAL,HARDINSBURG,KY,Critical Access Hospitals,mybreckhealth.org,,,,,,web 2026-10-14
 181320,"LIVINGSTON HOSPITAL AND HEALTHCARE SERVICES, INC",SALEM,KY,Critical Access Hospitals,,https://www.lhhs.org/getmedia/79a9cfb5-87d0-4d03-903a-5cb2435410cb/livingston-hospital-and-healthcare-services-inc_standardcharges.csv,raw/hospitals/2026-10/KY/fcbd046dbf4d_livingston-hospital-and-healthcare-services-inc_standardcharges.csv.zst,fcbd046dbf4dadfdcbcb05442820527faa4de8587f736abc59be3336f6391375,54927846,2026-10-09/find,
-181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,,,,,,,
+181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,waynehospital.org,,,,,,hand check Oct 25 (issue 190)
 181322,CALDWELL MEDICAL CENTER,PRINCETON,KY,Critical Access Hospitals,caldwellmedical.com,,,,,,osm 2026-10-10
 181323,OHIO COUNTY HOSPITAL,HARTFORD,KY,Critical Access Hospitals,,https://www.ohiohealth.com/siteassets/patients-and-visitors/preparing-for-your-visit/out-of-pocket-estimates/316402699_morrow-county-hospital-_standardcharges.csv,raw/hospitals/2026-10/KY/765965322569_316402699_morrow-county-hospital-_standardcharges.csv.zst,765965322569ce85f12430f20811ec500b69783cb9587067106b79455c1a8a0b,41644665,2026-10-08/fill11,
 181324,THE MEDICAL CENTER AT SCOTTSVILLE,SCOTTSVILLE,KY,Critical Access Hospitals,medcenterhealth.org,https://medcenterhealth.org/charges/mcs/,,,,,web 2026-10-14
@@ -3189,7 +3189,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 271338,BIG HORN HOSPITAL,HARDIN,MT,Critical Access Hospitals,bighornhospital.org,,,,,,guess 2026-10-10
 271339,P H S INDIAN HOSPITAL CROW / NORTHERN CHEYENNE,CROW AGENCY,MT,Critical Access Hospitals,,,,,,,
 271340,BITTERROOT HEALTH - DALY HOSPITAL,HAMILTON,MT,Critical Access Hospitals,bitterroothealth.org,,,,,,osm 2026-10-10
-271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,,,,,,,
+271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,nemhs.net,,,,,,hand check Oct 25 (issue 190)
 271342,DANIELS MEMORIAL HOSPITAL,SCOBEY,MT,Critical Access Hospitals,danielsmemorialhealthcare.org,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbDMHCSCOBEYMT&type=CDMWithoutLabel&fileType=CSV,,,,,
 271343,PROVIDENCE ST JOSEPH MEDICAL CENTER,POLSON,MT,Critical Access Hospitals,providence.org,https://pricetransparency.providence.org/socal/live/951675600_providence-st-joseph-medical-center_standardcharges.json,,,,,
 271344,SIDNEY HEALTH CENTER,SIDNEY,MT,Critical Access Hospitals,sidneyhealth.org,,,,,,osm 2026-10-10
@@ -3420,7 +3420,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 281316,WEBSTER COUNTY COMMUNITY HOSPITAL,RED CLOUD,NE,Critical Access Hospitals,websterhospital.org,https://www.wcch.org/docs/ahwythecountycommunityhospitallibraries/hcl/mrf3q262/202468795_wythe-county-community_standardcharges.csv.zip,raw/hospitals/2026-10/NE/eb8ceb14cdae_202468795_wythe-county-community_standardcharges.csv.zip.zst,eb8ceb14cdae8669085697b07cb760c61be526c4ff71bfd317934f575aa2edca,1356646,2026-10-05/nat,web 2026-10-22
 281318,MORRILL COUNTY COMMUNITY HOSPITAL,BRIDGEPORT,NE,Critical Access Hospitals,morrillcountyhospital.com,,,,,,osm 2026-10-10
 281319,JEFFERSON COMMUNITY HEALTH & LIFE,FAIRBURY,NE,Critical Access Hospitals,jchealthandlife.org,,,,,,osm 2026-10-10
-281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,,,,,,,
+281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,memorialcommunityhealth.org,,,,,,hand check Oct 25 (issue 190)
 281322,ST FRANCIS MEMORIAL HOSPITAL,WEST POINT,NE,Critical Access Hospitals,franhealth.org,,,,,,osm 2026-10-10
 281323,CHI HEALTH SCHUYLER,SCHUYLER,NE,Critical Access Hospitals,chihealth.com,https://www.chihealth.com/content/dam/chihealthcom/documents/patients-and-visitors/financial-assistance/price-transparency-standard-charges/470399853-1568547032_alegent-health-memorial-hospital-schuyler_standardcharges.json,raw/hospitals/2026-10/NE/0df2e175dd27_470399853-1568547032_alegent-health-memorial-hospital-schuyler_standardcharges.json.zst,0df2e175dd27eb5b8c30bb793beeb41790fcdb178bf993a76d94ace71e49d24f,222376142,2026-10-05/nat,
 281324,NEMAHA COUNTY HOSPITAL,AUBURN,NE,Critical Access Hospitals,,https://nemahacountyhospital.com/wp-content/uploads/2026/06/470471042_nemaha-county-hospital_standardcharges.csv,raw/hospitals/2026-10/NE/f60438ac8973_470471042_nemaha-county-hospital_standardcharges.csv.zst,f60438ac89735e764aca41a342505c39dd057fdbafcd7176ffa8e3c699443568,1814532,2026-10-05/nat,
@@ -3963,7 +3963,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 360161,MH ST JOSEPH WARREN HOSPITAL,WARREN,OH,Acute Care Hospitals,,,,,,,
 360163,CHRIST HOSPITAL,CINCINNATI,OH,Acute Care Hospitals,,https://bmtncl.files.cmp.optimizely.com/download/assets/31-0538525_TheChristHospitalHealthNetwork_StandardCharges.csv/9c55def043e911f19a46868e68cd3a8e,,,,,web 2026-10-14
 360170,BERGER HOSPITAL,CIRCLEVILLE,OH,Acute Care Hospitals,ohiohealth.com,,,,,,osm 2026-10-10
-360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,,,,,,,
+360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,mercy.com,,,,,,hand check Oct 25 (issue 190)
 360174,UPPER VALLEY MEDICAL CENTER,TROY,OH,Acute Care Hospitals,premierhealth.com,,,,,,osm 2026-10-10
 360175,TRIHEALTH CLINTON REGIONAL HOSPITAL,WILMINGTON,OH,Acute Care Hospitals,trihealth.com,,,,,,osm 2026-10-10
 360179,BETHESDA NORTH,CINCINNATI,OH,Acute Care Hospitals,trihealth.com,https://apps.trihealth.com/static/pricing/310537122_BETHESDAHOSPITALINC_STANDARDCHARGES.csv,raw/hospitals/2026-10/OH/e7898e6d1b49_310537122_BETHESDAHOSPITALINC_STANDARDCHARGES.csv.zst,e7898e6d1b4991fa38dffa3837ef26bef01b9bd5e85da386a68da6457201f99a,64285754,2026-10-05/nat,
