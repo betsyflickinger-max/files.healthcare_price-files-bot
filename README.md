@@ -1,4 +1,4 @@
-# price-files-bot
+# files.healthcare_price-files-bot
 
 **The data engine behind [The Healthcare Files](https://files.healthcare): the receipt for the U.S. healthcare system.**
 
