@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use this software or its data, please cite it as below."
+title: "price-files-bot: the data engine behind The Healthcare Files"
+abstract: "Collects, archives and reads U.S. hospital and insurer price transparency files, and tracks which ones are missing or broken."
+authors:
+  - family-names: Flickinger
+    given-names: Mary Elizabeth
+    alias: Betsy Flickinger
+repository-code: "https://github.com/betsyflickinger-max/price-files-bot"
+url: "https://files.healthcare"
+license: AGPL-3.0-or-later
+keywords:
+  - price transparency
+  - healthcare prices
+  - transparency in coverage
+  - hospital price transparency
+  - machine-readable files
