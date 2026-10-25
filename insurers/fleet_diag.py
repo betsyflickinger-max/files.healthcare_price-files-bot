@@ -42,7 +42,7 @@ for did, name, created in droplets.mine():
     except Exception as e:
         print("  no log:", e)
 
-for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:", "ctl:"))]:   # e.g. stn5-2026-10: a page build's saved state
+for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:", "ctl:", "queue"))]:   # e.g. stn5-2026-10: a page build's saved state
     try:
         st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
@@ -103,3 +103,14 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ct
         if hit in l:
             for j in range(max(0, i - 3), min(len(lines), i + 4)): print(f"  {j + 1}: {lines[j][:400]}")
             print("  ...")
+
+# Oct 24: "queue" prints every queued insurer file in the order the machines take them (fleet.order), one line each
+if "queue" in os.environ.get("BUILDS", "").split(","):
+    qj, qc = fleet.jobs(s3, b), fleet.claims(s3, b)
+    rows = fleet.order(list(qj.values()))
+    print(f"=== QUEUE {len(rows)} jobs, {len(qc)} claimed")
+    for i, j in enumerate(rows, 1):
+        c = qc.get(j["id"], {})
+        print("Q\t" + "\t".join(str(x) for x in (i, "reading" if c else "waiting", j.get("scope"), j.get("network_label", "")[:90],
+              j["id"].split("__", 1)[-1][:110], j.get("mem", 8), "re-read" if j.get("backfill") else "new",
+              j.get("enqueued_at", ""), c.get("name", ""), c.get("claimed_at", ""))))
