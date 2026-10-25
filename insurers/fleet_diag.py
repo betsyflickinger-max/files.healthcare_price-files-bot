@@ -42,7 +42,7 @@ for did, name, created in droplets.mine():
     except Exception as e:
         print("  no log:", e)
 
-for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:", "ctl:", "queue"))]:   # e.g. stn5-2026-10: a page build's saved state
+for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.startswith(("tables:", "logs:", "ctl:", "queue", "manifest:"))]:   # e.g. stn5-2026-10: a page build's saved state
     try:
         st = json.loads(s3.get_object(Bucket=b, Key=f"site/builds/{bid}/state.json")["Body"].read())
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
@@ -114,3 +114,14 @@ if "queue" in os.environ.get("BUILDS", "").split(","):
         print("Q\t" + "\t".join(str(x) for x in (i, "reading" if c else "waiting", j.get("scope"), j.get("network_label", "")[:90],
               j["id"].split("__", 1)[-1][:110], j.get("mem", 8), "re-read" if j.get("backfill") else "new",
               j.get("enqueued_at", ""), c.get("name", ""), c.get("claimed_at", ""))))
+
+# Oct 25: "manifest:<area>" prints that area's insurer manifest rows that are not processed (what a page build waits on)
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("manifest:")]:
+    import csv as _csv, io as _io
+    sc = x.split(":", 1)[1]
+    m = list(_csv.DictReader(_io.StringIO(s3.get_object(Bucket=b, Key=f"bot/insurers/{sc}/manifest.csv")["Body"].read().decode())))
+    from collections import Counter as _C
+    print(f"=== manifest {sc}: {len(m)} rows", dict(_C(r.get("status") for r in m)))
+    for r in m:
+        if r.get("status") in ("running", "queued"):
+            print("  ", {k: (v[:120] if isinstance(v, str) else v) for k, v in r.items() if v})
