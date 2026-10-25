@@ -48,6 +48,7 @@ con = duckdb.connect(f'{W}/x.duckdb')
 con.execute("set memory_limit='10GB'; set preserve_insertion_order=false")
 con.execute("create table lines (sha16 varchar, hospital varchar, url varchar, all_codes varchar, description varchar, source_row varchar, n bigint)")
 con.execute("create table dname (sha16 varchar, drg varchar, description varchar, n bigint)")
+con.execute("create table diag (sha16 varchar, pattern varchar, n bigint)")
 no_allcodes = []
 def dl(x):
     k = f'data/hosp_every/rows/{x[5]}.parquet'; p = f'{W}/h_{x[5]}.parquet'
@@ -62,6 +63,8 @@ with ThreadPoolExecutor(8) as P:
             con.execute(f"""insert into lines select '{x[5]}', '{nm}', '{url}', all_codes, any_value(description), min(source_row::varchar), count(*)
                 from read_parquet('{p}') where all_codes ilike '%drg%' and (all_codes ilike '%cpt:%' or all_codes ilike '%hcpcs:%') group by all_codes""")
         else: no_allcodes.append(x[0])
+        con.execute(f"""insert into diag select '{x[5]}', regexp_replace(coalesce(all_codes,''), ':[^;]*', '', 'g'), count(*) from read_parquet('{p}')
+            where code_type ilike '%drg%' group by 2""")
         dl_list = ','.join(f"'{d}'" for d in ALL_DRG)
         con.execute(f"""insert into dname select '{x[5]}', ltrim(code,'0'), upper(trim(description)), count(*) from read_parquet('{p}')
             where code_type ilike '%drg%' and ltrim(code,'0') in ({dl_list}) group by all""")
@@ -103,15 +106,21 @@ for r in XW:
 with open(f'{OUT}/evidence.csv', 'w', newline='') as f:
     w = csv.DictWriter(f, list(ev[0].keys())); w.writeheader(); w.writerows(ev)
 
-dn = con.execute("select drg, description, count(distinct sha16) files, sum(n) lines from dname group by all order by drg::int, files desc").fetchall()
+dn = con.execute("select drg, description, count(distinct sha16) files, sum(n) lines from dname group by drg, description order by cast(drg as int), files desc").fetchall()
 with open(f'{OUT}/drg_names.csv', 'w', newline='') as f:
     w = csv.writer(f); w.writerow(['drg', 'hospital_description', 'hospital_files', 'lines']); w.writerows(dn)
 
+dg = con.execute("select pattern, count(distinct sha16), sum(n) from diag group by pattern order by 2 desc limit 25").fetchall()
+with open(f'{OUT}/drg_line_code_types.csv', 'w', newline='') as f:
+    w = csv.writer(f); w.writerow(['code_types_on_drg_lines', 'hospital_files', 'lines']); w.writerows(dg)
 with open(f'{OUT}/summary.md', 'w') as f:
     f.write(f"# Crosswalk evidence from DFW hospital price files ({time.strftime('%Y-%m-%d')})\n\nBuild {BID}: {len(src)} hospital files; "
             f"{len(no_allcodes)} had no all_codes column. Lines listing a DRG and a CPT/HCPCS together: "
             f"{con.execute('select count(*) from lines').fetchone()[0]:,} distinct code sets; DRG+CPT pairs: {len(pairs):,}.\n\n"
             "| Surgery | CPT | Usual DRG | Hospital files pairing them | DRGs seen | Other codes on those DRG lines (files) |\n|---|---|---|---|---|---|\n")
+    f.write("\n\nCode types that appear on hospitals' DRG lines (top patterns):\n\n| Code types on the line | Hospital files | Lines |\n|---|---|---|\n")
+    for pat, nf, nl in dg: f.write(f"| {pat or '(blank)'} | {nf} | {nl:,} |\n")
+    f.write("\n")
     for e in ev:
         f.write(f"| {e['surgery']} | {e['cpt']} | {e['usual_drg']} | {e['hospital_files_pairing_cpt_with_family']} | {e['drgs_seen_with_this_cpt']} | {e['other_codes_on_same_drg_lines'][:80]} |\n")
 log('done', OUT)
