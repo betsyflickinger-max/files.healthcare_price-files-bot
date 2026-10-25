@@ -103,7 +103,14 @@ UPDATE = REBUILD.get('mode') == 'update'
 def tadd(slug): return f'site/every-st-add/{slug}/{MONTH}/'
 def tbuild(slug): return tadd(slug) if UPDATE else tout(slug)
 def update_tables():
-    return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read())) if UPDATE else None
+    if not UPDATE: return None
+    tf = REBUILD.get('tables_from')
+    if tf:   # Oct 25, 2026: the table list taken straight from an area's insurer manifest (no separate R2 file to write)
+        import csv as _csv, io as _io
+        rows = _csv.DictReader(_io.StringIO(s3.get_object(Bucket=B, Key=tf['manifest'])['Body'].read().decode()))
+        return {r['table'] for r in rows if r.get('table') and r.get('status') == 'processed'
+                and r.get('insurer') == tf['insurer'] and (r.get('processed_on') or '') >= tf.get('processed_since', '')}
+    return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read()))
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
 CODE_OF = {v: k for k, v in STATES.items()}

@@ -22,5 +22,19 @@
     "paused": "Oct 18, 2026 2:40pm CT (Betsy OK'd): paused. With the 78 Anthem parts the CO/GA/MO rebuild was ~20 days and ~$2,000 at full fleet, more than the credit left, and it held every machine. Finished batches stay in R2 (work/every-st/<state>/v202610b/B/). Anthem gets slimmed (store-once + most-used networks) and added as an update before this is tried again. Delete this line to resume."
    }
   ]
+ },
+ "stb1": {
+  "base": "2026-10",
+  "build": "2026-10b",
+  "states": [
+   "MT"
+  ],
+  "mode": "update",
+  "tables_from": {
+   "manifest": "bot/insurers/b1/manifest.csv",
+   "insurer": "Mountain Health CO-OP",
+   "processed_since": "2026-10-24"
+  },
+  "why": "Oct 25, 2026 (Betsy asked Oct 24): add Mountain Health CO-OP's prices to Montana's live page as an update. 244 of its files failed on oversized provider_group_id values (fixed 496f695) and were re-read Oct 24-25; the update builds only those tables and merges them into Montana's finished build."
  }
 }
