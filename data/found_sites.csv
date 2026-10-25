@@ -1,11 +1,1 @@
 ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
-010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
-141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,bjc.org,sibling,100,Memorial Hospital,https://bjc.org/cms-hpt.txt,"no - same name in another state, check by hand"
-171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,saintlukeskc.org,sibling,91,Wright Memorial Hospital,https://saintlukeskc.org/cms-hpt.txt,"no - same name in another state, check by hand"
-181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,waynecountyhospital.org,guess,100,WAYNE COUNTY HOSPITAL,https://waynecountyhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,trinityhealth.org,guess,97,Trinity Hospitals,https://trinityhealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,mhcs.us,sibling,100,Memorial Hospital,https://mhcs.us/cms-hpt.txt,"no - same name in another state, check by hand"
-334026,"BRUNSWICK HOSPITAL CENTER, INC.",AMITYVILLE,NY,Psychiatric,brunswickhospitalcenter.org,osm,100,Brunswick Hospital Center,https://brunswickhospitalcenter.org/cms-hpt.txt,yes
-360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,mercyregionalmedical.com,guess,100,Mercy Regional Medical Center,https://mercyregionalmedical.com/cms-hpt.txt,"no - same name in another state, check by hand"
-400022,HOSPITAL DAMAS INC,PONCE,PR,Acute Care Hospitals,hospitaldamas.com,osm,100,Hospital Damas,https://hospitaldamas.com/cms-hpt.txt,yes
-412001,ELEANOR SLATER HOSPITAL,CRANSTON,RI,Long-term,bhddh.ri.gov,osm,100,Eleanor Slater Hospital,https://bhddh.ri.gov/cms-hpt.txt,yes
