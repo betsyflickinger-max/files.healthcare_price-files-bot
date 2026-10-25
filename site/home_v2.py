@@ -15,6 +15,7 @@ searches, how far people scroll, one optional "what were you hoping to find?" qu
 Safe to run again: every step checks a marker first. The procedure-pages workflow runs `deploy` after its own deploy,
 so /v2/ always shows the same figures as the price pages.
 """
+import control_money   # sibling module: the control center's money tab
 import csv
 import hashlib
 import html
@@ -832,6 +833,8 @@ def _deploy_once():
         sys.exit('STOP: current.tgz is missing site/ or functions/; nothing deployed')
     changed = patch_tracking(d)
     changed = patch_control(d) or changed
+    changed = control_money.patch(d) or changed   # Oct 25: "Where the money goes" tab
+    control_money.upload(s3, B)
     changed = build(d) or changed
     if not changed:
         print('/v2/ and tracking already up to date; nothing to deploy')
@@ -863,7 +866,7 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2 and sys.argv[1] == 'deploy':
         deploy()
     elif len(sys.argv) >= 3 and sys.argv[1] == 'build':
-        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2])
+        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2]) | control_money.patch(sys.argv[2])
         c2 = build(sys.argv[2])
         print('changed' if c1 or c2 else 'unchanged')
     else:

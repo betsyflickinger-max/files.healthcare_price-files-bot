@@ -1,0 +1,328 @@
+<!-- Control center: "Where the money goes" tab (Oct 25, 2026). Added by site/control_money.py; data in R2 control/data/money_*.json -->
+<style>
+#pg-money .mw{display:flex;flex-direction:column;gap:var(--cds-gap-xl)}
+#pg-money h2{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+#pg-money h3{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+#pg-money p{margin:0;max-width:72ch;line-height:1.55}
+#pg-money .sec{display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+#pg-money .mcard{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm);min-width:0}
+#pg-money .mnote{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);max-width:80ch;line-height:1.5}
+#pg-money .mjump{display:flex;gap:var(--cds-gap-md);flex-wrap:wrap;font-size:var(--cds-font-size-caption)}
+#pg-money .mjump a{color:var(--color-fg)}
+#pg-money .mctrl{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center}
+#pg-money .mseg button{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);background:var(--color-bg);color:var(--color-fg);cursor:pointer}
+#pg-money .mseg button:first-child{border-radius:var(--cds-radius) 0 0 var(--cds-radius)}
+#pg-money .mseg button:last-child{border-radius:0 var(--cds-radius) var(--cds-radius) 0}
+#pg-money .mseg button[aria-pressed=true]{background:var(--color-fg);color:var(--color-bg);border-color:var(--color-fg)}
+#pg-money select,#pg-money input[type=search]{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-bg);color:var(--color-fg);max-width:100%}
+#pg-money button:focus-visible,#pg-money select:focus-visible,#pg-money input:focus-visible{outline:2px solid var(--color-fg);outline-offset:1px}
+#pg-money .mtiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:var(--cds-gap-md)}
+#pg-money .mtile .lab{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+#pg-money .mtile .big{font-family:var(--font-anthropic-serif);font-size:var(--cds-font-size-title);font-variant-numeric:tabular-nums}
+#pg-money .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,24rem),1fr));gap:var(--cds-gap-md)}
+#pg-money .mlegend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm) var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+#pg-money .mlegend span{display:inline-flex;align-items:center;gap:6px}
+#pg-money .mlegend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+#pg-money .mchart,#pg-money .mbill{position:relative;min-height:160px}
+#pg-money .mbill svg,#pg-money .mchart svg{display:block;overflow:visible}
+#pg-money .mmsg{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);padding:var(--cds-pad-md) 0}
+#pg-money .mtip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);max-width:16rem;z-index:2}
+#pg-money .mtip .t{color:var(--cds-text-secondary);margin-bottom:2px}
+#pg-money .mtw{overflow:auto;max-height:30rem}
+#pg-money table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+#pg-money th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap;vertical-align:bottom}
+#pg-money th button{all:unset;cursor:pointer}
+#pg-money td{padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);vertical-align:top}
+#pg-money td.n,#pg-money th.n{text-align:right}
+#pg-money td.neg{color:var(--color-bad)}
+#pg-money tr.tot td,#pg-money tr.hi td{font-weight:var(--cds-font-weight-medium)}
+#pg-money .barcell{display:flex;align-items:center;gap:var(--cds-gap-sm);min-width:8rem}
+#pg-money .barcell span{width:3.6em;text-align:right;flex:none}
+#pg-money .barcell i{display:block;height:8px;border-radius:4px;background:var(--cds-chart-muted)}
+#pg-money tr.hi .barcell i{background:var(--color-bad)}
+#pg-money .mmethod li{margin-bottom:var(--cds-gap-xs);line-height:1.5;max-width:78ch}
+</style>
+<template id="tpl-money">
+  <div class="mw">
+    <section class="sec" id="money-top">
+      <div class="head"><div><h2>Where the money goes</h2>
+        <p class="muted">Research for the site: where a premium dollar goes at each Texas insurer, where a Medicare procedure dollar goes in Dallas, and how much of it is malpractice insurance. These are yearly government files, put here by hand (no bot); each section says which year.</p></div></div>
+      <nav class="mjump" aria-label="Sections"><a href="#money-premium">Premium dollar</a><a href="#money-procedure">Procedure dollar</a><a href="#money-malpractice">Malpractice</a><a href="#money-method">How this was built</a></nav>
+    </section>
+
+    <section class="sec" id="money-premium">
+      <h3>The premium dollar: Texas insurers, 2024</h3>
+      <p class="mnote">From each insurer's medical loss ratio report to CMS. Fully insured plans only: self-funded employer plans don't file these.</p>
+      <div class="mctrl"><div class="mseg" role="group" aria-label="Market" id="m-mkt"></div><select id="m-ins" aria-label="Insurer"></select></div>
+      <div class="mcard"><div class="mbill" id="m-premBill" data-source="money_prem"></div>
+        <div class="mnote">Each slice is drawn to scale. When an insurer spent more than it took in, the extra hangs off the end of the bill.</div></div>
+      <div class="mcard">
+        <h3>Cents of each premium dollar, by insurer</h3>
+        <div class="mlegend" id="m-prem-legend"></div>
+        <div class="mchart" id="m-premchart" data-source="money_prem"></div>
+        <div class="mnote">Insurers with at least $5 million in Texas premium in that market. "Left over" is premium minus everything else, before investment income and any rebate owed.</div>
+      </div>
+      <div class="mcard">
+        <h3>All the line items</h3>
+        <div class="mnote">Cents per premium dollar. Rx is already inside care, net of drug-maker rebates. The 3-year MLR triggers a rebate when it's under 80% (individual, small employer) or 85% (large employer).</div>
+        <input type="search" id="m-premq" placeholder="Search an insurer" aria-label="Search insurers">
+        <div class="mtw"><table id="m-premtbl" data-source="money_prem" data-row-key="key"><thead><tr>
+          <th data-field="insurer">Insurer</th><th data-field="parent">Parent</th><th data-field="market">Market</th><th data-field="premium_millions" class="n">Premium ($M)</th><th data-field="covered_lives" class="n">People</th><th data-field="care" class="n">Care</th><th data-field="rx_part_of_care" class="n">of which Rx</th><th data-field="quality" class="n">Quality</th><th data-field="taxes_fees" class="n">Taxes, fees</th><th data-field="claims_admin" class="n">Claims handling</th><th data-field="sales_brokers" class="n">Sales, brokers</th><th data-field="other_overhead" class="n">Other overhead</th><th data-field="left_over" class="n">Left over</th><th data-field="mlr_3yr" class="n">3-yr MLR</th><th data-field="rebate_owed" class="n">Rebate owed</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="sec" id="money-procedure">
+      <h3>The procedure dollar: what Medicare pays in Dallas, 2026</h3>
+      <p class="mnote">The facility's fee (Medicare counts 60% of a hospital outpatient fee and 50% of a surgery center fee as staff wages) and the doctor's fee (work, practice costs, malpractice). Anesthesia is billed by the minute and isn't shown.</p>
+      <div class="mctrl"><select id="m-proc" aria-label="Procedure"></select><div class="mseg" role="group" aria-label="Setting" id="m-setg"></div></div>
+      <div class="mcard"><div class="mbill" id="m-procBill" data-source="money_proc"></div></div>
+      <div class="mcard">
+        <h3>Every procedure and setting</h3>
+        <div class="mtw"><table id="m-proctbl" data-source="money_proc" data-row-key="key"><thead><tr>
+          <th data-field="code">Code</th><th data-field="procedure">Procedure</th><th data-field="setting">Setting</th><th data-field="facility_labor" class="n">Facility: staff</th><th data-field="facility_other" class="n">Facility: other</th><th data-field="doctor_work" class="n">Doctor: work</th><th data-field="doctor_practice" class="n">Doctor: practice costs</th><th data-field="doctor_malpractice" class="n">Doctor: malpractice</th><th data-field="total" class="n">Total</th><th data-field="malpractice_pct_of_total" class="n">Malpractice share</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="sec" id="money-malpractice">
+      <h3>Malpractice in the price</h3>
+      <div class="mtiles">
+        <div class="mcard mtile"><span class="lab">Doctor pay, US</span><span class="big"><span data-source="money_mp_kind" data-field="malpractice_share_pct" data-where="kind=All fee-schedule services">—</span>%</span><span class="mnote">2026 fee schedule, 2024 mix of services</span></div>
+        <div class="mcard mtile"><span class="lab">Doctor pay, Dallas</span><span class="big"><span data-source="money_mp_loc" data-field="malpractice_share_pct" data-where="key=TX|Dallas">—</span>%</span><span class="mnote">Houston: <span data-source="money_mp_loc" data-field="malpractice_share_pct" data-where="key=TX|Houston">—</span>%</span></div>
+        <div class="mcard mtile"><span class="lab">Hospital costs, US</span><span class="big"><span data-source="money_mp_hstates" data-field="malpractice_pct_of_costs" data-where="state=US (all states)">—</span>%</span><span class="mnote">General hospitals, 2023 cost reports</span></div>
+        <div class="mcard mtile"><span class="lab">Hospital costs, Texas</span><span class="big"><span data-source="money_mp_hstates" data-field="malpractice_pct_of_costs" data-where="state=TX">—</span>%</span><span class="mnote">Illinois <span data-source="money_mp_hstates" data-field="malpractice_pct_of_costs" data-where="state=IL">—</span>% · New York <span data-source="money_mp_hstates" data-field="malpractice_pct_of_costs" data-where="state=NY">—</span>%</span></div>
+      </div>
+      <div class="mgrid">
+        <div class="mcard"><h3>Doctor pay: share by kind of service, US</h3><div class="mchart" id="m-kindchart" data-source="money_mp_kind"></div></div>
+        <div class="mcard"><h3>Codes where malpractice is the biggest slice</h3><div class="mnote">National Medicare amounts; codes with 5,000+ Medicare services in 2024.</div>
+          <div class="mtw"><table id="m-heavy" data-source="money_mp_heavy" data-row-key="code"><thead><tr><th data-field="code">Code</th><th data-field="description">What it is</th><th data-field="malpractice_share_pct" class="n">Share</th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+      <div class="mgrid">
+        <div class="mcard"><h3>Every Medicare pricing area</h3><div class="mnote">Premium index = Medicare's measure of local malpractice premiums (1.00 = national average). Texas highlighted.</div>
+          <input type="search" id="m-locq" placeholder="Search a state or city" aria-label="Search pricing areas">
+          <div class="mtw"><table id="m-loc" data-source="money_mp_loc" data-row-key="key"><thead><tr><th data-field="state">State</th><th data-field="locality">Pricing area</th><th data-field="malpractice_cost_index" class="n">Premium index</th><th data-field="malpractice_share_pct">Share</th></tr></thead><tbody></tbody></table></div></div>
+        <div class="mcard"><h3>Hospitals: malpractice share of costs, by state</h3><div class="mnote">Pooled for hospitals that reported a real amount; many system hospitals book it at the parent and report zero.</div>
+          <input type="search" id="m-hstq" placeholder="Search a state" aria-label="Search states">
+          <div class="mtw"><table id="m-hst" data-source="money_mp_hstates" data-row-key="state"><thead><tr><th data-field="state">State</th><th data-field="malpractice_pct_of_costs">Share</th><th data-field="median_hospital_pct" class="n">Middle hospital</th><th data-field="hospitals_counted" class="n">Counted</th><th data-field="hospitals_filed" class="n">Filed</th></tr></thead><tbody></tbody></table></div></div>
+      </div>
+    </section>
+
+    <section class="sec" id="money-method">
+      <h3>How this was built</h3>
+      <ul class="mmethod mnote">
+        <li><b>Premium dollar:</b> CMS medical loss ratio public use file, 2024, Texas comprehensive major medical; runout columns (claims through March 31, 2025). Individual premium includes risk adjustment. Left over is before investment income and rebates. Insurer-owned providers and PBMs count as care, so profit made there doesn't show. Next file: CMS posts the 2025 filings in the fall of 2027.</li>
+        <li><b>Procedure dollar:</b> October 2026 hospital outpatient Addendum B and surgery center Addendum AA, adjusted to the Dallas-Plano-Irving wage index (FY 2026 IPPS Table 3); implant cost on implant-heavy surgery center procedures (Addendum FF) isn't wage-adjusted. Doctor fees from the October 2026 physician fee schedule, Dallas locality, facility setting; imaging in a hospital uses the reading fee (modifier 26). Inpatient procedures show the doctor fee only. Refresh each January.</li>
+        <li><b>Malpractice:</b> 2026 fee schedule units and Medicare's local premium index, weighted by 2024 Medicare services in each state; hospitals from 2023 cost reports (Worksheet S-2 line 118.01), leaving out reports under $10,000 or over 15%.</li>
+        <li><b>Dollar image:</b> U.S. one-dollar note (Bureau of Engraving and Printing, public domain), via Wikimedia Commons; one-sided, colored over, under 75% of actual size.</li>
+        <li>Notes: project docs claude/dollar-breakdown-oct24.md and claude/malpractice-share-oct24.md.</li>
+      </ul>
+    </section>
+  </div>
+</template>
+<script src="money-bill.js"></script>
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const pg = () => document.getElementById('pg-money');
+  const BAD = 'var(--color-bad)';
+  const cents = v => (v === '' || v == null) ? '' : (+v).toFixed(1);
+  const f2 = v => (v === '' || v == null || isNaN(+v)) ? '' : (+v).toFixed(2);
+  const usd = v => (v === '' || v == null) ? '' : d3.format('$,.2f')(+v);
+  const usd0 = v => (v === '' || v == null) ? '' : d3.format('$,')(+v);
+  const PSEG = [['care', 'Care'], ['quality', 'Quality programs'], ['taxes_fees', 'Taxes and fees'], ['claims_admin', 'Claims handling'], ['sales_brokers', 'Sales and brokers'], ['other_overhead', 'Other overhead'], ['left_over', 'Left over']];
+  const DSEG = [['facility_labor', 'Facility: staff'], ['facility_other', 'Facility: supplies, equipment, building'], ['doctor_work', "Doctor's work"], ['doctor_practice', 'Practice costs'], ['doctor_malpractice', 'Malpractice insurance']];
+  const MKTS = ['Individual (ACA)', 'Small employer', 'Large employer'];
+  let built = false, market = MKTS[0], insurer = 'All Texas insurers', proc = '27447', setting = null;
+  const ok = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+
+  function legend(el, segs) { el.textContent = ''; segs.forEach(([, n], i) => { const s = document.createElement('span'); const b = document.createElement('i'); b.style.background = dash.colors[i]; s.append(b, document.createTextNode(n)); el.appendChild(s); }); }
+
+  function tipOn(el) { const tp = document.createElement('div'); tp.className = 'mtip'; tp.hidden = true; el.appendChild(tp);
+    return {show(ev, a, b) { const r = el.getBoundingClientRect(); tp.hidden = false; tp.textContent = ''; const t1 = document.createElement('div'); t1.className = 't'; t1.textContent = a; const t2 = document.createElement('div'); t2.textContent = b; tp.append(t1, t2); tp.style.left = Math.max(0, Math.min(ev.clientX - r.left + 12, r.width - tp.offsetWidth - 4)) + 'px'; tp.style.top = (ev.clientY - r.top + 12) + 'px'; }, hide() { tp.hidden = true; }}; }
+
+  function drawBill(el, top, bottom, segs, note) {
+    el.textContent = ''; const tip = tipOn(el);
+    const W = el.clientWidth || 640, total = d3.sum(segs, s => Math.max(0, s.v)), span = Math.max(100, total);
+    const billW = Math.min(W - 8, 440) * 100 / span, H = billW * (window.MONEY_BILL_RATIO || 0.427), per = billW / 100;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('font-family', 'var(--font-anthropic-sans)');
+    const hat = svg.append('defs').append('pattern').attr('id', el.id + '-over').attr('width', 6).attr('height', 6).attr('patternUnits', 'userSpaceOnUse').attr('patternTransform', 'rotate(-45)');
+    hat.append('line').attr('x2', 0).attr('y2', 6).attr('stroke', BAD).attr('stroke-width', 2);
+    const bx = Math.max(0, (Math.min(W, 760) - billW * span / 100) / 2), ty = 64;
+    const g0 = svg.append('g').attr('transform', `translate(${bx},${ty})`);
+    if (window.MONEY_BILL_IMG) g0.append('image').attr('href', window.MONEY_BILL_IMG).attr('width', billW).attr('height', H).attr('preserveAspectRatio', 'none');
+    else g0.append('rect').attr('width', billW).attr('height', H).attr('fill', 'var(--cds-chart-muted)');
+    let x0 = 0; const placed = [];
+    segs.forEach((s) => {
+      if (s.v <= 0) return;
+      const w = s.v * per, inBill = Math.max(0, Math.min(w, billW - x0)), out = w - inBill, g = g0.append('g');
+      if (inBill > 0) g.append('rect').attr('x', x0).attr('width', inBill).attr('height', H).attr('fill', s.color).attr('fill-opacity', 0.68).style('mix-blend-mode', 'multiply');
+      if (out > 0) g.append('rect').attr('x', x0 + inBill).attr('width', out).attr('height', H).attr('fill', `url(#${el.id}-over)`).attr('stroke', BAD);
+      if (inBill > 0) g.append('line').attr('x1', x0 + inBill).attr('x2', x0 + inBill).attr('y2', H).attr('stroke', 'var(--color-panel)');
+      g.on('mousemove', ev => tip.show(ev, s.name, s.label + (s.extra ? ' · ' + s.extra : ''))).on('mouseleave', () => tip.hide());
+      placed.push({cx: bx + x0 + w / 2, name: s.name, label: s.label, color: s.color, pos: s.pos || 'bottom'});
+      x0 += w;
+    });
+    g0.append('rect').attr('width', billW).attr('height', H).attr('fill', 'none').attr('stroke', 'var(--color-fg-muted)').attr('stroke-width', 0.75);
+    const maxX = Math.max(Math.min(W, 760), bx + x0 + 4), probe = svg.append('text').attr('font-size', 11);
+    placed.forEach(p => { probe.text(p.name); p.tw = Math.max(probe.node().getComputedTextLength(), 44) + 10; });
+    probe.remove();
+    const rowsUsed = {top: 1, bottom: 1};
+    ['top', 'bottom'].forEach(pos => {
+      const ps = placed.filter(p => p.pos === pos).sort((a, b) => a.cx - b.cx);
+      let right = maxX;
+      for (let i = ps.length - 1; i >= 0; i--) { const p = ps[i]; const r = Math.min(right, maxX, p.cx + p.tw / 2); p.lx = r - p.tw; p.row = 0; right = p.lx - 6; }
+      if (ps.length && ps[0].lx < 0) { // no room in one row: stack instead
+        const L = [[]];
+        ps.forEach(p => { const lx = Math.max(0, Math.min(p.cx - p.tw / 2, maxX - p.tw)); let r = L.findIndex(row => row.every(([a, b]) => lx >= b + 4 || lx + p.tw <= a - 4)); if (r < 0) { L.push([]); r = L.length - 1; } L[r].push([lx, lx + p.tw]); p.lx = lx; p.row = r; });
+        rowsUsed[pos] = L.length;
+      }
+    });
+    const shiftTop = (rowsUsed.top - 1) * 40, billTop = ty + shiftTop, billBot = billTop + H;
+    g0.attr('transform', `translate(${bx},${billTop})`);
+    placed.forEach(p => {
+      const cx = p.lx + p.tw / 2;
+      if (p.pos === 'top') {
+        const yb = billTop - 8 - p.row * 40;
+        const nt = svg.append('text').attr('x', cx + 7).attr('y', yb - 22).attr('text-anchor', 'middle').attr('font-family', 'var(--font-anthropic-serif)').attr('font-size', 17).attr('font-weight', 600).attr('fill', 'var(--color-fg)').text(p.label);
+        svg.append('rect').attr('x', cx + 7 - nt.node().getComputedTextLength() / 2 - 14).attr('y', yb - 33).attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', p.color);
+        svg.append('text').attr('x', cx).attr('y', yb - 8).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg)').text(p.name);
+        svg.append('polyline').attr('points', `${cx},${yb - 2} ${cx},${yb + 2} ${p.cx},${yb + 2} ${p.cx},${billTop}`).attr('fill', 'none').attr('stroke', p.color).attr('stroke-width', 1.25);
+      } else {
+        const yt = billBot + 14 + p.row * 40;
+        svg.append('polyline').attr('points', `${p.cx},${billBot} ${p.cx},${yt - 6} ${cx},${yt - 6} ${cx},${yt}`).attr('fill', 'none').attr('stroke', p.color).attr('stroke-width', 1.25);
+        const nt = svg.append('text').attr('x', cx + 7).attr('y', yt + 14).attr('text-anchor', 'middle').attr('font-family', 'var(--font-anthropic-serif)').attr('font-size', 17).attr('font-weight', 600).attr('fill', 'var(--color-fg)').text(p.label);
+        svg.append('rect').attr('x', cx + 7 - nt.node().getComputedTextLength() / 2 - 14).attr('y', yt + 3).attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', p.color);
+        svg.append('text').attr('x', cx).attr('y', yt + 28).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg)').text(p.name);
+      }
+    });
+    const capY = billBot + 14 + rowsUsed.bottom * 40 + 8;
+    svg.append('text').attr('x', bx).attr('y', capY).attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(top + ' · ' + bottom);
+    svg.attr('viewBox', `0 0 ${maxX} ${capY + 6}`);
+    if (note) { const n = document.createElement('div'); n.className = 'mmsg'; n.textContent = note; el.appendChild(n); }
+  }
+
+  function stack(el, rows, segs, fmtv, endLabel, title) {
+    el.textContent = ''; const tip = tipOn(el);
+    const W = el.clientWidth || 600, rowH = 30;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('font-family', 'var(--font-anthropic-sans)');
+    const probe = svg.append('text').attr('font-size', 12);
+    const lw = Math.min(W * 0.42, d3.max(rows, r => (probe.text(title(r)), probe.node().getComputedTextLength())) + 12);
+    const ew = d3.max(rows, r => (probe.text(endLabel(r)), probe.node().getComputedTextLength())) + 10; probe.remove();
+    const tot = r => d3.sum(segs, ([k]) => Math.max(0, +r[k] || 0));
+    const x = d3.scaleLinear([0, d3.max(rows, tot) || 1], [lw, Math.max(lw + 40, W - ew)]);
+    const H = rows.length * rowH + 4; svg.attr('viewBox', `0 0 ${W} ${H}`);
+    rows.forEach((r, i) => {
+      const y = i * rowH + 4, g = svg.append('g');
+      const t = g.append('text').attr('font-size', 12).text(title(r)); let str = title(r);
+      while (t.node().getComputedTextLength() > lw - 12 && str.length > 4) { str = str.slice(0, -2); t.text(str + '…'); }
+      t.attr('x', lw - 8).attr('y', y + 11).attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', 'var(--color-fg)').attr('font-weight', r._tot ? 600 : 400);
+      let x0 = lw;
+      segs.forEach(([k, n], j) => {
+        const v = +r[k] || 0; if (v <= 0) return;
+        const ww = x(v) - x(0);
+        g.append('rect').attr('x', x0).attr('y', y).attr('height', 22).attr('width', Math.max(0, ww - 1)).attr('fill', dash.colors[j])
+          .on('mousemove', ev => tip.show(ev, title(r), n + ': ' + fmtv(v))).on('mouseleave', () => tip.hide());
+        x0 += ww;
+      });
+      g.append('text').attr('x', x0 + 6).attr('y', y + 11).attr('dy', '0.35em').attr('font-size', 12).attr('fill', endLabel(r).startsWith('loss') ? BAD : 'var(--color-fg-muted)').text(endLabel(r));
+    });
+  }
+
+  const tables = {};
+  function makeTable(sel, id, cols, opts) {
+    const t = $(sel), st = {key: null, dir: 1}; tables[sel] = {t, id, cols, opts, st};
+    t.querySelectorAll('th').forEach((th, i) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = th.textContent; th.textContent = ''; th.appendChild(b); b.addEventListener('click', () => { st.dir = st.key === i ? -st.dir : (cols[i].num ? -1 : 1); st.key = i; drawTable(sel); }); });
+    if (opts.search) $(opts.search).addEventListener('input', () => drawTable(sel));
+  }
+  function drawTable(sel) {
+    const {t, id, cols, opts, st} = tables[sel], tb = t.querySelector('tbody'); tb.textContent = '';
+    const data = ok(id); if (!data) return;
+    let rows = data.slice(); if (opts.filter) rows = rows.filter(opts.filter);
+    const q = opts.search ? $(opts.search).value.trim().toLowerCase() : '';
+    if (q) rows = rows.filter(r => cols.some(c => String(r[c.f]).toLowerCase().includes(q)));
+    if (st.key != null) { const c = cols[st.key], v = r => c.num ? (r[c.f] === '' ? -Infinity : +r[c.f]) : r[c.f]; rows.sort((a, b) => (v(a) < v(b) ? -1 : v(a) > v(b) ? 1 : 0) * st.dir); }
+    t.querySelectorAll('th').forEach((th, i) => th.setAttribute('aria-sort', st.key === i ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'));
+    const max = opts.bar ? d3.max(data, r => +r[opts.bar] || 0) : 0;
+    rows.forEach(r => {
+      const tr = document.createElement('tr'); tr.dataset.key = r[t.dataset.rowKey]; if (opts.cls) tr.className = opts.cls(r) || '';
+      cols.forEach(c => {
+        const td = document.createElement('td'); if (c.num && c.f !== opts.bar) td.className = 'n'; if (c.neg && +r[c.f] < 0) td.className += ' neg';
+        if (c.f === opts.bar) { const w = document.createElement('div'); w.className = 'barcell'; const s = document.createElement('span'); s.textContent = c.fmt(r[c.f]); const i = document.createElement('i'); i.style.width = (max ? 70 * (+r[c.f] || 0) / max : 0) + '%'; w.append(s, i); td.appendChild(w); }
+        else td.textContent = c.fmt ? c.fmt(r[c.f]) : r[c.f];
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+  }
+
+  function drawPremBill() {
+    const el = $('#m-premBill'), data = ok('money_prem'), sel = $('#m-ins'); if (!data) { el.textContent = ''; return; }
+    const rows = data.filter(r => r.market === market).sort((a, b) => ((b.insurer === 'All Texas insurers') - (a.insurer === 'All Texas insurers')) || (+b.premium_millions - +a.premium_millions));
+    if (sel.dataset.m !== market) { sel.textContent = ''; rows.forEach(r => { const o = document.createElement('option'); o.value = r.insurer; o.textContent = r.insurer; sel.appendChild(o); }); sel.dataset.m = market; }
+    const r = rows.find(x => x.insurer === insurer) || rows[0]; sel.value = r.insurer;
+    const segs = PSEG.map(([k, n], i) => ({v: +r[k] || 0, name: n, label: cents(r[k]) + '¢', color: dash.colors[i], pos: k === 'care' ? 'top' : 'bottom', extra: k === 'care' ? 'incl. prescriptions ' + cents(r.rx_part_of_care) + '¢' : ''}));
+    drawBill(el, 'One premium dollar', r.insurer + ' · ' + r.market + ' · Texas 2024', segs, +r.left_over < 0 ? r.insurer + ' spent ' + cents(-r.left_over) + '¢ more than each dollar it took in.' : '');
+  }
+  function drawPrem() {
+    const data = ok('money_prem'), el = $('#m-premchart'); if (!data) { el.textContent = ''; return; }
+    const rows = data.filter(r => r.market === market && (+r.premium_millions >= 5 || r.insurer === 'All Texas insurers')).map(r => Object.assign({_tot: r.insurer === 'All Texas insurers'}, r)).sort((a, b) => (b._tot - a._tot) || (+b.premium_millions - +a.premium_millions));
+    stack(el, rows, PSEG, v => cents(v) + '¢', r => +r.left_over < 0 ? 'loss ' + cents(-r.left_over) + '¢' : '', r => r.insurer);
+  }
+  function drawProcBill() {
+    const el = $('#m-procBill'), data = ok('money_proc'), sel = $('#m-proc'), sg = $('#m-setg'); if (!data) { el.textContent = ''; return; }
+    if (!sel.options.length) { const seen = new Set(); data.forEach(r => { if (seen.has(r.code)) return; seen.add(r.code); const o = document.createElement('option'); o.value = r.code; o.textContent = r.procedure + ' (' + r.code + ')'; sel.appendChild(o); }); sel.value = proc; }
+    const rows = data.filter(r => r.code === proc); if (!rows.length) return;
+    if (!setting || !rows.some(r => r.setting === setting)) setting = rows[0].setting;
+    sg.textContent = '';
+    rows.forEach(r => { const b = document.createElement('button'); b.type = 'button'; b.textContent = r.setting; b.setAttribute('aria-pressed', r.setting === setting); b.addEventListener('click', () => { setting = r.setting; drawProcBill(); }); sg.appendChild(b); });
+    const r = rows.find(x => x.setting === setting);
+    if (r.total === '') { el.textContent = ''; const n = document.createElement('div'); n.className = 'mmsg'; n.textContent = 'Medicare pays the hospital one separate fee for the whole inpatient stay, so only the doctor fee of ' + usd(r.doctor_fee) + ' is shown.'; el.appendChild(n); return; }
+    const segs = DSEG.map(([k, n], i) => ({v: +r['c_' + k] || 0, name: n, label: cents(r['c_' + k]) + '¢', color: dash.colors[i], pos: k.startsWith('facility') ? 'top' : 'bottom', extra: usd(r[k])}));
+    drawBill(el, 'One Medicare dollar', r.procedure + ' · ' + r.setting + ' · Dallas 2026 · ' + usd(r.total) + ' total', segs, '');
+  }
+  function drawKind() {
+    const el = $('#m-kindchart'); el.textContent = ''; const data = ok('money_mp_kind'); if (!data) return;
+    const rows = data.filter(r => r.kind !== 'All fee-schedule services').map(r => ({k: r.kind, v: +r.malpractice_share_pct}));
+    const allRow = data.find(r => r.kind === 'All fee-schedule services'), all = allRow ? +allRow.malpractice_share_pct : null;
+    const W = el.clientWidth || 400, rowH = 32, H = rows.length * rowH + 32;
+    const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('font-family', 'var(--font-anthropic-sans)');
+    const probe = svg.append('text').attr('font-size', 12);
+    const lw = d3.max(rows, r => (probe.text(r.k), probe.node().getComputedTextLength())) + 10; probe.remove();
+    const x = d3.scaleLinear([0, d3.max(rows, r => r.v) * 1.2], [lw, W - 8]), y = d3.scaleBand(rows.map(r => r.k), [0, rows.length * rowH]).padding(0.3);
+    svg.append('g').selectAll('line').data(x.ticks(4)).join('line').attr('x1', x).attr('x2', x).attr('y2', rows.length * rowH).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').selectAll('text').data(x.ticks(4)).join('text').attr('x', x).attr('y', rows.length * rowH + 14).attr('text-anchor', 'middle').attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text(t => t + '%');
+    if (all != null) { svg.append('line').attr('x1', x(all)).attr('x2', x(all)).attr('y2', rows.length * rowH).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3');
+      svg.append('text').attr('x', x(all) + 4).attr('y', rows.length * rowH + 28).attr('font-size', 11).attr('fill', 'var(--color-fg-muted)').text('all services ' + all.toFixed(2) + '%'); }
+    const g = svg.append('g').selectAll('g').data(rows).join('g');
+    g.append('text').attr('x', lw - 8).attr('y', r => y(r.k) + y.bandwidth() / 2).attr('dy', '0.35em').attr('text-anchor', 'end').attr('font-size', 12).attr('fill', 'var(--color-fg)').text(r => r.k);
+    g.append('rect').attr('x', lw).attr('y', r => y(r.k)).attr('height', Math.min(y.bandwidth(), 24)).attr('width', r => x(r.v) - lw).attr('rx', 4).attr('fill', (r, i) => i === 0 ? dash.colors[0] : 'var(--cds-chart-muted)');
+    g.append('text').attr('x', r => x(r.v) + 6).attr('y', r => y(r.k) + Math.min(y.bandwidth(), 24) / 2).attr('dy', '0.35em').attr('font-size', 12).attr('fill', 'var(--color-fg)').text(r => r.v.toFixed(2) + '%');
+  }
+
+  function build() {
+    pg().appendChild($('#tpl-money').content.cloneNode(true)); built = true;
+    legend($('#m-prem-legend'), PSEG);
+    const mk = $('#m-mkt');
+    MKTS.forEach(m => { const b = document.createElement('button'); b.type = 'button'; b.textContent = m; b.setAttribute('aria-pressed', m === market); b.addEventListener('click', () => { market = m; insurer = 'All Texas insurers'; mk.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.textContent === m)); drawAll(); }); mk.appendChild(b); });
+    $('#m-ins').addEventListener('change', e => { insurer = e.target.value; drawPremBill(); });
+    $('#m-proc').addEventListener('change', e => { proc = e.target.value; setting = null; drawProcBill(); });
+    const pct = v => v === '' ? '' : f2(v) + '%';
+    makeTable('#m-premtbl', 'money_prem', [{f: 'insurer'}, {f: 'parent'}, {f: 'market'}, {f: 'premium_millions', num: 1, fmt: v => d3.format(',.1f')(+v)}, {f: 'covered_lives', num: 1, fmt: v => d3.format(',')(+v)}, {f: 'care', num: 1, fmt: cents}, {f: 'rx_part_of_care', num: 1, fmt: cents}, {f: 'quality', num: 1, fmt: cents}, {f: 'taxes_fees', num: 1, fmt: cents}, {f: 'claims_admin', num: 1, fmt: cents}, {f: 'sales_brokers', num: 1, fmt: cents}, {f: 'other_overhead', num: 1, fmt: cents}, {f: 'left_over', num: 1, fmt: cents, neg: 1}, {f: 'mlr_3yr', num: 1, fmt: v => v === '' ? '' : (+v).toFixed(1) + '%'}, {f: 'rebate_owed', num: 1, fmt: v => +v ? usd0(v) : ''}], {search: '#m-premq', filter: r => r.market === market, cls: r => r.insurer === 'All Texas insurers' ? 'tot' : ''});
+    makeTable('#m-proctbl', 'money_proc', [{f: 'code'}, {f: 'procedure'}, {f: 'setting'}, {f: 'facility_labor', num: 1, fmt: usd}, {f: 'facility_other', num: 1, fmt: usd}, {f: 'doctor_work', num: 1, fmt: usd}, {f: 'doctor_practice', num: 1, fmt: usd}, {f: 'doctor_malpractice', num: 1, fmt: usd}, {f: 'total', num: 1, fmt: usd}, {f: 'malpractice_pct_of_total', num: 1, fmt: v => v === '' ? '' : (+v).toFixed(2) + '%'}], {});
+    makeTable('#m-heavy', 'money_mp_heavy', [{f: 'code'}, {f: 'description'}, {f: 'malpractice_share_pct', num: 1, fmt: v => (+v).toFixed(1) + '%'}], {});
+    makeTable('#m-loc', 'money_mp_loc', [{f: 'state'}, {f: 'locality'}, {f: 'malpractice_cost_index', num: 1, fmt: v => (+v).toFixed(3)}, {f: 'malpractice_share_pct', num: 1, fmt: pct}], {bar: 'malpractice_share_pct', search: '#m-locq', cls: r => r.state === 'TX' ? 'hi' : ''});
+    makeTable('#m-hst', 'money_mp_hstates', [{f: 'state'}, {f: 'malpractice_pct_of_costs', num: 1, fmt: pct}, {f: 'median_hospital_pct', num: 1, fmt: pct}, {f: 'hospitals_counted', num: 1, fmt: v => d3.format(',')(+v)}, {f: 'hospitals_filed', num: 1, fmt: v => d3.format(',')(+v)}], {bar: 'malpractice_pct_of_costs', search: '#m-hstq', cls: r => r.state === 'TX' ? 'hi' : ''});
+    pg().querySelectorAll('.mjump a').forEach(a => a.addEventListener('click', e => { const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) { e.preventDefault(); t.scrollIntoView({behavior: 'smooth'}); } }));
+  }
+  function drawAll() {
+    pg().querySelectorAll('[data-field][data-where]').forEach(el => {
+      const data = ok(el.dataset.source); if (!data) { el.textContent = '—'; return; }
+      const [k, v] = el.dataset.where.split('='), r = data.find(r => String(r[k]) === v);
+      el.textContent = r ? f2(r[el.dataset.field]) : '—';
+    });
+    drawPremBill(); drawPrem(); drawProcBill(); drawKind(); Object.keys(tables).forEach(drawTable);
+  }
+  window.MONEY = {show() { if (!built) build(); dash.setParams({_t: Date.now()}); }};
+  if (location.hash === '#money') { const t = document.querySelector('#tabs [data-tab=money]'); if (t) setTimeout(() => t.click(), 0); }
+  dash.onData(() => { if (!built || pg().hidden) return; drawAll(); });
+})();
+</script>
