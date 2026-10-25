@@ -3864,7 +3864,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 334020,ROCHESTER PSYCHIATRIC CENTER,ROCHESTER,NY,Psychiatric,,,,,,,
 334021,MOHAWK VALLEY PSYCHIATRIC CENTER,UTICA,NY,Psychiatric,,,,,,,
 334022,BRYLIN HOSP,BUFFALO,NY,Psychiatric,,,,,,,
-334026,"BRUNSWICK HOSPITAL CENTER, INC.",AMITYVILLE,NY,Psychiatric,,,,,,,
+334026,"BRUNSWICK HOSPITAL CENTER, INC.",AMITYVILLE,NY,Psychiatric,brunswickhospitalcenter.org,,,,,,osm 2026-10-25
 334027,SOUTH OAKS HOSP,AMITYVILLE,NY,Psychiatric,,,,,,,
 334043,SOUTH BEACH PSYCHIATRIC CENTER,STATEN ISLAND,NY,Psychiatric,,,,,,,
 334045,ELMIRA PSYCH CENTER,ELMIRA,NY,Psychiatric,,,,,,,
@@ -4537,7 +4537,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 400018,HOSPITAL MENONITA DE AIBONITO,AIBONITO,PR,Acute Care Hospitals,sistemamenonita.com,,,,,,osm 2026-10-10
 400019,HOSPITAL PAVIA SANTURCE,SAN JUAN,PR,Acute Care Hospitals,,https://hpt.inmediata.com/?handler=DF&d=0C7D0EB4-7AFE-4319-B440-FF3C21B8684D,,,,,web 2026-10-14
 400021,HOSPITAL DE LA CONCEPCION,SAN GERMAN,PR,Acute Care Hospitals,,https://sthpiprd.blob.core.windows.net/machine-readable-files/8494/660227304_hospital-de-la-concepcion-inc_standardcharges.csv,,,,,web 2026-10-19
-400022,HOSPITAL DAMAS INC,PONCE,PR,Acute Care Hospitals,,,,,,,
+400022,HOSPITAL DAMAS INC,PONCE,PR,Acute Care Hospitals,hospitaldamas.com,,,,,,osm 2026-10-25
 400032,BAYAMON MEDICAL CENTER,BAYAMON,PR,Acute Care Hospitals,bayamonmedical.com,,,,,,guess 2026-10-10
 400044,HOSPITAL EPISCOPAL SAN LUCAS II,PONCE,PR,Acute Care Hospitals,,https://hospitalsanlucastorage.blob.core.windows.net/images/price-transparency/66-0589727-Saint-Lukes-Memorial-Hospital-Inc-standardcharges.csv,,,,,web 2026-10-14
 400048,HOSPITAL MENONITA GUAYAMA,GUAYAMA,PR,Acute Care Hospitals,sistemamenonita.com,https://hpt.inmediata.com/?handler=DF&d=D8136AB7-2C71-41A1-A648-15D62355ACC0,,,,,web 2026-10-14
@@ -4593,7 +4593,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 410011,LANDMARK MEDICAL CENTER,WOONSOCKET,RI,Acute Care Hospitals,landmarkmedical.org,https://landmarkmedical.org/wp-content/uploads/2026/09/HOS00134_LandmarkMedicalCenter_standardcharges.json,raw/hospitals/2026-10/RI/97315684752e_HOS00134_LandmarkMedicalCenter_standardcharges.json.zst,97315684752eb710f92dbf64e4c3d3f859c06377df89d668fe08baa50ba98fb4,27078067,2026-10-05/nat,
 410012,THE MIRIAM HOSPITAL,PROVIDENCE,RI,Acute Care Hospitals,lifespan.org,https://www.brownhealth.org/sites/default/files/2026-03/05-0258905_the-miriam-hospital_standardcharges.csv,,,,,
 410013,WESTERLY HOSPITAL,WESTERLY,RI,Acute Care Hospitals,westerlyhospital.org,https://www.westerlyhospital.org/-/media/Files/YNHHS/sc/46-0543230-Westerly_Hospital_Standard_Charges-1.ashx,raw/hospitals/2026-10/RI/d5f8140b5ff4_46-0543230-Westerly_Hospital_Standard_Charges-1.ashx.zst,d5f8140b5ff4e88d04b154ba0355dd9813c46aa4dafcad1021126556ebb00324,92222145,2026-10-05/nat,
-412001,ELEANOR SLATER HOSPITAL,CRANSTON,RI,Long-term,,,,,,,
+412001,ELEANOR SLATER HOSPITAL,CRANSTON,RI,Long-term,bhddh.ri.gov,,,,,,osm 2026-10-25
 413025,REHABILITATION HOSPITAL OF RHODE ISLAND,NORTH SMITHFIELD,RI,Inpatient Rehabilitation,rehabhospitalri.com,,,,,,web 2026-10-14
 413026,ENCOMPASS HEALTH REHAB HOSPITAL OF JOHNSTON,JOHNSTON,RI,Inpatient Rehabilitation,encompasshealth.com,,,,,,chain 2026-10-10
 414000,BUTLER HOSPITAL,PROVIDENCE,RI,Psychiatric,butler.org,https://www.carenewengland.org/hubfs/050258812_Butler-Hospital_standardcharges.csv,raw/hospitals/2026-10/RI/8d8c5e7490af_050258812_Butler-Hospital_standardcharges.csv.zst,8d8c5e7490af9f0509f9833cd449b14590a5b0004a599bf0ef4cb3f910ce9e7b,11586060,2026-10-05/nat,

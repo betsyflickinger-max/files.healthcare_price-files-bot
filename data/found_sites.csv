@@ -1,40 +1,11 @@
 ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
-010045,FAYETTE MEDICAL CENTER,FAYETTE,AL,Acute Care Hospitals,dchsystem.com,osm,100,Fayette Medical Center,https://dchsystem.com/cms-hpt.txt,yes
 010051,GREENE COUNTY HOSPITAL,EUTAW,AL,Acute Care Hospitals,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
-050045,EL CENTRO REGIONAL MEDICAL CENTER,EL CENTRO,CA,Acute Care Hospitals,ecrmc.org,osm,100,El Centro Regional Medical Center,https://ecrmc.org/cms-hpt.txt,yes
-050126,VALLEY PRESBYTERIAN HOSPITAL,VAN NUYS,CA,Acute Care Hospitals,valleypres.org,osm,100,Valley Presbyterian Hospital,https://valleypres.org/cms-hpt.txt,yes
-050195,WASHINGTON HOSPITAL,FREMONT,CA,Acute Care Hospitals,whhs.com,osm,84,WASHINGTON TOWNSHIP HOSPITAL DISTRICT,https://whhs.com/cms-hpt.txt,yes
-050245,ARROWHEAD REGIONAL MEDICAL CENTER,COLTON,CA,Acute Care Hospitals,arrowheadregional.org,osm,100,Arrowhead Regional Medical Center,https://arrowheadregional.org/cms-hpt.txt,yes
-050334,SALINAS VALLEY HEALTH MEDICAL CENTER,SALINAS,CA,Acute Care Hospitals,salinasvalleyhealth.com,osm,70,Salinas Valley Memorial Healthcare System,https://salinasvalleyhealth.com/cms-hpt.txt,yes
-050557,MEMORIAL MEDICAL CENTER,MODESTO,CA,Acute Care Hospitals,adventisthealth.org,sibling,94,WHITE MEMORIAL MEDICAL CENTER,https://adventisthealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-050782,CASA COLINA HOSPITAL,POMONA,CA,Acute Care Hospitals,casacolina.org,osm,82,Casa Colina Hospital and Centers for Healthcare,https://casacolina.org/cms-hpt.txt,yes
-051326,PLUMAS DISTRICT HOSPITAL,QUINCY,CA,Critical Access Hospitals,pdh.org,osm,100,Plumas District Hospital,https://pdh.org/cms-hpt.txt,yes
-060075,VALLEY VIEW HOSPITAL ASSOCIATION,GLENWOOD SPRINGS,CO,Acute Care Hospitals,vvh.org,osm,88,Valley View Hospital,https://vvh.org/cms-hpt.txt,yes
-100253,JUPITER MEDICAL CENTER,JUPITER,FL,Acute Care Hospitals,jupitermed.com,osm,100,Jupiter Medical Center,https://jupitermed.com/cms-hpt.txt,yes
-130065,MOUNTAIN VIEW HOSPITAL,IDAHO FALLS,ID,Acute Care Hospitals,mountainviewhospital.org,sibling,100,Mountain View Hospital,https://mountainviewhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-140133,HOLY CROSS HOSPITAL,CHICAGO,IL,Acute Care Hospitals,sinaichicago.org,sibling,100,HOLY CROSS HOSPITAL,https://sinaichicago.org/cms-hpt.txt,"no - same name in another state, check by hand"
-140145,ST JOSEPHS HOSPITAL,BREESE,IL,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Joseph's Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
-141327,WABASH GENERAL HOSPITAL 1,MOUNT CARMEL,IL,Critical Access Hospitals,wabashgeneral.com,osm,90,Wabash General Hospital District,https://wabashgeneral.com/cms-hpt.txt,yes
 141338,MEMORIAL HOSPITAL,CHESTER,IL,Critical Access Hospitals,bjc.org,sibling,100,Memorial Hospital,https://bjc.org/cms-hpt.txt,"no - same name in another state, check by hand"
-150061,DAVIESS COMMUNITY HOSPITAL,WASHINGTON,IN,Acute Care Hospitals,dchosp.org,osm,100,Daviess Community Hospital,https://dchosp.org/cms-hpt.txt,yes
-151322,PERRY COUNTY MEMORIAL HOSPITAL,TELL CITY,IN,Critical Access Hospitals,pchospital.org,osm,100,Perry County Memorial Hospital,https://pchospital.org/cms-hpt.txt,yes
 171381,MEMORIAL HOSPITAL,ABILENE,KS,Critical Access Hospitals,saintlukeskc.org,sibling,91,Wright Memorial Hospital,https://saintlukeskc.org/cms-hpt.txt,"no - same name in another state, check by hand"
 181321,WAYNE COUNTY HOSPITAL,MONTICELLO,KY,Critical Access Hospitals,waynecountyhospital.org,guess,100,WAYNE COUNTY HOSPITAL,https://waynecountyhospital.org/cms-hpt.txt,"no - same name in another state, check by hand"
-250043,NESHOBA COUNTY GENERAL HOSPITAL,PHILADELPHIA,MS,Acute Care Hospitals,neshobageneral.com,osm,100,Neshoba County General Hospital,https://neshobageneral.com/cms-hpt.txt,yes
-250057,KING'S DAUGHTERS MEDICAL CENTER-BROOKHAVEN,BROOKHAVEN,MS,Acute Care Hospitals,kdmc.org,osm,92,King's Daughters Medical Center,https://kdmc.org/cms-hpt.txt,yes
-250097,SOUTHWEST MS REGIONAL MEDICAL CENTER,MCCOMB,MS,Acute Care Hospitals,smrmc.com,osm,92,Southwest Mississippi Regional Medical Center,https://smrmc.com/cms-hpt.txt,yes
-250782,GREENE COUNTY HOSPITAL,LEAKESVILLE,MS,Rural Emergency Hospital,greenecountyhospital.com,guess,92,Greene County General Hospital,https://greenecountyhospital.com/cms-hpt.txt,"no - same name in another state, check by hand"
-251305,LAWRENCE COUNTY HOSPITAL CAH,MONTICELLO,MS,Critical Access Hospitals,smrmc.com,osm,96,Lawrence County Hospital,https://smrmc.com/cms-hpt.txt,yes
-251340,NESHOBA COUNTY GENERAL HOSPITAL,PHILADELPHIA,MS,Critical Access Hospitals,neshobageneral.com,osm,100,Neshoba County General Hospital,https://neshobageneral.com/cms-hpt.txt,yes
-271316,FRANCES MAHON DEACONESS HOSPITAL,GLASGOW,MT,Critical Access Hospitals,fmdh.org,osm,100,Frances Mahon Deaconess Hospital,https://fmdh.org/cms-hpt.txt,yes
-271332,GLENDIVE MEDICAL CENTER,GLENDIVE,MT,Critical Access Hospitals,gmc.org,osm,100,Glendive Medical Center,https://gmc.org/cms-hpt.txt,yes
 271341,TRINITY HOSPITAL,WOLF POINT,MT,Critical Access Hospitals,trinityhealth.org,guess,97,Trinity Hospitals,https://trinityhealth.org/cms-hpt.txt,"no - same name in another state, check by hand"
-271346,ROUNDUP MEMORIAL HEALTHCARE,ROUNDUP,MT,Critical Access Hospitals,rmhmt.org,osm,100,Roundup Memorial Healthcare,https://rmhmt.org/cms-hpt.txt,yes
 281320,MEMORIAL HOSPITAL,AURORA,NE,Critical Access Hospitals,mhcs.us,sibling,100,Memorial Hospital,https://mhcs.us/cms-hpt.txt,"no - same name in another state, check by hand"
-360156,MEMORIAL HOSPITAL,FREMONT,OH,Acute Care Hospitals,wvumedicine.org,sibling,92,Grant Memorial Hospital,https://wvumedicine.org/cms-hpt.txt,"no - same name in another state, check by hand"
+334026,"BRUNSWICK HOSPITAL CENTER, INC.",AMITYVILLE,NY,Psychiatric,brunswickhospitalcenter.org,osm,100,Brunswick Hospital Center,https://brunswickhospitalcenter.org/cms-hpt.txt,yes
 360172,MERCY REGIONAL MEDICAL CENTER,LORAIN,OH,Acute Care Hospitals,mercyregionalmedical.com,guess,100,Mercy Regional Medical Center,https://mercyregionalmedical.com/cms-hpt.txt,"no - same name in another state, check by hand"
-431316,COMMUNITY MEMORIAL HOSPITAL,REDFIELD,SD,Critical Access Hospitals,avera.org,sibling,95,Community Memorial Hospital Avera,https://avera.org/cms-hpt.txt,"no - same name in another state, check by hand"
-461304,CENTRAL VALLEY MEDICAL CENTER - CAH,NEPHI,UT,Critical Access Hospitals,centralvalleymedicalcenter.com,osm,97,Central Valley medical Center,https://centralvalleymedicalcenter.com/cms-hpt.txt,yes
-461306,GUNNISON VALLEY HOSPITAL,GUNNISON,UT,Critical Access Hospitals,gunnisonvalleyhealth.org,osm,100,GUNNISON VALLEY HOSPITAL,https://gunnisonvalleyhealth.org/cms-hpt.txt,yes
-490022,MARY WASHINGTON HOSPITAL,FREDERICKSBURG,VA,Acute Care Hospitals,marywashingtonhealthcare.com,osm,100,Mary Washington Hospital,https://marywashingtonhealthcare.com/cms-hpt.txt,yes
-520075,ST VINCENT HOSPITAL,GREEN BAY,WI,Acute Care Hospitals,hshs.org,sibling,94,HSHS St. Vincent Hospital,https://hshs.org/cms-hpt.txt,"no - same name in another state, check by hand"
+400022,HOSPITAL DAMAS INC,PONCE,PR,Acute Care Hospitals,hospitaldamas.com,osm,100,Hospital Damas,https://hospitaldamas.com/cms-hpt.txt,yes
+412001,ELEANOR SLATER HOSPITAL,CRANSTON,RI,Long-term,bhddh.ri.gov,osm,100,Eleanor Slater Hospital,https://bhddh.ri.gov/cms-hpt.txt,yes
