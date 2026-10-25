@@ -1,76 +1,39 @@
 # price-files-bot
 
-Automatically collects and checks U.S. hospital and insurer price transparency files, and flags missing or broken ones.
+**The data engine behind [The Healthcare Files](https://files.healthcare): the receipt for the U.S. healthcare system.**
 
-## Version 1: hospital files (running on GitHub, free)
+Federal rules now require hospitals to post their prices and require insurers and employer health plans to publish the rates they've negotiated with doctors and hospitals. That makes the last black box in American healthcare public on paper. In practice, the files are enormous (a single insurer file can run to hundreds of gigabytes), often broken, and almost impossible for a normal person to open.
 
-Every day at 4:17am Central, GitHub runs one job per state (20 at a time). Each hospital comes up about once a week; broken links are retried daily.
+This bot does the unglamorous part. Every day it finds, downloads, checks and reads those files, keeps an untouched copy of every original, and flags the ones that are missing or broken. The Healthcare Files turns the result into something anyone can search: what a procedure costs, at which provider, under which insurance network, compared with what Medicare pays.
 
-For each hospital due that day the bot:
+> The site is in private preview while it's being built and tested. It will open to the public at **files.healthcare**.
 
-1. **Finds the current file link** in the hospital's own `cms-hpt.txt` index, so moved or renamed files are followed. Link cleanup is the same as the Oct 9 retry run.
-2. **Checks for changes without downloading** when it can: same ETag, or same Last-Modified and size, or the same size plus first and last 64 KB. Otherwise it downloads the whole file and compares its SHA-256. Every file is fully downloaded at least once a week anyway, because some servers send stale headers.
-3. **Saves every new version**, untouched and zstd-compressed, to R2 at `raw/hospitals/<yyyy-mm>/<state>/<sha12>_<name>.zst` and to the state's archive.org item. Files already archived in October are recognized and not saved twice.
-4. **Reads it with the fixed reader** (`bot/reader.py`, from `pipeline/2026-10-09/08_extract_hospital_codes.py`): counts every row and pulls the site's 89 target codes to `bot/rows/<day>/<state>/<sha12>.csv.zst`. Each row keeps `raw_key`, `source_url`, `sha256` and `source_row`. The whole original is kept, so any other code can be extracted later.
-5. **Writes one status row per hospital** and flags problems: broken link, missing file, a web page instead of a file, an unreadable file, or rows down by more than half.
+## What it collects
 
-Hospitals that share one system-wide file are checked once. Files over 6 GB don't fit the free runner (about 14 GB of disk), so since Oct 14 they go into the shared machine queue (see version 2, step 4) as a hospital job, with status "queued for a rented machine". A machine with enough disk (8 GB machines up to 60 GB files, 16 GB machines up to 130 GB, 32 GB machines beyond) runs the same steps on it: save the original to R2 and archive.org, count rows, pull the target codes. Its result lands in `bot/fleet/results/hospital/<state>/`, and the state's next daily run folds it into the manifests and that day's status.
+- **Hospital price files.** Every hospital on CMS's Hospital General Information list (VA and Defense Department hospitals excluded), checked about once a week, with broken links retried daily.
+- **Insurer and health plan rate files** (the Transparency in Coverage "in-network" files), read on rented cloud machines when they change. The coverage expands state by state.
+- **What's missing.** Hospitals and insurers with no usable file are tracked by name, along with what was tried and when. That list feeds the site's *Price File Watch*.
 
-### Where results go (R2, under `bot/`)
+## The rules
 
-| File | What it is |
-|---|---|
-| `status/latest.csv` | Newest status for every hospital checked. Feeds the coverage spreadsheet and the Price File Watch. |
-| `status/coverage_by_state.csv` | Hospitals, files saved, problems and not-yet-checked, by state |
-| `status/<day>/<state>.csv` | That day's checks |
-| `status/<day>/alerts.csv` | Problems that are new that day |
-| `manifest/files/<state>.csv` | Fingerprint of every file (ETag, dates, size, SHA-256, rows) |
-| `manifest/hospitals/<state>.csv` | Each hospital's current link and last status |
-| `rows/<day>/<state>/*.csv.zst` | Target-code rows from new versions |
+1. **Every price comes from a real source** (a hospital file, an insurer file or a provider's posted price) and links back to it.
+2. **Nothing is estimated or averaged.**
+3. **Every price shows when it was checked**, and old data is flagged.
+4. **Nothing is deleted.** Every version of every file is kept compressed and unchanged, and copies go to the [Internet Archive](https://archive.org), so any price can be traced back to the exact file and row it came from. This also builds a record of how prices change over time.
+5. **High prices stay visible.** Outliers are labeled, never filtered out, because real overcharges are part of the story.
 
-If a file that used to work breaks, or its rows drop by more than half, the bot opens a GitHub issue labeled `price-file-alert`. Hospitals that never had a working file are listed in `alerts.csv` and the Price File Watch, but they don't open issues.
+## Why
 
-### Setup (one time)
+This project was started by a former employee-benefits consultant who spent years watching, from the inside, how negotiated prices stay hidden from the people paying the bills. It's self-funded and run without profit. Nobody can pay to change a rate.
 
-Repo **Settings → Secrets and variables → Actions → New repository secret**, one at a time:
+## Found a missing or broken file?
 
-| Name | Value |
-|---|---|
-| `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | from `r2.env.txt` |
-| `IA_ACCESS_KEY` | the `IA_ACCESS` value from `ia.env.txt` on the Mac |
-| `IA_SECRET_KEY` | the `IA_SECRET` value from `ia.env.txt` on the Mac |
+If you know where a hospital or insurer posts a file we couldn't find, please [open an issue](https://github.com/betsyflickinger-max/price-files-bot/issues/new) with the link. Corrections are welcome too.
 
-The bot runs without the archive.org keys and notes "archive.org keys not set" in each new file's status.
+## For developers
 
-### Running it by hand
+- How the bot runs, what it stores and how to set it up: [docs/operations.md](docs/operations.md)
+- The hospital file reader: [`bot/reader.py`](bot/reader.py)
+- The insurer file pipeline: [`insurers/`](insurers/)
 
-**Actions → Hospital price files → Run workflow.** To test, enter one small state (for example `DE`), tick "check every hospital", and set the limit to `3`.
-
-On a computer: `pip install -r requirements.txt` then `python bot/run.py --state DE --all --limit 3 --local` (writes to `./local/`, no keys needed).
-
-### Hospital list
-
-`data/hospitals.csv` lists the 5,255 hospitals on CMS's Hospital General Information list (excluding VA and Defense Department hospitals). For each hospital it has the known index domain and file link, plus the last original archived in the October 3–9 runs. To add a found link, edit the hospital's row; the bot picks it up the next time that hospital is due.
-
-## Version 2: insurer files (rented machines only when needed)
-
-Every day at 5:47am Central (`insurers/bot.py`, workflow "Insurer price files"):
-
-1. **Collect** results from any rented machines, and delete any bot machine older than 2 days so nothing runs up a bill.
-2. **Find this month's file** for each of the 76 DFW networks in `insurers/networks.csv`. Insurers date their file names, so the bot tries each date from today back to the file it already has. Files with a fixed link (Wellpoint) are checked in place.
-3. **Check without downloading:** same ETag, or the same `last_updated_on` inside the file plus the same size, means unchanged. That network gets `last_checked` = today.
-4. **Put changed files in one shared machine queue (Oct 14)** (`insurers/fleet.py`, R2 `bot/fleet/`). Every file to read is one job. The bot rents one machine per waiting job, biggest files first, up to the account's machine limit, which it reads live from DigitalOcean on every pass (raise the limit and the next pass uses it). Each machine keeps claiming the next job it is big enough for (Cigna and BCBSTX need 32 GB, UnitedHealthcare/Aetna/Blue plans 16 GB, the rest 8 GB), runs the unchanged 06f pipeline, replaces that network's tables in R2 `data/full/rates/` and `data/full/membership/`, and deletes itself when nothing is left it can take. New files go before re-reads of unchanged files. A machine that disappears mid-file has its file put back in line; after two such machines the file is reported as failed. Nothing starts while a website build is reading the same tables. Machine logs: `bot/fleet/logs/<machine>.txt`.
-5. **Keep every field and take an inventory (Oct 13):** tables also keep each code's description and version, the insurer's "additional information" notes, bundled codes and covered services. After each file, 06f writes a "what's in the file" inventory (real counts: how often each field is filled, top values for arrangement, rate type, class, setting, expiration, notes) to `bot/insurers/census/<yyyy-mm>/<scope>/<table>.json`. Research only, never shown as a price; a census error never fails the read.
-6. **Double-count fix:** when the new file has a new name, the old month's tables move to `work/retired/<yyyy-mm>/` after the new ones are safely uploaded, so each network is counted once.
-
-Problems (failed reads, rows down by more than half, dead links) open a GitHub issue labeled `insurer-file-alert`, once per problem. State: R2 `bot/insurers/manifest.csv`; machine logs and results: `bot/insurers/runs/<run>/`.
-
-Needs one more secret: `DIGITALOCEAN_TOKEN`. Without it the workflow only checks. To test: Actions → Insurer price files → Run workflow, untick "Dry run", and enter one slot (e.g. `oscar-oscar-064-in-network-json`).
-
-Known gaps (Oct 9): Cigna's links need signed URLs from its table of contents (CloudFront answers 403); BSW's September files are gone and October's use a different name; Molina's links now open a web page. These networks keep their last good tables and are flagged until their discovery is added. Rebuilding the site files from the new tables (every-code build) is still a separate step.
-
-## Data rules
-
-Every price comes from a real source file and links back to it. Nothing is estimated or averaged. Each record shows when it was checked.
-
-Change-detection ideas adapted from [hospital-price-history](https://github.com/lkowalcz/hospital-price-history) (CC0).
+Change-detection ideas adapted from [hospital-price-history](https://github.com/lkowalcz/hospital-price-history) (CC0). Thanks to everyone else working to make these files readable.
