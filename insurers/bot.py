@@ -236,8 +236,14 @@ def collect(s3, b, man, now, dry):
                 notes.append(("failed", m))
                 continue
             age = (now - datetime.fromisoformat(m["launched_at"].replace("Z", "+00:00"))).total_seconds() / 3600
-            if age > STUCK_HOURS:
-                m.update(status="failed", detail=f"machine gave no result in {STUCK_HOURS} hours", fails=str(int(m.get("fails") or 0) + 1))
+            # Oct 25, 2026: a file that is neither in the machine queue nor has a result has no machine on it, so waiting
+            # STUCK_HOURS (48) for it only holds up its area's page build (two Molina Ohio files held IN/KY/OH that way).
+            # After 2 hours it counts as failed, and the next check puts it back in line (retry 1 of 3).
+            gone = jid not in qjobs and age > 2
+            if age > STUCK_HOURS or gone:
+                m.update(status="failed", fails=str(int(m.get("fails") or 0) + 1),
+                         detail="no machine on it and no result (taken out of the queue); back in line" if gone and age <= STUCK_HOURS
+                         else f"machine gave no result in {STUCK_HOURS} hours")
                 notes.append(("failed", m))
             continue
         if res.get("ok") and res.get("fields_only"):   # prices unchanged: keep the table, its rows and dates
