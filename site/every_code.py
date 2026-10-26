@@ -28,14 +28,30 @@ _g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/l
 s3 = boto3.client('s3', endpoint_url=f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
                   aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name='auto')
 B = _g('R2_BUCKET'); OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); SPLIT = int(E.get('SPLIT', '1')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
-LOG = []
+LOG = []; _LOGT = [0.0]
 def log(*a):
     m = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a); print(m, flush=True); LOG.append(m)
-    if len(LOG) % 3 == 1: s3.put_object(Bucket=B, Key=OUTP + 'log.txt', Body='\n'.join(LOG).encode())
+    # Oct 26, 2026 (R2 bill): was a write of the whole log every 3 lines on every machine; now at most once a minute
+    if time.time() - _LOGT[0] > 60: _LOGT[0] = time.time(); s3.put_object(Bucket=B, Key=OUTP + 'log.txt', Body='\n'.join(LOG).encode())
 def ls(pfx):
     out = []
     for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=pfx): out += [(o['Key'], o['Size']) for o in pg.get('Contents', [])]
     return out
+# Oct 26, 2026 (R2 bill, $165 in two weeks, mostly reads): R2 charges per request, not per byte. Downloads used boto3's
+# default 8 MB pieces, so a 20 GB insurer table cost 2,500 reads each time; 128 MB pieces cost 160 (same speed or faster).
+from boto3.s3.transfer import TransferConfig
+TC = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=128 << 20, max_concurrency=8)
+def root_state(pfx):
+    """One listing of only the top level of pfx (Delimiter='/', so the ~256 stage files per table under xpart/ aux/ ...
+    are not walked): {tag: True} for '<tag>.done' and {tag: last-modified time} for '<tag>.claim'. Replaces a
+    HEAD + GET per table piece on every restart and every minute of waiting."""
+    done, claims = set(), {}
+    for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=pfx, Delimiter='/'):
+        for o in pg.get('Contents', []):
+            n = o['Key'][len(pfx):]
+            if n.endswith('.done'): done.add(n[:-5])
+            elif n.endswith('.claim'): claims[n[:-6]] = o['LastModified'].timestamp()
+    return done, claims
 # a crashed earlier attempt on this machine leaves DuckDB spill files (and, with NOXPART, downloaded buckets) behind; clear them
 shutil.rmtree(D / 'tmp', ignore_errors=True)
 if E.get('NOXPART'): shutil.rmtree(D / 'xpart', ignore_errors=True)
@@ -108,7 +124,7 @@ def by_label(key): return bool(E.get('NETS_FROM_LABEL')) or key in LABEL_KEYS
 # same table + size -> same results; label-named tables get their own cache entries
 TAG = {key: 't' + hashlib.sha1((f'{key}|{size}' + ('|label' if by_label(key) else '')).encode()).hexdigest()[:12] for key, size in files}
 TAGS = set(TAG.values())
-doneA = {k.rsplit('/', 1)[1][:-5] for k, _ in ls(AC) if k.endswith('.done')}
+doneA, CLAIMT = root_state(AC)   # Oct 26: was ls(AC), which also walked every table's ~256 stage files
 def isdone(tag): 
     try: s3.head_object(Bucket=B, Key=AC + f'{tag}.done'); return True
     except Exception: return False
@@ -140,14 +156,24 @@ PIECE_GB = float(E.get('PIECE_GB', '0.4'))
 # different tables; a claim older than CLAIM_H hours (machine died) can be taken over. After its own tables, a
 # machine waits for the others' tables and then moves on to stage B with all of them.
 ROLE = E.get('ROLE', 'local'); CLAIM_S = float(E.get('CLAIM_H', '2')) * 3600
+MYCL = D / 'my_claims.txt'   # claims this machine made (kept across restarts), so the shortcut below never skips our own
+# A replacement machine reuses its predecessor's name (ROLE) but starts on an empty disk, so on its first run it doesn't
+# know which claims are "its own": that run checks every claim the old way; the restarts after it use the shortcut.
+FIRSTRUN = not MYCL.exists(); MYCL.touch()
+def mine_cl(i): return str(i) in MYCL.read_text().split()
 def claim(i):
+    # Oct 26: a claim the listing shows as fresh and not ours is skipped without a read (was a GET per piece, per restart, per minute)
+    if not FIRSTRUN and str(i) in CLAIMT and time.time() - CLAIMT[str(i)] < CLAIM_S and not mine_cl(i): return False
     try:
         o = s3.get_object(Bucket=B, Key=AC + f'{i}.claim'); who = o['Body'].read().decode()
         if who != ROLE and time.time() - o['LastModified'].timestamp() < CLAIM_S: return False
     except Exception: pass
     s3.put_object(Bucket=B, Key=AC + f'{i}.claim', Body=ROLE.encode()); time.sleep(3)   # two machines can claim at once:
-    try: return s3.get_object(Bucket=B, Key=AC + f'{i}.claim')['Body'].read().decode() == ROLE   # the last write wins
-    except Exception: return True
+    try: ok = s3.get_object(Bucket=B, Key=AC + f'{i}.claim')['Body'].read().decode() == ROLE   # the last write wins
+    except Exception: ok = True
+    if ok:
+        with open(MYCL, 'a') as f_: f_.write(f'{i}\n')
+    return ok
 waiting = []
 for ii, (key, size) in enumerate(files):
     i = TAG[key]
@@ -159,7 +185,7 @@ for ii, (key, size) in enumerate(files):
     K = max(1, math.ceil(size / (PIECE_GB * 1e9))) if size > float(E.get('MINSPLIT', '0.8e9')) else 1
     if K == 1 and E.get('ACLAIM') and not claim(i):   # big tables are shared piece by piece instead
         waiting.append((ii, key, i, K)); continue
-    loc, locm = D / 'in/r.parquet', D / 'in/m.parquet'
+    loc, locm = D / f'in/{i}.r.parquet', D / f'in/{i}.m.parquet'   # Oct 26: named per table so a restart reuses it
     got = False; others = False
     total = 0
     for p in range(K):
@@ -168,9 +194,20 @@ for ii, (key, size) in enumerate(files):
             restore_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} restored'); continue
         if K > 1 and E.get('ACLAIM') and not claim(tag): others = True; continue
         if not got:   # download only once this machine has work in the table
-            s3.download_file(B, key, str(loc))
-            try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm)); mj = True
-            except Exception: mj = False
+            # Oct 26 (R2 bill): MAXPIECES restarts the script every few pieces; the table stayed on disk but was named
+            # in/r.parquet and downloaded again in full each time. Now it's kept per table and reused if complete.
+            for old in (D / 'in').glob('*.parquet'):
+                if not old.name.startswith(f'{i}.'): old.unlink(missing_ok=True)   # only one table on disk at a time
+            if not (loc.exists() and loc.stat().st_size == size):
+                s3.download_file(B, key, str(loc) + '.part', Config=TC); os.replace(str(loc) + '.part', loc)
+            mmark = D / f'in/{i}.m.none'
+            if locm.exists(): mj = True
+            elif mmark.exists(): mj = False
+            else:
+                try: s3.download_file(B, key.replace('/rates/', '/membership/'), str(locm) + '.part', Config=TC); os.replace(str(locm) + '.part', locm); mj = True
+                except Exception as e_:
+                    mj = False
+                    if '404' in str(e_) or 'NoSuchKey' in str(e_) or 'Not Found' in str(e_): mmark.touch()   # remember only a real 'no membership file'
             # Oct 18, 2026: NETS_FROM_LABEL=1 (update builds of catalog networks, e.g. Anthem's employer networks): one
             # network per file, named by its label. The membership file lists each provider's Anthem products ("Blue
             # Connection | Blue Preferred HMO | Pathway"), which split one employer network into ~200 picker entries.
@@ -206,7 +243,7 @@ for ii, (key, size) in enumerate(files):
             save_a(tag); log(f'A {ii+1}/{len(files)} piece {p+1}/{K} done')
             NEWP[0] += 1
             if E.get('MAXPIECES') and NEWP[0] >= int(E['MAXPIECES']): log('MAXPIECES reached, restarting fresh'); LOGFLUSH(); os._exit(3)
-    loc.unlink(missing_ok=True); locm.unlink(missing_ok=True)
+    for f_ in (D / 'in').glob(f'{i}.*'): f_.unlink(missing_ok=True)
     if K > 1 and others and not all(isdone(f'{i}_{p}') for p in range(K)):
         waiting.append((ii, key, i, K)); continue   # other machines still have pieces of this table
     gl = f'{D}/xpart/bucket=*/{i}.parquet' if K == 1 else f'{D}/xpart/bucket=*/{i}_*.parquet'
@@ -219,13 +256,15 @@ if waiting:
     log('A waiting for', len(waiting), 'tables other machines are reading'); LOGFLUSH()
     while waiting:
         time.sleep(60)
+        doneA, CLAIMT = root_state(AC)   # Oct 26: one listing per minute replaces a HEAD per piece and a GET per unfinished piece
+        isdone_ = lambda t_: str(t_) in doneA
         for w in list(waiting):
             ii_, key_, i_, K_ = w
-            if K_ > 1 and not isdone(i_) and all(isdone(f'{i_}_{p}') for p in range(K_)):
-                s3.put_object(Bucket=B, Key=AC + f'{i_}.done', Body=b'1')   # last piece came in: mark the whole table
-            if isdone(i_):
+            if K_ > 1 and not isdone_(i_) and all(isdone_(f'{i_}_{p}') for p in range(K_)):
+                s3.put_object(Bucket=B, Key=AC + f'{i_}.done', Body=b'1'); doneA.add(str(i_))   # last piece came in: mark the whole table
+            if isdone_(i_):
                 _LA = None; restore_a(i_); waiting.remove(w); log(f'A {ii_+1}/{len(files)} read by other machines', key_.rsplit('/', 1)[1])
-            elif any(claim(t_) for t_ in ([i_] if K_ == 1 else [f'{i_}_{p}' for p in range(K_) if not isdone(f'{i_}_{p}')])):
+            elif any(claim(t_) for t_ in ([i_] if K_ == 1 else [f'{i_}_{p}' for p in range(K_) if not isdone_(f'{i_}_{p}')])):
                 log('A taking over', key_.rsplit('/', 1)[1]); LOGFLUSH(); os._exit(4)   # its machine stopped: restart and read it here
 if E.get('ACLAIM'):
     # Oct 12, 2026 fix: the file listing used by restore_a was taken when the first table was restored, so tables other
@@ -237,7 +276,7 @@ if E.get('ACLAIM'):
     log('A all', len(TAGS), 'tables restored from a fresh listing')
 if E.get('STOPA'): log('STOPA'); sys.exit(0)
 # ---------- lookups ----------
-s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), str(D / 'npis.parquet'))
+s3.download_file(B, E.get('NPIS', 'data/2026-09-29/dfw_npis_all.parquet'), str(D / 'npis.parquet'), Config=TC)
 s3.download_file(B, 'site/site_codes.csv', str(D / 'site_codes.csv'))
 # Oct 19, 2026: zip5 too, for each provider's state (4th field of D.fac below)
 NP = {r[0]: r[1:] for r in con.execute(f"select npi, entity_type, name, credential, taxonomy_1, city, zip5 from '{D}/npis.parquet'").fetchall()}
