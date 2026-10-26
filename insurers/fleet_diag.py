@@ -7,7 +7,24 @@ sys.path.insert(0, str(HERE)); sys.path.insert(0, str(HERE.parent / "bot"))
 import droplets, fleet, store  # noqa: E402
 
 s3, b = store.r2()
-cl = fleet.claims(s3, b)
+# Oct 26, 2026: when R2 itself is down, still list every machine on the account with its CPU (is money being wasted?)
+try:
+    cl = fleet.claims(s3, b)
+except Exception as e:
+    print("R2 NOT REACHABLE:", repr(e)[:200])
+    import time as _t, requests as _rq
+    r = _rq.get(f"{droplets.API}/droplets", params={"per_page": 200}, headers=droplets._h(), timeout=60).json()["droplets"]
+    print(f"=== ALL MACHINES: {len(r)}")
+    for d in r:
+        try:
+            end = int(_t.time()); q = dict(host_id=str(d["id"]), start=str(end - 1800), end=str(end))
+            res = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/cpu", params=q, headers=droplets._h(), timeout=60).json()["data"]["result"]
+            tot = {x["metric"].get("mode"): float(x["values"][-1][1]) - float(x["values"][0][1]) for x in res if len(x["values"]) >= 2}
+            cpu = f"{100 * (1 - (tot.get('idle', 0) + tot.get('iowait', 0)) / sum(tot.values())):.0f}%" if sum(tot.values()) else "?"
+        except Exception:
+            cpu = "?"
+        print(f"  {d['name']}  made {d['created_at']}  {d['size_slug']}  ${d['size']['price_hourly']}/h  CPU {cpu}")
+    sys.exit(0)
 by_did = {}
 for jid, c in cl.items():
     by_did.setdefault(str(c.get("droplet_id")), []).append((jid, c.get("name"), c.get("heartbeat") or c.get("at")))
