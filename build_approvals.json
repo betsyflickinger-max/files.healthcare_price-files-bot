@@ -40,8 +40,8 @@
   "why": "Betsy OK'd up to $150 per new-state page build (Oct 23, 2026) so builds keep running while she's away"
  },
  "stn5-2026-10": {
-  "usd": 150,
-  "why": "Betsy OK'd up to $150 per new-state page build (Oct 24, 2026), same as the other new areas"
+  "usd": 250,
+  "why": "Betsy OK'd raising to $250 on Oct 26, 2026 after the $220 projection hold (issue #203); price check still holds again if the projection passes ~$312"
  },
  "stn5-2026-11": {
   "usd": 150,
