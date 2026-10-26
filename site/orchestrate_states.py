@@ -108,8 +108,13 @@ def update_tables():
     if tf:   # Oct 25, 2026: the table list taken straight from an area's insurer manifest (no separate R2 file to write)
         import csv as _csv, io as _io
         rows = _csv.DictReader(_io.StringIO(s3.get_object(Bucket=B, Key=tf['manifest'])['Body'].read().decode()))
-        return {r['table'] for r in rows if r.get('table') and r.get('status') == 'processed'
-                and r.get('insurer') == tf['insurer'] and (r.get('processed_on') or '') >= tf.get('processed_since', '')}
+        tabs = sorted({r['table'] for r in rows if r.get('table') and r.get('status') == 'processed'
+                       and r.get('insurer') == tf['insurer'] and (r.get('processed_on') or '') >= tf.get('processed_since', '')})
+        # Oct 25, 2026: machines get the list by R2 key (ONLY_KEY), so write it once and point REBUILD['tables'] at it
+        key = f"site/builds/{STB}-{MONTH}/update_tables.json"
+        s3.put_object(Bucket=B, Key=key, Body=json.dumps(tabs).encode())
+        REBUILD['tables'] = key
+        return set(tabs)
     return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read()))
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
@@ -532,6 +537,7 @@ def main():
                 if common_first() and not UPDATE:   # Oct 18: common codes first (priority list + DRGs, the rest listed as coming)
                     env.update(PHASE='1', PRIORITY_KEY=f'site/priority/{CODE_OF[slug]}.json')
                 if UPDATE:
+                    if 'tables' not in REBUILD: update_tables()   # tables_from: writes the list to R2 first
                     env['ONLY_KEY'] = REBUILD['tables']
                     if REBUILD.get('nets_from_label'): env['NETS_FROM_LABEL'] = '1'
                 bd = build_defaults(); ps = bd.get('per_state', {}).get(slug, {})   # per-state settings win
