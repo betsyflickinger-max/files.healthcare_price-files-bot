@@ -1,0 +1,45 @@
+name: Storage cost check (every 3 hours)
+
+# Prices the last week of Cloudflare R2 storage requests (board/r2_cost.py). If yesterday's requests cost more than
+# R2_LIMIT_DAY_USD, or the check can't read Cloudflare analytics yet, it opens one GitHub issue titled
+# "Storage cost check", which emails Betsy. Closes itself when things are back under the limit. Free (public repo).
+on:
+  schedule:
+    - cron: "53 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      CF_ANALYTICS_TOKEN: ${{ secrets.CF_ANALYTICS_TOKEN }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      R2_LIMIT_DAY_USD: "10"
+      GH_TOKEN: ${{ github.token }}
+      TITLE: "Storage cost check"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: board
+      - run: python3 board/r2_cost.py
+      - run: cat r2_cost.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Open, update or close the alert issue
+        run: |
+          num=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          when=$(TZ=America/Chicago date '+%a %b %-d, %-I:%M %p Central')
+          if [ -s alert.txt ]; then
+            body=$(printf '%s\n\n%s\n\n%s\n' "Checked $when." "$(cat alert.txt)" "$(cat r2_cost.md)")
+            if [ -z "$num" ]; then
+              gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body" --assignee betsyflickinger-max || gh issue create --repo "$GITHUB_REPOSITORY" --title "$TITLE" --body "$body"
+            elif grep -q '^OVER' alert.txt && [ "$(TZ=America/Chicago date +%H)" -lt 3 ]; then
+              gh issue comment "$num" --repo "$GITHUB_REPOSITORY" --body "$body"   # at most one new email a day while it stays over
+            fi
+          elif [ -n "$num" ]; then
+            gh issue close "$num" --repo "$GITHUB_REPOSITORY" --comment "Storage requests are back under the limit ($when)."
+          fi

@@ -157,10 +157,13 @@ PIECE_GB = float(E.get('PIECE_GB', '0.4'))
 # machine waits for the others' tables and then moves on to stage B with all of them.
 ROLE = E.get('ROLE', 'local'); CLAIM_S = float(E.get('CLAIM_H', '2')) * 3600
 MYCL = D / 'my_claims.txt'   # claims this machine made (kept across restarts), so the shortcut below never skips our own
-def mine_cl(i): return MYCL.exists() and str(i) in MYCL.read_text().split()
+# A replacement machine reuses its predecessor's name (ROLE) but starts on an empty disk, so on its first run it doesn't
+# know which claims are "its own": that run checks every claim the old way; the restarts after it use the shortcut.
+FIRSTRUN = not MYCL.exists(); MYCL.touch()
+def mine_cl(i): return str(i) in MYCL.read_text().split()
 def claim(i):
     # Oct 26: a claim the listing shows as fresh and not ours is skipped without a read (was a GET per piece, per restart, per minute)
-    if str(i) in CLAIMT and time.time() - CLAIMT[str(i)] < CLAIM_S and not mine_cl(i): return False
+    if not FIRSTRUN and str(i) in CLAIMT and time.time() - CLAIMT[str(i)] < CLAIM_S and not mine_cl(i): return False
     try:
         o = s3.get_object(Bucket=B, Key=AC + f'{i}.claim'); who = o['Body'].read().decode()
         if who != ROLE and time.time() - o['LastModified'].timestamp() < CLAIM_S: return False
