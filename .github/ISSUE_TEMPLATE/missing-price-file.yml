@@ -1,0 +1,49 @@
+name: Report a missing or broken price file
+description: A hospital or insurer price file we don't have, or one that's broken. Feeds the Price File Watch.
+title: "Missing price file: "
+labels: ["price-file-report", "needs-betsy"]
+assignees: ["betsyflickinger-max"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping. Federal rules require hospitals and insurers to publish their prices. If you found a file we're missing, or one of ours is broken, tell us here.
+        **Please don't include anything personal** (your name on a bill, medical details, member ID). This page is public.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of file?
+      options:
+        - Hospital price file (standard charges)
+        - Insurer or health plan rate file (Transparency in Coverage)
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: who
+    attributes:
+      label: Hospital, insurer or plan name
+      placeholder: "e.g. Example General Hospital, Dallas TX"
+    validations:
+      required: true
+  - type: input
+    id: link
+    attributes:
+      label: Link to the file or the page that lists it (if you have one)
+      placeholder: "https://..."
+  - type: dropdown
+    id: problem
+    attributes:
+      label: What's wrong?
+      options:
+        - We don't have this file at all
+        - The link is dead or the file won't download
+        - The file opens but looks wrong or empty
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Anything else we should know?
+      placeholder: "Where you found it, when you checked, what you saw."

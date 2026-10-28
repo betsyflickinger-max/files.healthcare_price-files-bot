@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: The Healthcare Files
+    url: https://files.healthcare
+    about: Search what care costs, by procedure, provider and insurance network.

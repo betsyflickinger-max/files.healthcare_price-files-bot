@@ -1,0 +1,42 @@
+name: This price looks wrong
+description: A price on The Healthcare Files that doesn't match its source or doesn't look right.
+title: "Price check: "
+labels: ["price-correction", "needs-betsy"]
+assignees: ["betsyflickinger-max"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Every price on The Healthcare Files links back to the hospital or insurer file it came from. If one looks off, tell us and we'll check it against the original.
+        **Please don't include anything personal** (your name, medical details, member ID, a photo of a bill with your info on it). This page is public.
+  - type: input
+    id: page
+    attributes:
+      label: Link to the page with the price
+      placeholder: "https://files.healthcare/..."
+    validations:
+      required: true
+  - type: input
+    id: what
+    attributes:
+      label: Procedure, provider and insurer (as shown on the page)
+      placeholder: "e.g. Colonoscopy, Example Surgery Center, Aetna PPO"
+    validations:
+      required: true
+  - type: input
+    id: shown
+    attributes:
+      label: Price shown on our page
+      placeholder: "$"
+  - type: textarea
+    id: why
+    attributes:
+      label: Why does it look wrong?
+      placeholder: "Doesn't match the hospital's own file, way too high or low, wrong provider, out of date..."
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Link to where you saw a different price (optional)
+      placeholder: "https://..."
