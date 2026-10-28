@@ -25,8 +25,8 @@ def looks_placeholder(v, median):
     return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 E = os.environ
 _g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks
-s3 = boto3.client('s3', endpoint_url=f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
-                  aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"), aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
+                  aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 B = _g('R2_BUCKET'); OUTP = E.get('OUTP', 'site/every/2026-10-08/'); D = Path(E.get('WORK', '/d')); NB = int(E.get('NB', '256')); SPLIT = int(E.get('SPLIT', '1')); TOUT = E.get('TOUT', 'site/every/2026-10-08/')
 LOG = []; _LOGT = [0.0]
 def log(*a):
@@ -381,8 +381,8 @@ def fresh_s3():
     practice test: 5 restarts on 4 machines)."""
     global s3
     if os.getpid() != _S3PID[0]:
-        s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                          aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+        s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                          aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
         _S3PID[0] = os.getpid()
 def work(u):
     """One bucket (or one piece of one). DuckDB only sorts (spills to disk, so memory stays bounded); Python walks the sorted rows and

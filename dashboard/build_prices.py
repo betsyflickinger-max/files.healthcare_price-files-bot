@@ -39,8 +39,8 @@ ap = argparse.ArgumentParser(); ap.add_argument("--only", default=""); ap.add_ar
 ap.add_argument("--out", default="out/dashboard"); ap.add_argument("--dfw-page", default="", help="local copy of the DFW Price Finder page (testing)")
 ARGS = ap.parse_args()
 E = {k: "".join(v.split()) if k.startswith("R2_") else v for k, v in os.environ.items()}; BUCKET = E["R2_BUCKET"]   # secrets may carry a newline
-s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
-                  aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E["R2_ACCESS_KEY_ID"],
+                  aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
 def get_bytes(key): return s3.get_object(Bucket=BUCKET, Key=key)["Body"].read()
 def get_text(key): return get_bytes(key).decode().strip()
 def exists(key):

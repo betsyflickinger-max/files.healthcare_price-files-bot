@@ -26,8 +26,8 @@ CODES = "90832 90834 90837 90846 90847 90853 99203 99204 99205 99243 99244 99385
 
 def r2():
     g = lambda k: "".join(os.environ[k].split())
-    s3 = boto3.client("s3", endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-                      aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name="auto")
+    s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"),
+                      aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name=(os.environ.get("STORAGE_REGION") or "auto"))
     return s3, g("R2_BUCKET")
 
 

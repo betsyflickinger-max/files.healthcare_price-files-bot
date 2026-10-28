@@ -17,8 +17,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 HAND, AUTO = f"{ROOT}/site/plain_names_cpt.tsv", f"{ROOT}/site/plain_names_auto.tsv"
 DECLINED = f"{ROOT}/site/plain_names_declined.tsv"   # code<TAB>date both models declined; retried after RETRY_DAYS
 MAX, BATCH, MODEL = int(E.get("MAX_CODES", "20000")), int(E.get("BATCH", "40")), E.get("MODEL", "claude-haiku-5-5")
-s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                  aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
+                  aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
 B = E["R2_BUCKET"]
 
 def load(p):

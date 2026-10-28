@@ -28,6 +28,8 @@ jobs:
     timeout-minutes: 30
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
@@ -43,8 +45,8 @@ jobs:
           python - <<'EOF'
           import os, boto3
           g = lambda k: "".join(os.environ[k].split())
-          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-                            aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name="auto")
+          s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"),
+                            aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name=(os.environ.get("STORAGE_REGION") or "auto"))
           os.makedirs(os.path.expanduser("~/.ssh"), exist_ok=True)
           p = os.path.expanduser("~/.ssh/hz")
           open(p, "wb").write(s3.get_object(Bucket=g("R2_BUCKET"), Key="bot/secrets/hetzner_ssh_key")["Body"].read())
@@ -57,7 +59,7 @@ jobs:
           SSH="ssh -i $HOME/.ssh/hz -o StrictHostKeyChecking=accept-new -o ServerAliveInterval=30 root@$IP"
           scp -i $HOME/.ssh/hz -o StrictHostKeyChecking=accept-new dedicated/setup.sh root@$IP:/root/setup.sh
           $SSH "R2_ACCOUNT_ID='$(strip "$R2_ACCOUNT_ID")' R2_ACCESS_KEY_ID='$(strip "$R2_ACCESS_KEY_ID")' \
-                R2_SECRET_ACCESS_KEY='$(strip "$R2_SECRET_ACCESS_KEY")' R2_BUCKET='$(strip "$R2_BUCKET")' \
+                R2_SECRET_ACCESS_KEY='$(strip "$R2_SECRET_ACCESS_KEY")' R2_BUCKET='$(strip "$R2_BUCKET")' STORAGE_ENDPOINT='$(strip "$STORAGE_ENDPOINT")' STORAGE_REGION='$(strip "$STORAGE_REGION")' \
                 DIGITALOCEAN_TOKEN='$(strip "$DIGITALOCEAN_TOKEN")' BOT_GITHUB_TOKEN='$(strip "$BOT_GITHUB_TOKEN")' \
                 IA_ACCESS_KEY='$(strip "$IA_ACCESS_KEY")' IA_SECRET_KEY='$(strip "$IA_SECRET_KEY")' \
                 SERVER='$NAME' SLOTS='$SLOTS' bash /root/setup.sh"

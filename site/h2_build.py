@@ -178,8 +178,8 @@ def part(k):
     c2.execute(f"SET threads=1; SET memory_limit='{os.environ.get('FMEM', '1500MB')}'; SET temp_directory='{out}/duck/p{k}'")
     c2.execute(f"CREATE VIEW rout AS SELECT * FROM read_parquet('{out}/part/r_*.parquet'); CREATE VIEW cout AS SELECT * FROM read_parquet('{out}/part/c_*.parquet')")
     E = os.environ
-    s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto') if E.get('UPLOAD') else None
+    s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto')) if E.get('UPLOAD') else None
     pool = ThreadPoolExecutor(8)
     cash_by, xc = defaultdict(list), defaultdict(dict)
     for row in c2.execute(f"SELECT code, s, st, cash, gross, rw, fee, dsc, k, n FROM cout WHERE hash(code)%{NP}={k} ORDER BY code, cash").fetchall():

@@ -43,6 +43,8 @@ jobs:
     timeout-minutes: 350
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
@@ -86,6 +88,8 @@ jobs:
     timeout-minutes: 350
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
@@ -108,8 +112,8 @@ jobs:
           python - <<'PY' || exit 0
           import os, sys, json, boto3, time
           g = lambda k: "".join(os.environ[k].split())
-          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", aws_access_key_id=g("R2_ACCESS_KEY_ID"),
-                            aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name="auto")
+          s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"), aws_access_key_id=g("R2_ACCESS_KEY_ID"),
+                            aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"), region_name=(os.environ.get("STORAGE_REGION") or "auto"))
           k = f"site/builds/st{os.environ['HOSP_SCOPE']}-{time.strftime('%Y-%m')}/state.json"
           try: st = json.loads(s3.get_object(Bucket=g("R2_BUCKET"), Key=k)["Body"].read())
           except Exception: print("no insurer build yet for", os.environ["HOSP_SCOPE"]); sys.exit(1)

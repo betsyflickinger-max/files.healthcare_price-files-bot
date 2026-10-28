@@ -18,9 +18,9 @@ def env(name):
 
 def main():
     folder, pats = sys.argv[1], sys.argv[2:]
-    s3 = boto3.client("s3", endpoint_url=f"https://{env('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+    s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{env('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"),
                       aws_access_key_id=env("R2_ACCESS_KEY_ID"), aws_secret_access_key=env("R2_SECRET_ACCESS_KEY"),
-                      region_name="auto")
+                      region_name=(os.environ.get("STORAGE_REGION") or "auto"))
     n = 0
     for pat in pats:
         for f in sorted(glob.glob(os.path.join(folder, pat))):

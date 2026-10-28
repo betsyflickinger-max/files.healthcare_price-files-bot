@@ -18,8 +18,8 @@ for _k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCK
     if _k in E:  # pasted secrets can carry a line break; strip it (same as bot/store.env) so every step and machine gets clean values
         E[_k] = ''.join(E[_k].split())
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 HERE = os.path.dirname(os.path.abspath(__file__))
 BID = E.get('BUILD') or time.strftime('%Y-%m')
 # Oct 23, 2026 (Betsy: "set up the DFW update"): a mid-month DFW rebuild, so networks added after the month's build
@@ -74,8 +74,10 @@ def droplets(): return do('GET', '/droplets?per_page=200')['droplets']
 def free_slots(): return int(do('GET', '/account')['account']['droplet_limit']) - RESERVE - len(droplets())
 
 ENV_KEYS = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']
+# Oct 28, 2026: where storage lives (blank = Cloudflare R2). Set as repo variables to move to another S3-style store.
+STORAGE_KEYS = ['STORAGE_ENDPOINT', 'STORAGE_REGION']
 def userdata(script, env):
-    envs = '\n'.join(f"export {k}='{E[k]}'" for k in ENV_KEYS) + f"\nexport R2_BUCKET={B} DO_TOKEN='{E['DIGITALOCEAN_TOKEN']}'\n" + \
+    envs = '\n'.join(f"export {k}='{E.get(k, '')}'" for k in ENV_KEYS + STORAGE_KEYS) + f"\nexport R2_BUCKET={B} DO_TOKEN='{E['DIGITALOCEAN_TOKEN']}'\n" + \
         '\n'.join(f"export {k}='{v}'" for k, v in env.items())
     return f"""#!/bin/bash
 exec > /root/boot.log 2>&1
@@ -91,13 +93,13 @@ cat > /root/run.sh <<'RUN'
 mkdir -p /root/h /d && cd /root/h
 /root/v/bin/python -c "
 import boto3,os
-s3=boto3.client('s3',endpoint_url='https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com',aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name='auto')
+s3=boto3.client('s3',endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or 'https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com'),aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 s3.download_file(os.environ['R2_BUCKET'],'{SP}bundle.tgz','/root/b.tgz')"
 tar xzf /root/b.tgz -C /root/h
 {script}
 /root/v/bin/python -c "
 import boto3,os
-s3=boto3.client('s3',endpoint_url='https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com',aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name='auto')
+s3=boto3.client('s3',endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or 'https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com'),aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 s3.upload_file('/root/run.log',os.environ['R2_BUCKET'],'{SP}logs/'+os.environ['ROLE']+'.log')"
 ID=$(curl -s http://169.254.169.254/metadata/v1/id)
 curl -s -X DELETE -H "Authorization: Bearer $DO_TOKEN" https://api.digitalocean.com/v2/droplets/$ID
@@ -123,7 +125,7 @@ RUN_H2 = """/root/v/bin/python - >> /root/run.log 2>&1 <<'PY'
 import boto3, os, json
 from concurrent.futures import ThreadPoolExecutor
 E = os.environ
-s3 = boto3.client('s3', endpoint_url='https://' + E['R2_ACCOUNT_ID'] + '.r2.cloudflarestorage.com', aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or 'https://' + E['R2_ACCOUNT_ID'] + '.r2.cloudflarestorage.com'), aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 jobs = json.loads(s3.get_object(Bucket=E['R2_BUCKET'], Key=E['JOBS_KEY'])['Body'].read())
 os.makedirs('/root/rows', exist_ok=True)
 with ThreadPoolExecutor(16) as P: list(P.map(lambda j: s3.download_file(E['R2_BUCKET'], E['HPFX'] + 'rows/' + j['id'] + '.parquet', '/root/rows/' + j['id'] + '.parquet'), jobs))
@@ -132,7 +134,7 @@ PY
 /root/v/bin/python /root/h/h2_build.py '/root/rows/*.parquet' /root/h/payer_name_mapping.csv /root/page.html /d >> /root/run.log 2>&1
 /root/v/bin/python -c "
 import boto3,os
-s3=boto3.client('s3',endpoint_url='https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com',aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name='auto')
+s3=boto3.client('s3',endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or 'https://'+os.environ['R2_ACCOUNT_ID']+'.r2.cloudflarestorage.com'),aws_access_key_id=os.environ['R2_ACCESS_KEY_ID'],aws_secret_access_key=os.environ['R2_SECRET_ACCESS_KEY'],region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 s3.upload_file('/d/hosp_index.json',os.environ['R2_BUCKET'],os.environ['SP']+'hosp_index.json')" >> /root/run.log 2>&1"""
 
 

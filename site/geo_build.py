@@ -23,8 +23,8 @@ import boto3, duckdb, requests
 
 E = os.environ
 page, BID = sys.argv[1], sys.argv[2]
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 B = E['R2_BUCKET']
 UA = {'User-Agent': 'what-it-costs-price-map/1.0 (Texas healthcare price transparency site)'}
 BBOX = tuple(float(x) for x in E['GEO_BBOX'].split(',')) if E.get('GEO_BBOX') else (-98.6, 31.6, -95.4, 34.2)   # lon/lat limits (default: DFW and the surrounding counties)

@@ -33,8 +33,8 @@ OUT = Path(__file__).resolve().parent.parent / "reports" / "insurer_report_cards
 
 
 def s3c():
-    return boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
-                        aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+    return boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E["R2_ACCESS_KEY_ID"],
+                        aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
 
 
 def pct(n, d):

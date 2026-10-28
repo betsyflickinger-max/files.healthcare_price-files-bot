@@ -43,9 +43,9 @@ STB = 'st' if HSCOPE in ('', 's7') else 'st' + HSCOPE   # build ids: st-YYYY-MM 
 def s3c():
     import boto3
     E = os.environ
-    return boto3.client('s3', endpoint_url=f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com",
+    return boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com"),
                         aws_access_key_id=''.join(E['R2_ACCESS_KEY_ID'].split()),
-                        aws_secret_access_key=''.join(E['R2_SECRET_ACCESS_KEY'].split()), region_name='auto')
+                        aws_secret_access_key=''.join(E['R2_SECRET_ACCESS_KEY'].split()), region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 
 
 def newest_build(s3, B, area):

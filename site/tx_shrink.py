@@ -9,8 +9,8 @@ Env: R2_*; TABLE (file name in data/tx/rates/ without .parquet) or ALL=1; MEM; T
 import json, os, time, duckdb, boto3, shutil
 E = os.environ
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 W = E.get('WORK', '/d'); os.makedirs(f'{W}/tmp', exist_ok=True)
 def ls(p): return [(o['Key'], o['Size']) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p) for o in pg.get('Contents', [])]
 tables = [k.rsplit('/', 1)[1][:-8] for k, _ in sorted(ls('data/tx/rates/'), key=lambda x: -x[1])] if E.get('ALL') else [E['TABLE']]

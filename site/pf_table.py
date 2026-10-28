@@ -117,8 +117,8 @@ def write_ml(d, only_stale=False):
     E = {k: ''.join(os.environ.get(k, '').split()) for k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET')}
     if not all(E.values()):
         return 0
-    s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
     B = E['R2_BUCKET']
     ML = json.loads(s3.get_object(Bucket=B, Key='site/med_local/2026.json')['Body'].read())['npi']
     ccn_npis = {}

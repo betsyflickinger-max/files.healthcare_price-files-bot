@@ -518,7 +518,8 @@ def fill(s3, b, now):
         print(f"queue: {sc} files not started: {why}")
     want = fleet.plan(qjobs, qclaims, held, ours, free, fleet.idle_dedicated(s3, b, qclaims))
     env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET",
-                                     "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN", "IA_ACCESS_KEY", "IA_SECRET_KEY")}
+                                     "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN", "IA_ACCESS_KEY", "IA_SECRET_KEY",
+                                     "STORAGE_ENDPOINT", "STORAGE_REGION")}
     launched, stamp = [], now.strftime("%Y%m%d-%H%M")
     for i, (size, job) in enumerate(want, 1):
         name = f"{fleet.NAME}{fleet.mem_gb(size)}g-{stamp}-{i:02d}"

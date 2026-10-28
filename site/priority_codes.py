@@ -30,8 +30,8 @@ STATES = {'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'C
 def s3c():
     import boto3
     g = lambda k: ''.join(E[k].split())
-    return boto3.client('s3', endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", aws_access_key_id=g('R2_ACCESS_KEY_ID'),
-                        aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name='auto'), g('R2_BUCKET')
+    return boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"), aws_access_key_id=g('R2_ACCESS_KEY_ID'),
+                        aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name=(os.environ.get('STORAGE_REGION') or 'auto')), g('R2_BUCKET')
 
 
 def medicare_rank(geo_rows, state_name):

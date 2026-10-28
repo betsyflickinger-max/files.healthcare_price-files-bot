@@ -66,8 +66,8 @@ def main():
     a = ap.parse_args()
     defs = list(csv.DictReader(open(HERE / "packages.csv")))
     codes = sorted({c for d in defs for k in ("codes", "family") for c in d[k].split("|") if c})
-    s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E["R2_ACCESS_KEY_ID"],
-                      aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+    s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E["R2_ACCESS_KEY_ID"],
+                      aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
     tables = []
     for page in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix=a.rates):
         tables += [o["Key"] for o in page.get("Contents", []) if o["Key"].endswith(".parquet")]

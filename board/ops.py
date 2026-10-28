@@ -27,8 +27,8 @@ sys.path.insert(0, str(HERE.parent / "insurers"))
 import fleet  # noqa: E402  (the insurer queue's own rules for claims and holds)
 
 E = {k: v.strip() for k, v in os.environ.items()}
-s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
-                  aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name="auto")
+s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
+                  aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
 B = E["R2_BUCKET"]
 OUT = Path("out/board"); OUT.mkdir(parents=True, exist_ok=True)
 NOW = datetime.now(timezone.utc); MONTH = NOW.strftime("%Y-%m")

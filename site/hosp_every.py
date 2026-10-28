@@ -37,7 +37,7 @@ def parse_codecols(path):
                        negotiated_percentage=r.get('standard_charge_percent', ''), negotiated_algorithm=r.get('standard_charge_algorithm', ''),
                        methodology=r.get('methodology', ''), median_amount=r.get('50th_percentile', ''), notes=r.get('additional_generic_notes', ''),
                        payer_notes=r.get('additional_payer_notes', ''), hospital_name=E.get('HNAME_' + os.path.basename(path), ''))
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 B = E['R2_BUCKET']; PFX = E.get('HPFX', 'data/hosp_every/')   # rows/<sha16>.parquet is a cache shared across months
 jobs = json.loads(s3.get_object(Bucket=E['R2_BUCKET'], Key=E['JOBS_KEY'])['Body'].read()) if E.get('JOBS_KEY') else json.load(open(E.get('JOBS', f'{HERE}/jobs.json')))
 if E.get('SHARDS'): jobs = jobs[int(E.get('SHARD', '0'))::int(E['SHARDS'])]

@@ -430,8 +430,8 @@ def main():
     for k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'CLOUDFLARE_API_TOKEN'):
         if k in E: E[k] = ''.join(E[k].split())
     B = E.get('R2_BUCKET', 'upfrontdfwdata')
-    s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
     def written(k):
         try: return s3.head_object(Bucket=B, Key=k)['LastModified']
         except Exception: return None

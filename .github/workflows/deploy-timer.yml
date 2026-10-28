@@ -19,6 +19,8 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4

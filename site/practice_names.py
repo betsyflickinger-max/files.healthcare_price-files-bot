@@ -120,8 +120,8 @@ def refresh_sources():
     """Download the two public lists and store compact copies in R2 (run monthly; both sources update monthly)."""
     import json, urllib.request, boto3, duckdb
     E = os.environ
-    s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+    s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
     d = E.get('WORK', '/tmp/names'); os.makedirs(d, exist_ok=True)
     meta = json.loads(urllib.request.urlopen(DAC_URL_META, timeout=60).read())
     url = meta['distribution'][0]['data']['downloadURL']

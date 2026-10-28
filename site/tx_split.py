@@ -15,8 +15,8 @@ Env: R2_*; TABLES (comma list of table names without .parquet) or ALL=1; [SRC=re
 import json, os, sys, time, glob, shutil, duckdb, boto3
 E = os.environ
 B = E.get('R2_BUCKET', 'upfrontdfwdata')
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 W = E.get('WORK', '/d'); os.makedirs(f'{W}/tmp', exist_ok=True)
 HERE = os.path.dirname(os.path.abspath(__file__))
 GEO = next((p for p in (f'{HERE}/tx_zip_metro.csv', f'{HERE}/../reference/geo/tx_zip_metro.csv') if os.path.exists(p)), None)   # bundled next to this file on machines

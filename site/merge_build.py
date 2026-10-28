@@ -40,8 +40,8 @@ def log(*a): print(time.strftime('%H:%M:%S'), *a, flush=True)
 def s3c():
     import boto3
     g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks (as the other bot scripts do)
-    return boto3.client('s3', endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
-                        aws_access_key_id=g('R2_ACCESS_KEY_ID'), aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name='auto')
+    return boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"),
+                        aws_access_key_id=g('R2_ACCESS_KEY_ID'), aws_secret_access_key=g('R2_SECRET_ACCESS_KEY'), region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 
 
 def looks_placeholder(v, median):

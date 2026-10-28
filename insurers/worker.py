@@ -41,9 +41,9 @@ E = {k: "".join(os.environ.get(k, "").split()) for k in
 from boto3.s3.transfer import TransferConfig  # noqa: E402
 from botocore.config import Config  # noqa: E402
 
-s3 = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com",
+s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
-                  region_name="auto",
+                  region_name=(os.environ.get("STORAGE_REGION") or "auto"),
                   config=Config(connect_timeout=60, read_timeout=900, retries={"max_attempts": 10, "mode": "adaptive"}))
 BIG = TransferConfig(multipart_threshold=64 << 20, multipart_chunksize=256 << 20, max_concurrency=4)
 B = E["R2_BUCKET"]

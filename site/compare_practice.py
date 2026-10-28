@@ -11,16 +11,16 @@ import os, sys, json, gzip, base64, boto3
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 E = os.environ
-s3 = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                  aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 B = E['R2_BUCKET']; LIVE = E['LIVE']; TEST = E['TEST']
 def j(key): return json.loads(s3.get_object(Bucket=B, Key=key)['Body'].read())
 _S3 = {}
 def cli():   # one client per process (the check forks worker processes)
     pid = os.getpid()
     if pid not in _S3:
-        _S3[pid] = boto3.client('s3', endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", aws_access_key_id=E['R2_ACCESS_KEY_ID'],
-                                aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name='auto')
+        _S3[pid] = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                                aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
     return _S3[pid]
 def page(prefix, code):
     try: return json.loads(gzip.decompress(base64.b64decode(cli().get_object(Bucket=B, Key=f'{prefix}t/{code}.txt')['Body'].read())))

@@ -51,6 +51,8 @@ jobs:
     timeout-minutes: ${{ (github.event.schedule == '*/10 * * * *' || inputs.fill) && 60 || 240 }}   # Oct 23: full checks of 15,000+ links ran out at 60
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
       R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
@@ -73,7 +75,7 @@ jobs:
             python - <<'PY'
           import json, os, time, boto3
           E = os.environ
-          s3 = boto3.client('s3', endpoint_url=f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com", region_name='auto',
+          s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com"), region_name=(os.environ.get('STORAGE_REGION') or 'auto'),
                             aws_access_key_id=''.join(E['R2_ACCESS_KEY_ID'].split()), aws_secret_access_key=''.join(E['R2_SECRET_ACCESS_KEY'].split()))
           try: at = json.loads(s3.get_object(Bucket=''.join(E['R2_BUCKET'].split()), Key='bot/insurers/full_check.json')['Body'].read())['at']
           except Exception: at = 0
@@ -85,7 +87,7 @@ jobs:
             python - <<'PY'
           import json, os, time, boto3
           E = os.environ
-          s3 = boto3.client('s3', endpoint_url=f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com", region_name='auto',
+          s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com"), region_name=(os.environ.get('STORAGE_REGION') or 'auto'),
                             aws_access_key_id=''.join(E['R2_ACCESS_KEY_ID'].split()), aws_secret_access_key=''.join(E['R2_SECRET_ACCESS_KEY'].split()))
           s3.put_object(Bucket=''.join(E['R2_BUCKET'].split()), Key='bot/insurers/full_check.json', Body=json.dumps({'at': time.time(), 'run': E.get('GITHUB_RUN_ID')}).encode())
           print('full check lock set')
@@ -170,7 +172,7 @@ jobs:
           python - <<'PY'
           import os, boto3
           E = os.environ
-          s3 = boto3.client('s3', endpoint_url=f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com", region_name='auto',
+          s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com"), region_name=(os.environ.get('STORAGE_REGION') or 'auto'),
                             aws_access_key_id=''.join(E['R2_ACCESS_KEY_ID'].split()), aws_secret_access_key=''.join(E['R2_SECRET_ACCESS_KEY'].split()))
           s3.delete_object(Bucket=''.join(E['R2_BUCKET'].split()), Key='bot/insurers/full_check.json')
           print('full check lock cleared')
