@@ -1,0 +1,37 @@
+name: Backblaze B2 test (write, read back, list)
+# Oct 28, 2026: one-time check that the B2 keys work before storage moves there. Writes one small file
+# (bot/b2-test.txt), reads it back and lists the bucket. Safe to run any time.
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, time, boto3
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          print("endpoint:", ep, "| bucket:", b, "| bucket looks like an ID:", bool(re.fullmatch(r"[0-9a-f]{24}", b)))
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          region = m.group(1) if m else "us-east-005"
+          print("region:", region)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=region,
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          body = f"b2 test {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}".encode()
+          s3.put_object(Bucket=b, Key="bot/b2-test.txt", Body=body)
+          back = s3.get_object(Bucket=b, Key="bot/b2-test.txt")["Body"].read()
+          assert back == body, "read-back mismatch"
+          n = s3.list_objects_v2(Bucket=b, MaxKeys=5).get("KeyCount")
+          print(f"B2 OK: wrote, read back and listed ({n} object(s) visible)")
