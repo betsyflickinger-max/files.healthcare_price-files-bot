@@ -24,6 +24,9 @@ jobs:
           if ep and not ep.startswith("http"):
               ep = "https://" + ep
           print("endpoint:", ep, "| bucket:", b, "| bucket looks like an ID:", bool(re.fullmatch(r"[0-9a-f]{24}", b)))
+          host = re.sub(r"^https?://", "", ep).split("/")[0]
+          print("endpoint starts with s3.:", host.startswith("s3."), "| bucket name inside endpoint:", b.lower() in ep.lower(),
+                "| endpoint has a path after the host:", "/" in re.sub(r"^https?://", "", ep).rstrip("/"))
           m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
           region = m.group(1) if m else "us-east-005"
           print("region:", region)
