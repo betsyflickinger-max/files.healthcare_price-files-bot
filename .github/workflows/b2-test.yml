@@ -33,5 +33,14 @@ jobs:
           s3.put_object(Bucket=b, Key="bot/b2-test.txt", Body=body)
           back = s3.get_object(Bucket=b, Key="bot/b2-test.txt")["Body"].read()
           assert back == body, "read-back mismatch"
-          n = s3.list_objects_v2(Bucket=b, MaxKeys=5).get("KeyCount")
-          print(f"B2 OK: wrote, read back and listed ({n} object(s) visible)")
+          print("B2 write + read back: OK")
+          for label, kw in (("list whole bucket", {}), ("list bot/", {"Prefix": "bot/"})):
+              try:
+                  r = s3.list_objects_v2(Bucket=b, MaxKeys=5, **kw)
+                  print(f"{label}: OK ({r.get('KeyCount')} shown)")
+              except Exception as e:
+                  print(f"{label}: FAILED {e}")
+          try:
+              s3.list_objects(Bucket=b, MaxKeys=5); print("list (older method): OK")
+          except Exception as e:
+              print(f"list (older method): FAILED {e}")
