@@ -83,7 +83,7 @@ def main():
         s3.list_objects_v2(Bucket=b, MaxKeys=1)
     except Exception as ex:
         sys.exit(f"R2 isn't answering yet, so there's nothing to copy: {ex}")
-    issue = requests.post(f"{API}/issues", headers=GH, timeout=60, json={"title": f"{TITLE} (R2 → B2)", "body": (
+    issue = requests.post(f"{API}/issues", headers=GH, timeout=60, json={"title": f"{TITLE} (R2 → B2)", "assignees": [REPO.split("/")[0]], "body": (
         "Copying everything in Cloudflare R2 to Backblaze B2 on one rented machine. **Copy only: nothing is deleted "
         "on either side.** Two passes (the second catches files written during the first), then a check that every "
         "R2 file is in Backblaze. Expect about 1–2 days for ~11.8 TB. Progress is posted here every 2 hours; the "

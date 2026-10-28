@@ -134,7 +134,8 @@ def go_off(err):
         f"**Nothing is lost.** Everything already saved stays in storage. Files that were mid-read get read again.\n\n"
         f"This issue closes itself, and the paused jobs turn back on, within 15 minutes of storage answering again.\n\n"
         f"Error: `{err[:300]}`\n\n<!-- paused: {json.dumps(state)} -->")
-    gh("POST", "/issues", json={"title": f"{TITLE} — check {name} billing", "body": body})
+    gh("POST", "/issues", json={"title": f"{TITLE} — check {name} billing", "body": body,
+                            "assignees": [REPO.split("/")[0]]})  # assigned = on Betsy's plan board
     print(f"storage OFF: paused {len(paused)} workflows, powered off {len(machines)} machines")
 
 
