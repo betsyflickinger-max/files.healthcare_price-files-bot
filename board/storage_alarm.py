@@ -27,7 +27,8 @@ API = f"https://api.github.com/repos/{REPO}"
 DO = "https://api.digitalocean.com/v2"
 TITLE = "Storage is switched off"
 ME = "storage-alarm.yml"
-KEEP_RUNNING = {ME, "r2-cost.yml"}  # the cost check reads Cloudflare's billing numbers, not storage
+KEEP_RUNNING = {ME, "r2-cost.yml", "calculator.yml"}  # cost check reads Cloudflare billing, not storage; the
+# calculator check only touches storage once new plan files are out, and must not miss them (Nov 1 deadline)
 OFF_CODES = {"NotEntitled", "AccessDenied", "InvalidAccessKeyId", "SignatureDoesNotMatch", "NoSuchBucket",
              "AccountProblem", "AllAccessDisabled", "Unauthorized", "Forbidden", "403", "401"}
 MARK = re.compile(r"<!-- paused: (\{.*?\}) -->", re.S)
@@ -155,6 +156,11 @@ def go_on(issue):
         f"(their files go back in the queue automatically). Closing."})
     gh("PATCH", f"/issues/{issue['number']}", json={"state": "closed"})
     print(f"storage back: re-enabled {len(back)}, returned {gone} machines")
+    # Oct 28, 2026 (Betsy OK'd): while the bot is still on R2, the first time R2 answers again, start the one-time copy
+    # to Backblaze B2 right away. storage_copy.py skips itself if a copy was already started.
+    if not env("STORAGE_ENDPOINT"):
+        r = gh("POST", "/actions/workflows/storage-copy.yml/dispatches", json={"ref": "main"})
+        print(f"started the R2 -> B2 copy workflow: HTTP {r.status_code}")
 
 
 def main():

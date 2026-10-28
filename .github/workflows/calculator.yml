@@ -6,7 +6,7 @@ name: Plan Calculator data
 # everything to calculator/data/<year>/ and R2, and opens an issue so the page can be updated.
 on:
   schedule:
-    - cron: "23 13 * * *"   # 8:23am Central
+    - cron: "23 1,7,13,19 * * *"   # every 6 hours (Oct 28, 2026: 2027 plans are due before Nov 1; was daily 8:23am Central)
   workflow_dispatch:
     inputs:
       year:
