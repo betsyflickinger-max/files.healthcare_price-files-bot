@@ -546,7 +546,7 @@ def fill(s3, b, now):
     for sc, why in held.items():
         print(f"queue: {sc} files not started: {why}")
     want = fleet.plan(qjobs, qclaims, held, ours, free, fleet.idle_dedicated(s3, b, qclaims))
-    if want and not dry:
+    if want:
         clash = pin_clashes()
         if clash:   # Oct 29, 2026: every machine would fail to install and delete itself (cost money, read nothing)
             raise SystemExit(f"::error::not renting machines: requirements.txt and insurers/requirements-worker.txt pin "
