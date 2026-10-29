@@ -155,3 +155,21 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("fl
         lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
         print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M}, {len(lines)} lines)")
         print("    " + "\n    ".join(lines[-20:]))
+
+# Oct 29, 2026: "joblog:<part of a file id>" finds that file's reads in queue machine logs from the last 3 days and prints
+# the end of each read (from its "claimed" line to the next file), so a file that failed after reading can be explained.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("joblog:")]:
+    import datetime as _dt
+    want = x.split(":", 1)[1]
+    since = _dt.datetime.now(_dt.timezone.utc) - _dt.timedelta(days=3)
+    objs = [o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=fleet.L)
+            for o in page.get("Contents", []) if o["LastModified"] >= since]
+    print(f"=== joblog {want}: searching {len(objs)} machine logs from the last 3 days")
+    for o in sorted(objs, key=lambda o: o["LastModified"]):
+        lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").splitlines()
+        starts = [i for i, l in enumerate(lines) if want in l and "claimed" in l]
+        for s in starts:
+            e = next((i for i in range(s + 1, len(lines)) if "] claimed (" in lines[i]), len(lines))
+            seg = lines[s:e]
+            print(f"--- {o['Key']} lines {s + 1}-{e} ({len(seg)} lines)")
+            print("    " + "\n    ".join(l[:300] for l in (seg[:3] + ["    ..."] + seg[-30:] if len(seg) > 34 else seg)))
