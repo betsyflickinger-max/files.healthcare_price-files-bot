@@ -89,12 +89,17 @@ OVERFLOW_FIX = "2026-10-24T05:30:00Z"   # files that failed on "integer overflow
 # refused the bot, or because its machine stopped while storage was off, gets its tries back. Files launched up to
 # 48 hours (STUCK_HOURS) before the outage could have been mid-read when it hit.
 OUTAGE_FROM, OUTAGE_TO = "2026-10-24T06:00:00Z", "2026-10-29T18:00:00Z"
+OUTAGE_TO_DL = "2026-10-29T21:15:00Z"   # download waits between retries from here on (06f_full_extract.py)
 OUTAGE_SIGNS = ("NotEntitled", "enable R2", "no machine on it", "gave no result", "machine reading this file stopped")
 
 
 def storage_outage_fail(m):
     d = m.get("detail") or ""
     if "NotEntitled" in d or "enable R2" in d:
+        return True
+    # Oct 29, 2026: a download blocked for a few minutes (Geisinger) used up all five back-to-back tries and showed up as
+    # "No such file or directory: .../dl_...". Downloads now wait between tries; failures from before that get their tries back.
+    if "/dl_" in d and "No such file or directory" in d and (m.get("launched_at") or "") < OUTAGE_TO_DL:
         return True
     return OUTAGE_FROM <= (m.get("launched_at") or "") < OUTAGE_TO and any(s in d for s in OUTAGE_SIGNS)
 REREAD_OLD_TABLES = True

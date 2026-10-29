@@ -27,6 +27,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import time
 from datetime import date
 from pathlib import Path
 
@@ -328,12 +329,20 @@ def run(source, ctx):
         name = Path(source.split("?")[0]).name
         tmp = DATA / ("dl_" + name)
         print(f"Downloading {name} ...", flush=True)
+        last = None
         for attempt in range(5):
             try:
                 download(source, tmp)   # Oct 22, 2026: host swap, browser user agent, certificate chain (common.py)
                 break
             except Exception as e:
+                last = e
                 print(f"  retry {attempt + 1}: {e}", flush=True)
+                # Oct 29, 2026: some hosts (Geisinger's mrf.thehealthplan.com) block for a few minutes when many of our
+                # machines ask at once. Five back-to-back tries all landed inside one block; now they wait 0.5-8 minutes.
+                if attempt < 4:
+                    time.sleep(30 * 2 ** attempt)
+        if not tmp.exists():   # was a confusing "No such file or directory: dl_..." from the reader
+            raise RuntimeError(f"download failed after 5 tries (last: {str(last)[:300]})")
         try:
             extract(str(tmp), {**ctx, "source_url": source.split("?")[0], "source_file": name})
         finally:
