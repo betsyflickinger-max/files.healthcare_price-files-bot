@@ -413,6 +413,19 @@ def check_all(man, today, only, force=False):
     return notes
 
 
+def pin_clashes():
+    """Packages pinned to different versions in the two lists every queue machine installs together (Oct 29, 2026:
+    a Dependabot update moved requests to 2.33.0 in one list only; pip refused both, so every machine rented after the
+    storage outage deleted itself without reading a file)."""
+    pins = {}
+    for f in ("requirements.txt", "insurers/requirements-worker.txt"):
+        for line in (Path(__file__).resolve().parent.parent / f).read_text().splitlines():
+            m = re.match(r"\s*([A-Za-z0-9_.\-]+)\s*==\s*([^\s;#]+)", line)
+            if m:
+                pins.setdefault(m.group(1).lower().replace("_", "-"), set()).add(m.group(2))
+    return ", ".join(f"{k} ({' vs '.join(sorted(v))})" for k, v in sorted(pins.items()) if len(v) > 1)
+
+
 def user_data(env):
     """Start-up script for a queue machine: install, then take jobs from the shared queue until none are left."""
     exports = "\n".join(f"export {k}='{v}'" for k, v in env.items())
@@ -533,6 +546,11 @@ def fill(s3, b, now):
     for sc, why in held.items():
         print(f"queue: {sc} files not started: {why}")
     want = fleet.plan(qjobs, qclaims, held, ours, free, fleet.idle_dedicated(s3, b, qclaims))
+    if want and not dry:
+        clash = pin_clashes()
+        if clash:   # Oct 29, 2026: every machine would fail to install and delete itself (cost money, read nothing)
+            raise SystemExit(f"::error::not renting machines: requirements.txt and insurers/requirements-worker.txt pin "
+                             f"different versions of {clash}; machines can't install either list. Make the pins match.")
     env = {k: store.env(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET",
                                      "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN", "IA_ACCESS_KEY", "IA_SECRET_KEY",
                                      "STORAGE_ENDPOINT", "STORAGE_REGION")}
