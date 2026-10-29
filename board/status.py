@@ -83,7 +83,8 @@ except Exception as e:
 TX_BATCHES = 256
 # Oct 29, 2026: the whole-bucket size pass (millions of objects, listing is R2's pricier request class) ran every 15
 # minutes and pushed each run past its 50-minute limit after the storage outage, so the board stopped updating. Now the
-# size is re-counted at most every 6 hours and saved; runs in between reuse it. Texas batches list only their own folder.
+# size comes from Cloudflare's analytics at most every 6 hours and is saved; runs in between reuse it. Texas batches
+# list only their own folder.
 SIZE_KEY, SIZE_HOURS = "bot/dashboard/r2_size.json", 6
 txb = Counter()
 for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="work/every-tx/"):
@@ -101,16 +102,31 @@ try:
 except Exception:
     size = {}
 if time.time() - size.get("at", 0) > SIZE_HOURS * 3600:
-    tot, n, top = 0, 0, Counter()
-    for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B):
-        for o in p.get("Contents", []):
-            tot += o["Size"]; n += 1; top["/".join(o["Key"].split("/")[:2])] += o["Size"]
-    size = {"at": time.time(), "objects": n, "gb": round(tot / 1e9, 1),
-            "est_usd_month": round(max(tot / 1e9 - 10, 0) * 0.015, 2),
-            "largest": [[k, round(v / 1e9, 1)] for k, v in top.most_common(6)]}
-    s3.put_object(Bucket=B, Key=SIZE_KEY, Body=json.dumps(size).encode())
+    # Oct 29, 2026 (same day): listing every object took longer than the run's 50 minutes, so the total comes from
+    # Cloudflare's own storage analytics (the same numbers board/r2_cost.py prices). The per-folder breakdown is kept
+    # from the last full count, if there was one.
+    try:
+        acct, tok = E.get("R2_ACCOUNT_ID", ""), E.get("CF_ANALYTICS_TOKEN", "")
+        sd = (datetime.now(timezone.utc).date().toordinal() - 3)
+        sd = datetime.fromordinal(sd).date().isoformat()
+        q = ('query($a: String!, $sd: Date!) { viewer { accounts(filter: {accountTag: $a}) { st: r2StorageAdaptiveGroups('
+             'limit: 1000, filter: {date_geq: $sd}) { max { payloadSize objectCount } dimensions { date bucketName } } } } }')
+        req = urllib.request.Request("https://api.cloudflare.com/client/v4/graphql",
+                                     data=json.dumps({"query": q, "variables": {"a": acct, "sd": sd}}).encode(),
+                                     headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"})
+        st = json.load(urllib.request.urlopen(req, timeout=60))["data"]["viewer"]["accounts"][0]["st"]
+        last = max(g["dimensions"]["date"] for g in st)
+        tot = sum(g["max"]["payloadSize"] or 0 for g in st if g["dimensions"]["date"] == last)
+        n = sum(g["max"]["objectCount"] or 0 for g in st if g["dimensions"]["date"] == last)
+        size = {"at": time.time(), "objects": n, "gb": round(tot / 1e9, 1),
+                "est_usd_month": round(max(tot / 1e9 - 10, 0) * 0.015, 2),
+                "largest": size.get("largest", []), "source": f"Cloudflare storage analytics, {last}"}
+        s3.put_object(Bucket=B, Key=SIZE_KEY, Body=json.dumps(size).encode())
+    except Exception as e:   # no token or analytics down: keep the last saved numbers rather than stall the board
+        print("storage size not refreshed:", repr(e)[:200])
+        size.setdefault("at", 0)
 out["r2"] = {k: v for k, v in size.items() if k != "at"}
-out["r2"]["counted_at"] = datetime.fromtimestamp(size["at"], timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+out["r2"]["counted_at"] = datetime.fromtimestamp(size["at"], timezone.utc).strftime("%Y-%m-%d %H:%M UTC") if size["at"] else "unknown"
 
 # DigitalOcean: month-to-date spend, credit, machines running now
 def do(path):
