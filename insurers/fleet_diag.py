@@ -142,3 +142,16 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ma
     for r in m:
         if r.get("status") in ("running", "queued"):
             print("  ", {k: (v[:120] if isinstance(v, str) else v) for k, v in r.items() if v})
+
+# Oct 29, 2026: "fleetlogs:<start of machine name>" prints the logs of queue machines that are already gone (newest 4),
+# plus any page build below its machine floor (queue machines step aside for those), so a machine that deleted itself
+# without reading a file can be explained after the fact.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("fleetlogs:")]:
+    pre = fleet.L + x.split(":", 1)[1]
+    print("=== page builds below their machine floor:", fleet.build_shortfall(s3, b) or "none")
+    objs = [o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=pre) for o in page.get("Contents", [])]
+    print(f"=== {len(objs)} machine logs starting {pre}")
+    for o in sorted(objs, key=lambda o: o["LastModified"])[-4:]:
+        lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
+        print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M}, {len(lines)} lines)")
+        print("    " + "\n    ".join(lines[-20:]))
