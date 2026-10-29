@@ -81,10 +81,13 @@ except Exception as e:
 # R2 size by top-level folder; the same pass counts finished Texas city-build batches
 # (work/every-tx/<city>/<run>/B/<n>.json; each city build has TX_BATCHES batches, newest run counts)
 TX_BATCHES = 256
-tot, n, top, txb = 0, 0, Counter(), Counter()
-for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B):
+# Oct 29, 2026: the whole-bucket size pass (millions of objects, listing is R2's pricier request class) ran every 15
+# minutes and pushed each run past its 50-minute limit after the storage outage, so the board stopped updating. Now the
+# size is re-counted at most every 6 hours and saved; runs in between reuse it. Texas batches list only their own folder.
+SIZE_KEY, SIZE_HOURS = "bot/dashboard/r2_size.json", 6
+txb = Counter()
+for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="work/every-tx/"):
     for o in p.get("Contents", []):
-        tot += o["Size"]; n += 1; top["/".join(o["Key"].split("/")[:2])] += o["Size"]
         k = o["Key"].split("/")
         if len(k) == 6 and k[:2] == ["work", "every-tx"] and k[4] == "B" and k[5].endswith(".json") and k[3][:1] == "v":
             txb[(k[2], k[3])] += 1
@@ -93,9 +96,21 @@ for (city, run), cnt in txb.items():
     if city not in cities or int(run[1:] or 0) > int(cities[city]["run"][1:] or 0):
         cities[city] = {"run": run, "done": min(cnt, TX_BATCHES), "total": TX_BATCHES}
 out["tx_cities"] = cities
-out["r2"] = {"objects": n, "gb": round(tot / 1e9, 1),
-             "est_usd_month": round(max(tot / 1e9 - 10, 0) * 0.015, 2),
-             "largest": [[k, round(v / 1e9, 1)] for k, v in top.most_common(6)]}
+try:
+    size = json.loads(get(SIZE_KEY))
+except Exception:
+    size = {}
+if time.time() - size.get("at", 0) > SIZE_HOURS * 3600:
+    tot, n, top = 0, 0, Counter()
+    for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B):
+        for o in p.get("Contents", []):
+            tot += o["Size"]; n += 1; top["/".join(o["Key"].split("/")[:2])] += o["Size"]
+    size = {"at": time.time(), "objects": n, "gb": round(tot / 1e9, 1),
+            "est_usd_month": round(max(tot / 1e9 - 10, 0) * 0.015, 2),
+            "largest": [[k, round(v / 1e9, 1)] for k, v in top.most_common(6)]}
+    s3.put_object(Bucket=B, Key=SIZE_KEY, Body=json.dumps(size).encode())
+out["r2"] = {k: v for k, v in size.items() if k != "at"}
+out["r2"]["counted_at"] = datetime.fromtimestamp(size["at"], timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
 # DigitalOcean: month-to-date spend, credit, machines running now
 def do(path):
