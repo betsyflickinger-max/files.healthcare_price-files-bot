@@ -16,7 +16,7 @@ Inputs (all already in R2, no rented machines):
 Rules (fixed before looking at any result, Oct 24, 2026):
   - Same billing code, facility fee only (hospital billing_class facility; insurer billing_class institutional), no modifier,
     same setting (inpatient/outpatient; a side that doesn't say, or says "both", fits either). MS-DRGs are inpatient.
-  - Hospital rows for Medicare Advantage or Medicaid plans are left out (insurer price files cover commercial and
+  - Hospital rows for Medicare Advantage or Medicaid plans, and rows labelled out-of-network (Oct 29), are left out (insurer price files cover commercial and
     marketplace plans only). Rows whose product line isn't known are kept.
   - Only dollar amounts are compared. Percent of charges, per diem and formula-only rows are "not comparable", with the reason.
   - Nothing is averaged. A hospital file can list several plan rows for one insurer and the insurer file several networks:
@@ -121,6 +121,10 @@ NAME_RULES = [(("aetna",), "Aetna"), (("humana",), "Humana"), (("cigna",), "Cign
               (("baylor scott", "bsw"), "BSW Health Plan"), (("curative",), "Curative")]
 MA_WORDS = ('medicare', 'advantage', ' mapd', 'dsnp', 'd-snp', ' ppo ma', ' hmo ma', 'senior', 'dual')
 MCD_WORDS = ('medicaid', 'chip', 'star kids', 'starkids', 'star+plus', 'star plus', 'starplus', 'star health')
+# Oct 29, 2026: hospital rows labelled out-of-network are not the in-network contract the insurer file lists, so they are
+# "not comparable" (the Oct 24 run paired 368 Aetna in-network rates with Medical City "Aetna · OON" rows, 344 counted as
+# "files disagree"). Labels like "Traditional" or "ParPlan" are left in: their meaning varies, so review them by hand.
+OON_RE = re.compile(r'\bOON\b|out[\s-]*of[\s-]*network|\bnon[\s-]*par(ticipating)?\b', re.I)
 def classify(payer, plan):
     ins, prod = mapping.get((payer, plan), ('', None))
     if not ins and payer in by_payer: ins = by_payer[payer].most_common(1)[0][0]
@@ -227,6 +231,7 @@ for sha, code, st, bc, modi, pn, pl, ins, prod, dol, pct, alg, meth, row, lu, ur
     G = groups[(sha, ins, code)]
     why = None
     if prod in ('Medicare Advantage', 'Medicaid'): why = f'{prod} plan rows (not in insurer files)'
+    elif OON_RE.search(f' {pn} {pl} '): why = 'out-of-network plan row (insurer files list in-network rates)'
     elif bc.startswith('prof'): why = 'professional fee only'
     elif modi: why = 'row has a modifier'
     elif not (dol and dol > 0):
@@ -330,7 +335,7 @@ pc = lambda n: f"{100*n/both:.0f}%" if both else '-'
 md = [f"# Hospital file vs insurer file: DFW pilot ({time.strftime('%b %d, %Y')})", '',
       f"Live DFW build `{BID}`: {len(src)} hospital files, {len(benv['files'])} insurer tables. The 89 core procedures, facility fees only.",
       f"Bands (set before looking): match = within $1 or 0.5%; close = within 5%; otherwise files disagree. The closest pair of",
-      f"amounts decides; nothing is averaged. Hospital rows for Medicare Advantage / Medicaid plans are left out. File dates more than {DATE_DAYS} days apart are flagged.", '',
+      f"amounts decides; nothing is averaged. Hospital rows for Medicare Advantage / Medicaid plans and rows labelled out-of-network are left out. File dates more than {DATE_DAYS} days apart are flagged.", '',
       f"**Where both files give a dollar amount: {both:,}** (hospital file + insurer + procedure + setting)", '',
       f"- Match: {tot['match']:,} ({pc(tot['match'])})", f"- Close: {tot['close']:,} ({pc(tot['close'])})", f"- Files disagree: {tot['files disagree']:,} ({pc(tot['files disagree'])})",
       f"- Not comparable (percent of charges, per diem, formula, professional fee only...): {tot['not comparable']:,}",
