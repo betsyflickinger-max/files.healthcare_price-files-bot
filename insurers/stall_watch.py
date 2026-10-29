@@ -27,6 +27,7 @@ OWNER = "betsyflickinger-max"
 REPO = os.environ.get("GITHUB_REPOSITORY", "betsyflickinger-max/price-files-bot")
 MIN_GAP = 9 * 60
 CPU_UNDER = 5
+MBPS_OVER = 1   # Oct 29, 2026: a machine still downloading (e.g. PHPNI serves ~9 Mbps, so its file takes hours at 0% CPU) isn't stuck
 
 
 def cpu_pct(did):
@@ -40,6 +41,22 @@ def cpu_pct(did):
             tot[x["metric"].get("mode")] = float(v[-1][1]) - float(v[0][1])
     allt = sum(tot.values())
     return round(100 * (1 - (tot.get("idle", 0) + tot.get("iowait", 0)) / allt)) if allt > 0 else None
+
+
+def mbps_in(did):
+    end = int(time.time())
+    r = requests.get(f"{droplets.API}/monitoring/metrics/droplet/bandwidth", headers=droplets._h(), timeout=60,
+                     params=dict(host_id=str(did), start=str(end - 1800), end=str(end), interface="public", direction="inbound"))
+    res = r.json()["data"]["result"]
+    pts = [float(x[1]) for x in res[0]["values"]] if res else []
+    return sum(pts) / len(pts) if pts else 0.0
+
+
+def _safe_mbps(did):
+    try:
+        return mbps_in(did)
+    except Exception:
+        return 0.0
 
 
 def _gh(method, path, **kw):
@@ -80,6 +97,11 @@ def _check(s3, b, claims):
     with ThreadPoolExecutor(8) as P:
         cpus = list(P.map(lambda t: _safe_cpu(t[0]), todo))
     stalled = {n: (h, c) for (_, n, h), c in zip(todo, cpus) if c is not None and c < CPU_UNDER}
+    low = [t for t in todo if t[1] in stalled]
+    with ThreadPoolExecutor(8) as P:
+        for (_, n, _h), mb in zip(low, P.map(lambda t: _safe_mbps(t[0]), low)):
+            if mb > MBPS_OVER:   # slow server, still downloading: not stuck
+                stalled.pop(n, None)
     seen = {n: t for n, t in st.get("seen", {}).items() if n in stalled}
     for n in stalled:
         seen.setdefault(n, now.isoformat(timespec="seconds"))
