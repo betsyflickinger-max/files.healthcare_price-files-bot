@@ -21,6 +21,7 @@ import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 from botocore.exceptions import ClientError
 
@@ -225,6 +226,42 @@ def held_scopes(s3, b, all_jobs, names):
 
 # Oct 20, 2026 (Betsy: "move it ahead of them"): areas whose new files go to the front of the line, ahead of every
 # other area's new files. Re-reads of unchanged files still come last. Empty the tuple to go back to plain order.
+# Oct 29, 2026: hosts that block when many of our machines download at once. Geisinger's mrf.thehealthplan.com
+# turned away 11-20 machines at a time; each sat in download back-off at 1-7% CPU holding a rented slot (DFW and
+# Texas files waited behind them) and 700+ files failed. At most this many machines read from such a host at once.
+HOST_CAPS = {"mrf.thehealthplan.com": 2}
+
+
+def host(j):
+    try:
+        return (urlsplit(j.get("url") or "").hostname or "").lower()
+    except Exception:
+        return ""
+
+
+def host_counts(all_jobs, all_claims):
+    """{host: machines reading from it now}, capped hosts only."""
+    n = {}
+    for jid in all_claims:
+        h = host(all_jobs.get(jid) or {})
+        if h in HOST_CAPS:
+            n[h] = n.get(h, 0) + 1
+    return n
+
+
+def under_cap(js, counts):
+    """Keep jobs (in order) while their host is under its cap, counting the ones kept."""
+    n, out = dict(counts), []
+    for j in js:
+        h = host(j)
+        if h in HOST_CAPS:
+            if n.get(h, 0) >= HOST_CAPS[h]:
+                continue
+            n[h] = n.get(h, 0) + 1
+        out.append(j)
+    return out
+
+
 TOP_SCOPES = ("c1",)   # Oct 24, 2026 (Betsy OK'd): Upper Midwest (MI ND SD IA MN NE KS) ahead of the Northeast and West groups
 FIRST_SCOPES = ("ar", "b1", "la", "b4", "az", "c1", "c2", "c3")   # Oct 22, 2026: Maryland, New Mexico, Montana next (Betsy OK'd batches 1-2)
 
@@ -294,6 +331,7 @@ def plan(all_jobs, all_claims, held, machines, free, dedicated=()):
                      and not (GHA_LANE and j.get("kind", "insurer") == "insurer" and j.get("mem", 8) <= GHA_MAX_MEM
                               and not j.get("nogha")
                               and age_mins(j.get("enqueued_at", "")) < GHA_GRACE_MIN)])
+    waiting = under_cap(waiting, host_counts(all_jobs, all_claims))   # no rented machine for a file over its host's cap
     busy = {str(c.get("droplet_id")) for c in all_claims.values()}
     booting = sorted((m for m in machines if str(m[0]) not in busy and age_mins(m[2]) < BOOT_MINS),
                      key=lambda m: -mem_gb(m[3]))

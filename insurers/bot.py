@@ -90,6 +90,7 @@ OVERFLOW_FIX = "2026-10-24T05:30:00Z"   # files that failed on "integer overflow
 # 48 hours (STUCK_HOURS) before the outage could have been mid-read when it hit.
 OUTAGE_FROM, OUTAGE_TO = "2026-10-24T06:00:00Z", "2026-10-29T18:00:00Z"
 OUTAGE_TO_DL = "2026-10-29T21:15:00Z"   # download waits between retries from here on (06f_full_extract.py)
+HOST_CAP_FIX = "2026-10-30T00:00:00Z"   # files launched before fleet.HOST_CAPS existed
 OUTAGE_SIGNS = ("NotEntitled", "enable R2", "no machine on it", "gave no result", "machine reading this file stopped")
 
 
@@ -407,6 +408,12 @@ def check_all(man, today, only, force=False):
         if m.get("status") == "failed" and storage_outage_fail(m):
             # Oct 29, 2026: storage (R2) was switched off Oct 26-29. Machines reading then died or got "NotEntitled";
             # that isn't the file's fault, so those tries don't count toward the 3-strikes limit.
+            m["fails"] = "0"
+        if (m.get("status") == "failed" and (m.get("launched_at") or "") < HOST_CAP_FIX
+                and "thehealthplan.com" in (m.get("url") or "")
+                and any(s in (m.get("detail") or "") for s in ("dl_FINS", "download failed after 5 tries", "403"))):
+            # Oct 29, 2026: Geisinger's host turned us away because up to 20 machines asked at once (fleet.HOST_CAPS
+            # now allows 2). Those blocked downloads weren't the file's fault, so the tries don't count.
             m["fails"] = "0"
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already

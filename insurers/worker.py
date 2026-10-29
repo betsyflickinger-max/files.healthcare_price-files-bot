@@ -409,6 +409,8 @@ def queue_main():
         cand = fleet.order([j for jid, j in js.items()
                             if jid not in cl and j["scope"] not in held and j.get("mem", 8) <= who["mem"]
                             and not (os.environ.get("GHA_WORKER") and (j.get("kind", "insurer") != "insurer" or j.get("nogha")))])
+        hc = fleet.host_counts(js, cl)   # Oct 29, 2026: skip files whose host already has its most machines (HOST_CAPS)
+        cand = [j for j in cand if fleet.host(j) not in fleet.HOST_CAPS or hc.get(fleet.host(j), 0) < fleet.HOST_CAPS[fleet.host(j)]]
         job = next((j for j in cand if fleet.claim(s3, B, j["id"], who)), None)
         if job is None:
             left = len([j for jid, j in js.items() if jid not in cl])
