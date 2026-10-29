@@ -16,7 +16,7 @@ Inputs (all already in R2, no rented machines):
 Rules (fixed before looking at any result, Oct 24, 2026):
   - Same billing code, facility fee only (hospital billing_class facility; insurer billing_class institutional), no modifier,
     same setting (inpatient/outpatient; a side that doesn't say, or says "both", fits either). MS-DRGs are inpatient.
-  - Hospital rows for Medicare Advantage or Medicaid plans, and rows labelled out-of-network (Oct 29), are left out (insurer price files cover commercial and
+  - Hospital rows for Medicare Advantage or Medicaid plans are left out (insurer price files cover commercial and
     marketplace plans only). Rows whose product line isn't known are kept.
   - Only dollar amounts are compared. Percent of charges, per diem and formula-only rows are "not comparable", with the reason.
   - Nothing is averaged. A hospital file can list several plan rows for one insurer and the insurer file several networks:
@@ -121,9 +121,10 @@ NAME_RULES = [(("aetna",), "Aetna"), (("humana",), "Humana"), (("cigna",), "Cign
               (("baylor scott", "bsw"), "BSW Health Plan"), (("curative",), "Curative")]
 MA_WORDS = ('medicare', 'advantage', ' mapd', 'dsnp', 'd-snp', ' ppo ma', ' hmo ma', 'senior', 'dual')
 MCD_WORDS = ('medicaid', 'chip', 'star kids', 'starkids', 'star+plus', 'star plus', 'starplus', 'star health')
-# Oct 29, 2026: hospital rows labelled out-of-network are not the in-network contract the insurer file lists, so they are
-# "not comparable" (the Oct 24 run paired 368 Aetna in-network rates with Medical City "Aetna · OON" rows, 344 counted as
-# "files disagree"). Labels like "Traditional" or "ParPlan" are left in: their meaning varies, so review them by hand.
+# Oct 29, 2026: hospital rows labelled out-of-network are kept and shown as their own category ("out-of-network
+# (hospital file)", one pairs.csv row each, with the amount and its source), but never compared with or counted as an
+# in-network rate. The Oct 24 run paired 368 Aetna in-network rates with Medical City "Aetna · OON" rows and counted
+# 344 as "files disagree". Labels like "Traditional" or "ParPlan" are left in: their meaning varies, so review them by hand.
 OON_RE = re.compile(r'\bOON\b|out[\s-]*of[\s-]*network|\bnon[\s-]*par(ticipating)?\b', re.I)
 def classify(payer, plan):
     ins, prod = mapping.get((payer, plan), ('', None))
@@ -219,7 +220,7 @@ NUM = lambda c: f"try_cast(replace(replace(trim({c}),'$',''),',','') AS DOUBLE)"
 con.execute(f"""create table hh as select h.sha16, h.code, h.setting, h.billing_class, h.modifiers, h.payer_name, h.plan_name, c.ins, c.prod,
   {NUM('h.dol')} dol, {NUM('h.pct')} pct, trim(coalesce(h.alg,'')) alg, h.methodology, h.source_row, h.last_updated_on, h.source_url
   from h join cls c using (payer_name, plan_name) where c.ins <> ''""")
-groups = defaultdict(lambda: {'h': [], 'hx': Counter(), 'i': [], 'ix': Counter()})
+groups = defaultdict(lambda: {'h': [], 'hx': Counter(), 'i': [], 'ix': Counter(), 'oon': []})
 DRG = lambda c: c.isdigit() and len(c) <= 3
 def st_norm(s, code):
     s = (s or '').lower()
@@ -231,7 +232,6 @@ for sha, code, st, bc, modi, pn, pl, ins, prod, dol, pct, alg, meth, row, lu, ur
     G = groups[(sha, ins, code)]
     why = None
     if prod in ('Medicare Advantage', 'Medicaid'): why = f'{prod} plan rows (not in insurer files)'
-    elif OON_RE.search(f' {pn} {pl} '): why = 'out-of-network plan row (insurer files list in-network rates)'
     elif bc.startswith('prof'): why = 'professional fee only'
     elif modi: why = 'row has a modifier'
     elif not (dol and dol > 0):
@@ -240,6 +240,10 @@ for sha, code, st, bc, modi, pn, pl, ins, prod, dol, pct, alg, meth, row, lu, ur
     elif meth == 'other' and alg: why = 'estimate from a formula (methodology "other" with an algorithm; the dollar amount is an estimate)'
     elif DRG(code) and dol < 100: why = 'under $100 for a hospital stay: looks like a DRG weight, not a dollar price'
     elif 'percent' in meth: why = 'percent of billed charges'
+    if OON_RE.search(f' {pn} {pl} ') and prod not in ('Medicare Advantage', 'Medicaid'):   # Oct 29: its own category, never in-network
+        G['oon'].append(dict(v=dol if not why else None, st=st_norm(st, code), plan=f'{pn} · {pl}'.strip(' ·'), meth=meth, row=row,
+                             date=lu or '', url=url or '', note=why or ''))
+        continue
     if why: G['hx'][why] += 1; continue
     G['h'].append(dict(prod=prod, v=dol, st=st_norm(st, code), plan=f'{pn} · {pl}'.strip(' ·'), meth=meth, row=row, date=lu or '', url=url or ''))
 
@@ -302,7 +306,12 @@ for (sha, ins, code), G in groups.items():
         r.update(result='hospital file only', reason='; '.join(f'{k} ({n})' for k, n in G['hx'].most_common(2)) if not H_ else '')
     else:
         r.update(result='insurer file only', reason='; '.join(f'{k} ({n})' for k, n in G['ix'].most_common(2)) if not I_ else '')
-    rows.append(r)
+    if H_ or I_ or G['hx'] or G['ix']: rows.append(r)   # a group with only out-of-network rows gets just the rows below
+    for o in G['oon']:   # out-of-network amounts from the hospital file: listed with their source, not compared
+        rows.append(dict(hospital=r['hospital'], hospital_file=r['hospital_file'], insurer=ins, code=code, procedure=r['procedure'],
+                         result='out-of-network (hospital file)', setting=o['st'], hospital_price=o['v'], hospital_plan=o['plan'],
+                         hospital_row=o['row'], hospital_methodology=o['meth'], hospital_file_date=o['date'],
+                         reason='out-of-network rate in the hospital file; insurer price files list in-network rates, so not compared' + (f" ({o['note']})" if o['note'] else '')))
 
 COLS = ['result', 'hospital', 'insurer', 'code', 'procedure', 'setting', 'hospital_price', 'insurer_price', 'diff', 'diff_pct',
         'hospital_plan', 'hospital_row', 'hospital_methodology', 'hospital_file_date', 'hospital_file', 'hospital_range',
@@ -312,7 +321,7 @@ with open(f'{OUT}/pairs.csv', 'w', newline='', encoding='utf-8') as f:
     w = csv.DictWriter(f, COLS, extrasaction='ignore'); w.writeheader(); w.writerows(rows)
 
 # ---- summary
-RES = ['match', 'close', 'files disagree', 'not comparable', 'hospital file only', 'insurer file only']
+RES = ['match', 'close', 'files disagree', 'not comparable', 'hospital file only', 'insurer file only', 'out-of-network (hospital file)']
 def table(key, keep=None, top=None):
     c = defaultdict(Counter)
     for r in rows: c[r[key]][r['result']] += 1
@@ -335,11 +344,12 @@ pc = lambda n: f"{100*n/both:.0f}%" if both else '-'
 md = [f"# Hospital file vs insurer file: DFW pilot ({time.strftime('%b %d, %Y')})", '',
       f"Live DFW build `{BID}`: {len(src)} hospital files, {len(benv['files'])} insurer tables. The 89 core procedures, facility fees only.",
       f"Bands (set before looking): match = within $1 or 0.5%; close = within 5%; otherwise files disagree. The closest pair of",
-      f"amounts decides; nothing is averaged. Hospital rows for Medicare Advantage / Medicaid plans and rows labelled out-of-network are left out. File dates more than {DATE_DAYS} days apart are flagged.", '',
+      f"amounts decides; nothing is averaged. Hospital rows for Medicare Advantage / Medicaid plans are left out. Hospital rows labelled out-of-network are listed as their own category and never compared with in-network rates. File dates more than {DATE_DAYS} days apart are flagged.", '',
       f"**Where both files give a dollar amount: {both:,}** (hospital file + insurer + procedure + setting)", '',
       f"- Match: {tot['match']:,} ({pc(tot['match'])})", f"- Close: {tot['close']:,} ({pc(tot['close'])})", f"- Files disagree: {tot['files disagree']:,} ({pc(tot['files disagree'])})",
       f"- Not comparable (percent of charges, per diem, formula, professional fee only...): {tot['not comparable']:,}",
       f"- Only the hospital file has it: {tot['hospital file only']:,} · only the insurer file has it: {tot['insurer file only']:,}",
+      f"- Out-of-network amounts listed in hospital files (shown separately, not compared): {tot['out-of-network (hospital file)']:,}",
       f"- File dates more than {DATE_DAYS} days apart: {far:,}",
       f"- Compared at an NPI that more than one hospital file lists (can't tell which campus the insurer rate is for): {sum(1 for r in rows if r.get('npi_shared_by'))}", '',
       "Rules added after the first run (Oct 24, data-type rules, not the bands): a hospital-stay (MS-DRG) amount under $100 is a DRG weight,",
