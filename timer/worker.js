@@ -2,8 +2,11 @@
 // none fired for hours), so this Worker starts each bot workflow at its time instead. It runs every minute, checks the
 // table below (times in UTC, same as the workflows' own cron lines) and asks GitHub to start what is due.
 // GitHub's own schedules stay in the workflows as a backup; every workflow that matters has a run lock, so a double start waits.
-// Secret GH_TOKEN: a fine-grained GitHub token for betsyflickinger-max/price-files-bot with "Actions: read and write".
-const REPO = 'betsyflickinger-max/price-files-bot';
+// Oct 29, 2026: every scheduled workflow is now on this table. After the storage alarm switched jobs off (Oct 28) and
+// back on (Oct 29), GitHub's own schedule stopped firing for many of them; the shared state page builder missed every
+// hourly run for 30 hours. Repo renamed to files.healthcare_price-files-bot (the old name only redirects).
+// Secret GH_TOKEN: a fine-grained GitHub token for this repo with "Actions: read and write".
+const REPO = 'betsyflickinger-max/files.healthcare_price-files-bot';
 const JOBS = [
   ['7,22,37,52 * * * *', 'board-status.yml'],
   ['*/10 * * * *', 'insurers.yml', { dry_run: 'false', fill: 'true' }],          // quick fill: collect results, start waiting files
@@ -28,6 +31,25 @@ const JOBS = [
   ['51 14 3 * *', 'index-watch.yml', { deep: 'true' }],                        // monthly deep check: every rate file link (receipts)
   ['23 12 7 * *', 'receipts.yml'],                                             // national file receipts, after catalogs + deep check
   ['33 15 * * *', 'ia-backfill.yml'],                                         // daily: send anything archive.org is missing
+  // Added Oct 29 (were on GitHub's schedule only):
+  ['36 * * * *', 'state-builds.yml'],                                          // shared state Price Finder pages
+  ['26 * * * *', 'ct-pages.yml'],
+  ['3,23,43 * * * *', 'gha-fleet.yml'],                                        // small insurer files on free GitHub machines
+  ['*/10 * * * *', 'request-codes.yml'],
+  ['7,22,37,52 * * * *', 'storage-alarm.yml'],
+  ['2,17,32,47 * * * *', 'visitors.yml'],
+  ['53 */3 * * *', 'r2-cost.yml'],
+  ['41 */3 * * *', 'control-watchdog.yml'],
+  ['17 11 * * *', 'procedure-pages.yml'],
+  ['17 12 * * *', 'pick-coverage.yml'],
+  ['17 15 * * *', 'coverage.yml'],
+  ['41 10 * * 1', 'file-check.yml'],
+  ['23 9 7 * *', 'insurer-search.yml'],
+  ['13 8 6 * *', 'web-search.yml', { retry_not_found: 'true' }],             // schedule meant all outstanding + retry
+  ['37 14 10 * *', 'match-pilot.yml'],
+  ['40 9 12 * *', 'more-pages.yml'],
+  ['33 14 12 * *', 'packages.yml'],
+  ['23 14 1 2,3,8,9 *', 'nsa-idr.yml'],
 ];
 
 function part(spec, v, min, max) {
