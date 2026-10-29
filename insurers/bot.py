@@ -85,6 +85,18 @@ FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date"
 # covered services, code version). When a machine slot is free, the bot re-reads those files, new files always first.
 READER = "2"
 OVERFLOW_FIX = "2026-10-24T05:30:00Z"   # files that failed on "integer overflow" before this get one fresh try
+# Storage outage (Oct 26-29, 2026: Cloudflare switched R2 off over a card check). A file that failed because storage
+# refused the bot, or because its machine stopped while storage was off, gets its tries back. Files launched up to
+# 48 hours (STUCK_HOURS) before the outage could have been mid-read when it hit.
+OUTAGE_FROM, OUTAGE_TO = "2026-10-24T06:00:00Z", "2026-10-29T18:00:00Z"
+OUTAGE_SIGNS = ("NotEntitled", "enable R2", "no machine on it", "gave no result", "machine reading this file stopped")
+
+
+def storage_outage_fail(m):
+    d = m.get("detail") or ""
+    if "NotEntitled" in d or "enable R2" in d:
+        return True
+    return OUTAGE_FROM <= (m.get("launched_at") or "") < OUTAGE_TO and any(s in d for s in OUTAGE_SIGNS)
 REREAD_OLD_TABLES = True
 # Oct 15, 2026: such a re-read (an unchanged file, tables from an older reader) only collects the fields kept since Oct 13,
 # so it streams the file once and writes just those to <scope>/fields/ (worker.py fields_only) instead of re-writing
@@ -386,6 +398,10 @@ def check_all(man, today, only, force=False):
                      or 'line 153, in roster_it' in (m.get("detail") or ""))):
             # Oct 24, 2026: failed on an oversized provider_group_id before the parser fix (496f695). "line 153, in
             # roster_it" is the OLD code's traceback: a machine started before the fix took it, so it isn't a real failure.
+            m["fails"] = "0"
+        if m.get("status") == "failed" and storage_outage_fail(m):
+            # Oct 29, 2026: storage (R2) was switched off Oct 26-29. Machines reading then died or got "NotEntitled";
+            # that isn't the file's fault, so those tries don't count toward the 3-strikes limit.
             m["fails"] = "0"
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
