@@ -45,7 +45,8 @@
  },
  "stn5-2026-10": {
   "usd": 150,
-  "why": "Betsy OK'd (Oct 30, 2026, issue #225): the $752 projection was a price-check bug (Wisconsin finishing dropped its batches from the done count; fixed in 72d95c1). California was landing ~50 batches/h; real cost to finish NY + CA estimated $30-60. $150 from the restart"
+  "why": "Betsy OK'd (Oct 30, 2026, issue #225): the $752 projection was a price-check bug (Wisconsin finishing dropped its batches from the done count; fixed in 72d95c1). California was landing ~50 batches/h; real cost to finish NY + CA estimated $30-60. $150 from the restart (ok_at lets it resume below the $250 it was held at)",
+  "ok_at": "2026-10-30 13:06"
  },
  "stn5-2026-11": {
   "usd": 150,

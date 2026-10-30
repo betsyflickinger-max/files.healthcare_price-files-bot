@@ -33,6 +33,16 @@ def approved_usd(bid):
         return 0.0
 
 
+def approved_at(bid):
+    """Oct 30, 2026: when Betsy gave the OK ("ok_at", UTC "YYYY-MM-DD HH:MM"), so a held build can resume on a new OK
+    that is lower than the one it was held at (stn5: held at $250, she OK'd $150 for the restart)."""
+    try:
+        a = json.load(open(os.path.join(HERE, "build_approvals.json"))).get(bid) or {}
+        return str(a.get("ok_at") or "")
+    except Exception:
+        return ""
+
+
 def projection(t0, done0, done_now, left, machines, usd_hour, now=None):
     """(hours left, dollars left, units per hour) from the speed since t0; None until CHECK_AFTER_H has passed."""
     now = now or time.time()

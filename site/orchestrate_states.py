@@ -391,7 +391,10 @@ def cost_hold(st, left):
     h = ck.get('hold')
     # Oct 24, 2026: a hold resumes only when the OK is raised above what it was at the hold (before, any OK on file resumed it
     # at once, so a build held for going over its OK was stopped and restarted in a loop)
-    if h and C.approved_usd(O.BID) <= ck.get('hold_ok', 0): log('price check: waiting for Betsy\'s OK:', h); return True
+    # Oct 30, 2026: ...or when a new OK was given after the hold ("ok_at" in build_approvals.json), even a lower one
+    hold_at = ck.get('hold_at') or (ck.get('last') or {}).get('at', '')
+    if h and C.approved_usd(O.BID) <= ck.get('hold_ok', 0) and not (C.approved_at(O.BID) > hold_at > ''):
+        log('price check: waiting for Betsy\'s OK:', h); return True
     # Oct 18, 2026: the first step (reading the insurer tables, stage A) finishes no batches, so a build still reading at
     # 2 hours looked like "no progress" and was held (st-2026-10c). Now the 2-hour measurement starts with the first
     # finished batch; only a reading step longer than READ_LIMIT_H hours is held.
@@ -422,7 +425,7 @@ def cost_hold(st, left):
     if proj: ck['last'] = dict(at=time.strftime('%Y-%m-%d %H:%M'), hours_left=round(proj[0], 1) if proj[0] != float('inf') else None,
                                usd_left=round(proj[1]) if proj[1] != float('inf') else None, units_per_hour=round(proj[2], 2))
     if v == 'ok': return False
-    ck['hold'] = v; ck['hold_ok'] = C.approved_usd(O.BID)
+    ck['hold'] = v; ck['hold_ok'] = C.approved_usd(O.BID); ck['hold_at'] = time.strftime('%Y-%m-%d %H:%M', time.gmtime())
     for d in O.droplets():
         if d['name'].startswith(f'upfront-site-{O.BID}-'):
             try: O.do('DELETE', f"/droplets/{d['id']}"); log('price check: stopped', d['name'])
