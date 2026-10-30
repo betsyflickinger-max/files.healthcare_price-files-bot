@@ -47,3 +47,14 @@ jobs:
               s3.list_objects(Bucket=b, MaxKeys=5); print("list (older method): OK")
           except Exception as e:
               print(f"list (older method): FAILED {e}")
+          # Oct 30: what the R2 -> B2 copy left behind (top-level folders, and the copy machine's logs if it saved them)
+          r = s3.list_objects_v2(Bucket=b, Delimiter="/")
+          print("top-level folders in B2:", [p["Prefix"] for p in r.get("CommonPrefixes", [])], "| top-level files:", r.get("KeyCount"))
+          for p in r.get("CommonPrefixes", [])[:20]:
+              q = s3.list_objects_v2(Bucket=b, Prefix=p["Prefix"], MaxKeys=1000)
+              print(f"  {p['Prefix']}: {q.get('KeyCount')}{'+' if q.get('IsTruncated') else ''} files in the first page")
+          logs = s3.list_objects_v2(Bucket=b, Prefix="bot/migration/logs/").get("Contents", [])
+          print("copy logs saved:", [(o["Key"], o["Size"], str(o["LastModified"])) for o in logs])
+          for o in logs:
+              txt = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode("utf-8", "replace").splitlines()
+              print(f"--- {o['Key']} (last 15 lines)"); print("\n".join(x[:300] for x in txt[-15:]))
