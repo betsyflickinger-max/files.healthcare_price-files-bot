@@ -51,8 +51,12 @@ say() {{ python3 -c 'import json,sys; print(json.dumps({{"body": sys.stdin.read(
 apt-get update -y && apt-get install -y curl unzip python3
 curl -s https://rclone.org/install.sh | bash
 OPTS="--transfers 48 --checkers 64 --retries 10 --low-level-retries 20 --b2-chunk-size 96M --stats 10m --stats-one-line --log-level NOTICE"
-( while sleep 7200; do echo "Still copying. Latest: $(grep -a 'Transferred' /var/log/copy.log | tail -1)" | say; done ) &
+# Oct 30: progress also saved to Backblaze (bot/migration/logs/) every 2 hours, so it can be read even if the GitHub
+# comment can't be posted (the first copy, Oct 29, posted nothing and stopped when Backblaze's free 10 GB cap was hit)
+( while sleep 7200; do echo "Still copying. Latest: $(grep -a 'Transferred' /var/log/copy.log | tail -1)" | say;
+  rclone copy /var/log "$DST/bot/migration/logs" --include 'copy*.log' --include 'check.log' -q || true; done ) &
 TICK=$!
+rclone copy /var/log "$DST/bot/migration/logs" --include 'copy-setup.log' -q || true
 echo "Machine is up; copy pass 1 starting (copy only: nothing is deleted on either side)." | say
 rclone copy "$SRC" "$DST" $OPTS --log-file /var/log/copy.log; P1=$?
 echo "Pass 1 finished (exit $P1): $(grep -a 'Transferred' /var/log/copy.log | tail -2 | tr '\\n' ' '). Pass 2 catches anything written meanwhile." | say
