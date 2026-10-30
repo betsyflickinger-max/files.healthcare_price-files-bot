@@ -55,7 +55,7 @@ THREADS = 16
 FIELDS = ["checked_on", "insurer", "state", "kind", "url", "http", "status", "size", "last_modified", "etag",
           "changed", "error", "source"]
 DEEP_FIELDS = ["checked_on", "insurer", "state", "url", "index_bytes", "links", "checked", "missing", "hosts",
-               "missing_examples", "archived", "error"]
+               "missing_examples", "archived", "error", "allowed_files"]
 
 
 def slug(s):
@@ -110,15 +110,24 @@ def daily_check(src, prev):
                 last_modified=h["last_modified"], etag=h["etag"], changed=changed, error=h["error"][:200])
 
 
+ALLOWED_LINKS = {}   # Oct 30, 2026: index path -> its allowed-amount (out-of-network) file links, set by index_links
+
+
 def index_links(path):
-    """Every rate-file link an index names (in-network and allowed-amount), streamed with ijson."""
+    """Every rate-file link an index names (in-network and allowed-amount), streamed with ijson.
+    Oct 30, 2026 (Betsy: out-of-network amounts are kept, never skipped): the allowed-amount links are also noted in
+    ALLOWED_LINKS[path], so the monthly deep check can hand every insurer's out-of-network files to plans/allowed_amounts.py
+    (it only knew Cigna's and UnitedHealthcare's before)."""
     import ijson
     op = gzip.open if open(path, "rb").read(2) == b"\x1f\x8b" else open
-    links = []
+    links, allowed = [], []
     with op(path, "rb") as f:
         for prefix, event, value in ijson.parse(f, multiple_values=True):  # Oct 22, 2026: Regence indexes hold two JSON documents back to back
             if event == "string" and prefix.endswith(".location"):
                 links.append(value)
+                if "allowed_amount_file" in prefix:
+                    allowed.append(value)
+    ALLOWED_LINKS[path] = list(dict.fromkeys(allowed))
     return list(dict.fromkeys(links))
 
 
@@ -157,7 +166,8 @@ def wayback_save(url):
 
 def deep_check(src, month, archive):
     row = dict(checked_on=date.today().isoformat(), insurer=src["insurer"], state=src["state"], url=src["url"],
-               index_bytes="", links=0, checked=0, missing=0, hosts="", missing_examples="", archived="", error="")
+               index_bytes="", links=0, checked=0, missing=0, hosts="", missing_examples="", archived="", error="",
+               allowed_files="")
     h = check.headers(src["url"])
     if h["size"].isdigit() and int(h["size"]) > DEEP_MAX_MB * 2**20:
         row["error"] = f"index over {DEEP_MAX_MB} MB, left to the catalog"
@@ -171,6 +181,8 @@ def deep_check(src, month, archive):
         row["index_bytes"] = os.path.getsize(path)
         try:
             links = index_links(path)
+            row["allowed"] = ALLOWED_LINKS.pop(path, [])
+            row["allowed_files"] = len(row["allowed"])
         except Exception as e:
             row["error"] = f"index unreadable: {type(e).__name__}: {str(e)[:120]}"
             links = []
@@ -238,6 +250,12 @@ def main():
         for s in [x for x in srcs if x["kind"] in ("index", "evidence")]:
             row, missing = deep_check(s, month, archive=not a.no_archive and not a.dry_run)
             rec = row.pop("receipts", [])
+            allowed = row.pop("allowed", [])
+            if s3 and allowed:   # Oct 30, 2026: read by plans/allowed_amounts.py --insurers deep (monthly, the 5th)
+                s3.put_object(Bucket=b, Key=f"{W}deep/{month}/{slug(s['insurer'])}_"
+                              f"{hashlib.sha256(s['url'].encode()).hexdigest()[:8]}.allowed.json",
+                              Body=json.dumps(dict(insurer=s["insurer"], state=s["state"], index_url=s["url"].split("?")[0],
+                                                   files=allowed)).encode())
             if s3 and rec:
                 store.write_csv(s3, b, f"bot/receipts/{month}/watch/{slug(s['insurer'])}_"
                                 f"{hashlib.sha256(s['url'].encode()).hexdigest()[:8]}.csv", rec, RECEIPT_FIELDS)

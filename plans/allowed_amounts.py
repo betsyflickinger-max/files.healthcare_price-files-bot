@@ -85,6 +85,45 @@ def uhc_list():
     return [dict(url=b["downloadUrl"], plans_using="") for b in blobs if "allowed-amounts" in b["name"]]
 
 
+def _s3():
+    import boto3
+    E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
+    return boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
+                        aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
+                        region_name=(os.environ.get("STORAGE_REGION") or "auto")), E["R2_BUCKET"]
+
+
+SKIP_DEEP = ("cigna", "united", "uhc", "umr", "optum")   # collected above from their own listings
+
+
+def deep_lists():
+    """Oct 30, 2026 (Betsy: out-of-network amounts are kept, never skipped): every other insurer's allowed-amount files,
+    from the lists the monthly index deep check (insurers/index_watch.py, the 3rd) writes per index to
+    bot/watch/indexes/deep/<YYYY-MM>/<insurer>_<hash>.allowed.json. Uses this month's lists, else the newest month there.
+    Indexes over the deep check's size limit (Anthem's 11 GB, for one) aren't in these lists yet.
+    Returns {insurer slug: (display name, [items])}."""
+    s3, b = _s3()
+    keys = [o["Key"] for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix="bot/watch/indexes/deep/")
+            for o in page.get("Contents", []) if o["Key"].endswith(".allowed.json")]
+    months = sorted({k.split("/")[4] for k in keys})
+    if not months:
+        print("  deep: no allowed-amount lists yet (the index deep check writes them on the 3rd)")
+        return {}
+    use = MONTH if MONTH in months else months[-1]
+    out = {}
+    for k in [k for k in keys if k.split("/")[4] == use]:
+        j = json.loads(s3.get_object(Bucket=b, Key=k)["Body"].read())
+        name = j.get("insurer") or k.rsplit("/", 1)[1].split("_")[0]
+        sl = "".join(c if c.isalnum() else "-" for c in name.lower()).strip("-")[:60]
+        if any(w in sl for w in SKIP_DEEP):
+            continue
+        disp, items = out.setdefault(sl, (name, []))
+        seen = {it["url"] for it in items}
+        items += [dict(url=u, plans_using="") for u in j.get("files", []) if u not in seen]
+    print(f"  deep: {len(out)} insurers with allowed-amount files listed ({use})")
+    return out
+
+
 def collect(insurer, items, workdir, workers=64):
     tar_path = workdir / f"{insurer}.tar"
     rows, names = [], set()
@@ -172,7 +211,7 @@ def summary(by):
             L += ["", f"## {ins}: files with data (most services first)", ""]
             L += [f"- {r['file_name']}: {r['services']:,} services, {r['payments']:,} payments" for r in full[:25]]
             if len(full) > 25:
-                L.append(f"- ... and {len(full) - 25:,} more (R2 data/allowed/{MONTH}/{ins.lower()}.parquet)")
+                L.append(f"- ... and {len(full) - 25:,} more (R2 data/allowed/{MONTH}/, this insurer's parquet)")
     out = Path(__file__).resolve().parent.parent / "reports" / "allowed" / f"{MONTH}.md"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L) + "\n")
@@ -181,7 +220,7 @@ def summary(by):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--insurers", default="cigna,uhc")
+    ap.add_argument("--insurers", default="cigna,uhc,deep")
     ap.add_argument("--limit", type=int, default=0, help="test: only this many files per insurer")
     ap.add_argument("--local", action="store_true", help="write to ./local/ instead of R2")
     a = ap.parse_args()
@@ -189,6 +228,23 @@ def main():
     work.mkdir(parents=True, exist_ok=True)
     by = {}
     for ins in [x.strip() for x in a.insurers.split(",") if x.strip()]:
+        if ins == "deep":   # Oct 30, 2026: every other insurer whose index names allowed-amount files
+            try:
+                lists = deep_lists()
+            except Exception as e:
+                print(f"! deep lists failed: {type(e).__name__}: {str(e)[:200]}", flush=True); lists = {}
+            for sl, (disp, items) in sorted(lists.items()):
+                try:
+                    t0 = time.time()
+                    if a.limit:
+                        items = items[:a.limit]
+                    rows, tar_path = collect(sl, items, work)
+                    upload(sl, rows, tar_path, a.local)
+                    by[disp] = rows
+                    print(f"{disp}: {len(rows):,} files in {time.time() - t0:.0f} s", flush=True)
+                except Exception as e:
+                    print(f"! {disp} failed: {type(e).__name__}: {str(e)[:200]}", flush=True)
+            continue
         if ins not in ("cigna", "uhc"):
             print(f"  unknown insurer {ins}"); continue
         t0 = time.time()

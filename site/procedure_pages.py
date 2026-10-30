@@ -365,7 +365,8 @@ LAB = re.compile(r'\blab\b|labs\b|laborator|diagnostic|patholog|quest|labcorp|bi
 
 # ---------------------------------------------------------------- the numbers for one area x code
 KIND = {'A': 'surgery center', 'H': 'hospital', 'G': 'practice, clinic, lab or imaging center', 'P': 'clinician'}
-PROD = ['Employer and individual plans', 'Marketplace (ACA) plans', 'Medicare Advantage', 'Medicaid and CHIP', 'Plan type not stated']
+PROD = ['Employer and individual plans', 'Marketplace (ACA) plans', 'Medicare Advantage', 'Medicaid and CHIP', 'Plan type not stated',
+        'Out-of-network']   # 5: Oct 30, 2026, hospital rows labelled out-of-network (h2_build.py OON_RE)
 SHOWN = {'Superior/Ambetter/Wellcare (Centene)': 'Ambetter / Superior / Wellcare'}
 
 
@@ -616,20 +617,24 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         if r[5] == 0 and (r[0] not in hcash or r[2] < hcash[r[0]]['v']):
             hcash[r[0]] = dict(hsrc(r[0]), v=r[2], row=r[4], list=r[3])
     hcash = sorted(hcash.values(), key=lambda e: e['v'])
-    hrate, hfiles = {}, set()
+    hrate, hoon, hfiles = {}, {}, set()
     plans = hc.get('p') or H.get('plans') or []
     for r in hc.get('r', []):
         hfiles.add(r[0])
         if r[4] or r[5]:                 # doctor's line or percent of charges
             continue
+        # Oct 30, 2026 (Betsy, Oct 29): out-of-network amounts (type 5) are kept but never counted as an insurer's
+        # in-network rate; they get their own short list on the page
+        into = hoon if r[2] == 5 else hrate
         k = (r[0], r[1])
-        if k not in hrate or r[6] < hrate[k]['v']:
+        if k not in into or r[6] < into[k]['v']:
             ins = H['ins'][r[1]]
             if PUBLIC_PAYER.search(ins):   # traditional Medicare / Medicaid lines aren't insurer rates
                 continue
-            hrate[k] = dict(hsrc(r[0]), v=r[6], row=r[7], ins=SHOWN.get(ins, ins), plan=plans[r[3]] if r[3] < len(plans) else '',
-                            prod=PROD[r[2]] if r[2] < len(PROD) else '')
+            into[k] = dict(hsrc(r[0]), v=r[6], row=r[7], ins=SHOWN.get(ins, ins), plan=plans[r[3]] if r[3] < len(plans) else '',
+                           prod=PROD[r[2]] if r[2] < len(PROD) else '')
     hrate = sorted(hrate.values(), key=lambda e: e['v'])
+    hoon = sorted(hoon.values(), key=lambda e: e['v'])
     hfiles |= {r[0] for r in hc.get('c', [])}
 
     cash = sorted([c for c in D.get('cash', []) if c.get('code') == code], key=lambda c: c['v'])
@@ -677,9 +682,9 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         'n_pct': len(pct[kind]), 'n_flag': len(flagged[kind]), 'n_high': len(high[kind]), 'n_other_kind': len(other_kind) if kind == 'fac' else 0,
         'fac_kinds': sorted(fac_kinds) if kind == 'fac' else [],
         'doc_lo': doc[0] if doc else None, 'doc_hi': doc[-1] if doc else None, 'doc_n': len(doc),
-        'hcash': hcash, 'hrate': hrate, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
+        'hcash': hcash, 'hrate': hrate, 'hoon': hoon, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
-        'any': bool(lines or hcash or hrate or cash),
+        'any': bool(lines or hcash or hrate or hoon or cash),
         'highest': highest, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
         'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
@@ -1235,14 +1240,23 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                   "cash, and you can dispute a bill that comes in $400 or more above it.</p></div>") if cash_items else ''
 
     hosp_sec = ''
-    if S['hrate']:
+    oon_sec = ''
+    if S.get('hoon'):   # Oct 30, 2026: out-of-network amounts hospitals list, shown on their own and never compared
+        ho = S['hoon']
+        orow = ''.join(f"<li><span><b>{esc(e['name'])}</b><span class='m'>{esc(e['ins'])} · {esc(e['plan'])} · {hosp_link(e)}</span></span>"
+                       f"<span class='n'>{money(e['v'])}</span></li>" for e in ho[:3])
+        oon_sec = (f"<p class='cap'>Hospital files also list {len(ho):,} out-of-network {'amount' if len(ho) == 1 else 'amounts'} for this code "
+                   f"({money(ho[0]['v'])}{'' if len(ho) == 1 else ' to ' + money(ho[-1]['v'])}). These are what a hospital lists for an insurer "
+                   f"it has no contract with, so they aren't in-network rates and aren't counted above. The lowest:</p><ol class='word'>{orow}</ol>")
+    if S['hrate'] or oon_sec:
         hr = S['hrate']
         rows = ''.join(f"<li><span><b>{esc(e['name'])}</b><span class='m'>{esc(e['ins'])} · {esc(e['plan'])} · {hosp_link(e)}</span></span>"
                        f"<span class='n'>{money(e['v'])}</span></li>" for e in hr[:5])
+        lede = (f"{S['hfiles']:,} hospital {'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from "
+                f"{money(hr[0]['v'])} to {money(hr[-1]['v'])} (hospital fee only, one line per hospital per insurer). The five lowest:</p>"
+                f"<ol class='word'>{rows}</ol>") if hr else "None of the hospital files that list this code give an in-network insurer rate for it.</p>"
         hosp_sec = (f"<section class='sec' id='hospital-files'><p class='kicker'>In hospitals' own price files</p><h2>What hospitals say they're paid</h2>"
-                    f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {S['hfiles']:,} hospital "
-                    f"{'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from {money(hr[0]['v'])} to "
-                    f"{money(hr[-1]['v'])} (hospital fee only, one line per hospital per insurer). The five lowest:</p><ol class='word'>{rows}</ol></section>")
+                    f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {lede}{oon_sec}</section>")
 
     inc, exc = includes(S)
     doc_line = ''

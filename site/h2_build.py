@@ -100,9 +100,16 @@ def _classify(payer, plan):
 
 NUM = lambda c: f"try_cast(replace(replace(trim({c}),'$',''),',','') AS DOUBLE)"
 pairs = con.execute("SELECT DISTINCT coalesce(payer_name,''), coalesce(plan_name,'') FROM raw WHERE trim(coalesce(payer_name,''))<>''").fetchall()
+# Oct 30, 2026 (Betsy, Oct 29: out-of-network amounts are kept, labelled out-of-network, never treated as in-network):
+# a hospital row whose payer or plan is labelled out-of-network gets product type 5. Every reader of these files that
+# looks for a plan type (Medicare Advantage = 2, the procedure pages' insurer rates) leaves type 5 out of in-network figures;
+# the procedure pages list them on their own. Same rule as the match pilot (site/match_pilot.py OON_RE).
+OON_RE = re.compile(r'\bOON\b|out[\s-]*of[\s-]*network|\bnon[\s-]*par(ticipating)?\b', re.I)
 cls = []
 for pa, pl in pairs:
     ins, prod = classify(pa, pl)
+    if OON_RE.search(f' {pa} {pl} '):
+        prod = 5
     if not ins:
         ins = pa.strip()
     cls.append([pa, pl, ins, prod, f'{pa.strip()} · {pl.strip()}'.strip(' ·')])

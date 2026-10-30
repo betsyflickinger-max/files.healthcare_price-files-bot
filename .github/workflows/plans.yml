@@ -66,7 +66,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 requests==2.32.3 pyarrow==26.0.0
-      - run: python plans/allowed_amounts.py --insurers "${{ inputs.insurers || 'cigna,uhc' }}"
+      - run: python plans/allowed_amounts.py --insurers "${{ inputs.insurers || 'cigna,uhc,deep' }}"
       - name: Save the summary
         run: |
           git config user.name "price-files-bot"
