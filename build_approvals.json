@@ -4,8 +4,8 @@
   "why": "Betsy OK'd (Oct 29, 2026): once the DigitalOcean credit is used up, rent machines on her card up to $500 a month, then stop renting until she raises this (files being read finish; nothing is deleted)"
  },
  "stb4-2026-10": {
-  "usd": 150,
-  "why": "Betsy OK'd up to $150 per new-state page build (Oct 23, 2026) so builds keep running while she's away"
+  "usd": 160,
+  "why": "Betsy OK'd finishing Ohio (Oct 30, 2026, issue #219): the $206 hold was mostly machines idle during the R2 outage; Indiana and Kentucky were done and Ohio was ~2.4 h / ~$8 from done. Raised above the $150 at the hold so it resumes; the price check measures from the restart, so this caps new spend"
  },
  "stb4-2026-11": {
   "usd": 150,
