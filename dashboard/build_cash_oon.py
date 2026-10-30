@@ -276,6 +276,9 @@ def add_file(j, fm, fname, name, amounts):
                 for pv in p.get("providers") or [{}]:
                     npi = pv.get("npi") or []
                     npi = [str(x).strip() for x in (npi if isinstance(npi, list) else [npi]) if str(x).strip()]
+                    listed = len(npi)
+                    if str(tin.get("type", "")).lower() == "npi" and str(tin.get("value", "")).strip() not in npi: npi.append(str(tin.get("value", "")).strip())
+                    npi = [n[:-2] if n.endswith(".0") else n for n in npi]   # a number written as 1234567890.0
                     amounts.append({"insurer": name, "plan": fm.get("plan_name") or "", "plan_market_type": fm.get("plan_market_type") or "",
                                     "file_date": str(fm.get("last_updated_on") or "")[:10] or None, "code": code,
                                     "description": (o.get("description") or "")[:60],
@@ -283,7 +286,7 @@ def add_file(j, fm, fname, name, amounts):
                                     "service_code": sc,
                                     "tin": f"{tin.get('type', '')} {tin.get('value', '')}".strip(),
                                     "allowed_amount": rnd(p.get("allowed_amount")), "billed_charge": rnd(pv.get("billed_charge")),
-                                    "npis": len(npi), "file": fname, "_npi": npi})
+                                    "npis": listed, "file": fname, "_npi": npi})
 
 def match_areas(amounts):
     """Oct 30, 2026 (Betsy): put each insurer out-of-network payment in the areas where its provider practices, by matching
@@ -339,6 +342,10 @@ def match_areas(amounts):
         r["areas"] = "|".join(ks)
         if r["matched_by"]: by[r["matched_by"]] += 1
         for k in ks: per[k][0] += 1; per[k][1].add(r["insurer"])
+    miss = defaultdict(list)
+    for r in amounts:
+        if not r["areas"] and len(miss[r["insurer"]]) < 3: miss[r["insurer"]].append(r["tin"])
+    print("  not in any area (sample tax IDs):", "; ".join(f"{k}: {', '.join(v)}" for k, v in sorted(miss.items())[:8]))
     rows = [{"market": k, "area": AREAS[k]["name"], "payments": n, "insurers": len(i)} for k, (n, i) in sorted(per.items(), key=lambda x: -x[1][0])]
     save("oon_ins_areas", rows)
     hit = sum(1 for r in amounts if r["areas"])
