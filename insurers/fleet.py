@@ -229,7 +229,7 @@ def held_scopes(s3, b, all_jobs, names):
 # Oct 29, 2026: hosts that block when many of our machines download at once. Geisinger's mrf.thehealthplan.com
 # turned away 11-20 machines at a time; each sat in download back-off at 1-7% CPU holding a rented slot (DFW and
 # Texas files waited behind them) and 700+ files failed. At most this many machines read from such a host at once.
-HOST_CAPS = {"mrf.thehealthplan.com": 2}
+HOST_CAPS = {"mrf.thehealthplan.com": 2, "www.molinahealthcare.com": 3}   # Molina WA: HTTP 403 on some files Oct 24-25
 
 
 def host(j):

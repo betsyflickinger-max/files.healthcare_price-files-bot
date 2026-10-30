@@ -108,7 +108,10 @@ def download(url, out, log=print):
                 break
     try:
         from curl_cffi import requests as creq
-        with creq.get(url, impersonate="chrome", stream=True, timeout=300, verify=False) as r:
+        # Oct 29, 2026: curl_cffi's streamed response is not a context manager ("'Response' object does not support
+        # the context manager protocol"), so this fallback never ran (Molina WA files); close it by hand instead.
+        r = creq.get(url, impersonate="chrome", stream=True, timeout=300, verify=False)
+        try:
             if r.status_code < 400 and "text/html" not in r.headers.get("Content-Type", "").lower():
                 with open(out, "wb") as f:
                     for chunk in r.iter_content():
@@ -116,6 +119,8 @@ def download(url, out, log=print):
                 log(f"  note: {url.split('/')[2]} only answers a Chrome-like request")
                 return url
             errs.append(f"chrome-like: HTTP {r.status_code}")
+        finally:
+            r.close()
     except Exception as e:  # noqa: BLE001
         errs.append(f"chrome-like: {type(e).__name__}: {str(e)[:120]}")
     raise RuntimeError("; ".join(errs))

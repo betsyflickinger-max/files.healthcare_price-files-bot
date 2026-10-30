@@ -108,7 +108,7 @@ REREAD_OLD_TABLES = True
 # so it streams the file once and writes just those to <scope>/fields/ (worker.py fields_only) instead of re-writing
 # every price row. Aetna national files took 3+ hours per scope the full way. False = re-read in full as before.
 REREAD_FIELDS_ONLY = True
-SIZES = {"uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
+SIZES = {"big32": "s-8vcpu-32gb-amd", "uhc": "s-8vcpu-16gb-amd", "aetna": "s-8vcpu-16gb-amd", "bcbs": "s-8vcpu-16gb-amd", "bcbstx": "s-8vcpu-32gb-amd", "cigna": "s-8vcpu-32gb-amd"}  # 320 GB disk for the biggest files; BCBSTX reader needs >8 GB (OOM Oct 11)
 # Oct 12, 2026: DigitalOcean answered "Size is not available in this region" for s-4vcpu-8gb in nyc3, nyc1 and sfo3, so the
 # last Texas Cigna file (Pathwell OAP) could not start; s-8vcpu-32gb-amd was renting fine in nyc3 (and Cigna ran out of memory before).
 # Oct 14, 2026: no more fixed files-per-machine batches. Every waiting file is one job in the shared queue
@@ -201,7 +201,8 @@ def load(s3, b, scope):
     man = {r["slot"]: r for r in store.read_csv(s3, b, P + "manifest.csv")}
     for n in csv.DictReader(open(HERE / NETWORKS.get(scope, "networks.csv"))):
         if n["slot"] in man:
-            pass
+            if n.get("machine_group") and man[n["slot"]].get("machine_group") != n["machine_group"]:
+                man[n["slot"]]["machine_group"] = n["machine_group"]   # Oct 29, 2026: a bigger machine set in the list applies from the next try
         elif scope == "dfw" and n.get("current_table"):  # first run: start from the tables already in R2
             man[n["slot"]] = dict(slot=n["slot"], insurer=n["insurer"], network_label=n["network_label"],
                                   machine_group=n["machine_group"], url=n["current_url"],
@@ -414,7 +415,10 @@ def check_all(man, today, only, force=False):
         d_ = m.get("detail") or ""
         if m.get("status") == "failed" and (m.get("launched_at") or "") < HOST_CAP_FIX and (
                 ("wrote " in d_ and " price rows and " in d_)          # failed after the tables were written (inventory out of memory)
-                or "No such file or directory: '/opt/bot/insurers/data/d" in d_):   # download failed, before the retry waits
+                or "No such file or directory: '/opt/bot/insurers/data/d" in d_     # download failed, before the retry waits
+                or ("FileNotFoundError" in d_ and ("gzip.py" in d_ or "zipfile" in d_))   # same, cut short (Regence)
+                or ("Out of memory" in d_ and m.get("machine_group") == "big32")    # moved to a 32 GB machine (Aetna pl-vk)
+                or ("machine reading this file stopped" in d_ and "upfront-fleet-gha-" in d_)):   # free GitHub machine died: next try on a rented one
             # Oct 29, 2026: both are fixed (inventory in its own process; downloads wait between tries), so these
             # files get their tries back.
             m["fails"] = "0"
@@ -427,7 +431,11 @@ def check_all(man, today, only, force=False):
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
         if m.get("status") == "failed" and url == m["url"]:
-            m.update(status="queued", next_url=url, detail=f"retry {m.get('fails')} of 3: {(m.get('detail') or '')[:150]}")
+            d0 = m.get("detail") or ""
+            no_gha = d0.startswith(NOGHA_MARK) or "upfront-fleet-gha-" in d0   # Oct 29, 2026: HMSA PPO, Molina WA died on GitHub's machines
+            rest = d0[len(NOGHA_MARK):].lstrip(" |") if d0.startswith(NOGHA_MARK) else d0
+            m.update(status="queued", next_url=url,
+                     detail=(NOGHA_MARK + " | " if no_gha else "") + f"retry {m.get('fails')} of 3: {rest[:150]}")
             continue
         m.update(status="queued", next_url=url, etag=info["etag"], size=info["size"],
                  detail=f"{f['how']}; internal date {info['file_last_updated_on'] or '?'}")
