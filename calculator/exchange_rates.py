@@ -51,7 +51,7 @@ def main():
               for o in pg.get("Contents", []) if o["Key"].endswith(".parquet")]
     added = []
     for label, pat in ADD.items():
-        old = old[old.network_name != label]   # re-running replaces this network's rows, never duplicates them
+        n_add = len(added)
         newest = {}
         for o in tables:
             name = o["Key"].rsplit("/", 1)[1][:-8]
@@ -67,9 +67,18 @@ def main():
                 miss = [c for c in KEEP if c not in have and c != "expiration_date"]
                 if miss:
                     print(f"  ! {o['Key']}: missing columns {miss}; skipped"); continue
-                t = pd.read_parquet(tf.name, columns=[c for c in KEEP if c in have],
-                                    filters=[("billing_code", "in", sorted(codes))])
-            t = t[t.npi.astype(str).isin(fac.index)].copy()
+                pf = pq.ParquetFile(tf.name)
+                n_all = pf.metadata.num_rows
+                smp = pf.read_row_group(0, columns=["billing_code", "npi"]).to_pandas().head(3) if pf.num_row_groups else None
+                t = pd.read_parquet(tf.name, columns=[c for c in KEEP if c in have], filters=[("billing_code", "in", sorted(codes))])
+            t["billing_code"] = t.billing_code.astype(str).str.strip()
+            t["npi"] = t.npi.astype(str).str.strip().str.replace(r"\.0$", "", regex=True)
+            n_code = len(t)
+            n_npi = int(t.npi.isin(fac.index).sum())
+            if not n_npi:   # Oct 30: say why a table adds nothing (the first run added no rows and gave no reason)
+                print(f"  {stem}: {n_all:,} rows, {n_code:,} with the calculator's codes, {n_npi:,} of those at DFW facilities;"
+                      f" sample rows {None if smp is None else smp.values.tolist()}; sample NPIs with codes {t.npi.head(3).tolist()}")
+            t = t[t.npi.isin(fac.index)].copy()
             if not len(t):
                 continue
             t = t[[c for c in KEEP if c in t.columns]].astype(str)
@@ -80,6 +89,10 @@ def main():
             t["reporting_entity_name"] = label.split(" ")[0]
             added.append(t)
             print(f"  {stem}: {len(t):,} rows (file date {t.last_updated_on.iloc[0]})")
+        if len(added) > n_add:   # replace this network's old rows only when the bot's tables gave new ones
+            old = old[old.network_name != label]
+        else:
+            print(f"  {label}: nothing new; its {int((old.network_name == label).sum()):,} existing rows are kept")
     new = pd.concat([old] + added, ignore_index=True).fillna("")
     for c in old.columns:
         if c not in new.columns:
