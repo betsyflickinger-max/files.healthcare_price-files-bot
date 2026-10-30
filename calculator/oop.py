@@ -34,6 +34,9 @@ LINK = [
     ("WellPoint", "Wellpoint Texas Essential and RX Choice Tiered Network", "Wellpoint Texas Essential (TX_JBLXMED0001)", "Wellpoint plan search"),
     ("WellPoint", "Wellpoint Texas Essential, Dental Prime, and RX Choice Tiered Network", "Wellpoint Texas Essential (TX_JBLXMED0001)", "Wellpoint plan search"),
     ("Molina Healthcare", "Molina Marketplace", "Molina Marketplace TX", "Molina TX index lists every plan against all files"),
+    # Oct 30, 2026: 2027 plan files rename two networks
+    ("Blue Cross and Blue Shield of Texas", "MyBlueHealth", "BCBSTX MyBlue Health HMO", '2027 PUF spelling of "MyBlue Health" (same BCBSTX MyBlue-Health-HMO file)'),
+    ("Molina Healthcare", "Molina IFP Texas", "Molina Marketplace TX", "ASSUMED - 2027 PUF name for Molina's one Texas marketplace network; verify with Molina"),
 ]
 NETKEY = {(a, b): c for a, b, c, _ in LINK}
 

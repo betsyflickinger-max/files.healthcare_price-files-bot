@@ -16,6 +16,10 @@ on:
         description: "Build even if this year is already built"
         type: boolean
         default: false
+      add_rates:
+        description: "First add the networks in calculator/exchange_rates.py (Wellpoint, Molina) to the exchange rate file"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -60,7 +64,10 @@ jobs:
           python-version: "3.12"
           cache: pip
       - if: steps.y.outputs.go == 'yes'
-        run: pip install -r requirements.txt pandas==2.2.3
+        run: pip install -r requirements.txt pandas==2.2.3 pyarrow==26.0.0
+      - name: Add networks to the exchange rate file (Oct 30, 2026)
+        if: steps.y.outputs.go == 'yes' && inputs.add_rates
+        run: python calculator/exchange_rates.py
       - name: Get the current exchange rate file from R2
         if: steps.y.outputs.go == 'yes'
         run: |
