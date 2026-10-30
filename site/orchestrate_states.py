@@ -381,7 +381,11 @@ def cost_hold(st, left):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import cost_check as C
     lefts = {s: units_left(s) for s in left}
-    done_now = sum(units_total(s) - lefts[s] for s in left)
+    # Oct 30, 2026: done counts every state in the build, finished ones included. It used to count only the states still
+    # building, so when Wisconsin finished (stn5, Oct 30 00:19 UTC) its 35 batches left the count, California's 53 new
+    # batches looked like 18, and the check projected $752 / 231 h (2 batches an hour) while California was really landing
+    # ~50 an hour. Finished states add a constant, so they no longer distort the speed.
+    done_now = sum(units_total(s) - lefts[s] for s in left) + sum(units_total(s) for s in STATES.values() if s not in left)
     ck = st.setdefault('cost_check', {})
     if 't0' not in ck: ck.update(t0=time.time(), done0=done_now); return False
     h = ck.get('hold')
