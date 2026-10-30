@@ -143,8 +143,8 @@
       <div class="ctiles" id="o-ptiles" data-source="oon_ins_amounts_all"></div>
       <div class="ccard">
         <div class="ctw"><table id="o-ptbl"><thead><tr>
-          <th>Insurer</th><th>Provider</th><th>City</th><th>Plan</th><th>Market</th><th>Procedure</th><th>Fee</th><th>Place codes</th><th>Provider tax ID</th><th class="n">Allowed amount</th><th class="n">Billed charge</th><th class="n">NPIs</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
-        <div class="cnote">One row per payment and provider group as the file lists it. The allowed amount is what the plan allowed (its payment plus the patient's share); the billed charge is what the provider asked for. A payment is in an area when one of its providers (by NPI) is on that area's Price Finder provider list; the provider and city shown are the first match. "Not in any area yet" = no listed provider is on a live area's list.</div>
+          <th>Insurer</th><th>Provider</th><th>City</th><th>Found by</th><th>Plan</th><th>Market</th><th>Procedure</th><th>Fee</th><th>Place codes</th><th>Provider tax ID</th><th class="n">Allowed amount</th><th class="n">Billed charge</th><th class="n">NPIs</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">One row per payment and provider group as the file lists it. The allowed amount is what the plan allowed (its payment plus the patient's share); the billed charge is what the provider asked for. A payment is in an area when one of its providers (by NPI) is on that area's Price Finder provider list, or, failing that, practices there according to the NPI registry (out-of-network providers are often in no network list). The provider and city shown are the first match. "Not in any area yet" = no listed provider is on a live area's list.</div>
       </div>
       <button type="button" class="more" id="o-pmore" hidden>Show all rows</button>
     </section>
@@ -329,9 +329,9 @@
     table('#o-ftbl', [{f: 'insurer'}, {f: 'month'}, {f: 'files', num: 1, fmt: fmtN}, {f: 'empty', num: 1, fmt: fmtN}, {f: 'with_data', num: 1, fmt: fmtN},
       {f: 'failed', num: 1, fmt: fmtN}, {f: 'services', num: 1, fmt: fmtN}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'megabytes', num: 1, fmt: (v) => d3.format(',.1f')(+v || 0)},
       {f: 'newest_file_date', fmt: (v) => v || '—'}], {sort: 7, dir: -1});
-    table('#o-ptbl', [{f: 'insurer'}, {f: 'provider', fmt: (v) => v || '—'}, {f: 'city'}, {f: 'plan'}, {f: 'plan_market_type'}, {f: 'procedure'}, {f: 'billing_class'}, {f: 'service_code'}, {f: 'tin'},
+    table('#o-ptbl', [{f: 'insurer'}, {f: 'provider', fmt: (v) => v || '—'}, {f: 'city'}, {f: 'matched_by', fmt: (v) => v || '—'}, {f: 'plan'}, {f: 'plan_market_type'}, {f: 'procedure'}, {f: 'billing_class'}, {f: 'service_code'}, {f: 'tin'},
       {f: 'allowed_amount', num: 1, fmt: money}, {f: 'billed_charge', num: 1, fmt: money}, {f: 'npis', num: 1, fmt: fmtN}, {f: 'file_date', fmt: (v) => v || '—'},
-      {f: 'file', node: (r) => link(r.file_url, 'file')}], {sort: 5, limit: 500});
+      {f: 'file', node: (r) => link(r.file_url, 'file')}], {sort: 6, limit: 500});
     pg.querySelectorAll('.cjump a').forEach((a) => a.addEventListener('click', (e) => { const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) { e.preventDefault(); t.scrollIntoView({behavior: 'smooth'}); } }));
   }
   function drawOon() {

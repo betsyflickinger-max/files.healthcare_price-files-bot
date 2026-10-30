@@ -101,11 +101,12 @@ def medicare_hosp(code):
 
 _cur = f"site/every/{get_text('site/every/CURRENT')}/"
 MARKETS = {"DFW": {"name": "Dallas–Fort Worth", "state": "TX", "hidx": DFW["hosp"], "h": _cur + "h/"}}
-AREAS = {"DFW": {"name": "Dallas–Fort Worth", "npis": _cur + "npis.json", "fac": DFW["fac"]}}   # every live area's provider list
+AREAS = {"DFW": {"name": "Dallas–Fort Worth", "npis": _cur + "npis.json", "fac": DFW["fac"],   # every live area's provider list
+                 "registry": "data/2026-09-29/dfw_npis_all.parquet"}}
 for slug, (name, *_rest) in CP.CITIES.items():
     key, st = OLDKEY.get(slug, slug), CP.STATE_OF.get(slug, "TX")
     months = sorted(d for d in ls(f"{CP.root(slug)}{slug}/", dirs=True) if exists(d + "embed.json"))
-    if months: AREAS[key] = {"name": name, "npis": months[-1] + "npis.json", "embed": months[-1] + "embed.json"}
+    if months: AREAS[key] = {"name": name, "npis": months[-1] + "npis.json", "embed": months[-1] + "embed.json", "registry": CP.npis_key(slug)}
     for d_ in reversed(months):   # newest finished build with the area's own hospital files (as city_page.py picks them)
         if exists(d_ + "hosp/hosp_index.json"):
             MARKETS[key] = {"name": name, "state": st, "hidx": json.loads(get_bytes(d_ + "hosp/hosp_index.json")), "h": d_ + "hosp/h/"}
@@ -303,20 +304,45 @@ def match_areas(amounts):
     for k in sorted({k for v in hits.values() for k, _ in v}):
         try: fac[k] = AREAS[k].get("fac") or json.loads(get_bytes(AREAS[k]["embed"]))["fac"]
         except Exception as e: print(f"  {AREAS[k]['name']}: provider names not readable ({e})"); fac[k] = []
+    # second pass, for NPIs on no area's Price Finder list (out-of-network providers often aren't in any network):
+    # each area's full provider list from the NPI registry, by practice location (the list every Price Finder build starts from)
+    left = want - set(hits)
+    reg = defaultdict(list)   # npi -> [(area key, name, city)]
+    def two(kv):
+        import pyarrow.parquet as pq, pyarrow.compute as pc, pyarrow as pa
+        k, a = kv
+        try: t = pq.read_table(io.BytesIO(get_bytes(a["registry"])))
+        except Exception as e: print(f"  {a['name']}: no NPI registry list ({e})"); return k, []
+        cols = [c for c in ("npi", "name", "city") if c in t.column_names]
+        if "npi" not in cols: return k, []
+        t = t.select(cols); t = t.filter(pc.is_in(pc.cast(t["npi"], pa.string()), value_set=pa.array(sorted(left), pa.string())))
+        return k, [(str(r.get("npi")), r.get("name") or "", (r.get("city") or "").title()) for r in t.to_pylist()]
+    if left:
+        with ThreadPoolExecutor(4) as ex:
+            for k, found in ex.map(two, AREAS.items()):
+                for n, nm, ct in found: reg[n].append((k, nm, ct))
     per = defaultdict(lambda: [0, set()])
+    by = {"Price Finder list": 0, "NPI registry": 0}
     for r in amounts:
-        m = [h for n in r.pop("_npi") for h in hits.get(n, [])]
-        ks = sorted({k for k, _ in m}, key=lambda k: (k != "DFW", k))
+        npi = r.pop("_npi")
+        m = [h for n in npi for h in hits.get(n, [])]
+        if m:
+            ks = {k for k, _ in m}; k0, i0 = m[0]; f = fac.get(k0) or []
+            r["provider"], r["city"] = (f[i0][0], f[i0][1]) if i0 < len(f) else ("", "")
+            r["matched_by"] = "Price Finder list"
+        else:
+            g = [h for n in npi for h in reg.get(n, [])]
+            ks = {k for k, _, _ in g}
+            r["provider"], r["city"] = (g[0][1], g[0][2]) if g else ("", "")
+            r["matched_by"] = "NPI registry" if g else ""
+        ks = sorted(ks, key=lambda k: (k != "DFW", k))
         r["areas"] = "|".join(ks)
-        k0, i0 = m[0] if m else (None, None)
-        f = fac.get(k0) or []
-        r["provider"] = f[i0][0] if k0 and i0 < len(f) else ""
-        r["city"] = f[i0][1] if k0 and i0 < len(f) else ""
+        if r["matched_by"]: by[r["matched_by"]] += 1
         for k in ks: per[k][0] += 1; per[k][1].add(r["insurer"])
     rows = [{"market": k, "area": AREAS[k]["name"], "payments": n, "insurers": len(i)} for k, (n, i) in sorted(per.items(), key=lambda x: -x[1][0])]
     save("oon_ins_areas", rows)
     hit = sum(1 for r in amounts if r["areas"])
-    print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas"
+    print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas ({by['Price Finder list']:,} by Price Finder list, {by['NPI registry']:,} by NPI registry)"
           + (f" (DFW {per['DFW'][0]:,})" if "DFW" in per else ""))
 
 
