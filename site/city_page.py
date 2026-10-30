@@ -446,6 +446,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('city'); ap.add_argument('--deploy', action='store_true'); ap.add_argument('--out', default='/tmp/city')
     ap.add_argument('--map-only', action='store_true', help='rebuild only the map files for the published page (no deploy)')
+    ap.add_argument('--check', action='store_true', help='build the page only: no map, nothing saved to R2, no deploy (Oct 30)')
     for a in ('template', 'embed', 'rvu', 'med-all', 't5', 'quality'): ap.add_argument('--' + a)
     A = ap.parse_args()
     if A.city not in CITIES: sys.exit(f'unknown city {A.city!r}; choose one of {", ".join(CITIES)}')
@@ -487,6 +488,7 @@ def main():
         page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
     else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json', f'{A.out}/npis.parquet')
     if not A.map_only: practice_and_list_price(page, s3, B, A.out)
+    if A.check: print('check only: page built in', page, '(not saved, not deployed)'); return
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return

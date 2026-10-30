@@ -1,0 +1,71 @@
+name: Check a state page build (read-only)
+
+# Oct 30, 2026: builds one city or state Price Finder page exactly as a publish would (site/city_page.py --check), saves
+# nothing and deploys nothing, then prints its Medicare areas (site/med_areas.py) and runs the page's Medicare code for a
+# few procedures. No lock: safe to run while state builds are running.
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: "Page slug, e.g. florida, maryland, houston"
+        default: "florida"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CITY: ${{ inputs.city }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install boto3==1.35.36 duckdb==1.1.3 requests==2.32.3 rapidfuzz==3.10.0
+      - name: Build (check only)
+        run: python site/city_page.py "$CITY" --check --out /tmp/city
+      - name: Medicare areas on the page
+        run: |
+          python - <<'PY'
+          import json, re, collections
+          s = open('/tmp/city/page.html', encoding='utf-8').read()
+          i = s.find('<script type="application/json" id="data">'); D = json.loads(s[i+42:s.find('</script>', i)])
+          A = D['med'].get('ar')
+          print('page size', f'{len(s):,}', 'chars; providers', f"{len(D['fac']):,}")
+          print('medArea code on page:', '/*medArea*/' in s, '| Medicare block lists areas:', '/*medAreas*/' in s)
+          if not A: print('NO Medicare areas on this page'); raise SystemExit
+          print('areas:', [(n, c) for n, c in zip(A['n'], A['c'])])
+          print('provider area string length', len(A['p']), 'unknown', A['p'].count('-'), '| codes with RVUs', len(A['r']), '+26:', len(A['r26']), '| exact overrides', len(A['x']))
+          print('area data size', f"{len(json.dumps(A, separators=(',', ':'))):,}", 'chars')
+          open('/tmp/city/D.json', 'w').write(json.dumps(D))
+          PY
+      - name: Run the page's Medicare code (node)
+        run: |
+          node - <<'JS'
+          const fs = require('fs'); const s = fs.readFileSync('/tmp/city/page.html', 'utf8');
+          global.window = global; global.D = JSON.parse(fs.readFileSync('/tmp/city/D.json', 'utf8'));
+          if (!D.med.ar) { console.log('no areas'); process.exit(0); }
+          const js = s.match(/<script>\/\*medArea\*\/([\s\S]*?)<\/script>/)[1]; eval.call(global, js);
+          const mb = s.match(/function medBlock\(code\) \{[\s\S]*?\n\}\n/)[0];
+          global.esc = x => String(x); global.money = v => '$' + Number(v).toFixed(2); global.mlLocal = () => '';
+          eval.call(global, mb);
+          const A = D.med.ar, seen = {};
+          for (const code of ['99213', '27447', '70553', '45378', '93000']) {
+            if (!D.med.codes[code] || !D.codes[code]) continue;
+            console.log('\n' + code + ':', medBlock(code).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').slice(0, 900));
+            for (let i = 0; i < A.p.length; i++) { const c = A.p[i]; if (seen[c + code]) continue; seen[c + code] = 1;
+              console.log('  provider', i, D.fac[i][0], '·', D.fac[i][1], '->', JSON.stringify(window.medArea(code, i))); }
+          }
+          JS
