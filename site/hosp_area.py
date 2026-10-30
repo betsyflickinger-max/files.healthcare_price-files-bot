@@ -322,6 +322,18 @@ def state_by_state(O, st):
     # all. Before this, a failed publish was recorded once and never retried (Connecticut was built Oct 18 and sat unpublished
     # for three days after city_page.py was fixed). After the last try it stays "failed" and the run log says so.
     tries = st.setdefault('publish_tries', {})
+    # Oct 30, 2026: when the page builder (city_page.py) changes, pages that failed to publish get their tries back. VA, DC, FL
+    # and WI used up all 3 tries on "unknown city" (the n5 states were never added to city_page.py) and would have stayed failed.
+    try:
+        import hashlib
+        cp_ver = hashlib.sha1(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'city_page.py'), 'rb').read()).hexdigest()[:12]
+    except Exception: cp_ver = None
+    if cp_ver and st.get('publish_code') != cp_ver:
+        for a in areas:
+            if str(st['published'].get(a, '')).startswith('failed: page not published') and tries.get(a, 1) >= PUBLISH_TRIES:
+                O.log(a, 'page builder changed since its last publish try: its tries start over')
+                tries[a] = 0
+        st['publish_code'] = cp_ver
     for a in areas:
         if str(st['published'].get(a, '')).startswith('failed: page not published'):
             if tries.get(a, 1) < PUBLISH_TRIES:
