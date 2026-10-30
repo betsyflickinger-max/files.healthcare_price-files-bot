@@ -39,7 +39,9 @@ def main():
     s3, b = store.r2()
     objs = [o for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix="data/")
             for o in pg.get("Contents", []) if "payer_rates_dfw_exchange" in o["Key"]]
-    cur = max(objs, key=lambda o: o["LastModified"])["Key"]
+    # the base is the newest hand-built file (.csv); files this script wrote (.csv.gz) are never built on, so a re-run
+    # starts from the same rows and adds the bot's networks again (the Oct 30 first run had dropped Wellpoint's 120 rows)
+    cur = max([o for o in objs if not o["Key"].endswith(".gz")] or objs, key=lambda o: o["LastModified"])["Key"]
     raw = s3.get_object(Bucket=b, Key=cur)["Body"].read()
     old = pd.read_csv(io.BytesIO(raw), dtype=str, keep_default_na=False, compression="gzip" if cur.endswith(".gz") else None)
     print(f"current file {cur}: {len(old):,} rows; networks:", old.network_name.value_counts().to_dict())
