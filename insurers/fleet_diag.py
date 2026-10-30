@@ -195,3 +195,20 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("re
             print("   ", json.dumps(json.loads(s3.get_object(Bucket=b, Key=k)["Body"].read()), indent=1)[:4000])
         except Exception as e:
             print(f"    no saved result at {k}: {type(e).__name__}")
+
+# Oct 30: "work:<slug>:<yyyymm>" counts a state page build's finished stage-B results (work/every-st/<slug>/v<yyyymm>/B/):
+# whole batches ("k.json") vs slices of a batch ("k_s.json"), with when they landed. A slice-only batch counts as 0 in
+# the build's "N of 256 batches done", so this shows progress the counter can't.
+import collections as _c, datetime as _dt
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("work:")]:
+    _, slug, ym = x.split(":", 2)
+    objs = [o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"work/every-st/{slug}/v{ym}/B/")
+            for o in page.get("Contents", []) if o["Key"].endswith(".json")]
+    names = [o["Key"].rsplit("/", 1)[1][:-5] for o in objs]
+    whole = {n for n in names if "_" not in n}
+    sl = [n for n in names if "_" in n]
+    open_b = _c.Counter(n.split("_")[0] for n in sl if n.split("_")[0] not in whole)
+    by_day = _c.Counter(o["LastModified"].strftime("%m-%d %H:00") for o in objs)
+    print(f"=== work {slug} v{ym}: {len(whole)} whole batches, {len(sl)} slices ({len(open_b)} batches with slices but not whole)")
+    print("  slices per unfinished batch (first 20):", dict(list(sorted(open_b.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0))[:20]))
+    print("  results landed per hour (last 24):", dict(sorted(by_day.items())[-24:]))
