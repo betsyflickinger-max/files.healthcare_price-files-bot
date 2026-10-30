@@ -1,0 +1,53 @@
+name: Control center cash and out-of-network data (by hand)
+
+# Oct 30, 2026: builds the control center's "Cash prices" and "Out of network" files (dashboard/build_cash_oon.py) and
+# copies them to R2 control/data/ right away. The daily "Dashboard data" workflow builds the same files on its own;
+# this is only for a refresh between daily runs or a test.
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Areas, comma separated (blank = every area), e.g. DFW"
+        default: ""
+      skip_insurers:
+        description: "Skip the insurers' allowed-amount files"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install boto3==1.35.36 pyarrow==26.0.0
+      - env:
+          ONLY: ${{ inputs.only }}
+          SKIP: ${{ inputs.skip_insurers }}
+        run: |
+          set -o pipefail
+          python dashboard/build_cash_oon.py --out out/cash_oon --only "$ONLY" $([ "$SKIP" = "true" ] && echo --skip-insurers) | tee -a "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          import glob, os
+          for f in sorted(glob.glob("out/cash_oon/*.json")): assert os.path.getsize(f) < 8_000_000, f"{f} is over 8 MB"
+          PY
+      - run: python board/to_r2_control.py out/cash_oon '*.json'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cash_oon
+          path: out/cash_oon
+          retention-days: 3
