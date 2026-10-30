@@ -372,7 +372,8 @@
     const nowhere = A.filter((r) => !r.areas).length;
     O.parea = fillSelect($('#o-parea'), [['', 'All areas (' + fmtN(A.length) + ')']].concat(AR.map((a) => [a.market, a.area + ' (' + fmtN(a.payments) + ')']), [['-', 'Not in any area yet (' + fmtN(nowhere) + ')']]),
       O.parea == null ? (AR.some((a) => a.market === (dash.params().market || 'DFW')) ? (dash.params().market || 'DFW') : '') : O.parea);
-    const inA = A.filter((r) => !O.parea ? true : O.parea === '-' ? !r.areas : (r.areas || '').split('|').includes(O.parea));
+    const pareaNow = O.parea; if (!ok('oon_ins_areas')) O.parea = null;   // keep the DFW default until the area list has loaded
+    const inA = A.filter((r) => !pareaNow ? true : pareaNow === '-' ? !r.areas : (r.areas || '').split('|').includes(pareaNow));
     O.ins = fillSelect($('#o-ins'), [['', 'All insurers']].concat([...new Set(inA.map((r) => r.insurer))].sort().map((i) => [i, i])), O.ins);
     const inI = inA.filter((r) => !O.ins || r.insurer === O.ins);
     O.pcode = fillSelect($('#o-pcode'), [['', 'All procedures']].concat(byCodeName(inI).map(([c, n]) => [c, n + ' (' + c + ')'])), O.pcode);
