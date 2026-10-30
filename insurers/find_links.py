@@ -139,6 +139,26 @@ def toc_match(arg, today):
                 http="200", error="", found=True)
 
 
+def healthsparq(arg):
+    """Oct 30, 2026: insurers on HealthSparq (Medica, Quartz) list every file in one latest_metadata.json. The file
+    names carry the date, so take the newest file whose name (without the date) matches. arg = '<metadata url>|<regex>'.
+    Each file's link is the metadata's folder + its filePath."""
+    import json
+    meta, pat = arg.split("|", 1)
+    base = meta.rsplit("/", 1)[0] + "/"
+    hits = {}
+    for f in json.loads(_get(meta)).get("files", []):
+        if f.get("fileSchema") != "IN_NETWORK_RATES":
+            continue
+        name = f.get("fileName", "")
+        if re.search(pat, re.sub(r"^\d{4}-\d{2}-\d{2}_", "", name)):
+            hits[name] = base + f["filePath"]
+    if not hits:
+        return dict(url="", how="not in the insurer's HealthSparq file list", http="", error="no match", found=False)
+    key = sorted(hits)[-1]
+    return dict(url=hits[key], how="from the insurer's HealthSparq file list (latest_metadata.json)", http="200", error="", found=True)
+
+
 def find(row, today, since):
     """Returns dict(url, how, http, error). since = date of the file we already have."""
     finder = row.get("finder", "")
@@ -149,6 +169,8 @@ def find(row, today, since):
             return azure_list(row["finder_arg"])
         if finder == "toc_match":
             return toc_match(row["finder_arg"], today)
+        if finder == "healthsparq":
+            return healthsparq(row["finder_arg"])
         if finder == "catalog":   # Oct 16, 2026: link from the newest insurer catalog (insurers/catalog.py), arg insurer|network|part
             import catalog
             ins, net, part = row["finder_arg"].split("|")

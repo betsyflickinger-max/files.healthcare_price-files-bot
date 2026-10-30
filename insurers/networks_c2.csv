@@ -3641,3 +3641,7 @@ anthem-nh-271-35e0-part-5,Anthem New Hampshire,Anthem New Hampshire employer net
 anthem-nh-271-35e0-part-6,Anthem New Hampshire,Anthem New Hampshire employer network (271_35E0),,,,2026-10-01,small,yes,catalog,anthem|271_35E0|6
 anthem-nh-nh-hxabmed0000-part-1,Anthem New Hampshire,Anthem New Hampshire marketplace network (NH_HXABMED0000),,,,2026-10-01,small,yes,catalog,anthem|NH_HXABMED0000|1
 anthem-nh-nh-hxabmed0000-part-2,Anthem New Hampshire,Anthem New Hampshire marketplace network (NH_HXABMED0000),,,,2026-10-01,small,yes,catalog,anthem|NH_HXABMED0000|2
+c2-wellsense-wellsense-health-connector-plan1,WellSense,WellSense Health Connector Plan1,,https://connect.wellsense.org:8443/mrfdownload/Plan1.zip,Plan1,,small,yes,,
+c2-wellsense-wellsense-health-connector-plan2,WellSense,WellSense Health Connector Plan2,,https://connect.wellsense.org:8443/mrfdownload/Plan2.zip,Plan2,,small,yes,,
+c2-wellsense-wellsense-health-connector-plan3,WellSense,WellSense Health Connector Plan3,,https://connect.wellsense.org:8443/mrfdownload/Plan3.zip,Plan3,,small,yes,,
+c2-wellsense-wellsense-health-connector-plan4,WellSense,WellSense Health Connector Plan4,,https://connect.wellsense.org:8443/mrfdownload/Plan4.zip,Plan4,,small,yes,,
