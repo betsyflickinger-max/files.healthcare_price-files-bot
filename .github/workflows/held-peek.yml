@@ -1,0 +1,24 @@
+name: Held hospital files, first look (read-only)
+
+# Oct 30, 2026: prints the name/address each held hospital file states about itself, for a review pass. Changes nothing.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests==2.32.3 remotezip==0.12.6
+      - run: python bot/held_peek.py > peek.tsv; cat peek.tsv
+      - uses: actions/upload-artifact@v4
+        with:
+          name: held-peek
+          path: peek.tsv
