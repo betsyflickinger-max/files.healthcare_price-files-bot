@@ -26,6 +26,8 @@ Out of network:
   oon_ins_amounts, _2 .. _N      every payment those files list for a featured procedure: insurer, plan, provider tax ID,
                                  allowed amount, billed charge, number of NPIs, file (packed by procedure).
   oon_ins_sources                each of those files' link, once.
+  oon_ins_areas                  how many of those payments fall in each live area (provider NPI in the area's Price Finder
+                                 provider list); each payment row carries its areas, provider and city.
 
   python dashboard/build_cash_oon.py [--only DFW,AUS] [--out out/cash_oon] [--skip-insurers]
 Env: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET (STORAGE_ENDPOINT / STORAGE_REGION when set).
@@ -99,9 +101,11 @@ def medicare_hosp(code):
 
 _cur = f"site/every/{get_text('site/every/CURRENT')}/"
 MARKETS = {"DFW": {"name": "Dallas–Fort Worth", "state": "TX", "hidx": DFW["hosp"], "h": _cur + "h/"}}
+AREAS = {"DFW": {"name": "Dallas–Fort Worth", "npis": _cur + "npis.json", "fac": DFW["fac"]}}   # every live area's provider list
 for slug, (name, *_rest) in CP.CITIES.items():
     key, st = OLDKEY.get(slug, slug), CP.STATE_OF.get(slug, "TX")
     months = sorted(d for d in ls(f"{CP.root(slug)}{slug}/", dirs=True) if exists(d + "embed.json"))
+    if months: AREAS[key] = {"name": name, "npis": months[-1] + "npis.json", "embed": months[-1] + "embed.json"}
     for d_ in reversed(months):   # newest finished build with the area's own hospital files (as city_page.py picks them)
         if exists(d_ + "hosp/hosp_index.json"):
             MARKETS[key] = {"name": name, "state": st, "hidx": json.loads(get_bytes(d_ + "hosp/hosp_index.json")), "h": d_ + "hosp/h/"}
@@ -269,6 +273,8 @@ def add_file(j, fm, fname, name, amounts):
             sc = ",".join(map(str, sc)) if isinstance(sc, list) else str(sc)
             for p in a.get("payments") or []:
                 for pv in p.get("providers") or [{}]:
+                    npi = pv.get("npi") or []
+                    npi = [str(x).strip() for x in (npi if isinstance(npi, list) else [npi]) if str(x).strip()]
                     amounts.append({"insurer": name, "plan": fm.get("plan_name") or "", "plan_market_type": fm.get("plan_market_type") or "",
                                     "file_date": str(fm.get("last_updated_on") or "")[:10] or None, "code": code,
                                     "description": (o.get("description") or "")[:60],
@@ -276,12 +282,49 @@ def add_file(j, fm, fname, name, amounts):
                                     "service_code": sc,
                                     "tin": f"{tin.get('type', '')} {tin.get('value', '')}".strip(),
                                     "allowed_amount": rnd(p.get("allowed_amount")), "billed_charge": rnd(pv.get("billed_charge")),
-                                    "npis": len(pv.get("npi") or []) if isinstance(pv.get("npi"), list) else (1 if pv.get("npi") else 0), "file": fname})
+                                    "npis": len(npi), "file": fname, "_npi": npi})
+
+def match_areas(amounts):
+    """Oct 30, 2026 (Betsy): put each insurer out-of-network payment in the areas where its provider practices, by matching
+    the payment's NPIs to each live area's Price Finder provider list (R2 <build>/npis.json, same order as the page's
+    providers). A payment can be in more than one area (a group with doctors in two places), or in none (a provider in no
+    live area's list yet). Adds areas ("DFW|AUS"), provider and city (the first matching provider, as the page names it)."""
+    want = {n for r in amounts for n in r["_npi"]}
+    hits = defaultdict(list)   # npi -> [(area key, provider position)]
+    def one(kv):
+        k, a = kv
+        try: npis = json.loads(get_bytes(a["npis"]))
+        except Exception as e: print(f"  {a['name']}: no provider list ({e})"); return k, []
+        return k, [(str(n), i) for i, n in enumerate(npis) if str(n) in want]
+    with ThreadPoolExecutor(8) as ex:
+        for k, found in ex.map(one, AREAS.items()):
+            for n, i in found: hits[n].append((k, i))
+    fac = {}   # provider names only for areas that matched something (embed.json is large)
+    for k in sorted({k for v in hits.values() for k, _ in v}):
+        try: fac[k] = AREAS[k].get("fac") or json.loads(get_bytes(AREAS[k]["embed"]))["fac"]
+        except Exception as e: print(f"  {AREAS[k]['name']}: provider names not readable ({e})"); fac[k] = []
+    per = defaultdict(lambda: [0, set()])
+    for r in amounts:
+        m = [h for n in r.pop("_npi") for h in hits.get(n, [])]
+        ks = sorted({k for k, _ in m}, key=lambda k: (k != "DFW", k))
+        r["areas"] = "|".join(ks)
+        k0, i0 = m[0] if m else (None, None)
+        f = fac.get(k0) or []
+        r["provider"] = f[i0][0] if k0 and i0 < len(f) else ""
+        r["city"] = f[i0][1] if k0 and i0 < len(f) else ""
+        for k in ks: per[k][0] += 1; per[k][1].add(r["insurer"])
+    rows = [{"market": k, "area": AREAS[k]["name"], "payments": n, "insurers": len(i)} for k, (n, i) in sorted(per.items(), key=lambda x: -x[1][0])]
+    save("oon_ins_areas", rows)
+    hit = sum(1 for r in amounts if r["areas"])
+    print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas"
+          + (f" (DFW {per['DFW'][0]:,})" if "DFW" in per else ""))
+
 
 if ARGS.skip_insurers:
     print("insurer allowed-amount files skipped (--skip-insurers)")
 else:
     files, amounts, sources = insurer_files()
+    match_areas(amounts)
     save("oon_ins_files", files)
     save("oon_ins_sources", sources)   # each file's link once; payment rows name their file
     pack("oon_ins_amounts", amounts, 4, "code")
