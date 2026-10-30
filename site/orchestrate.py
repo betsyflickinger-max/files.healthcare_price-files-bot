@@ -71,7 +71,21 @@ def do(method, path, body=None):
                                  headers={'Authorization': 'Bearer ' + E['DIGITALOCEAN_TOKEN'], 'Content-Type': 'application/json'})
     with urllib.request.urlopen(req) as r: return json.loads(r.read() or b'{}')
 def droplets(): return do('GET', '/droplets?per_page=200')['droplets']
-def free_slots(): return int(do('GET', '/account')['account']['droplet_limit']) - RESERVE - len(droplets())
+def over_card_cap():
+    """Oct 29, 2026: this month's spend beyond the DigitalOcean credit has reached the cap Betsy OK'd
+    (build_approvals.json "_card_cap"): start no new machines. An API hiccup never stops a build."""
+    try:
+        b = do('GET', '/customers/my/balance')
+        mtd, bal = float(b.get('month_to_date_usage') or 0), float(b.get('account_balance') or 0)
+        cap = float(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'build_approvals.json')))['_card_cap']['usd'])
+        return mtd - (-bal if bal < 0 else 0.0) >= cap
+    except Exception:
+        return False
+def free_slots():
+    if over_card_cap():
+        print('card spending cap reached for this month: no new machines (build_approvals.json _card_cap)')
+        return 0
+    return int(do('GET', '/account')['account']['droplet_limit']) - RESERVE - len(droplets())
 
 ENV_KEYS = ['R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY']
 # Oct 28, 2026: where storage lives (blank = Cloudflare R2). Set as repo variables to move to another S3-style store.

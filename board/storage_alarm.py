@@ -14,6 +14,7 @@ import json
 import os
 import re
 import sys
+import time
 from pathlib import Path
 
 import boto3
@@ -164,7 +165,40 @@ def go_on(issue):
         print(f"started the R2 -> B2 copy workflow: HTTP {r.status_code}")
 
 
+def card_alarm():
+    """Oct 29, 2026 (Betsy OK'd): email her (one GitHub issue each, once a month) when the DigitalOcean credit is used
+    up and machines start billing her card, and when the month's card spend reaches her cap (build_approvals.json
+    "_card_cap"), at which point the bot rents nothing new. Files being read finish; nothing is deleted."""
+    if not do_h():
+        return
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "insurers"))
+    import droplets
+    card, mtd, credit = droplets.card_spend()
+    cap, month = droplets.card_cap(), time.strftime("%Y-%m")
+    print(f"DigitalOcean: ${mtd:,.2f} this month, ${credit:,.2f} credit at the last invoice, ${card:,.2f} on the card (cap ${cap:,.0f})")
+    seen = {i.get("title", "") for i in gh("GET", "/issues", params={"state": "all", "per_page": 100}).json() if isinstance(i, dict)}
+    notes = []
+    if card > 0:
+        notes.append((f"DigitalOcean credit used up ({month}): rented machines now bill your card",
+                      f"This month's machine spend is ${mtd:,.2f} and the credit was ${credit:,.2f}, so ${card:,.2f} goes on your card so far. "
+                      f"The bot keeps renting until the card spend reaches ${cap:,.0f} this month, then stops renting new machines "
+                      f"(files being read finish; nothing is deleted). To change the limit, tell Claude (it's `_card_cap` in build_approvals.json)."))
+    if card >= cap:
+        notes.append((f"Card spending cap reached ({month}): no new machines this month",
+                      f"${card:,.2f} of this month's ${mtd:,.2f} machine spend is on your card, which reaches the ${cap:,.0f} limit you set. "
+                      f"The bot has stopped renting new machines; files already being read finish and nothing is deleted. Renting starts "
+                      f"again next month, or now if you tell Claude a higher limit."))
+    for title, body in notes:
+        if title not in seen:
+            gh("POST", "/issues", json={"title": title, "body": body})
+            print("opened:", title)
+
+
 def main():
+    try:
+        card_alarm()
+    except Exception as e:   # a money check must never stop the storage check
+        print("card check skipped:", repr(e)[:200])
     status, err = check()
     issue = open_issue()
     print(f"storage: {status} {err[:200]}")

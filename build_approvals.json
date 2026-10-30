@@ -1,4 +1,8 @@
 {
+ "_card_cap": {
+  "usd": 500,
+  "why": "Betsy OK'd (Oct 29, 2026): once the DigitalOcean credit is used up, rent machines on her card up to $500 a month, then stop renting until she raises this (files being read finish; nothing is deleted)"
+ },
  "stb4-2026-10": {
   "usd": 150,
   "why": "Betsy OK'd up to $150 per new-state page build (Oct 23, 2026) so builds keep running while she's away"

@@ -137,7 +137,10 @@ if E.get("DIGITALOCEAN_TOKEN"):
         bal = do("customers/my/balance")
         d = do("droplets?per_page=100")["droplets"]
         out["digitalocean"] = {"month_to_date_usd": float(bal["month_to_date_usage"]),
-                               "credit_left_usd": -float(bal["account_balance"]) if float(bal["account_balance"]) < 0 else 0.0,
+                               # Oct 29, 2026: account_balance is the credit at the last invoice; this month's usage comes
+                               # off it (the board said $1,305 and "20 days left" when about $75 was left)
+                               "credit_left_usd": max(0.0, (-float(bal["account_balance"]) if float(bal["account_balance"]) < 0 else 0.0)
+                                                      - float(bal["month_to_date_usage"])),
                                "machines": [{"name": x["name"], "usd_hour": x["size"]["price_hourly"], "created": x["created_at"]} for x in d],
                                "usd_hour_now": round(sum(x["size"]["price_hourly"] for x in d), 3),
                                # Oct 14, 2026: the account's live machine limit, so the board shows "N of <limit>" (was 10, now 25)
