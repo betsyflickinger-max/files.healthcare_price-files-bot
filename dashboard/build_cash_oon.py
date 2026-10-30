@@ -24,7 +24,8 @@ Out of network:
   oon_ins_files                  insurers' allowed-amount (out-of-network) files, newest month: files, empty, with data,
                                  failed, services and payments listed, size (from plans/allowed_amounts.py's parquet).
   oon_ins_amounts, _2 .. _N      every payment those files list for a featured procedure: insurer, plan, provider tax ID,
-                                 allowed amount, billed charge, number of NPIs, file and link.
+                                 allowed amount, billed charge, number of NPIs, file (packed by procedure).
+  oon_ins_sources                each of those files' link, once.
 
   python dashboard/build_cash_oon.py [--only DFW,AUS] [--out out/cash_oon] [--skip-insurers]
 Env: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET (STORAGE_ENDPOINT / STORAGE_REGION when set).
@@ -220,10 +221,13 @@ def insurer_files():
         _, _, month, fn = k.split("/", 3)
         stem = fn[:-8]
         if stem not in newest or month > newest[stem][0]: newest[stem] = (month, k)
-    files, amounts = [], []
+    files, amounts, sources = [], [], []
     for stem, (month, k) in sorted(newest.items()):
         t = pq.read_table(io.BytesIO(get_bytes(k))).to_pylist()
+        from collections import Counter
+        ent = Counter(r.get("reporting_entity_name") for r in t if r.get("reporting_entity_name"))
         name = next((r["insurer"] for r in t if r.get("insurer")), stem)
+        if name == stem or "-" in name and " " not in name: name = ent.most_common(1)[0][0] if ent else {"cigna": "Cigna", "uhc": "UnitedHealthcare"}.get(stem, stem)
         ok = [r for r in t if r.get("status") == "ok"]; full = [r for r in ok if r.get("services")]
         files.append({"id": stem, "insurer": name, "month": month, "files": len(t), "empty": len(ok) - len(full), "with_data": len(full),
                       "failed": len(t) - len(ok), "services": sum(r.get("services") or 0 for r in ok),
@@ -233,7 +237,8 @@ def insurer_files():
         meta = {r["file_name"]: r for r in full}
         try: tb = get_bytes(f"raw/allowed/{month}/{stem}.tar")
         except Exception as e: print(f"  {name}: raw files not readable ({e})"); continue
-        n0 = len(amounts)
+        n0, odd = len(amounts), []
+        sources += [{"insurer": name, "file": r["file_name"], "url": r.get("source_url") or ""} for r in full]
         with tarfile.open(fileobj=io.BytesIO(tb)) as tar:
             for mem in tar:
                 fm = meta.get(mem.name)
@@ -241,28 +246,40 @@ def insurer_files():
                 b = tar.extractfile(mem).read()
                 try: j = json.loads(gzip.decompress(b) if b[:2] == b"\x1f\x8b" else b)
                 except Exception: continue
-                for o in j.get("out_of_network") or []:
-                    code = str(o.get("billing_code", "")).strip().upper()
-                    if code not in FEATURED: continue
-                    for a in o.get("allowed_amounts") or []:
-                        tin = a.get("tin") or {}
-                        for p in a.get("payments") or []:
-                            for pv in p.get("providers") or [{}]:
-                                amounts.append({"insurer": name, "plan": fm.get("plan_name") or "", "plan_market_type": fm.get("plan_market_type") or "",
-                                                "file_date": str(fm.get("last_updated_on") or "")[:10] or None, "code": code,
-                                                "procedure": NAMES.get(code, code), "description": (o.get("description") or "")[:90],
-                                                "billing_class": a.get("billing_class") or p.get("billing_class") or "",
-                                                "service_code": ",".join(a.get("service_code") or []),
-                                                "tin": f"{tin.get('type', '')} {tin.get('value', '')}".strip(),
-                                                "allowed_amount": rnd(p.get("allowed_amount")), "billed_charge": rnd(pv.get("billed_charge")),
-                                                "npis": len(pv.get("npi") or []), "file": mem.name, "file_url": fm.get("source_url") or ""})
+                try: add_file(j, fm, mem.name, name, amounts)
+                except Exception as e: odd.append(f"{mem.name}: {type(e).__name__}: {e}"[:200])
+        if odd: print(f"  {name}: {len(odd)} files laid out differently, skipped; first: {odd[0]}")
         print(f"  {name} ({month}): {len(full)} files with data, {len(amounts) - n0:,} payments for featured procedures", flush=True)
-    return files, amounts
+    return files, amounts, sources
+
+
+def add_file(j, fm, fname, name, amounts):
+    """every payment one allowed-amount file lists for a featured procedure, as published"""
+    for o in j.get("out_of_network") or []:
+        code = str(o.get("billing_code", "")).strip().upper()
+        if code not in FEATURED: continue
+        for a in o.get("allowed_amounts") or []:
+            tin = a.get("tin") or {}
+            if isinstance(tin, list): tin = tin[0] if tin and isinstance(tin[0], dict) else {"value": ",".join(map(str, tin))}
+            if not isinstance(tin, dict): tin = {"value": str(tin)}
+            sc = a.get("service_code") or []
+            sc = ",".join(map(str, sc)) if isinstance(sc, list) else str(sc)
+            for p in a.get("payments") or []:
+                for pv in p.get("providers") or [{}]:
+                    amounts.append({"insurer": name, "plan": fm.get("plan_name") or "", "plan_market_type": fm.get("plan_market_type") or "",
+                                    "file_date": str(fm.get("last_updated_on") or "")[:10] or None, "code": code,
+                                    "description": (o.get("description") or "")[:60],
+                                    "billing_class": a.get("billing_class") or p.get("billing_class") or "",
+                                    "service_code": sc,
+                                    "tin": f"{tin.get('type', '')} {tin.get('value', '')}".strip(),
+                                    "allowed_amount": rnd(p.get("allowed_amount")), "billed_charge": rnd(pv.get("billed_charge")),
+                                    "npis": len(pv.get("npi") or []) if isinstance(pv.get("npi"), list) else (1 if pv.get("npi") else 0), "file": fname})
 
 if ARGS.skip_insurers:
     print("insurer allowed-amount files skipped (--skip-insurers)")
 else:
-    files, amounts = insurer_files()
+    files, amounts, sources = insurer_files()
     save("oon_ins_files", files)
-    pack("oon_ins_amounts", amounts, 3, "insurer")
+    save("oon_ins_sources", sources)   # each file's link once; payment rows name their file
+    pack("oon_ins_amounts", amounts, 4, "code")
     print("oon_ins_files:", len(files), "insurers")
