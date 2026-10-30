@@ -173,3 +173,17 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("jo
             seg = lines[s:e]
             print(f"--- {o['Key']} lines {s + 1}-{e} ({len(seg)} lines)")
             print("    " + "\n    ".join(l[:300] for l in (seg[:3] + ["    ..."] + seg[-30:] if len(seg) > 34 else seg)))
+
+# Oct 29, 2026: "result:<area>:<part of slot>" prints the saved result of that file's last read (the full error, not
+# the 300-character cut the status board shows).
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("result:")]:
+    import csv as _csv, io as _io
+    _, sc, part = x.split(":", 2)
+    m = list(_csv.DictReader(_io.StringIO(s3.get_object(Bucket=b, Key=f"bot/insurers/{sc}/manifest.csv")["Body"].read().decode())))
+    for r in [r for r in m if part in r.get("slot", "")]:
+        print(f"=== result {sc} {r['slot']}: status {r.get('status')}, fails {r.get('fails')}, run {r.get('run_id')}, launched {r.get('launched_at')}")
+        k = f"bot/insurers/{sc}/runs/{r.get('run_id')}/done/{r['slot']}.json"
+        try:
+            print("   ", json.dumps(json.loads(s3.get_object(Bucket=b, Key=k)["Body"].read()), indent=1)[:4000])
+        except Exception as e:
+            print(f"    no saved result at {k}: {type(e).__name__}")
