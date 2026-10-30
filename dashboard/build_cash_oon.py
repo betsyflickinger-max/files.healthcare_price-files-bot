@@ -13,6 +13,8 @@ Cash prices (hospital price files, every live Price Finder area that has its own
   cash_proc                      one row per area x procedure: how many hospital files list a cash price, the lowest /
                                  middle / highest of them, Medicare's hospital outpatient rate, and how many hospitals' cash
                                  price is below the middle of their own in-network rates.
+  cash_files                     each hospital file once (hospital, city, file date, link); cash_hosp and oon_hosp rows point
+                                 to it by market + "f", which keeps the files small. The page joins them.
   cash_posted                    providers' own posted cash prices (DFW Price Finder only), as copied from their websites.
 Out of network:
   oon_hosp, oon_hosp_2           every hospital-file line labelled out-of-network for a featured procedure (product type 5,
@@ -64,9 +66,7 @@ TODAY = datetime.date.today()
 OLDKEY = {"austin": "AUS", "san-antonio": "SAT", "houston": "HOU", "el-paso": "ELP"}   # same market keys as build_prices.py
 # same rule as site/h2_build.py and site/match_pilot.py (Betsy, Oct 29: out-of-network is kept, labelled, never in-network)
 OON_RE = re.compile(r'\bOON\b|out[\s-]*of[\s-]*network|\bnon[\s-]*par(ticipating)?\b', re.I)
-PROD = {0: "Commercial", 1: "Marketplace", 2: "Medicare Advantage", 3: "Medicaid", 4: "Not labelled", 5: "Out of network"}
-IN_NET = (0, 1, 4)
-SETTING = {"o": "Outpatient", "i": "Inpatient", "b": "Both", "": ""}
+IN_NET = (0, 1, 4)   # product types counted as in-network: commercial, marketplace, not labelled (2 MA, 3 Medicaid, 5 out of network)
 MAX_BYTES = 7_000_000   # a control-center file must stay under 8 MB
 
 
@@ -120,7 +120,7 @@ def hfile(prefix, code):
 
 def build_market(key, m):
     H = m["hidx"]; src = H["src"]; ins_names = H.get("ins") or []; gplans = H.get("plans") or []
-    cash_rows, oon_rows, proc_rows = [], [], []
+    cash_rows, oon_rows, proc_rows, used = [], [], [], set()
     for code in sorted(FEATURED):
         f = hfile(m["h"], code)
         med, med_what = medicare_hosp(code)
@@ -138,51 +138,42 @@ def build_market(key, m):
         for r in f.get("r", []):
             if r[5] or r[9] or r[2] not in IN_NET or is_oon(r): continue   # percent-only, flat, MA/Medicaid, out of network
             inn[(r[0], r[4])].append((r[6], r[8], ins_of(r)))
-            # out-of-network lines are listed below, never compared
-        for r in f.get("r", []):
+        for r in f.get("r", []):   # out-of-network lines: listed on their own, never compared or counted as in-network
             if not is_oon(r): continue
-            s = r[0]; sr = src[s] if s < len(src) else ["", "", "", "", "", ""]; dd = pdate(sr[3])
-            same = sorted(v for v, _, i in inn.get((s, r[4]), []) if i == ins_of(r))
-            oon_rows.append({"market": key, "code": code, "procedure": NAMES.get(code, code), "hospital": sr[0], "city": sr[1],
-                             "insurer": ins_of(r), "plan": plan_of(r), "kind": "percent of charges" if r[5] else "dollar amount",
-                             "amount": r[6], "fee": "Doctor fee" if r[4] == 1 else "Facility fee", "setting": SETTING.get(r[8], r[8] or ""),
-                             "row": r[7], "file_date": dd.isoformat() if dd else None, "days_old": (TODAY - dd).days if dd else None,
-                             "file_url": sr[4], "in_network_middle_same_insurer": rnd(mid(same)), "in_network_rates_same_insurer": len(same)})
+            same = sorted(v for v, _, i in inn.get((r[0], r[4]), []) if i == ins_of(r))
+            used.add(r[0])
+            oon_rows.append({"market": key, "code": code, "f": r[0], "insurer": ins_of(r), "plan": plan_of(r), "pct": r[5], "amount": r[6],
+                             "fee": r[4], "st": r[8] or "", "row": r[7], "inn_mid": rnd(mid(same)), "inn_n": len(same)})
         # cash: the lowest cash line per file x fee type x setting
         best = {}
         for c in f.get("c", []):
             k = (c[0], c[5], c[1])
             if c[2] and c[2] > 0 and (k not in best or c[2] < best[k][2]): best[k] = c
-        desc = f.get("d") or []
-        per_file_ratio = {}
+        per_file = {}
         for (s, fee, st), c in sorted(best.items()):
-            sr = src[s] if s < len(src) else ["", "", "", "", "", ""]; dd = pdate(sr[3])
-            v = sorted(x for x, st2, _ in inn.get((s, fee), []) if not st or not st2 or st in ("b",) or st2 in ("b",) or st2 == st)
-            cash = c[2]
-            row = {"id": f"{key}|{code}|{s}|{fee}|{st}", "market": key, "code": code, "procedure": NAMES.get(code, code),
-                   "hospital": sr[0], "city": sr[1], "fee": "Doctor fee" if fee == 1 else "Facility fee", "setting": SETTING.get(st, st),
-                   "description": desc[c[6]] if isinstance(c[6], int) and c[6] < len(desc) else "",
-                   "cash": rnd(cash), "list_price": rnd(c[3]) or None, "row": c[4],
-                   "in_network_rates": len(v), "in_network_lowest": rnd(v[0]) if v else None, "in_network_middle": rnd(mid(v)),
-                   "in_network_highest": rnd(v[-1]) if v else None, "in_network_below_cash": sum(1 for x in v if x < cash),
-                   "rates_capped": bool(capped.get(str(s))),
-                   "medicare": rnd(med) if fee == 0 else None, "cash_x_medicare": round(cash / med, 2) if med and fee == 0 else None,
-                   "file_date": dd.isoformat() if dd else None, "days_old": (TODAY - dd).days if dd else None,
-                   "age_flag": "No date in file" if dd is None else ("Over 6 months old" if (TODAY - dd).days > 183 else "Current"),
-                   "file_url": sr[4]}
-            cash_rows.append(row)
-            if fee == 0:   # area summary: one facility-fee cash price per hospital file (its lowest across settings)
-                if s not in per_file_ratio or cash < per_file_ratio[s][0]: per_file_ratio[s] = (cash, mid(v))
-        vals = sorted(x for x, _ in per_file_ratio.values())
-        comp = [(x, m_) for x, m_ in per_file_ratio.values() if m_]
+            v = sorted(x for x, st2, _ in inn.get((s, fee), []) if not st or not st2 or st == "b" or st2 == "b" or st2 == st)
+            cash = c[2]; used.add(s)
+            cash_rows.append({"market": key, "code": code, "f": s, "fee": fee, "st": st or "", "cash": rnd(cash), "list": rnd(c[3]) or None,
+                              "row": c[4], "n": len(v), "lo": rnd(v[0]) if v else None, "mid": rnd(mid(v)), "hi": rnd(v[-1]) if v else None,
+                              "below": sum(1 for x in v if x < cash), "cap": 1 if capped.get(str(s)) else 0,
+                              "xmed": round(cash / med, 2) if med and fee == 0 else None})
+            if fee == 0:   # area summary: one hospital-fee cash price per hospital file (its lowest across settings)
+                if s not in per_file or cash < per_file[s][0]: per_file[s] = (cash, mid(v))
+        vals = sorted(x for x, _ in per_file.values())
+        comp = [(x, m_) for x, m_ in per_file.values() if m_]
         proc_rows.append({"id": f"{key}|{code}", "market": key, "code": code, "procedure": NAMES.get(code, code),
                           "hospitals_cash": len(vals), "hospitals_any": len({r[0] for r in f.get("r", [])} | {c[0] for c in f.get("c", [])}),
                           "cash_lowest": rnd(vals[0]) if vals else None, "cash_middle": rnd(mid(vals)), "cash_highest": rnd(vals[-1]) if vals else None,
                           "medicare": rnd(med), "medicare_what": med_what,
                           "middle_x_medicare": round(mid(vals) / med, 2) if vals and med else None,
                           "cash_below_own_middle": sum(1 for x, m_ in comp if x < m_), "compared": len(comp)})
-    print(f"{m['name']}: {len(cash_rows):,} cash rows, {len(oon_rows):,} out-of-network rows", flush=True)
-    return cash_rows, oon_rows, proc_rows
+    files = []
+    for s in sorted(used):   # each hospital file once (rows above point to it by market + "f")
+        sr = src[s] if s < len(src) else ["", "", "", "", ""]; dd = pdate(sr[3])
+        files.append({"id": f"{key}|{s}", "market": key, "f": s, "hospital": sr[0], "city": sr[1], "file_date": dd.isoformat() if dd else None,
+                      "days_old": (TODAY - dd).days if dd else None, "file_url": sr[4]})
+    print(f"{m['name']}: {len(cash_rows):,} cash rows, {len(oon_rows):,} out-of-network rows, {len(files)} hospital files", flush=True)
+    return cash_rows, oon_rows, proc_rows, files
 
 
 OUT = Path(ARGS.out); OUT.mkdir(parents=True, exist_ok=True)
@@ -207,8 +198,9 @@ def pack(name, rows, n, group):
 
 with ThreadPoolExecutor(8) as ex:
     built = list(ex.map(lambda kv: build_market(*kv), MARKETS.items()))
-cash_rows = [r for c, _, _ in built for r in c]; oon_rows = [r for _, o, _ in built for r in o]; proc_rows = [r for _, _, p in built for r in p]
+cash_rows = [r for b in built for r in b[0]]; oon_rows = [r for b in built for r in b[1]]; proc_rows = [r for b in built for r in b[2]]
 pack("cash_hosp", cash_rows, 6, "market")
+save("cash_files", [r for b in built for r in b[3]])
 save("cash_proc", proc_rows)
 pack("oon_hosp", oon_rows, 2, "market")
 posted = [{"id": f"DFW|{i}", "market": "DFW", "code": c["code"], "procedure": NAMES.get(c["code"], c["code"]), "provider": c.get("name", ""),
