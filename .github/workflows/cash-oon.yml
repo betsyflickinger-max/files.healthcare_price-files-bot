@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       only:
-        description: "Areas, comma separated (blank = every area), e.g. DFW"
+        description: "Areas, comma separated (blank = every area). A test with some areas is not copied to the control center."
         default: ""
       skip_insurers:
         description: "Skip the insurers' allowed-amount files"
@@ -45,7 +45,9 @@ jobs:
           import glob, os
           for f in sorted(glob.glob("out/cash_oon/*.json")): assert os.path.getsize(f) < 8_000_000, f"{f} is over 8 MB"
           PY
-      - run: python board/to_r2_control.py out/cash_oon '*.json'
+      - name: Copy to the control center (only for a full run; a test with some areas would replace every area's files)
+        if: ${{ inputs.only == '' }}
+        run: python board/to_r2_control.py out/cash_oon '*.json'
       - uses: actions/upload-artifact@v4
         with:
           name: cash_oon
