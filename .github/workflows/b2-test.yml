@@ -32,6 +32,17 @@ jobs:
           print("region:", region)
           s3 = boto3.client("s3", endpoint_url=ep, region_name=region,
                             aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          import requests
+          try:
+              rr = requests.get(ep, timeout=30); print("plain GET of endpoint:", rr.status_code, rr.text[:200].replace("\n", " "))
+          except Exception as e:
+              print("plain GET of endpoint FAILED:", repr(e)[:300])
+          try:
+              r0 = s3.list_objects_v2(Bucket=b, MaxKeys=3); print("list before write: OK", [o["Key"] for o in r0.get("Contents", [])])
+          except Exception as e:
+              print("list before write FAILED:", repr(e)[:300])
+          import botocore
+          print("boto3", boto3.__version__, "botocore", botocore.__version__)
           body = f"b2 test {time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}".encode()
           s3.put_object(Bucket=b, Key="bot/b2-test.txt", Body=body)
           back = s3.get_object(Bucket=b, Key="bot/b2-test.txt")["Body"].read()
