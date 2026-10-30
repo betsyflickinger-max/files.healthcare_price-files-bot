@@ -249,7 +249,9 @@ def blob_structures(list_url, stats, limit=0):
     else:
         blobs = listing["blobs"]
     idx = [b for b in blobs if b["name"].endswith("_index.json")]
-    month = max(b["name"][:10] for b in idx)
+    # newest month (Oct 30, 2026: HCSC's list now carries a different date per employer index, so taking only the newest
+    # day kept 1 of ~6,000; the newest month keeps them all, and is the same as before for UnitedHealthcare)
+    month = max(b["name"][:7] for b in idx if re.match(r"\d{4}-\d{2}", b["name"]))
     idx = [b for b in idx if b["name"].startswith(month)]
     if limit:
         idx = idx[:limit]
