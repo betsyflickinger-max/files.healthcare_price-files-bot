@@ -64,7 +64,9 @@ def cms_hpt(domain, want):
 
 
 def one(r):
-    u = r["mrf_url"]
+    u = r["mrf_url"] or r.get("domain", "")   # Oct 30: rows matched through a system's cms-hpt.txt have only the domain
+    if u and not u.startswith("http"):
+        u = "https://" + u
     try:
         if urlparse(u).path in ("", "/"):
             got = cms_hpt(u, r["name"])
@@ -76,7 +78,9 @@ def one(r):
     return "\t".join([r["state"], r["name"], r["city"], urlparse(u).netloc, got.replace("\t", " ")])
 
 
-rows = list(csv.DictReader(open(sys.argv[1] if len(sys.argv) > 1 else "data/web_search_held.csv")))
+rows = list(csv.DictReader(open(sys.argv[1] if len(sys.argv) > 1 and not sys.argv[1].startswith("--") else "data/web_search_held.csv")))
+if "--index-only" in sys.argv:
+    rows = [r for r in rows if not r["mrf_url"]]
 with ThreadPoolExecutor(12) as ex:
     for line in ex.map(one, rows):
         print(line, flush=True)
