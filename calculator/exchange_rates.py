@@ -29,7 +29,25 @@ ADD = {
     "Molina Marketplace TX": r"^innetwork-G-(GMZ|MPT|QMX)CT\d+",
 }
 KEEP = ["negotiated_type", "negotiated_rate", "billing_code_type", "billing_code", "billing_class", "service_code",
-        "npi", "last_updated_on", "source_url", "expiration_date"]
+        "npi", "tin", "last_updated_on", "source_url", "expiration_date"]
+
+
+def roster_facilities(s3, b, key, fac):
+    """Oct 30, 2026: the bot stores a group's rates once per group (Oct 15 decision), under one of its NPIs, so a
+    hospital or surgery center in the group may not be the NPI on the rate rows. The insurer's own roster
+    (data/full/membership/<same file>.parquet: every in-scope NPI+TIN it lists) says which facility NPIs bill under
+    each TIN; a TiC rate for a provider group applies to every NPI in that group. Returns {tin: [facility NPIs]}."""
+    import pyarrow.parquet as pq, tempfile
+    mk = key.replace("data/full/rates/", "data/full/membership/")
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".parquet") as tf:
+            s3.download_file(b, mk, tf.name)
+            m = pq.read_table(tf.name, columns=["npi", "tin"]).to_pandas().astype(str)
+    except Exception as e:
+        print(f"    no roster for {key.rsplit('/', 1)[1]}: {str(e)[:80]}")
+        return {}
+    m = m[m.npi.isin(fac.index)]
+    return m.groupby("tin").npi.apply(lambda x: sorted(set(x))).to_dict()
 
 
 def main():
@@ -80,7 +98,15 @@ def main():
             if not n_npi:   # Oct 30: say why a table adds nothing (the first run added no rows and gave no reason)
                 print(f"  {stem}: {n_all:,} rows, {n_code:,} with the calculator's codes, {n_npi:,} of those at DFW facilities;"
                       f" sample rows {None if smp is None else smp.values.tolist()}; sample NPIs with codes {t.npi.head(3).tolist()}")
-            t = t[t.npi.isin(fac.index)].copy()
+            direct = t[t.npi.isin(fac.index)]
+            by_tin = roster_facilities(s3, b, o["Key"], fac) if "tin" in t.columns else {}
+            via = t[t.tin.astype(str).isin(by_tin)].copy() if by_tin else t.iloc[0:0]
+            if len(via):   # the group's rate, once for each facility NPI the insurer lists under that TIN
+                via["npi"] = via.tin.astype(str).map(by_tin)
+                via = via.explode("npi")
+            t = pd.concat([direct, via]).drop_duplicates().copy()
+            if not len(t) and n_npi == 0:
+                print(f"    roster: {len(by_tin)} TINs with DFW facilities; no rate rows under them")
             if not len(t):
                 continue
             t = t[[c for c in KEEP if c in t.columns]].astype(str)
