@@ -34,6 +34,7 @@ from pathlib import Path
 import duckdb
 
 from common import DATA, USER_AGENT, download
+import caresource  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 spec = importlib.util.spec_from_file_location("s6", HERE / "06_filter_payer_file.py")
@@ -364,10 +365,18 @@ def run(source, ctx):
                     time.sleep(30 * 2 ** attempt)
         if not tmp.exists():   # was a confusing "No such file or directory: dl_..." from the reader
             raise RuntimeError(f"download failed after 5 tries (last: {str(last)[:300]})")
+        cms = None
         try:
-            extract(str(tmp), {**ctx, "source_url": source.split("?")[0], "source_file": name})
+            src = str(tmp)
+            if caresource.is_caresource(source):   # Oct 29, 2026: CareSource's own layout -> CMS layout first
+                cms = DATA / ("cs_" + stem(name) + ".json.gz")
+                src = str(caresource.convert(str(tmp), str(cms)))
+                tmp.unlink(missing_ok=True)
+            extract(src, {**ctx, "source_url": source.split("?")[0], "source_file": name})
         finally:
             tmp.unlink(missing_ok=True)
+            if cms:
+                cms.unlink(missing_ok=True)
         return
     extract(source, {**ctx, "source_file": Path(source).name})
 
