@@ -55,13 +55,36 @@ def raw_get(url, tries=4, timeout=60):
             time.sleep(2 * (i + 1))
 
 
+def load_docs(b):
+    """One allowed-amount file -> its JSON documents (Oct 30, 2026: insurers also post them gzipped twice, zipped, with a
+    byte-order mark, or as several documents one after another; dashboard/build_cash_oon.py reads them the same way)."""
+    import zipfile
+    for _ in range(3):
+        if b[:2] == b"\x1f\x8b": b = gzip.decompress(b)
+        elif b[:2] == b"PK":
+            z = zipfile.ZipFile(io.BytesIO(b)); b = z.read(max(z.infolist(), key=lambda i: i.file_size))
+        else: break
+    t = b.decode("utf-8-sig").strip()
+    dec, docs, i = json.JSONDecoder(), [], 0
+    while i < len(t):
+        o, i = dec.raw_decode(t, i)
+        docs += o if isinstance(o, list) else [o]
+        while i < len(t) and t[i] in " \r\n\t,": i += 1
+    return [d for d in docs if isinstance(d, dict)]
+
+
 def describe(b):
     """Read one allowed-amount file. Returns the fields it states about itself and how much it reports."""
-    j = json.loads(gzip.decompress(b) if b[:2] == b"\x1f\x8b" else b)
-    oon = j.get("out_of_network") or []
-    pays = sum(len(a.get("payments") or []) for o in oon for a in (o.get("allowed_amounts") or []))
+    docs = load_docs(b)
+    j = docs[0] if docs else {}
+    oon = []
+    for d in docs:
+        o = d.get("out_of_network") or []
+        oon += [x for x in (o if isinstance(o, list) else [o]) if isinstance(x, dict)]
+    pays = sum(len(a.get("payments") or []) for o in oon for a in (o.get("allowed_amounts") or []) if isinstance(a, dict))
     plans = j.get("reporting_plans") or [j]  # older layout: plan fields at the top level
-    p = plans[0] if plans else {}
+    plans = plans if isinstance(plans, list) else [plans]
+    p = next((x for x in plans if isinstance(x, dict)), {})
     return dict(last_updated_on=str(j.get("last_updated_on", "")), reporting_entity_name=j.get("reporting_entity_name", ""),
                 plan_name=str(p.get("plan_name", "")), plan_id=str(p.get("plan_id", "")),
                 plan_market_type=str(p.get("plan_market_type", "")), services=len(oon), payments=pays)
