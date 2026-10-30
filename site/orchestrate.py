@@ -287,6 +287,14 @@ def publish(st):
     py = sys.executable
     subprocess.run([py, f'{HERE}/merge_page.py', '/tmp/pub/new.html', '/tmp/pub/embed.json', '/tmp/pub/hosp.json'], check=True)
     subprocess.run([py, f'{HERE}/apply_names_med.py', '/tmp/pub/new.html', '/tmp/pub/med.json', _names_file(), '/tmp/pub/t5.txt'], check=True)
+    # Oct 30, 2026 (Betsy): each DFW doctor compared with Medicare for their own area (Dallas, Fort Worth, Rest of Texas),
+    # site/med_areas.py. Never blocks the refresh: without the files the page keeps the Dallas figures, as before.
+    try:
+        import med_areas
+        s3.download_file(B, 'reference/2026-09-29/cms/rvu26d-updated-08-26-2026.zip', '/tmp/pub/rvu.zip')
+        s3.download_file(B, 'data/2026-09-29/dfw_npis_all.parquet', '/tmp/pub/npis.parquet')
+        med_areas.apply_to_page('/tmp/pub/new.html', 'TX', '/tmp/pub/npis.json', '/tmp/pub/npis.parquet', '/tmp/pub/rvu.zip', '11')
+    except Exception as e: print('Medicare areas not added to the DFW page:', e)
     chk = subprocess.run([py, f'{HERE}/check_build.py', '/tmp/pub/old.html', '/tmp/pub/new.html'], capture_output=True, text=True)
     print(chk.stdout)
     s3.upload_file('/tmp/pub/new.html', B, SP + 'page_new.html')

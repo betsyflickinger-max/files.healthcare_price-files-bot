@@ -48,6 +48,10 @@
   function median(xs) { xs = xs.slice().sort(function (a, b) { return a - b; }); return xs.length >= 5 ? xs[xs.length >> 1] : null; }
   function kindOf(i) { var x = D.fac[i]; return x[2] === 'A' && /\bhospital\b/i.test(x[0]) ? 'H' : x[2]; }
   function pfsOf(code) { var m = D.med && D.med.codes[code]; if (!m || !m.pfs) return null; var k = Object.keys(m.pfs)[0]; return k ? m.pfs[k] : null; }
+  // Oct 30, 2026: a provider's own Medicare doctor-fee area (window.medArea, site/med_areas.py) where the page has several;
+  // otherwise the page's area. -> [office, facility, label]
+  function pfsAt(code, i) { var a = window.medArea ? window.medArea(code, i) : null; if (a) return [a[0], a[1], a[2] + ' Medicare area'];
+    var p = pfsOf(code); return p ? [p[0], p[1], window.MED_AREA || 'this area'] : null; }
 
   // the kinds of places that do a service (same rules as the price pages); also used by the Price list tab
   var FITC = {};
@@ -112,10 +116,11 @@
     var m = D.med && D.med.codes[code], pfs = pfsOf(code), wi = (fresh && ML.f) || {};
     var medFor = function (i) {
       var k = kindOf(i);
-      if (useDoc) return pfs ? (k === 'P' || k === 'G' ? [pfs[0] != null ? pfs[0] : pfs[1], 'office rate, ' + (window.MED_AREA || 'this area')] : null) : null;
+      var pa = pfs ? pfsAt(code, i) : null;
+      if (useDoc) return pa ? (k === 'P' || k === 'G' ? [pa[0] != null ? pa[0] : pa[1], 'office rate, ' + pa[2]] : null) : null;
       if (k === 'H' && m && m.opps) return wi[i] ? [Math.round(m.opps[0] * (0.6 * wi[i] + 0.4) * 100) / 100, 'this hospital'] : [m.opps[0], 'national rate'];
       if (k === 'A' && m && m.asc) return wi[i] ? [Math.round(m.asc[0] * (0.5 * wi[i] + 0.5) * 100) / 100, 'this surgery center'] : [m.asc[0], 'national rate'];
-      if (k === 'G' && pfs && pfs[0] != null) return [pfs[0], 'office rate, ' + (window.MED_AREA || 'this area')];
+      if (k === 'G' && pa && pa[0] != null) return [pa[0], 'office rate, ' + pa[2]];
       return null;
     };
     // Medicare Advantage and cash from the hospital's own file, tied to places by CMS ID (ml.json h)
@@ -198,7 +203,7 @@
   var DER = '<span class="pt-der" title="The insurer calls this a derived amount: a figure it uses for its own bookkeeping, often for doctors paid a set amount per patient each month. It is not a price anyone pays for this visit or procedure.">accounting figure, not a price</span>';
   function feeCell(o, n) {
     var r = o.fees[n]; if (!r) return '<td><span class="pt-none" title="No published rate in this network">—</span></td>';
-    var lb = labOf(r), der = /derived/.test(lb), ref = o.med, pfs = pfsOf(S.code), fac = /outpatient|inpatient/.test(lb);
+    var lb = labOf(r), der = /derived/.test(lb), ref = o.med, pfs = pfsAt(S.code, o.i), fac = /outpatient|inpatient/.test(lb);
     if ((o.kind === 'P' || o.kind === 'G') && pfs && fac && pfs[1] != null) ref = [pfs[1], 'Medicare in a hospital or clinic setting'];
     var x = ref ? r[3] / ref[0] : null;
     return '<td' + (x && !der ? ' class="pt-b' + BAND(x) + '"' : '') + '>' + fileLink(r, M$(r[3]), x) + (x ? '<span class="pt-x">' + X(x) + ' Medicare' + (fac && ref !== o.med ? ' (clinic setting)' : '') + '</span>' : '') + (der ? DER : '') + '</td>';

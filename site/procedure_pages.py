@@ -450,7 +450,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
 
     def fac(i):
         x = D['fac'][int(i)]
-        o = {'name': nice(x[0]), 'city': nice(x[1]), 'kind': kind_of(x)}
+        o = {'name': nice(x[0]), 'city': nice(x[1]), 'kind': kind_of(x), 'fi': int(i)}
         m = (loc or {}).get(int(i))
         if m and m[0] == o['kind']:           # [kind, wage index, CCN, CBSA] from site/med_local.py (hospitals, surgery centers)
             o['ml'] = m
@@ -684,6 +684,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         'doc_lo': doc[0] if doc else None, 'doc_hi': doc[-1] if doc else None, 'doc_n': len(doc),
         'hcash': hcash, 'hrate': hrate, 'hoon': hoon, 'hfiles': len(hfiles), 'cash': cash, 'dates': dates,
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
+        'med_ar': med_areas_of(D, code),
         'any': bool(lines or hcash or hrate or hoon or cash),
         'highest': highest, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
@@ -875,6 +876,22 @@ def tile(label, v, sub):
     return f'<div class="tile"><p class="tl">{esc(label)}</p><p class="tv">{v}</p><div class="ts">{sub}</div></div>'
 
 
+def med_areas_of(D, code):
+    """Oct 30, 2026: the page's other Medicare doctor-fee areas for this code (site/med_areas.py, D.med.ar), the same figures
+    the Price Finder works out: {'s': state, 'p': provider areas, 'd': default index, 'a': [[name, office, facility, providers]]}."""
+    A = (D.get('med') or {}).get('ar')
+    m = ((D.get('med') or {}).get('codes') or {}).get(code) or {}
+    if not A or 'pfs' not in m or code not in A['r']:
+        return None
+    import med_areas
+    out = []
+    for a, nm in enumerate(A['n']):
+        x = ((A['x'].get(code) or {}).get('pfs') or {}).get(str(a)) or ((A['x'].get(code) or {}).get('pfs') or {}).get(a)
+        f = x or med_areas.fee_py(A['r'][code], A['g'][a])
+        out.append([nm, f[0], f[1], A['c'][a]])
+    return {'s': A['s'], 'p': A['p'], 'd': A['d'], 'a': out}
+
+
 def med_lines(S, med_area):
     m, src = S['med'], S['med_src']
     if not m:
@@ -895,6 +912,14 @@ def med_lines(S, med_area):
             L.append(('Total when billed by an office or imaging center', med_area, d[0], lk('pfs')))
     if m.get('pfs26'):
         L.append(('Doctor reading the results only', med_area, m['pfs26']['dal'][1], lk('pfs')))
+    MA = S.get('med_ar')
+    if MA and m.get('pfs'):   # Oct 30, 2026: the doctor's fee in the state's other Medicare areas that have providers here
+        for a, (nm, nf, fa, cnt) in enumerate(MA['a']):
+            if a == MA['d'] or not cnt or (nf is None and fa is None):
+                continue
+            L.append((f"Doctor, in a hospital or surgery center: {nm}" if fa is not None else f"Doctor or clinic, in an office: {nm}",
+                      f"{nm} Medicare area · {cnt:,} provider{'s' if cnt != 1 else ''} on this page" + (f" · office {money(nf)}" if fa is not None and nf is not None and nf != fa else ''),
+                      fa if fa is not None else nf, lk('pfs')))
     if m.get('lab'):
         L.append(('Lab test', 'national payment limit', m['lab'], lk('lab')))
     return L
@@ -1078,6 +1103,14 @@ def stands_out(S, area):
     mh = med_headline(S)
     if mh and S['lo'] and S['kind'] == 'fac' and S['lo'].get('kind') == 'A' and (S['med'] or {}).get('asc'):
         mh = S['med']['asc'][0], 'surgery center facility fee'   # compare like with like: the lowest is at a surgery center
+    MA = S.get('med_ar')
+    if mh and MA and S['lo'] and S['lo'].get('fi') is not None and 'local' in mh[1]:   # Oct 30: the lowest provider's own Medicare area
+        c = MA['p'][S['lo']['fi']] if S['lo']['fi'] < len(MA['p']) else '-'
+        if c != '-':
+            nm, nf, fa, _ = MA['a'][int(c, 36)]
+            v = nf if 'office' in mh[1] else fa
+            if v:
+                mh = v, ('office rate' if 'office' in mh[1] else "doctor's fee") + f", {nm} Medicare area"
     if mh and S['lo'] and mh[0] > 0:
         x = S['lo']['v'] / mh[0]
         out.append(f"The lowest negotiated rate here is {x:.1f} times Medicare's {money(mh[0])} ({esc(mh[1])})."

@@ -219,7 +219,7 @@ def pfs_for(rvu_zip, loc, codes, st='TX'):
     return out
 
 
-def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_file=None):
+def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_file=None, npis_parquet=None):
     name, where, loc, locname = CITIES[slug]
     adj, place = AREA.get(slug, (f'{name}-area', f'the {name} area'))
     os.makedirs(out, exist_ok=True)
@@ -284,6 +284,21 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     M = {c: m for c, m in M.items() if m}; D['med']['codes'] = M
     print(f'Medicare doctor fees set to the {locname} locality ({loc}); {dropped} left out')
 
+    # 2b. Oct 30, 2026 (Betsy: "as accurate as possible"): in a state with more than one Medicare doctor-fee area, each
+    #     provider is compared with Medicare for the area of their own practice ZIP (site/med_areas.py). The page's own
+    #     figures above stay as they are; D.med.ar adds the other areas. Without the ZIP list the page is built as before.
+    import med_areas
+    D['med'].pop('ar', None)   # never the DFW template's own areas
+    npp = os.path.join(os.path.dirname(os.path.abspath(embed)), 'npis.json')
+    if STATE_OF.get(slug, 'TX') in med_areas.AREAS:
+        if npis_parquet and os.path.exists(npis_parquet) and os.path.exists(npp):
+            import duckdb
+            zip_of = dict(duckdb.connect().execute(f"select npi, zip5 from read_parquet('{npis_parquet}')").fetchall())
+            try: print(med_areas.attach(D, STATE_OF.get(slug, 'TX'), json.load(open(npp)), zip_of, rvu, loc))
+            except ValueError as e: D['med'].pop('ar', None); print(f'Medicare areas: NOT added ({e}); every provider is compared with {locname}')
+        else:
+            print(f'Medicare areas: NOT added ({"no provider ZIP list" if not (npis_parquet and os.path.exists(npis_parquet)) else "no npis.json"}); every provider is compared with {locname}')
+
     # 3. wording
     w = Words(pre + '\x00' + post)
     w.s = w.s.replace('What It Costs', 'The Healthcare Files')   # Oct 18 rename: layouts saved before the rename still carry the old name
@@ -334,7 +349,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     left = [m.group(0) for m in re.finditer(r'.{40}(?:DFW|Dallas|Fort Worth).{40}', w.s)]
     if left: sys.exit('STOP: DFW wording left on the page:\n  ' + '\n  '.join(left[:10]))
     pre, post = w.s.split('\x00')
-    open(page, 'w', encoding='utf-8').write(join(pre, D, post))
+    open(page, 'w', encoding='utf-8').write(med_areas.patch_page(join(pre, D, post)) if D['med'].get('ar') else join(pre, D, post))
     print(f'wrote {page}: {len(D["codes"]):,} codes, {len(D["fac"]):,} providers, {len(D["nets"])} networks, insurers {", ".join(ins)}')
     return page
 
@@ -464,12 +479,13 @@ def main():
         if written(d_ + 'hosp/hosp_index.json'):
             hpre = d_ + 'hosp/'; hidx = f'{A.out}/hosp_index.json'; s3.download_file(B, hpre + 'hosp_index.json', hidx); break
     if hidx: print('hospital files from', hpre)
-    for k, dst in [(prefix + 'npis.json', f'{A.out}/npis.json'), ('data/idr/site/arb_tx.json', f'{A.out}/arb_tx.json')]:
+    for k, dst in [(prefix + 'npis.json', f'{A.out}/npis.json'), ('data/idr/site/arb_tx.json', f'{A.out}/arb_tx.json'),
+                   (npis_key(A.city), f'{A.out}/npis.parquet')]:   # npis.parquet: practice ZIPs for the Medicare areas (Oct 30)
         try: s3.download_file(B, k, dst)
         except Exception as e: print('not found:', k, e)
     if A.map_only:   # Oct 15, 2026: refresh only the map files for the page already published (saved in R2), no new page
         page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
-    else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json')
+    else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json', f'{A.out}/npis.parquet')
     if not A.map_only: practice_and_list_price(page, s3, B, A.out)
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')

@@ -13,7 +13,9 @@ on:
         options: [el-paso, austin, san-antonio, houston, mcallen, killeen-temple, brownsville-harlingen, corpus-christi, beaumont-port-arthur,
                   lubbock, waco, longview, college-station-bryan, amarillo, tyler, abilene, midland, odessa, wichita-falls, texarkana,
                   san-angelo, victoria, small-towns,
-                  colorado, missouri, georgia, tennessee, oklahoma, alabama, mississippi, north-carolina, arkansas, connecticut, illinois]   # Oct 21: state pages too
+                  colorado, missouri, georgia, tennessee, oklahoma, alabama, mississippi, north-carolina, arkansas, connecticut, illinois,
+                  louisiana, maryland, new-mexico, montana, indiana, kentucky, ohio, arizona, florida, virginia, district-of-columbia, wisconsin,
+                  new-york, california]   # Oct 21: state pages too; Oct 30: every state page
         default: el-paso
       deploy:
         description: "Put it on the preview site (off = build and check only; the page is saved to R2 either way)"

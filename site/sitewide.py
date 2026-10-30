@@ -153,6 +153,11 @@ def apply(d):
             pf_table.write_ml(d, only_stale=True)
     except Exception as e:
         print(f'sitewide: Price Finder compare view not applied ({type(e).__name__}: {e})')
+    try:   # Oct 30, 2026: map compares each doctor with Medicare for their own area (site/med_areas.py)
+        import med_areas
+        changed += med_areas.patch_map(d)
+    except Exception as e:
+        print(f'sitewide: map Medicare areas not applied ({type(e).__name__}: {e})')
     print(f'sitewide: {changed} files updated (name, Units look, share image)')
     return changed
 
