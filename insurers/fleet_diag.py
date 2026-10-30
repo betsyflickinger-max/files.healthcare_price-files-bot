@@ -103,8 +103,13 @@ for sc in [x[7:] for x in os.environ.get("BUILDS", "").split(",") if x.startswit
 # Oct 24: "logs:<build id>:<part of machine role>" prints those machines' logs (first and last lines)
 for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("logs:")]:
     _, bid, part = x.split(":", 2)
-    for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"site/builds/{bid}/logs/"):
-        for o in [o for o in page.get("Contents", []) if part in o["Key"].rsplit("/", 1)[1]][:4]:
+    # Oct 30: the newest 4 matching logs (was the first 4 by name, which showed week-old logs), plus every match's name and date
+    objs = [o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"site/builds/{bid}/logs/")
+            for o in page.get("Contents", []) if part in o["Key"].rsplit("/", 1)[1]]
+    objs.sort(key=lambda o: o["LastModified"])
+    print(f"=== logs {bid} '{part}': " + ", ".join(f"{o['Key'].rsplit('/', 1)[1]} {o['LastModified']:%m-%d %H:%M}" for o in objs))
+    if True:
+        for o in objs[-4:]:
             lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
             print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M}, {len(lines)} lines)")
             print("    " + "\n    ".join(lines[:12] + ["..."] + lines[-30:]))
