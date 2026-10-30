@@ -130,8 +130,8 @@
       <div class="ctiles" id="o-ftiles" data-source="oon_ins_files"></div>
       <div class="ccard">
         <div class="ctw"><table id="o-ftbl"><thead><tr>
-          <th>Insurer</th><th>Month read</th><th class="n">Files</th><th class="n">Empty</th><th class="n">With data</th><th class="n">Failed to download</th><th class="n">Services listed</th><th class="n">Payments listed</th><th class="n">Size (MB)</th><th>Newest file date</th></tr></thead><tbody></tbody></table></div>
-        <div class="cnote">Insurers only have to list a service they paid out of network 20 or more times in the period, so most files are empty today. The Oct 2026 federal rule lowers that to 11 and combines files by market, starting about March 2027. Collected monthly by plans/allowed_amounts.py; every file is saved untouched.</div>
+          <th>Insurer</th><th>Month read</th><th class="n">Files</th><th class="n">Empty</th><th class="n">With data</th><th class="n">Failed or unreadable</th><th class="n">Read on a second try</th><th class="n">Services listed</th><th class="n">Payments listed</th><th class="n">Size (MB)</th><th>Newest file date</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">Insurers only have to list a service they paid out of network 20 or more times in the period, so most files are empty today. The Oct 2026 federal rule lowers that to 11 and combines files by market, starting about March 2027. Collected monthly by plans/allowed_amounts.py; every file is saved untouched. "Read on a second try": files the monthly count couldn't read (zipped, gzipped twice, several JSON documents in one file, other layouts) that the control center's reader did read; services and payments above are the monthly count's.</div>
       </div>
     </section>
 
@@ -329,7 +329,7 @@
       {f: 'in_network_middle_same_insurer', num: 1, fmt: (v, r) => v == null ? '—' : money(v) + ' (' + fmtN(r.in_network_rates_same_insurer) + (r.in_network_rates_same_insurer === 1 ? ' rate)' : ' rates)')},
       {f: 'file_date', node: dateCell}, {f: 'row', node: srcCell}], {sort: 0, limit: 400});
     table('#o-ftbl', [{f: 'insurer'}, {f: 'month'}, {f: 'files', num: 1, fmt: fmtN}, {f: 'empty', num: 1, fmt: fmtN}, {f: 'with_data', num: 1, fmt: fmtN},
-      {f: 'failed', num: 1, fmt: fmtN}, {f: 'services', num: 1, fmt: fmtN}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'megabytes', num: 1, fmt: (v) => d3.format(',.1f')(+v || 0)},
+      {f: 'failed', num: 1, fmt: fmtN}, {f: 'read_here', num: 1, fmt: (v) => v ? fmtN(v) : '—'}, {f: 'services', num: 1, fmt: fmtN}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'megabytes', num: 1, fmt: (v) => d3.format(',.1f')(+v || 0)},
       {f: 'newest_file_date', fmt: (v) => v || '—'}], {sort: 7, dir: -1});
     table('#o-utbl', [{f: 'insurer'}, {f: 'procedure'}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'tax_ids', num: 1, fmt: fmtN},
       {f: 'lowest', num: 1, fmt: money}, {f: 'middle', num: 1, fmt: money}, {f: 'highest', num: 1, fmt: money}], {sort: 2, dir: -1, limit: 500});

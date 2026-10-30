@@ -245,10 +245,10 @@ def insurer_files():
         bad = Counter(str(r.get("status") or "")[:90] for r in t if r.get("status") != "ok")
         if bad: print(f"  {name}: {sum(bad.values()):,} files not read; most common: " + "; ".join(f"{k} ({v:,})" for k, v in bad.most_common(2)))
         if not full: continue
-        meta = {r["file_name"]: r for r in full}
+        meta = {r["file_name"]: r for r in t if r.get("file_name") and (r in full or str(r.get("status", "")).startswith("unreadable"))}
         try: tb = get_bytes(f"raw/allowed/{month}/{stem}.tar")
         except Exception as e: print(f"  {name}: raw files not readable ({e})"); continue
-        n0, odd = len(amounts), []
+        n0, odd, rescued = len(amounts), [], 0
         sources += [{"insurer": name, "file": r["file_name"], "url": r.get("source_url") or "", "plan": r.get("plan_name") or "",
                      "plan_market_type": r.get("plan_market_type") or "", "file_date": str(r.get("last_updated_on") or "")[:10] or None} for r in full]
         with tarfile.open(fileobj=io.BytesIO(tb)) as tar:
@@ -256,28 +256,56 @@ def insurer_files():
                 fm = meta.get(mem.name)
                 if not fm or not mem.isfile(): continue
                 b = tar.extractfile(mem).read()
-                try: j = json.loads(gzip.decompress(b) if b[:2] == b"\x1f\x8b" else b)
-                except Exception: continue
-                try: add_file(j, fm, mem.name, name, amounts)
+                try: docs = load_allowed(b)
+                except Exception as e:
+                    odd.append(f"{mem.name}: {type(e).__name__}: {e} [starts {b[:16].hex()}]"[:220]); continue
+                try:
+                    for j in docs: add_file(j, fm, mem.name, name, amounts)
+                    if fm not in full: rescued += 1
                 except Exception as e: odd.append(f"{mem.name}: {type(e).__name__}: {e}"[:200])
-        if odd: print(f"  {name}: {len(odd)} files laid out differently, skipped; first: {odd[0]}")
+        files[-1]["read_here"] = rescued   # files the monthly count called unreadable but this reader read
+        if rescued: print(f"  {name}: {rescued:,} files the monthly count couldn't read were read here")
+        if odd: print(f"  {name}: {len(odd)} files still not readable; first: {odd[0]}")
         print(f"  {name} ({month}): {len(full)} files with data, {len(amounts) - n0:,} payments for featured procedures", flush=True)
     return files, amounts, sources
 
 
+def load_allowed(b):
+    """One allowed-amount file -> its JSON documents. Insurers post them gzipped (sometimes twice), zipped, with a byte-order
+    mark, or as several JSON documents one after another (JSON Lines); all are read as published, nothing is changed."""
+    import zipfile
+    for _ in range(3):
+        if b[:2] == b"\x1f\x8b": b = gzip.decompress(b)
+        elif b[:2] == b"PK":
+            z = zipfile.ZipFile(io.BytesIO(b)); b = z.read(max(z.infolist(), key=lambda i: i.file_size))
+        else: break
+    t = b.decode("utf-8-sig", errors="strict").strip()
+    dec, docs, i = json.JSONDecoder(), [], 0
+    while i < len(t):
+        o, i = dec.raw_decode(t, i)
+        docs += o if isinstance(o, list) else [o]
+        while i < len(t) and t[i] in " \r\n\t,": i += 1
+    return [d for d in docs if isinstance(d, dict)]
+
+
 def add_file(j, fm, fname, name, amounts):
     """every payment one allowed-amount file lists for a featured procedure, as published"""
-    for o in j.get("out_of_network") or []:
+    oon = j.get("out_of_network") or []
+    if isinstance(oon, dict): oon = [oon]
+    for o in oon:
+        if not isinstance(o, dict): continue
         code = str(o.get("billing_code", "")).strip().upper()
         if code not in FEATURED: continue
         for a in o.get("allowed_amounts") or []:
+            if not isinstance(a, dict): continue
             tin = a.get("tin") or {}
             if isinstance(tin, list): tin = tin[0] if tin and isinstance(tin[0], dict) else {"value": ",".join(map(str, tin))}
             if not isinstance(tin, dict): tin = {"value": str(tin)}
             sc = a.get("service_code") or []
             sc = ",".join(map(str, sc)) if isinstance(sc, list) else str(sc)
             for p in a.get("payments") or []:
-                for pv in p.get("providers") or [{}]:
+                if not isinstance(p, dict): continue
+                for pv in [x for x in (p.get("providers") or [{}]) if isinstance(x, dict)] or [{}]:
                     npi = pv.get("npi") or []
                     npi = [str(x).strip() for x in (npi if isinstance(npi, list) else [npi]) if str(x).strip()]
                     listed = len(npi)
