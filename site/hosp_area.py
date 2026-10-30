@@ -283,6 +283,7 @@ def redo(areas):
 
 IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
 H2_RETRIES = 1             # Oct 24, 2026: a page live without hospitals (machine failed twice) gets this many more tries
+MED_AREAS_V = 1   # Oct 30, 2026: Medicare doctor fees by each provider's own area (site/med_areas.py); raise to republish
 PUBLISH_TRIES = 3          # Oct 21, 2026: how many times a state page's publish step is tried before it is left failed
 
 
@@ -293,6 +294,7 @@ def publish_one(O, st, a, how):
     print(r.stdout[-1200:], r.stderr[-1200:], flush=True)
     st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
     st.setdefault('published_from', {})[a] = newest_build(O.s3, O.B, a)
+    if r.returncode == 0: st.setdefault('med_areas', {})[a] = MED_AREAS_V
     O.log('published', a, '->', st['published'][a])
     O.putj(O.SP + 'state.json', st)
 
@@ -342,6 +344,17 @@ def state_by_state(O, st):
                 st['published'].pop(a, None)
             else:
                 O.log(a, 'STILL NOT PUBLISHED after', PUBLISH_TRIES, 'tries: see the publish step in earlier runs')
+    # Oct 30, 2026 (Betsy): a live page in a state with more than one Medicare doctor-fee area, published before each
+    # provider was compared with their own area (site/med_areas.py), is published once more with the same build.
+    try:
+        import med_areas
+        from city_page import STATE_OF
+        ma = st.setdefault('med_areas', {})
+        for a in areas:
+            if STATE_OF.get(a) in med_areas.AREAS and str(st['published'].get(a, '')).startswith('live') and ma.get(a) != MED_AREAS_V:
+                O.log(a, 'published before Medicare areas: publishing it again')
+                ma[a] = MED_AREAS_V; st['published'].pop(a, None)
+    except Exception as e: O.log('Medicare areas republish check skipped:', e)
     # Oct 24, 2026 (Betsy): Arizona went live with insurer rates only after its hospital machine hit the same bug twice
     # (h2_build.py temp folder). A page published that way is tried once more on a later run, with fresh machines.
     h2r = st.setdefault('h2_retries', {})
