@@ -1,5 +1,6 @@
 <!-- Control center: "Cash prices" and "Out of network" tabs (Oct 30, 2026). Added by site/control_cash_oon.py; data from dashboard/build_cash_oon.py in R2 control/data/ -->
 <style>
+.co [hidden]{display:none!important}
 .co .cw{display:flex;flex-direction:column;gap:var(--cds-gap-xl)}
 .co h2{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
 .co h3{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
@@ -137,16 +138,21 @@
     <section class="sec" id="oon-paid">
       <h3>What insurers paid out of network: the 89 featured procedures, by area</h3>
       <div class="cctrl"><label for="o-parea">Area</label><select id="o-parea" data-source="oon_ins_areas"></select>
-        <label for="o-ins">Insurer</label><select id="o-ins" data-source="oon_ins_amounts_all"></select>
-        <label for="o-pcode">Procedure</label><select id="o-pcode" data-source="oon_ins_amounts_all"></select>
+        <label for="o-ins">Insurer</label><select id="o-ins" data-source="oon_ins_areas"></select>
+        <label for="o-pcode">Procedure</label><select id="o-pcode" data-source="oon_ins_areas"></select>
         <input type="search" id="o-pq" placeholder="Search a provider, plan or tax ID" aria-label="Search payments"></div>
-      <div class="ctiles" id="o-ptiles" data-source="oon_ins_amounts_all"></div>
+      <div class="ctiles" id="o-ptiles" data-source="oon_ins_areas"></div>
       <div class="ccard">
         <div class="ctw"><table id="o-ptbl"><thead><tr>
           <th>Insurer</th><th>Provider</th><th>City</th><th>Found by</th><th>Plan</th><th>Market</th><th>Procedure</th><th>Fee</th><th>Place codes</th><th>Provider tax ID</th><th class="n">Allowed amount</th><th class="n">Billed charge</th><th class="n">NPIs</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
         <div class="cnote">One row per payment and provider group as the file lists it. The allowed amount is what the plan allowed (its payment plus the patient's share); the billed charge is what the provider asked for. A payment is in an area when one of its providers (by NPI) is on that area's Price Finder provider list, or, failing that, practices there according to the NPI registry (out-of-network providers are often in no network list). A payment listed by tax ID only goes where that tax ID's other payments were placed. The provider and city shown are the first match. "Not in any area yet" = its providers practice in states that aren't live on the site yet.</div>
       </div>
       <button type="button" class="more" id="o-pmore" hidden>Show all rows</button>
+      <div class="ccard" id="o-ucard" hidden>
+        <h3>Payments in no live area yet</h3>
+        <div class="cnote">Their providers practice in states that aren't on the site yet, so only a count per insurer and procedure is kept here (lowest, middle and highest are actual payments, never averages). Each area's payments load only when you pick it.</div>
+        <div class="ctw"><table id="o-utbl"><thead><tr><th>Insurer</th><th>Procedure</th><th class="n">Payments</th><th class="n">Tax IDs</th><th class="n">Lowest allowed</th><th class="n">Middle</th><th class="n">Highest</th></tr></thead><tbody></tbody></table></div>
+      </div>
     </section>
 
     <section class="sec" id="oon-method">
@@ -187,10 +193,6 @@
         insurer: r.insurer, plan: r.plan, kind: r.pct ? 'percent of charges' : 'dollar amount', amount: r.amount, fee: r.fee === 1 ? 'Doctor fee' : 'Facility fee',
         setting: SET[r.st] ?? r.st, row: r.row, in_network_middle_same_insurer: r.inn_mid, in_network_rates_same_insurer: r.inn_n,
         file_date: f.file_date, days_old: f.days_old, file_url: f.file_url}; }); }});
-  dash.calc('oon_ins_amounts_all', {title: 'Insurer out-of-network payments, featured procedures', description: 'Joins the 4 files with their links and procedure names.',
-    inputs: ['oon_ins_sources', 'cash_proc', 'oon_ins_amounts', 'oon_ins_amounts_2', 'oon_ins_amounts_3', 'oon_ins_amounts_4'],
-    fn: (src, procs, ...parts) => { const U = new Map((src || []).map((x) => [x.insurer + '|' + x.file, x.url])), N = new Map((procs || []).map((p) => [p.code, p.procedure]));
-      return join(...parts).map((r) => Object.assign({}, r, {procedure: N.get(r.code) || r.description || r.code, file_url: U.get(r.insurer + '|' + r.file) || ''})); }});
 
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const link = (url, text) => { if (!url || !/^https?:\/\//i.test(url)) return document.createTextNode(text && url ? '' : '—'); const a = el('a', '', text); a.href = url; a.target = '_blank'; a.rel = 'noopener'; return a; };
@@ -316,7 +318,7 @@
     const pg = $('#pg-oon'); pg.classList.add('co'); pg.appendChild($('#tpl-oon').content.cloneNode(true)); O.built = true;
     $('#o-mkt').addEventListener('change', (e) => { O.mkt = e.target.value; O.code = ''; drawOon(); });
     $('#o-code').addEventListener('change', (e) => { O.code = e.target.value; drawOon(); });
-    $('#o-parea').addEventListener('change', (e) => { O.parea = e.target.value; drawOon(); });
+    $('#o-parea').addEventListener('change', (e) => { O.parea = e.target.value; O.ins = ''; O.pcode = ''; tables['#o-ptbl'].all = false; drawOon(); });
     $('#o-ins').addEventListener('change', (e) => { O.ins = e.target.value; drawOon(); });
     $('#o-pcode').addEventListener('change', (e) => { O.pcode = e.target.value; drawOon(); });
     ['#o-q', '#o-pq'].forEach((s) => $(s).addEventListener('input', () => drawOon()));
@@ -329,6 +331,8 @@
     table('#o-ftbl', [{f: 'insurer'}, {f: 'month'}, {f: 'files', num: 1, fmt: fmtN}, {f: 'empty', num: 1, fmt: fmtN}, {f: 'with_data', num: 1, fmt: fmtN},
       {f: 'failed', num: 1, fmt: fmtN}, {f: 'services', num: 1, fmt: fmtN}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'megabytes', num: 1, fmt: (v) => d3.format(',.1f')(+v || 0)},
       {f: 'newest_file_date', fmt: (v) => v || '—'}], {sort: 7, dir: -1});
+    table('#o-utbl', [{f: 'insurer'}, {f: 'procedure'}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'tax_ids', num: 1, fmt: fmtN},
+      {f: 'lowest', num: 1, fmt: money}, {f: 'middle', num: 1, fmt: money}, {f: 'highest', num: 1, fmt: money}], {sort: 2, dir: -1, limit: 500});
     table('#o-ptbl', [{f: 'insurer'}, {f: 'provider', fmt: (v) => v || '—'}, {f: 'city'}, {f: 'matched_by', fmt: (v) => v || '—'}, {f: 'plan'}, {f: 'plan_market_type'}, {f: 'procedure'}, {f: 'billing_class'}, {f: 'service_code'}, {f: 'tin'},
       {f: 'allowed_amount', num: 1, fmt: money}, {f: 'billed_charge', num: 1, fmt: money}, {f: 'npis', num: 1, fmt: fmtN}, {f: 'file_date', fmt: (v) => v || '—'},
       {f: 'file', node: (r) => link(r.file_url, 'file')}], {sort: 6, limit: 500});
@@ -365,24 +369,47 @@
       tile(ft, 'Payments listed', fmtN(s('payments')), fmtN(s('services')) + ' services · ' + d3.format(',.1f')(s('megabytes')) + ' MB in all');
       draw('#o-ftbl', F);
     }
-    // insurer payments
-    const A = ok('oon_ins_amounts_all'), pt = $('#o-ptiles');
-    if (!A) { msgIn(pt, 'oon_ins_amounts_all', ''); draw('#o-ptbl', []); $('#o-pmore').hidden = true; return; }
-    const AR = ok('oon_ins_areas') || [];
-    const nowhere = A.filter((r) => !r.areas).length;
-    O.parea = fillSelect($('#o-parea'), [['', 'All areas (' + fmtN(A.length) + ')']].concat(AR.map((a) => [a.market, a.area + ' (' + fmtN(a.payments) + ')']), [['-', 'Not in any area yet (' + fmtN(nowhere) + ')']]),
-      O.parea == null ? (AR.some((a) => a.market === (dash.params().market || 'DFW')) ? (dash.params().market || 'DFW') : '') : O.parea);
-    const pareaNow = O.parea; if (!ok('oon_ins_areas')) O.parea = null;   // keep the DFW default until the area list has loaded
-    const inA = A.filter((r) => !pareaNow ? true : pareaNow === '-' ? !r.areas : (r.areas || '').split('|').includes(pareaNow));
-    O.ins = fillSelect($('#o-ins'), [['', 'All insurers']].concat([...new Set(inA.map((r) => r.insurer))].sort().map((i) => [i, i])), O.ins);
-    const inI = inA.filter((r) => !O.ins || r.insurer === O.ins);
+    // insurer payments: one area at a time (each area's own files, loaded when picked)
+    const AR = ok('oon_ins_areas'), pt = $('#o-ptiles');
+    if (!AR) { msgIn(pt, 'oon_ins_areas', ''); draw('#o-ptbl', []); $('#o-pmore').hidden = true; return; }
+    const UN = ok('oon_ins_unplaced') || [], nowhere = d3.sum(UN, (r) => r.payments);
+    const def = AR.some((a) => a.market === (dash.params().market || 'DFW')) ? (dash.params().market || 'DFW') : (AR[0] || {}).market;
+    O.parea = fillSelect($('#o-parea'), AR.map((a) => [a.market, a.area + ' (' + fmtN(a.payments) + ')']).concat([['-', 'Not in any area yet (' + fmtN(nowhere) + ')']]), O.parea || def);
+    const N = new Map((ok('cash_proc') || []).map((p) => [p.code, p.procedure])), pname = (c) => N.get(c) || c;
+    const unplaced = O.parea === '-';
+    $('#o-ucard').hidden = !unplaced; $('#o-ptbl').closest('.ccard').hidden = unplaced;
+    pt.textContent = '';
+    if (unplaced) {
+      $('#o-pmore').hidden = true;
+      O.ins = fillSelect($('#o-ins'), [['', 'All insurers']].concat([...new Set(UN.map((r) => r.insurer))].sort().map((i) => [i, i])), O.ins);
+      const inI = UN.filter((r) => !O.ins || r.insurer === O.ins).map((r) => Object.assign({procedure: pname(r.code)}, r));
+      O.pcode = fillSelect($('#o-pcode'), [['', 'All procedures']].concat(byCodeName(inI).map(([c, n]) => [c, n + ' (' + c + ')'])), O.pcode);
+      const rows = inI.filter((r) => !O.pcode || r.code === O.pcode);
+      tile(pt, 'Payments in no live area', fmtN(d3.sum(rows, (r) => r.payments)), fmtN(new Set(rows.map((r) => r.insurer)).size) + ' insurers');
+      draw('#o-utbl', rows); return;
+    }
+    const A0 = AR.find((a) => a.market === O.parea) || {}, ids = [...Array(A0.parts || 1).keys()].map((i) => i ? A0.file + '_' + (i + 1) : A0.file);
+    const parts = ids.map((id) => dash.data(id)), src = ok('oon_ins_sources');
+    if (!src || parts.some((d) => d.status !== 'ok')) {
+      const bad = parts.find((d) => d.status === 'error' || d.status === 'missing');
+      pt.appendChild(el('div', 'cmsg', bad ? 'This area\u2019s payments didn\u2019t load (' + bad.message + ').' : 'Loading ' + fmtN(A0.payments || 0) + ' payments for ' + (A0.area || '') + '…'));
+      draw('#o-ptbl', []); $('#o-pmore').hidden = true; return;
+    }
+    const FOUND = {list: 'Price Finder list', registry: 'NPI registry', tin: 'same tax ID'};
+    if (O.cacheKey !== O.parea + ':' + parts.map((d) => d.data.length).join(',')) {   // spell rows out once per area
+      O.cacheKey = O.parea + ':' + parts.map((d) => d.data.length).join(',');
+      O.rows = [].concat(...parts.map((d) => d.data)).map((r) => { const f = src[r.s] || {}; return {insurer: f.insurer || '', provider: r.p, city: r.ci, matched_by: FOUND[r.m] || '',
+        plan: f.plan || '', plan_market_type: f.plan_market_type || '', code: r.c, procedure: pname(r.c), billing_class: r.b, service_code: r.sc, tin: r.t,
+        allowed_amount: r.a, billed_charge: r.bc, npis: r.n, file_date: f.file_date, file_url: f.url}; });
+    }
+    const A = O.rows;
+    O.ins = fillSelect($('#o-ins'), [['', 'All insurers']].concat([...new Set(A.map((r) => r.insurer))].sort().map((i) => [i, i])), O.ins);
+    const inI = A.filter((r) => !O.ins || r.insurer === O.ins);
     O.pcode = fillSelect($('#o-pcode'), [['', 'All procedures']].concat(byCodeName(inI).map(([c, n]) => [c, n + ' (' + c + ')'])), O.pcode);
     const q = $('#o-pq').value.trim().toLowerCase();
-    const rows = inI.filter((r) => (!O.pcode || r.code === O.pcode) && (!q || (r.provider + ' ' + r.city + ' ' + r.plan + ' ' + r.tin + ' ' + r.description).toLowerCase().includes(q)));
+    const rows = inI.filter((r) => (!O.pcode || r.code === O.pcode) && (!q || (r.provider + ' ' + r.city + ' ' + r.plan + ' ' + r.tin).toLowerCase().includes(q)));
     const v = rows.map((r) => r.allowed_amount).filter((x) => x != null).sort((a, b) => a - b);
-    pt.textContent = '';
-    if (!A.length) pt.appendChild(el('div', 'cmsg', 'None of the insurers’ allowed-amount files read so far lists a payment for one of the 89 featured procedures.'));
-    tile(pt, 'Payments shown', fmtN(rows.length), fmtN(new Set(rows.map((r) => r.insurer)).size) + ' insurers · ' + ($('#o-parea').selectedOptions[0] || {}).textContent.replace(/ \([\d,]+\)$/, ''));
+    tile(pt, 'Payments shown', fmtN(rows.length), fmtN(new Set(rows.map((r) => r.insurer)).size) + ' insurers · ' + (A0.area || ''));
     tile(pt, 'Lowest allowed', money(v[0]), '');
     tile(pt, 'Middle allowed', money(v.length ? v[Math.floor((v.length - 1) / 2)] : null), 'an actual payment, not an average');
     tile(pt, 'Highest allowed', money(v[v.length - 1]), '');

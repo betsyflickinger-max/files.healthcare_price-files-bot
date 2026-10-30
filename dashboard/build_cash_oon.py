@@ -23,11 +23,12 @@ Out of network:
                                  in-network figures.
   oon_ins_files                  insurers' allowed-amount (out-of-network) files, newest month: files, empty, with data,
                                  failed, services and payments listed, size (from plans/allowed_amounts.py's parquet).
-  oon_ins_amounts, _2 .. _N      every payment those files list for a featured procedure: insurer, plan, provider tax ID,
-                                 allowed amount, billed charge, number of NPIs, file (packed by procedure).
-  oon_ins_sources                each of those files' link, once.
-  oon_ins_areas                  how many of those payments fall in each live area (provider NPI in the area's Price Finder
-                                 provider list); each payment row carries its areas, provider and city.
+  oon_pay_<area>, _2 ..          every payment those files list for a featured procedure in that live area (provider NPI on
+                                 the area's Price Finder list or in its NPI-registry list): procedure, fee, place codes,
+                                 tax ID, allowed amount, billed charge, NPIs, provider, city, how it was placed, file number.
+  oon_ins_sources                each of those files once: insurer, plan, date, link.
+  oon_ins_areas                  payments per live area, with its file name and number of parts.
+  oon_ins_unplaced               payments in no live area yet, per insurer x procedure (count, lowest / middle / highest).
 
   python dashboard/build_cash_oon.py [--only DFW,AUS] [--out out/cash_oon] [--skip-insurers]
 Env: R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET (STORAGE_ENDPOINT / STORAGE_REGION when set).
@@ -246,7 +247,8 @@ def insurer_files():
         try: tb = get_bytes(f"raw/allowed/{month}/{stem}.tar")
         except Exception as e: print(f"  {name}: raw files not readable ({e})"); continue
         n0, odd = len(amounts), []
-        sources += [{"insurer": name, "file": r["file_name"], "url": r.get("source_url") or ""} for r in full]
+        sources += [{"insurer": name, "file": r["file_name"], "url": r.get("source_url") or "", "plan": r.get("plan_name") or "",
+                     "plan_market_type": r.get("plan_market_type") or "", "file_date": str(r.get("last_updated_on") or "")[:10] or None} for r in full]
         with tarfile.open(fileobj=io.BytesIO(tb)) as tar:
             for mem in tar:
                 fm = meta.get(mem.name)
@@ -356,10 +358,54 @@ def match_areas(amounts):
         if not r["areas"] and len(miss[r["insurer"]]) < 3: miss[r["insurer"]].append(r["tin"])
     print("  not in any area (sample tax IDs):", "; ".join(f"{k}: {', '.join(v)}" for k, v in sorted(miss.items())[:8]))
     rows = [{"market": k, "area": AREAS[k]["name"], "payments": n, "insurers": len(i)} for k, (n, i) in sorted(per.items(), key=lambda x: -x[1][0])]
-    save("oon_ins_areas", rows)
+    AREA_ROWS[:] = rows   # saved by save_payments with each area's file names
     hit = sum(1 for r in amounts if r["areas"]); by["same tax ID"] = sum(1 for r in amounts if r.get("matched_by") == "same tax ID")
     print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas ({by['Price Finder list']:,} by Price Finder list, {by['NPI registry']:,} by NPI registry, {by['same tax ID']:,} by same tax ID)"
           + (f" (DFW {per['DFW'][0]:,})" if "DFW" in per else ""))
+
+
+AREA_ROWS = []
+PAY_PART = 6_000_000
+
+
+def save_payments(amounts, sources):
+    """Oct 30, 2026: with Anthem and Aetna there are over a million payments for the featured procedures, too many for one
+    page file. Each area gets its own files (oon_pay_<area>, _2 ...), loaded only when that area is picked; every row names
+    its file by number in oon_ins_sources (insurer, plan, date, link). Payments in no live area are summed up per insurer
+    and procedure in oon_ins_unplaced (count, lowest / middle / highest allowed: actual payments, never averages)."""
+    sid = {(x["insurer"], x["file"]): i for i, x in enumerate(sources)}
+    for i, x in enumerate(sources): x["id"] = i
+    save("oon_ins_sources", sources)
+    short = {"Price Finder list": "list", "NPI registry": "registry", "same tax ID": "tin"}
+    by_area, left = defaultdict(list), defaultdict(list)
+    for r in amounts:
+        row = {"c": r["code"], "s": sid.get((r["insurer"], r["file"])), "b": r["billing_class"], "sc": r["service_code"], "t": r["tin"],
+               "a": r["allowed_amount"], "bc": r["billed_charge"], "n": r["npis"], "p": r.get("provider", ""), "ci": r.get("city", ""),
+               "m": short.get(r.get("matched_by"), "")}
+        if r["areas"]:
+            for k in r["areas"].split("|"): by_area[k].append(row)
+        else:
+            left[(r["insurer"], r["code"])].append(r)
+    for a in AREA_ROWS:
+        rs = sorted(by_area.get(a["market"], []), key=lambda x: (x["c"], x["a"] if x["a"] is not None else -1))
+        base = "oon_pay_" + re.sub(r"[^a-z0-9]+", "_", a["market"].lower()).strip("_")
+        parts, cur, size = [], [], 0
+        for x in rs:
+            b = len(json.dumps(x, separators=(",", ":"))) + 1
+            if cur and size + b > PAY_PART: parts.append(cur); cur, size = [], 0
+            cur.append(x); size += b
+        parts.append(cur)
+        for i, p_ in enumerate(parts): save(base if i == 0 else f"{base}_{i + 1}", p_)
+        a.update(file=base, parts=len(parts))
+    save("oon_ins_areas", AREA_ROWS)
+    un = []
+    for (ins, code), rs in sorted(left.items()):
+        v = sorted(r["allowed_amount"] for r in rs if r["allowed_amount"] is not None)
+        un.append({"insurer": ins, "code": code, "payments": len(rs), "tax_ids": len({r["tin"] for r in rs}),
+                   "lowest": v[0] if v else None, "middle": mid(v), "highest": v[-1] if v else None})
+    save("oon_ins_unplaced", un)
+    print(f"payments saved: {sum(a['parts'] for a in AREA_ROWS)} area files for {len(AREA_ROWS)} areas; "
+          f"{sum(x['payments'] for x in un):,} payments in no live area, summed in {len(un):,} insurer x procedure rows")
 
 
 if ARGS.skip_insurers:
@@ -368,6 +414,5 @@ else:
     files, amounts, sources = insurer_files()
     match_areas(amounts)
     save("oon_ins_files", files)
-    save("oon_ins_sources", sources)   # each file's link once; payment rows name their file
-    pack("oon_ins_amounts", amounts, 4, "code")
+    save_payments(amounts, sources)
     print("oon_ins_files:", len(files), "insurers")
