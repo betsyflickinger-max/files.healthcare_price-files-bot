@@ -1,0 +1,390 @@
+<!-- Control center: "Cash prices" and "Out of network" tabs (Oct 30, 2026). Added by site/control_cash_oon.py; data from dashboard/build_cash_oon.py in R2 control/data/ -->
+<style>
+.co .cw{display:flex;flex-direction:column;gap:var(--cds-gap-xl)}
+.co h2{font-family:var(--font-anthropic-serif);font-weight:400;font-size:var(--cds-font-size-title);margin:0;text-wrap:balance}
+.co h3{font-size:var(--cds-font-size-heading);font-weight:var(--cds-font-weight-medium);margin:0}
+.co p{margin:0;max-width:72ch;line-height:1.55}
+.co .sec{display:flex;flex-direction:column;gap:var(--cds-gap-md)}
+.co .ccard{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-lg);display:flex;flex-direction:column;gap:var(--cds-gap-sm);min-width:0}
+.co .cnote{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);max-width:80ch;line-height:1.5}
+.co .cjump{display:flex;gap:var(--cds-gap-md);flex-wrap:wrap;font-size:var(--cds-font-size-caption)}
+.co .cjump a{color:var(--color-fg)}
+.co .cctrl{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);align-items:center}
+.co .cctrl label{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.co select,.co input[type=search]{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-bg);color:var(--color-fg);max-width:100%}
+.co select{max-width:min(100%,26rem)}
+.co button:focus-visible,.co select:focus-visible,.co input:focus-visible,.co a:focus-visible{outline:2px solid var(--color-fg);outline-offset:1px}
+.co .ctiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr));gap:var(--cds-gap-md)}
+.co .ctile{background:var(--color-panel);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:var(--cds-pad-md)}
+.co .ctile .lab{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.co .ctile .big{font-family:var(--font-anthropic-serif);font-size:24px;font-variant-numeric:tabular-nums}
+.co .ctile .sub{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.co .clegend{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm) var(--cds-gap-md);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted)}
+.co .clegend span{display:inline-flex;align-items:center;gap:6px}
+.co .clegend i{width:12px;height:10px;border-radius:2px;display:inline-block}
+.co .clegend i.tick{width:3px;height:12px;border-radius:0}
+.co .clegend i.ref{width:0;height:12px;border-left:2px dashed var(--cds-chart-reference);border-radius:0}
+.co .cchart{position:relative;max-height:34rem;overflow:auto}
+.co .cchart svg{display:block}
+.co .cmsg{font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);padding:var(--cds-pad-md) 0}
+.co .ctip{position:absolute;pointer-events:none;background:var(--cds-surface-popover);border:1px solid var(--cds-border);border-radius:var(--cds-radius);box-shadow:var(--cds-shadow-popover);padding:var(--cds-pad-xs) var(--cds-pad-sm);font-size:var(--cds-font-size-caption);max-width:18rem;z-index:2}
+.co .ctip .t{color:var(--cds-text-secondary);margin-bottom:2px}
+.co .ctw{overflow:auto;max-height:32rem}
+.co table{border-collapse:collapse;width:100%;font-size:var(--cds-font-size-caption);font-variant-numeric:tabular-nums}
+.co th{position:sticky;top:0;background:var(--color-panel);text-align:left;font-weight:var(--cds-font-weight-medium);padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);white-space:nowrap;vertical-align:bottom}
+.co th button{all:unset;cursor:pointer}
+.co th button:focus-visible{outline:2px solid var(--color-fg)}
+.co td{padding:var(--cds-pad-xs) var(--cds-pad-sm);border-bottom:1px solid var(--color-border-line);vertical-align:top}
+.co td.n,.co th.n{text-align:right;white-space:nowrap}
+.co td.old{color:var(--color-warn)}
+.co tr.pick{cursor:pointer}
+.co tr.pick:hover td{background:var(--color-bg)}
+.co tr.sel td{font-weight:var(--cds-font-weight-medium)}
+.co .tag{display:inline-block;font-size:11px;padding:0 6px;border-radius:9px;border:1px solid var(--color-border-line);color:var(--color-fg-muted);white-space:nowrap}
+.co .tag.oon{border-color:var(--color-bad);color:var(--color-bad)}
+.co .cmethod li{margin-bottom:var(--cds-gap-xs);line-height:1.5;max-width:78ch}
+.co .more{font:inherit;font-size:var(--cds-font-size-caption);padding:var(--cds-pad-xs) var(--cds-pad-sm);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);background:var(--color-bg);color:var(--color-fg);cursor:pointer;align-self:flex-start}
+</style>
+
+<template id="tpl-cash">
+  <div class="cw">
+    <section class="sec" id="cash-top">
+      <div><h2>Cash prices</h2>
+        <p class="muted">What hospitals say they charge someone paying cash, from their federally required price files, beside the in-network rates the same file lists and Medicare. Rebuilt every day for every area that has its own hospital files. Nothing is averaged: each number is one real line in one file.</p></div>
+      <nav class="cjump" aria-label="Sections"><a href="#cash-hospitals">Hospitals</a><a href="#cash-procs">Every procedure</a><a href="#cash-posted">Posted cash prices</a><a href="#cash-method">How this was built</a></nav>
+      <div class="cctrl"><label for="c-mkt">Area</label><select id="c-mkt" data-source="cash_proc"></select>
+        <label for="c-code">Procedure</label><select id="c-code" data-source="cash_proc"></select></div>
+      <div class="ctiles" id="c-tiles" data-source="cash_proc"></div>
+    </section>
+
+    <section class="sec" id="cash-hospitals">
+      <div class="ccard">
+        <h3 id="c-chart-h">Cash price at each hospital</h3>
+        <div class="clegend"><span><i style="background:var(--series-0)"></i>Cash price (the file's lowest for this procedure, hospital fee)</span><span><i class="tick" style="background:var(--color-fg)"></i>Middle in-network rate in the same file</span><span><i class="ref"></i>Medicare (hospital outpatient, national)</span></div>
+        <div class="cchart" id="c-chart" data-source="cash_hosp_all"></div>
+        <div class="cnote">Hospital fee only: the doctor, anesthesia and pathology usually bill separately. A bar past the tick means paying cash costs more than the typical insured rate at that hospital.</div>
+      </div>
+      <div class="ccard">
+        <h3>Every cash line, with the same file's in-network rates</h3>
+        <div class="cctrl"><input type="search" id="c-q" placeholder="Search a hospital or city" aria-label="Search hospitals"></div>
+        <div class="ctw"><table id="c-tbl"><thead><tr>
+          <th>Hospital</th><th>City</th><th>Fee</th><th>Setting</th><th class="n">Cash</th><th class="n">List price</th><th class="n">In-network lowest</th><th class="n">middle</th><th class="n">highest</th><th class="n">In-network rates</th><th class="n">Below cash</th><th class="n">Cash × Medicare</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">In-network = commercial, marketplace or unlabelled plans in that hospital's own file. Medicare Advantage, Medicaid, out-of-network lines, percent-only rates and "flat" amounts (one dollar amount repeated on 5+ procedures) are left out. "Capped" means the file listed more than 500 rates for this procedure and only the lowest 500 are kept, so its middle and highest are on the low side.</div>
+      </div>
+    </section>
+
+    <section class="sec" id="cash-procs">
+      <div class="ccard">
+        <h3 id="c-procs-h">Every procedure in this area</h3>
+        <div class="cnote">One cash price per hospital (its lowest hospital-fee line). Click a row to see its hospitals.</div>
+        <div class="ctw"><table id="c-ptbl"><thead><tr>
+          <th>Code</th><th>Procedure</th><th class="n">Hospitals with a cash price</th><th class="n">of files listing it</th><th class="n">Lowest</th><th class="n">Middle</th><th class="n">Highest</th><th class="n">Medicare</th><th class="n">Middle × Medicare</th><th class="n">Cash below own in-network middle</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="sec" id="cash-posted">
+      <div class="ccard">
+        <h3>Posted cash prices from providers' own websites</h3>
+        <div class="cnote">Bundled self-pay prices copied by hand from provider websites (Dallas–Fort Worth only so far). These often include the doctor's fee; check the label.</div>
+        <div class="cctrl"><label><input type="checkbox" id="c-allposted"> Show every procedure</label></div>
+        <div class="ctw"><table id="c-posted"><thead><tr><th>Procedure</th><th>Provider</th><th>City</th><th class="n">Price</th><th>What it includes</th><th>Checked</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+      </div>
+    </section>
+
+    <section class="sec" id="cash-method">
+      <h3>How this was built</h3>
+      <ul class="cmethod cnote">
+        <li>Source: each hospital's machine-readable price file (the "discounted cash price" column), as read into the Price Finder. Dates are the file's own "last updated" date; files over 6 months old are flagged.</li>
+        <li>For each hospital, procedure, fee type and setting, the lowest cash line is shown with its line number. Lowest / middle / highest across hospitals are actual hospital prices at those ranks, never averages.</li>
+        <li>Medicare is the national hospital outpatient (OPPS) rate, or the lab fee schedule for lab tests. Hospital stays (DRGs) have no Medicare figure here.</li>
+        <li>Built daily by dashboard/build_cash_oon.py (the "Dashboard data" workflow).</li>
+      </ul>
+    </section>
+  </div>
+</template>
+
+<template id="tpl-oon">
+  <div class="cw">
+    <section class="sec" id="oon-top">
+      <div><h2>Out of network</h2>
+        <p class="muted">Amounts that are labelled out-of-network, kept separate and never counted as in-network rates. Two sources: lines in hospitals' own price files, and the "allowed amount" files insurers must post showing what they actually paid out-of-network providers.</p></div>
+      <nav class="cjump" aria-label="Sections"><a href="#oon-hosp">In hospital files</a><a href="#oon-files">Insurers' files</a><a href="#oon-paid">What insurers paid</a><a href="#oon-method">How this was built</a></nav>
+    </section>
+
+    <section class="sec" id="oon-hosp">
+      <h3>In hospital price files</h3>
+      <div class="cctrl"><label for="o-mkt">Area</label><select id="o-mkt" data-source="oon_hosp_all"></select>
+        <label for="o-code">Procedure</label><select id="o-code" data-source="oon_hosp_all"></select>
+        <input type="search" id="o-q" placeholder="Search a hospital, insurer or plan" aria-label="Search out-of-network lines"></div>
+      <div class="ctiles" id="o-tiles" data-source="oon_hosp_all"></div>
+      <div class="ccard">
+        <div class="ctw"><table id="o-tbl"><thead><tr>
+          <th>Hospital</th><th>Insurer</th><th>Plan, as the file names it</th><th>Procedure</th><th class="n">Out-of-network amount</th><th>Fee</th><th>Setting</th><th class="n">Same insurer, in-network middle here</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">A line counts as out-of-network when the file labels its payer or plan that way ("OON", "out of network", "non-par"). The in-network middle beside it is the same insurer's middle dollar rate in the same file, for reference only.</div>
+      </div>
+    </section>
+
+    <section class="sec" id="oon-files">
+      <h3>Insurers' out-of-network (allowed amount) files</h3>
+      <div class="ctiles" id="o-ftiles" data-source="oon_ins_files"></div>
+      <div class="ccard">
+        <div class="ctw"><table id="o-ftbl"><thead><tr>
+          <th>Insurer</th><th>Month read</th><th class="n">Files</th><th class="n">Empty</th><th class="n">With data</th><th class="n">Failed to download</th><th class="n">Services listed</th><th class="n">Payments listed</th><th class="n">Size (MB)</th><th>Newest file date</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">Insurers only have to list a service they paid out of network 20 or more times in the period, so most files are empty today. The Oct 2026 federal rule lowers that to 11 and combines files by market, starting about March 2027. Collected monthly by plans/allowed_amounts.py; every file is saved untouched.</div>
+      </div>
+    </section>
+
+    <section class="sec" id="oon-paid">
+      <h3>What insurers paid out of network: the 89 featured procedures</h3>
+      <div class="cctrl"><label for="o-ins">Insurer</label><select id="o-ins" data-source="oon_ins_amounts_all"></select>
+        <label for="o-pcode">Procedure</label><select id="o-pcode" data-source="oon_ins_amounts_all"></select>
+        <input type="search" id="o-pq" placeholder="Search a plan or tax ID" aria-label="Search payments"></div>
+      <div class="ctiles" id="o-ptiles" data-source="oon_ins_amounts_all"></div>
+      <div class="ccard">
+        <div class="ctw"><table id="o-ptbl"><thead><tr>
+          <th>Insurer</th><th>Plan</th><th>Market</th><th>Procedure</th><th>Fee</th><th>Place codes</th><th>Provider tax ID</th><th class="n">Allowed amount</th><th class="n">Billed charge</th><th class="n">NPIs</th><th>File date</th><th>Source</th></tr></thead><tbody></tbody></table></div>
+        <div class="cnote">One row per payment and provider group as the file lists it. The allowed amount is what the plan allowed (its payment plus the patient's share); the billed charge is what the provider asked for. Shown as published, national (not yet narrowed to an area).</div>
+      </div>
+      <button type="button" class="more" id="o-pmore" hidden>Show all rows</button>
+    </section>
+
+    <section class="sec" id="oon-method">
+      <h3>How this was built</h3>
+      <ul class="cmethod cnote">
+        <li>Hospital lines: the same hospital price files as the Price Finder. Rule (Betsy, Oct 29, 2026): out-of-network amounts are kept and labelled out-of-network, never treated as in-network.</li>
+        <li>Insurer files: every allowed-amount file each insurer's index lists, downloaded monthly. Cigna and UnitedHealthcare from their own listings; every other insurer from the monthly index check.</li>
+        <li>Built daily by dashboard/build_cash_oon.py (the "Dashboard data" workflow).</li>
+      </ul>
+    </section>
+  </div>
+</template>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const fmtN = d3.format(',');
+  const money = (v) => v == null || v === '' ? '—' : (Math.abs(+v) >= 1000 ? d3.format('$,.0f')(+v) : d3.format('$,.2f')(+v));
+  const times = (v) => v == null || v === '' ? '—' : d3.format('.2f')(+v) + '×';
+  const ok = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+  const state = (id) => dash.data(id).status;
+  const join = (...parts) => [].concat(...parts.map((p) => p || []));
+  const SET = {o: 'Outpatient', i: 'Inpatient', b: 'Both', '': ''};
+  const fileMap = (files) => new Map((files || []).map((f) => [f.market + '|' + f.f, f]));
+  const fileOf = (M, r) => M.get(r.market + '|' + r.f) || {};
+  // the bot writes short rows that point to their hospital file (cash_files); these calcs spell them out for the page
+  dash.calc('cash_hosp_all', {title: 'Hospital cash prices, all areas', description: 'Joins the 6 cash files (split to stay under the 8 MB file limit) with their hospital files.',
+    inputs: ['cash_files', 'cash_proc', 'cash_hosp', 'cash_hosp_2', 'cash_hosp_3', 'cash_hosp_4', 'cash_hosp_5', 'cash_hosp_6'],
+    fn: (files, procs, ...parts) => { const M = fileMap(files), N = new Map((procs || []).map((p) => [p.code, p.procedure]));
+      return join(...parts).map((r) => { const f = fileOf(M, r); return {market: r.market, code: r.code, procedure: N.get(r.code) || r.code, hospital: f.hospital || '', city: f.city || '',
+        fee: r.fee === 1 ? 'Doctor fee' : 'Facility fee', setting: SET[r.st] ?? r.st, cash: r.cash, list_price: r.list, row: r.row,
+        in_network_rates: r.n, in_network_lowest: r.lo, in_network_middle: r.mid, in_network_highest: r.hi, in_network_below_cash: r.below, rates_capped: !!r.cap,
+        cash_x_medicare: r.xmed, file_date: f.file_date, days_old: f.days_old, file_url: f.file_url}; }); }});
+  dash.calc('oon_hosp_all', {title: 'Out-of-network lines in hospital files, all areas', description: 'Joins the 2 files with their hospital files.',
+    inputs: ['cash_files', 'cash_proc', 'oon_hosp', 'oon_hosp_2'],
+    fn: (files, procs, ...parts) => { const M = fileMap(files), N = new Map((procs || []).map((p) => [p.code, p.procedure]));
+      return join(...parts).map((r) => { const f = fileOf(M, r); return {market: r.market, code: r.code, procedure: N.get(r.code) || r.code, hospital: f.hospital || '', city: f.city || '',
+        insurer: r.insurer, plan: r.plan, kind: r.pct ? 'percent of charges' : 'dollar amount', amount: r.amount, fee: r.fee === 1 ? 'Doctor fee' : 'Facility fee',
+        setting: SET[r.st] ?? r.st, row: r.row, in_network_middle_same_insurer: r.inn_mid, in_network_rates_same_insurer: r.inn_n,
+        file_date: f.file_date, days_old: f.days_old, file_url: f.file_url}; }); }});
+  dash.calc('oon_ins_amounts_all', {title: 'Insurer out-of-network payments, featured procedures', description: 'Joins the 4 files with their links and procedure names.',
+    inputs: ['oon_ins_sources', 'cash_proc', 'oon_ins_amounts', 'oon_ins_amounts_2', 'oon_ins_amounts_3', 'oon_ins_amounts_4'],
+    fn: (src, procs, ...parts) => { const U = new Map((src || []).map((x) => [x.insurer + '|' + x.file, x.url])), N = new Map((procs || []).map((p) => [p.code, p.procedure]));
+      return join(...parts).map((r) => Object.assign({}, r, {procedure: N.get(r.code) || r.description || r.code, file_url: U.get(r.insurer + '|' + r.file) || ''})); }});
+
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const link = (url, text) => { if (!url || !/^https?:\/\//i.test(url)) return document.createTextNode(text && url ? '' : '—'); const a = el('a', '', text); a.href = url; a.target = '_blank'; a.rel = 'noopener'; return a; };
+  const marketName = (k) => { const m = ok('cash_proc'); const r = m && m.find((x) => x.market === k && x.area); return r ? r.area : (k === 'DFW' ? 'Dallas–Fort Worth' : k); };
+  const msgIn = (box, id, empty) => { box.textContent = ''; const s = state(id); box.appendChild(el('div', 'cmsg', s === 'loading' ? 'Loading…' : s === 'ok' ? empty : 'No data yet. The daily bot fills this in when it next runs (' + (dash.data(id).message || s) + ').')); };
+  function tile(box, lab, big, sub) { const t = el('div', 'ctile'); t.append(el('div', 'lab', lab), el('div', 'big', big)); if (sub) t.appendChild(el('div', 'sub', sub)); box.appendChild(t); }
+  function fillSelect(sel, opts, value) {   // opts: [[value, label]]; keeps the choice when it is still there
+    const key = opts.map((o) => o[0]).join('|');
+    if (sel.dataset.k !== key) { sel.textContent = ''; opts.forEach(([v, l]) => { const o = el('option', '', l); o.value = v; sel.appendChild(o); }); sel.dataset.k = key; }
+    sel.value = opts.some((o) => o[0] === value) ? value : (opts[0] ? opts[0][0] : '');
+    return sel.value;
+  }
+  const byCodeName = (rows) => [...new Map(rows.map((r) => [r.code, r.procedure])).entries()].sort((a, b) => String(a[1]).localeCompare(String(b[1])));
+
+  // a sortable table; cols: {f, num, fmt, node(r) -> Node, cls(r)}
+  const tables = {};
+  function table(sel, cols, opts = {}) {
+    const t = $(sel), st = {key: opts.sort == null ? null : opts.sort, dir: opts.dir || 1}; tables[sel] = {t, cols, opts, st, limit: opts.limit || 0};
+    t.querySelectorAll('th').forEach((th, i) => { const b = el('button', '', th.textContent); b.type = 'button'; th.textContent = ''; th.appendChild(b);
+      b.addEventListener('click', () => { st.dir = st.key === i ? -st.dir : (cols[i].num ? -1 : 1); st.key = i; draw(sel, tables[sel].rows || []); }); });
+  }
+  function draw(sel, rows) {
+    const T = tables[sel], {t, cols, opts, st} = T, tb = t.querySelector('tbody'); T.rows = rows; tb.textContent = '';
+    let rs = rows.slice();
+    if (st.key != null) { const c = cols[st.key], v = (r) => c.num ? (r[c.f] == null || r[c.f] === '' ? -Infinity : +r[c.f]) : String(r[c.f] ?? ''); rs.sort((a, b) => (v(a) < v(b) ? -1 : v(a) > v(b) ? 1 : 0) * st.dir); }
+    t.querySelectorAll('th').forEach((th, i) => th.setAttribute('aria-sort', st.key === i ? (st.dir > 0 ? 'ascending' : 'descending') : 'none'));
+    const shown = T.limit && !T.all ? rs.slice(0, T.limit) : rs;
+    shown.forEach((r) => {
+      const tr = el('tr', opts.cls ? opts.cls(r) : '');
+      if (opts.pick) { tr.classList.add('pick'); tr.tabIndex = 0; tr.addEventListener('click', () => opts.pick(r)); tr.addEventListener('keydown', (e) => { if (e.key === 'Enter') opts.pick(r); }); }
+      cols.forEach((c) => { const td = el('td', c.num ? 'n' : ''); if (c.tdcls) td.className += ' ' + (c.tdcls(r) || '');
+        if (c.node) td.appendChild(c.node(r)); else td.textContent = c.fmt ? c.fmt(r[c.f], r) : (r[c.f] ?? ''); tr.appendChild(td); });
+      tb.appendChild(tr);
+    });
+    if (!rows.length) { const tr = el('tr'); const td = el('td', 'cmsg', 'Nothing to show for this choice.'); td.colSpan = cols.length; tr.appendChild(td); tb.appendChild(tr); }
+    return rs.length - shown.length;
+  }
+  const dateCell = (r) => { const s = el('span', '', r.file_date || 'no date'); if (r.days_old == null || r.days_old > 183) { s.className = 'tag'; s.style.color = 'var(--color-warn)'; s.title = r.days_old == null ? 'The file gives no date' : 'Over 6 months old'; } return s; };
+  const srcCell = (r) => link(r.file_url, r.row ? 'file, line ' + fmtN(r.row) : 'file');
+
+  // ---------------------------------------------------------------- Cash prices
+  const C = {built: false, mkt: null, code: null, allPosted: false};
+  function buildCash() {
+    const pg = $('#pg-cash'); pg.classList.add('co'); pg.appendChild($('#tpl-cash').content.cloneNode(true)); C.built = true;
+    $('#c-mkt').addEventListener('change', (e) => { C.mkt = e.target.value; drawCash(); });
+    $('#c-code').addEventListener('change', (e) => { C.code = e.target.value; drawCash(); });
+    $('#c-q').addEventListener('input', () => drawCash());
+    $('#c-allposted').addEventListener('change', (e) => { C.allPosted = e.target.checked; drawCash(); });
+    table('#c-tbl', [{f: 'hospital'}, {f: 'city'}, {f: 'fee'}, {f: 'setting'}, {f: 'cash', num: 1, fmt: money}, {f: 'list_price', num: 1, fmt: money},
+      {f: 'in_network_lowest', num: 1, fmt: money}, {f: 'in_network_middle', num: 1, fmt: money}, {f: 'in_network_highest', num: 1, fmt: money},
+      {f: 'in_network_rates', num: 1, fmt: (v, r) => fmtN(v) + (r.rates_capped ? ' (capped)' : '')},
+      {f: 'in_network_below_cash', num: 1, fmt: (v, r) => r.in_network_rates ? fmtN(v) + ' of ' + fmtN(r.in_network_rates) : '—'},
+      {f: 'cash_x_medicare', num: 1, fmt: times}, {f: 'file_date', node: dateCell}, {f: 'row', node: srcCell}], {sort: 4});
+    table('#c-ptbl', [{f: 'code'}, {f: 'procedure'}, {f: 'hospitals_cash', num: 1, fmt: fmtN}, {f: 'hospitals_any', num: 1, fmt: fmtN},
+      {f: 'cash_lowest', num: 1, fmt: money}, {f: 'cash_middle', num: 1, fmt: money}, {f: 'cash_highest', num: 1, fmt: money}, {f: 'medicare', num: 1, fmt: money},
+      {f: 'middle_x_medicare', num: 1, fmt: times}, {f: 'cash_below_own_middle', num: 1, fmt: (v, r) => r.compared ? fmtN(v) + ' of ' + fmtN(r.compared) : '—'}],
+      {sort: 2, dir: -1, cls: (r) => r.code === C.code ? 'sel' : '', pick: (r) => { C.code = r.code; drawCash(); $('#cash-hospitals').scrollIntoView({behavior: 'smooth'}); }});
+    table('#c-posted', [{f: 'procedure'}, {f: 'provider'}, {f: 'city'}, {f: 'price', num: 1, fmt: (v, r) => money(v) + (r.price_high ? '–' + money(r.price_high) : '')},
+      {f: 'label', fmt: (v, r) => [v, r.note].filter(Boolean).join(' · ')}, {f: 'checked'}, {f: 'source', node: (r) => link(r.source, 'source')}], {sort: 3});
+    pg.querySelectorAll('.cjump a').forEach((a) => a.addEventListener('click', (e) => { const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) { e.preventDefault(); t.scrollIntoView({behavior: 'smooth'}); } }));
+  }
+  function drawCash() {
+    if (!C.built || $('#pg-cash').hidden) return;
+    const procs = ok('cash_proc'), tiles = $('#c-tiles');
+    if (!procs) { msgIn(tiles, 'cash_proc', ''); return; }
+    const mkts = [...new Set(procs.map((r) => r.market))].sort((a, b) => (b === 'DFW') - (a === 'DFW') || marketName(a).localeCompare(marketName(b)));
+    C.mkt = fillSelect($('#c-mkt'), mkts.map((k) => [k, marketName(k)]), C.mkt || dash.params().market || 'DFW');
+    const mp = procs.filter((r) => r.market === C.mkt);
+    C.code = fillSelect($('#c-code'), mp.slice().sort((a, b) => String(a.procedure).localeCompare(String(b.procedure))).map((r) => [r.code, r.procedure + ' (' + r.code + ')' + (r.hospitals_cash ? '' : ' · no cash prices')]), C.code || dash.params().code);
+    const p = mp.find((r) => r.code === C.code) || {};
+    tiles.textContent = '';
+    tile(tiles, 'Hospitals listing a cash price', p.hospitals_cash != null ? fmtN(p.hospitals_cash) : '—', 'of ' + fmtN(p.hospitals_any || 0) + ' hospital files listing this procedure');
+    tile(tiles, 'Lowest cash price', money(p.cash_lowest), 'one hospital file, its lowest line');
+    tile(tiles, 'Middle hospital', money(p.cash_middle), p.middle_x_medicare ? times(p.middle_x_medicare) + ' Medicare' : '');
+    tile(tiles, 'Highest cash price', money(p.cash_highest), '');
+    tile(tiles, 'Medicare', money(p.medicare), p.medicare_what || 'none for this code');
+    tile(tiles, 'Cash below the hospital’s own in-network middle', p.compared ? fmtN(p.cash_below_own_middle) + ' of ' + fmtN(p.compared) : '—', 'hospitals where paying cash beats the typical insured rate');
+    $('#c-chart-h').textContent = 'Cash price at each hospital: ' + (p.procedure || '') + ' · ' + marketName(C.mkt);
+    $('#c-procs-h').textContent = 'Every procedure in ' + marketName(C.mkt);
+    draw('#c-ptbl', mp);
+    const all = ok('cash_hosp_all'), chart = $('#c-chart');
+    if (!all) { msgIn(chart, 'cash_hosp_all', ''); draw('#c-tbl', []); }
+    else {
+      const rows = all.filter((r) => r.market === C.mkt && r.code === C.code);
+      const q = $('#c-q').value.trim().toLowerCase();
+      draw('#c-tbl', q ? rows.filter((r) => (r.hospital + ' ' + r.city).toLowerCase().includes(q)) : rows);
+      chartCash(chart, rows, p.medicare);
+    }
+    const posted = ok('cash_posted'), pt = $('#c-posted');
+    if (posted) draw('#c-posted', posted.filter((r) => r.market === C.mkt && (C.allPosted || r.code === C.code)));
+  }
+  function chartCash(box, rows, med) {
+    box.textContent = '';
+    const best = new Map();   // one bar per hospital: its lowest facility-fee cash line (any setting)
+    rows.filter((r) => r.fee === 'Facility fee').forEach((r) => { const k = r.hospital + '|' + r.city + '|' + r.file_url; if (!best.has(k) || r.cash < best.get(k).cash) best.set(k, r); });
+    const data = [...best.values()].sort((a, b) => a.cash - b.cash);
+    if (!data.length) { box.appendChild(el('div', 'cmsg', 'No hospital file in this area lists a hospital-fee cash price for this procedure.')); return; }
+    const W = Math.max(320, box.clientWidth || 640), lab = Math.min(220, W * 0.36), rowH = 22, H = data.length * rowH + 28;
+    const xmax = d3.max(data, (r) => Math.max(r.cash, r.in_network_middle || 0)) || 1;
+    const x = d3.scaleLinear().domain([0, Math.max(xmax, med || 0) * 1.05]).range([lab, W - 12]).nice();
+    const svg = d3.select(box).append('svg').attr('width', W).attr('height', H).attr('role', 'img').attr('aria-label', 'Cash price by hospital');
+    svg.append('g').attr('transform', `translate(0,${H - 22})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - lab) / 90))).tickFormat((v) => money(v)))
+      .call((g) => g.select('.domain').remove()).call((g) => g.selectAll('line').attr('stroke', 'var(--cds-chart-grid)')).call((g) => g.selectAll('text').attr('fill', 'var(--color-fg-muted)'));
+    const tipEl = el('div', 'ctip'); tipEl.hidden = true; box.appendChild(tipEl);
+    const g = svg.selectAll('g.r').data(data).join('g').attr('class', 'r').attr('transform', (r, i) => `translate(0,${i * rowH})`);
+    g.append('text').attr('x', lab - 8).attr('y', rowH / 2 + 4).attr('text-anchor', 'end').attr('fill', 'var(--color-fg)').attr('font-size', 12)
+      .text((r) => { const s = r.hospital || '—'; return s.length > 30 ? s.slice(0, 29) + '…' : s; });
+    g.append('rect').attr('x', lab).attr('y', 4).attr('height', rowH - 8).attr('rx', 2).attr('width', (r) => Math.max(1, x(r.cash) - lab)).attr('fill', 'var(--series-0)');
+    g.filter((r) => r.in_network_middle).append('rect').attr('x', (r) => x(r.in_network_middle) - 1).attr('y', 1).attr('width', 3).attr('height', rowH - 2).attr('fill', 'var(--color-fg)');
+    if (med) svg.append('line').attr('x1', x(med)).attr('x2', x(med)).attr('y1', 0).attr('y2', H - 22).attr('stroke', 'var(--cds-chart-reference)').attr('stroke-dasharray', '4 3').attr('stroke-width', 1.5);
+    g.append('rect').attr('x', 0).attr('y', 0).attr('width', W).attr('height', rowH).attr('fill', 'transparent')
+      .on('mousemove', (ev, r) => { const b = box.getBoundingClientRect(); tipEl.hidden = false; tipEl.textContent = '';
+        tipEl.append(el('div', 't', r.hospital + (r.city ? ' · ' + r.city : '')), el('div', '', 'Cash ' + money(r.cash) + (r.setting ? ' (' + r.setting.toLowerCase() + ')' : '')),
+          el('div', '', r.in_network_rates ? 'In-network middle ' + money(r.in_network_middle) + ' (' + fmtN(r.in_network_rates) + ' rates)' : 'No in-network dollar rates in this file'),
+          el('div', '', r.cash_x_medicare ? times(r.cash_x_medicare) + ' Medicare' : ''));
+        tipEl.style.left = Math.min(ev.clientX - b.left + 12, b.width - 200) + 'px'; tipEl.style.top = (ev.clientY - b.top + box.scrollTop + 12) + 'px'; })
+      .on('mouseleave', () => { tipEl.hidden = true; });
+  }
+
+  // ---------------------------------------------------------------- Out of network
+  const O = {built: false, mkt: null, code: '', ins: '', pcode: ''};
+  function buildOon() {
+    const pg = $('#pg-oon'); pg.classList.add('co'); pg.appendChild($('#tpl-oon').content.cloneNode(true)); O.built = true;
+    $('#o-mkt').addEventListener('change', (e) => { O.mkt = e.target.value; O.code = ''; drawOon(); });
+    $('#o-code').addEventListener('change', (e) => { O.code = e.target.value; drawOon(); });
+    $('#o-ins').addEventListener('change', (e) => { O.ins = e.target.value; drawOon(); });
+    $('#o-pcode').addEventListener('change', (e) => { O.pcode = e.target.value; drawOon(); });
+    ['#o-q', '#o-pq'].forEach((s) => $(s).addEventListener('input', () => drawOon()));
+    $('#o-pmore').addEventListener('click', () => { tables['#o-ptbl'].all = true; drawOon(); });
+    const amt = (v, r) => r.kind === 'percent of charges' ? d3.format(',.2f')(+v) + '% of charges' : money(v);
+    table('#o-tbl', [{f: 'hospital'}, {f: 'insurer'}, {f: 'plan', node: (r) => { const s = el('span'); s.append(el('span', 'tag oon', 'out of network'), document.createTextNode(' ' + (r.plan || ''))); return s; }},
+      {f: 'procedure'}, {f: 'amount', num: 1, fmt: amt}, {f: 'fee'}, {f: 'setting'},
+      {f: 'in_network_middle_same_insurer', num: 1, fmt: (v, r) => v == null ? '—' : money(v) + ' (' + fmtN(r.in_network_rates_same_insurer) + (r.in_network_rates_same_insurer === 1 ? ' rate)' : ' rates)')},
+      {f: 'file_date', node: dateCell}, {f: 'row', node: srcCell}], {sort: 0, limit: 400});
+    table('#o-ftbl', [{f: 'insurer'}, {f: 'month'}, {f: 'files', num: 1, fmt: fmtN}, {f: 'empty', num: 1, fmt: fmtN}, {f: 'with_data', num: 1, fmt: fmtN},
+      {f: 'failed', num: 1, fmt: fmtN}, {f: 'services', num: 1, fmt: fmtN}, {f: 'payments', num: 1, fmt: fmtN}, {f: 'megabytes', num: 1, fmt: (v) => d3.format(',.1f')(+v || 0)},
+      {f: 'newest_file_date', fmt: (v) => v || '—'}], {sort: 7, dir: -1});
+    table('#o-ptbl', [{f: 'insurer'}, {f: 'plan'}, {f: 'plan_market_type'}, {f: 'procedure'}, {f: 'billing_class'}, {f: 'service_code'}, {f: 'tin'},
+      {f: 'allowed_amount', num: 1, fmt: money}, {f: 'billed_charge', num: 1, fmt: money}, {f: 'npis', num: 1, fmt: fmtN}, {f: 'file_date', fmt: (v) => v || '—'},
+      {f: 'file', node: (r) => link(r.file_url, 'file')}], {sort: 3, limit: 500});
+    pg.querySelectorAll('.cjump a').forEach((a) => a.addEventListener('click', (e) => { const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) { e.preventDefault(); t.scrollIntoView({behavior: 'smooth'}); } }));
+  }
+  function drawOon() {
+    if (!O.built || $('#pg-oon').hidden) return;
+    // hospital files
+    const H = ok('oon_hosp_all'), ht = $('#o-tiles');
+    if (!H) { msgIn(ht, 'oon_hosp_all', ''); draw('#o-tbl', []); }
+    else {
+      const mkts = [...new Set(H.map((r) => r.market))].sort((a, b) => (b === 'DFW') - (a === 'DFW') || marketName(a).localeCompare(marketName(b)));
+      O.mkt = fillSelect($('#o-mkt'), mkts.map((k) => [k, marketName(k) + ' (' + fmtN(H.filter((r) => r.market === k).length) + ')']), O.mkt || dash.params().market || 'DFW');
+      const inM = H.filter((r) => r.market === O.mkt);
+      O.code = fillSelect($('#o-code'), [['', 'All procedures']].concat(byCodeName(inM).map(([c, n]) => [c, n + ' (' + c + ')'])), O.code);
+      const q = $('#o-q').value.trim().toLowerCase();
+      const rows = inM.filter((r) => (!O.code || r.code === O.code) && (!q || (r.hospital + ' ' + r.insurer + ' ' + r.plan).toLowerCase().includes(q)));
+      ht.textContent = '';
+      if (!H.length) ht.appendChild(el('div', 'cmsg', 'No hospital file in any area labels a line out-of-network for these procedures.'));
+      tile(ht, 'Out-of-network lines', fmtN(rows.length), marketName(O.mkt) + (O.code ? '' : ', all 89 procedures'));
+      tile(ht, 'Hospitals listing any', fmtN(new Set(rows.map((r) => r.hospital + '|' + r.file_url)).size), '');
+      tile(ht, 'Insurers named', fmtN(new Set(rows.map((r) => r.insurer)).size), '');
+      tile(ht, 'Given only as a percent', fmtN(rows.filter((r) => r.kind === 'percent of charges').length), 'of billed charges, no dollar amount');
+      draw('#o-tbl', rows);
+    }
+    // insurer files
+    const F = ok('oon_ins_files'), ft = $('#o-ftiles');
+    if (!F) { msgIn(ft, 'oon_ins_files', ''); draw('#o-ftbl', []); }
+    else {
+      ft.textContent = ''; const s = (k) => d3.sum(F, (r) => +r[k] || 0);
+      tile(ft, 'Insurers read', fmtN(F.length), '');
+      tile(ft, 'Files', fmtN(s('files')), fmtN(s('empty')) + ' empty · ' + fmtN(s('failed')) + ' failed');
+      tile(ft, 'Files with any data', fmtN(s('with_data')), s('files') ? d3.format('.0%')(s('with_data') / s('files')) + ' of files' : '');
+      tile(ft, 'Payments listed', fmtN(s('payments')), fmtN(s('services')) + ' services · ' + d3.format(',.1f')(s('megabytes')) + ' MB in all');
+      draw('#o-ftbl', F);
+    }
+    // insurer payments
+    const A = ok('oon_ins_amounts_all'), pt = $('#o-ptiles');
+    if (!A) { msgIn(pt, 'oon_ins_amounts_all', ''); draw('#o-ptbl', []); $('#o-pmore').hidden = true; return; }
+    O.ins = fillSelect($('#o-ins'), [['', 'All insurers']].concat([...new Set(A.map((r) => r.insurer))].sort().map((i) => [i, i])), O.ins);
+    const inI = A.filter((r) => !O.ins || r.insurer === O.ins);
+    O.pcode = fillSelect($('#o-pcode'), [['', 'All procedures']].concat(byCodeName(inI).map(([c, n]) => [c, n + ' (' + c + ')'])), O.pcode);
+    const q = $('#o-pq').value.trim().toLowerCase();
+    const rows = inI.filter((r) => (!O.pcode || r.code === O.pcode) && (!q || (r.plan + ' ' + r.tin + ' ' + r.description).toLowerCase().includes(q)));
+    const v = rows.map((r) => r.allowed_amount).filter((x) => x != null).sort((a, b) => a - b);
+    pt.textContent = '';
+    if (!A.length) pt.appendChild(el('div', 'cmsg', 'None of the insurers’ allowed-amount files read so far lists a payment for one of the 89 featured procedures.'));
+    tile(pt, 'Payments shown', fmtN(rows.length), fmtN(new Set(rows.map((r) => r.insurer)).size) + ' insurers');
+    tile(pt, 'Lowest allowed', money(v[0]), '');
+    tile(pt, 'Middle allowed', money(v.length ? v[Math.floor((v.length - 1) / 2)] : null), 'an actual payment, not an average');
+    tile(pt, 'Highest allowed', money(v[v.length - 1]), '');
+    const left = draw('#o-ptbl', rows); $('#o-pmore').hidden = !(left > 0); if (left > 0) $('#o-pmore').textContent = 'Show all ' + fmtN(rows.length) + ' rows';
+  }
+
+  window.CASHTAB = {show() { if (!C.built) buildCash(); dash.setParams({_t: Date.now()}); }};
+  window.OONTAB = {show() { if (!O.built) buildOon(); dash.setParams({_t: Date.now()}); }};
+  const hashTab = {'#cash': 'cash', '#out-of-network': 'oon'}[location.hash];
+  if (hashTab) { const t = document.querySelector('#tabs [data-tab=' + hashTab + ']'); if (t) setTimeout(() => t.click(), 0); }
+  dash.onData(() => { drawCash(); drawOon(); });
+})();
+</script>

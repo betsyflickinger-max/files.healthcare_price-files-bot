@@ -16,6 +16,7 @@ Safe to run again: every step checks a marker first. The procedure-pages workflo
 so /v2/ always shows the same figures as the price pages.
 """
 import control_money   # sibling module: the control center's money tab
+import control_cash_oon   # sibling module: the control center's cash prices and out-of-network tabs (Oct 30)
 import csv
 import hashlib
 import html
@@ -834,6 +835,7 @@ def _deploy_once():
     changed = patch_tracking(d)
     changed = patch_control(d) or changed
     changed = control_money.patch(d) or changed   # Oct 25: "Where the money goes" tab
+    changed = control_cash_oon.patch(d) or changed   # Oct 30: "Cash prices" and "Out of network" tabs
     control_money.upload(s3, B)
     changed = build(d) or changed
     if not changed:
@@ -866,7 +868,7 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2 and sys.argv[1] == 'deploy':
         deploy()
     elif len(sys.argv) >= 3 and sys.argv[1] == 'build':
-        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2]) | control_money.patch(sys.argv[2])
+        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2]) | control_money.patch(sys.argv[2]) | control_cash_oon.patch(sys.argv[2])
         c2 = build(sys.argv[2])
         print('changed' if c1 or c2 else 'unchanged')
     else:

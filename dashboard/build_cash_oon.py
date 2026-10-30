@@ -126,7 +126,7 @@ def build_market(key, m):
         f = hfile(m["h"], code)
         med, med_what = medicare_hosp(code)
         if not f:
-            proc_rows.append({"id": f"{key}|{code}", "market": key, "code": code, "procedure": NAMES.get(code, code), "hospitals_cash": 0,
+            proc_rows.append({"id": f"{key}|{code}", "market": key, "area": m["name"], "code": code, "procedure": NAMES.get(code, code), "hospitals_cash": 0,
                               "hospitals_any": 0, "cash_lowest": None, "cash_middle": None, "cash_highest": None, "medicare": rnd(med),
                               "medicare_what": med_what, "middle_x_medicare": None, "cash_below_own_middle": 0, "compared": 0})
             continue
@@ -162,7 +162,7 @@ def build_market(key, m):
                 if s not in per_file or cash < per_file[s][0]: per_file[s] = (cash, mid(v))
         vals = sorted(x for x, _ in per_file.values())
         comp = [(x, m_) for x, m_ in per_file.values() if m_]
-        proc_rows.append({"id": f"{key}|{code}", "market": key, "code": code, "procedure": NAMES.get(code, code),
+        proc_rows.append({"id": f"{key}|{code}", "market": key, "area": m["name"], "code": code, "procedure": NAMES.get(code, code),
                           "hospitals_cash": len(vals), "hospitals_any": len({r[0] for r in f.get("r", [])} | {c[0] for c in f.get("c", [])}),
                           "cash_lowest": rnd(vals[0]) if vals else None, "cash_middle": rnd(mid(vals)), "cash_highest": rnd(vals[-1]) if vals else None,
                           "medicare": rnd(med), "medicare_what": med_what,
@@ -227,7 +227,10 @@ def insurer_files():
         from collections import Counter
         ent = Counter(r.get("reporting_entity_name") for r in t if r.get("reporting_entity_name"))
         name = next((r["insurer"] for r in t if r.get("insurer")), stem)
-        if name == stem or "-" in name and " " not in name: name = ent.most_common(1)[0][0] if ent else {"cigna": "Cigna", "uhc": "UnitedHealthcare"}.get(stem, stem)
+        if name == stem:   # the parquet names only a slug: use the files' own name when it reads like one, else the slug spelled out
+            e = ent.most_common(1)[0][0] if ent else ""
+            name = {"cigna": "Cigna", "uhc": "UnitedHealthcare"}.get(stem) or (e if " " in e and e.lower() != "healthplanname" else
+                                                                             re.sub(r"\s+", " ", re.sub(r"[-_]+", " ", stem)).strip().title())
         ok = [r for r in t if r.get("status") == "ok"]; full = [r for r in ok if r.get("services")]
         files.append({"id": stem, "insurer": name, "month": month, "files": len(t), "empty": len(ok) - len(full), "with_data": len(full),
                       "failed": len(t) - len(ok), "services": sum(r.get("services") or 0 for r in ok),
