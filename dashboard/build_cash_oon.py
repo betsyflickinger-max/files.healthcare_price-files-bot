@@ -242,6 +242,8 @@ def insurer_files():
                       "failed": len(t) - len(ok), "services": sum(r.get("services") or 0 for r in ok),
                       "payments": sum(r.get("payments") or 0 for r in ok), "megabytes": round(sum(r.get("bytes") or 0 for r in ok) / 1e6, 2),
                       "newest_file_date": max((str(r.get("last_updated_on") or "")[:10] for r in ok), default="") or None})
+        bad = Counter(str(r.get("status") or "")[:90] for r in t if r.get("status") != "ok")
+        if bad: print(f"  {name}: {sum(bad.values()):,} files not read; most common: " + "; ".join(f"{k} ({v:,})" for k, v in bad.most_common(2)))
         if not full: continue
         meta = {r["file_name"]: r for r in full}
         try: tb = get_bytes(f"raw/allowed/{month}/{stem}.tar")
