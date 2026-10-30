@@ -15,6 +15,7 @@ one 11.4 GB file, and most of it is the same networks repeated once per employer
 The reading bot then reads one copy of each network it needs (finder "catalog" in find_links.py), never the employer copies.
 
 Run:  python insurers/catalog.py build --insurer anthem [--month YYYY-MM] [--max-mb N] [--out DIR] [--no-enrich]
+      python insurers/catalog.py allowed --insurer anthem   (only the out-of-network file links; also saved by build)
       python insurers/catalog.py rows --insurer anthem --states CO,GA,MO [--label-prefix "Anthem"]
 Output (R2): bot/catalog/<insurer>/<YYYY-MM>/{catalog.json, networks.csv, changes.json, watch.csv}, bot/catalog/<insurer>/latest.json
 Env: R2_* (without them, --out DIR writes the same files locally).
@@ -198,6 +199,8 @@ BLOBS = False        # set from the insurer's settings (UnitedHealthcare): many 
 FILELIST = False     # set from the insurer's settings (HCSC): many small indexes from a plain list of {url, ein, state}
 PEEK_TOP = 0         # set from the insurer's settings: provider samples only for the N networks most employers use
 STRIP_DATE = False   # set from the insurer's settings (Cigna): drop the leading date and "_in-network-rates" from keys
+ALLOWED = {}         # Oct 30, 2026 (Betsy: out-of-network amounts are kept, never skipped): allowed-amount file links seen
+                     # while reading the index (link without signature -> link as given), handed to plans/allowed_amounts.py
 
 
 UHC_MARKET = re.compile(r"_(Third-Party-Administrator|Insurer|Health-Insurance-Issuer|Group-Health-Plan)_", re.I)
@@ -292,6 +295,10 @@ def meta_structures(urls, stats):
         stats["bytes"] += len(r.content)
         base = u.rsplit("/", 1)[0] + "/"
         for f in r.json().get("files") or []:
+            if "ALLOWED" in (f.get("fileSchema") or "").upper():
+                loc = base + f["filePath"]
+                ALLOWED.setdefault(loc.split("?")[0], loc)
+                continue
             if f.get("fileSchema") != "IN_NETWORK_RATES":
                 continue
             stats["files"] += 1
@@ -347,6 +354,10 @@ def read_index(url, limit_bytes=0, employers_path=None):
             pass
         for rs in (structures if structures is not None else ijson.items(src, "reporting_structure.item", buf_size=1 << 20)):
             n_struct += 1
+            af = rs.get("allowed_amount_file") or {}
+            for a_ in (af if isinstance(af, list) else [af]):
+                loc_ = (a_.get("location") or "").strip() if isinstance(a_, dict) else ""
+                if loc_: ALLOWED.setdefault(loc_.split("?")[0], loc_)
             plans = rs.get("reporting_plans") or []
             n_plans += len(plans)
             files = rs.get("in_network_files") or []
@@ -665,6 +676,7 @@ def build(a):
     st.put(base + "watch.csv", wb.getvalue(), "text/csv")
     if not a.max_mb:
         st.put(f"bot/catalog/{a.insurer}/latest.json", dict(month=month, built=cat["built"], networks=len(rows)))
+        save_allowed(a.insurer, st)
     by_state = Counter(r["state"] or "?" for r in rows)
     summary = [f"## {cat['name']} catalog, {month}", "",
                f"Index {size / 1e9:.1f} GB read in {cat['seconds'] // 60} min: {counts['plans']:,} plans and {counts['links']:,} file links "
@@ -677,6 +689,29 @@ def build(a):
     print("\n".join(summary))
     if os.environ.get("GITHUB_STEP_SUMMARY"):
         open(os.environ["GITHUB_STEP_SUMMARY"], "a").write("\n".join(summary) + "\n")
+
+
+def save_allowed(insurer, st):
+    """Write the allowed-amount links to R2 bot/watch/indexes/deep/<YYYY-MM>/<insurer>_catalog.allowed.json, the list
+    format insurers/index_watch.py writes for indexes under its size limit. plans/allowed_amounts.py --insurers deep reads
+    every list there (monthly, the 5th; the catalog runs on the 2nd)."""
+    month = date.today().strftime("%Y-%m")
+    body = dict(insurer=INSURERS[insurer]["name"], index="insurers/catalog.py", checked=date.today().isoformat(), files=list(ALLOWED.values()))
+    st.put(f"bot/watch/indexes/deep/{month}/{insurer}_catalog.allowed.json", body)
+    print(f"out-of-network (allowed-amount) files named: {len(ALLOWED):,}", flush=True)
+
+
+def allowed_cmd(a):
+    """Read the index only for its out-of-network file links (no file checks, no catalog written)."""
+    t0 = time.time()
+    url, size, lm = find_index(a.insurer, a.month)
+    print(f"index: {url.split('?')[0]} ({size / 1e9:.1f} GB, modified {lm})", flush=True)
+    head, nets, counts = read_index(url, int(a.max_mb * 1e6) if a.max_mb else 0)
+    print(f"read {counts['bytes_read'] / 1e9:.2f} GB, {counts['structures']:,} plan groups ({time.time() - t0:.0f}s)", flush=True)
+    if not a.max_mb:
+        save_allowed(a.insurer, Store(a.out))
+    else:
+        print(f"test run: {len(ALLOWED):,} allowed-amount links seen, not saved")
 
 
 def rows_cmd(a):
@@ -756,7 +791,7 @@ def current_link(insurer, network, part, store=None):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["build", "rows", "report"])
+    ap.add_argument("cmd", choices=["build", "rows", "report", "allowed"])
     ap.add_argument("--insurer", default="anthem", choices=sorted(INSURERS))
     ap.add_argument("--month", default=None)
     ap.add_argument("--max-mb", type=float, default=0, help="test: stop after this many MB of the index")
@@ -770,4 +805,4 @@ if __name__ == "__main__":
     METAS = INSURERS[a.insurer].get("metas") or []
     FILELIST = bool(INSURERS[a.insurer].get("filelist"))
     PEEK_TOP = int(INSURERS[a.insurer].get("peek_top") or 0)
-    {"build": build, "rows": rows_cmd, "report": report_cmd}[a.cmd](a)
+    {"build": build, "rows": rows_cmd, "report": report_cmd, "allowed": allowed_cmd}[a.cmd](a)

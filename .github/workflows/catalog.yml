@@ -14,7 +14,7 @@ on:
         description: "Insurer (anthem, cigna, uhc, aetna, hcsc)"
         default: "anthem"
       cmd:
-        description: "build (read the index), report (summary of the newest catalog) or rows (network-list rows)"
+        description: "build (read the index), allowed (only its out-of-network file links), report or rows"
         default: "build"
       states:
         description: "For report/rows: states, comma separated (blank = all)"
@@ -41,6 +41,8 @@ jobs:
       - run: python -c "import ijson; print('ijson backend:', ijson.backend)"
       - if: ${{ (inputs.cmd || 'build') == 'build' }}
         run: python insurers/catalog.py build --insurer "${{ inputs.insurer || 'anthem' }}"
+      - if: ${{ inputs.cmd == 'allowed' }}
+        run: python insurers/catalog.py allowed --insurer "${{ inputs.insurer }}"
       - if: ${{ inputs.cmd == 'report' || inputs.cmd == 'rows' }}
         run: |
           mkdir -p out
