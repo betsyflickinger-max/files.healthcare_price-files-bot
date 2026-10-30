@@ -74,9 +74,11 @@ for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.st
                 print("    " + "\n    ".join(txt.strip().splitlines()[-15:]))
     except Exception as e:
         print(f"=== build {bid}: no state ({e})")
-for d in droplets.names() if hasattr(droplets, "names") else []:
-    if d.startswith("upfront-site-"):
-        print("site machine:", d)
+# Every machine on the account that isn't a queue machine (site builds, the R2 -> B2 copy, ...)
+_q = {n for _, n, _ in droplets.mine()}
+for d in _rq.get(f"{droplets.API}/droplets", params={"per_page": 200}, headers=droplets._h(), timeout=60).json()["droplets"]:
+    if d["name"] not in _q:
+        print(f"other machine: {d['name']} ({d['size_slug']}, {d['status']}, made {d['created_at']})")
 
 # Oct 24: insurer tables an area's page build reads (data/<scope>/rates/, the per-state split, split markers)
 def _count(prefix):
