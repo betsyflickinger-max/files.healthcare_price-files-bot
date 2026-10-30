@@ -1,0 +1,30 @@
+name: Find text in an insurer index (read-only)
+
+# Oct 30, 2026: streams a huge insurer index (e.g. Anthem's 11 GB one) and lists the rate files that the matching
+# plans point to. Changes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Index URL"
+        default: "https://antm-pt-prod-dataz-nogbd-nophi-us-east1.s3.amazonaws.com/anthem/2026-10-01_anthem_index.json.gz"
+      patterns:
+        description: "Space-separated regexes"
+        default: "37758TX Harbor"
+
+permissions:
+  contents: read
+
+jobs:
+  grep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - env:
+          U: ${{ inputs.url }}
+          P: ${{ inputs.patterns }}
+        run: python insurers/index_grep.py "$U" $P
