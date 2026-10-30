@@ -325,7 +325,7 @@ def match_areas(amounts):
             for k, found in ex.map(two, AREAS.items()):
                 for n, nm, ct in found: reg[n].append((k, nm, ct))
     per = defaultdict(lambda: [0, set()])
-    by = {"Price Finder list": 0, "NPI registry": 0}
+    by = {"Price Finder list": 0, "NPI registry": 0, "same tax ID": 0}
     for r in amounts:
         npi = r.pop("_npi")
         m = [h for n in npi for h in hits.get(n, [])]
@@ -342,14 +342,23 @@ def match_areas(amounts):
         r["areas"] = "|".join(ks)
         if r["matched_by"]: by[r["matched_by"]] += 1
         for k in ks: per[k][0] += 1; per[k][1].add(r["insurer"])
+    # third: a payment listed by tax ID only (no provider NPI) goes where that same tax ID's other payments were placed
+    tin_areas = defaultdict(set)
+    for r in amounts:
+        if r["areas"] and r["tin"]: tin_areas[r["tin"]].update(r["areas"].split("|"))
+    for r in amounts:
+        if not r["areas"] and not r["npis"] and tin_areas.get(r["tin"]):
+            ks = sorted(tin_areas[r["tin"]], key=lambda k: (k != "DFW", k))
+            r["areas"], r["matched_by"] = "|".join(ks), "same tax ID"
+            for k in ks: per[k][0] += 1; per[k][1].add(r["insurer"])
     miss = defaultdict(list)
     for r in amounts:
         if not r["areas"] and len(miss[r["insurer"]]) < 3: miss[r["insurer"]].append(r["tin"])
     print("  not in any area (sample tax IDs):", "; ".join(f"{k}: {', '.join(v)}" for k, v in sorted(miss.items())[:8]))
     rows = [{"market": k, "area": AREAS[k]["name"], "payments": n, "insurers": len(i)} for k, (n, i) in sorted(per.items(), key=lambda x: -x[1][0])]
     save("oon_ins_areas", rows)
-    hit = sum(1 for r in amounts if r["areas"])
-    print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas ({by['Price Finder list']:,} by Price Finder list, {by['NPI registry']:,} by NPI registry)"
+    hit = sum(1 for r in amounts if r["areas"]); by["same tax ID"] = sum(1 for r in amounts if r.get("matched_by") == "same tax ID")
+    print(f"oon_ins_areas: {hit:,} of {len(amounts):,} payments matched to {len(rows)} areas ({by['Price Finder list']:,} by Price Finder list, {by['NPI registry']:,} by NPI registry, {by['same tax ID']:,} by same tax ID)"
           + (f" (DFW {per['DFW'][0]:,})" if "DFW" in per else ""))
 
 
