@@ -223,9 +223,30 @@ def extract(path, ctx):
         p.unlink()
     tmp.rmdir()
     print(f"  wrote {n_rows:,} price rows and {len(members):,} roster rows -> {st}.parquet", flush=True)
-    try:  # an inventory problem must never cost us the tables
-        census(con, RATES / (st + ".parquet"), CENSUS / (st + ".json"), meta, label, source_file, ctx.get("source_url", ""),
-               n_rows, n_refs, len({k[0] for k in members}))
+    # An inventory problem must never cost us the tables. Oct 29, 2026: the inventory now runs in its own process.
+    # UHC Choice Plus (18 billion rows) and Anthem California (11 billion) for NY/CA were read and written, then the
+    # in-process inventory ran out of memory and the kill (exit -9) took the finished tables with it, three times each.
+    # If the child is killed, it is tried once more with less memory; if that fails too, only the inventory is skipped.
+    con.close()
+    args = (RATES / (st + ".parquet"), CENSUS / (st + ".json"), meta, label, source_file, ctx.get("source_url", ""),
+            n_rows, n_refs, len({k[0] for k in members}))
+    import multiprocessing as mp
+    for low in (False, True):
+        ch = mp.get_context("fork").Process(target=_census_child, args=(args, low))
+        ch.start()
+        ch.join()
+        if ch.exitcode == 0:
+            break
+        print(f"  ! census {'skipped' if low else 'failed'} (exit {ch.exitcode}{', retrying with less memory' if not low else ''})", flush=True)
+
+
+def _census_child(args, low):
+    try:
+        con = duck()
+        if low:
+            con.execute("set threads=1")
+            con.execute("set memory_limit='" + str(max(1, int(os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 2**30 * 0.25))) + "GB'")
+        census(con, *args)
     except Exception as e:
         print(f"  ! census skipped: {e}", flush=True)
 

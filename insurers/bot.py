@@ -280,7 +280,9 @@ def collect(s3, b, man, now, dry):
                 m["detail"] += f"; rows fell from {int(old_rows):,} to {int(m['rows']):,}"
                 notes.append(("rows dropped", m))
         else:
-            m.update(status="failed", detail=res.get("error", "unknown error")[:300], fails=str(int(m.get("fails") or 0) + 1))
+            err = res.get("error", "unknown error")   # Oct 29, 2026: keep the end too (exit code, out-of-memory kill)
+            m.update(status="failed", detail=err if len(err) <= 300 else err[:140] + " ... " + err[-155:],
+                     fails=str(int(m.get("fails") or 0) + 1))
             notes.append(("failed", m))
     cleanup_idle(s3, b, now, qclaims, dry)
     return notes
@@ -408,6 +410,13 @@ def check_all(man, today, only, force=False):
         if m.get("status") == "failed" and storage_outage_fail(m):
             # Oct 29, 2026: storage (R2) was switched off Oct 26-29. Machines reading then died or got "NotEntitled";
             # that isn't the file's fault, so those tries don't count toward the 3-strikes limit.
+            m["fails"] = "0"
+        d_ = m.get("detail") or ""
+        if m.get("status") == "failed" and (m.get("launched_at") or "") < HOST_CAP_FIX and (
+                ("wrote " in d_ and " price rows and " in d_)          # failed after the tables were written (inventory out of memory)
+                or "No such file or directory: '/opt/bot/insurers/data/d" in d_):   # download failed, before the retry waits
+            # Oct 29, 2026: both are fixed (inventory in its own process; downloads wait between tries), so these
+            # files get their tries back.
             m["fails"] = "0"
         if (m.get("status") == "failed" and (m.get("launched_at") or "") < HOST_CAP_FIX
                 and "thehealthplan.com" in (m.get("url") or "")
