@@ -55,7 +55,7 @@ OLDKEY = {"austin": "AUS", "san-antonio": "SAT", "houston": "HOU", "el-paso": "E
 KIND = {"H": "hospitals", "A": "surgery_centers", "G": "clinics_groups", "P": "clinicians"}
 FEE = {0: "Facility fee", 1: "Doctor fee"}
 MIN_NET, MIN_MKT = 5, 20   # a network middle needs 5+ providers, a market middle 20+ (provider, network) rates
-PART_FILES, PART_MAX = {"net_overlap": 12, "net_proc": 16}, 7_000_000   # Oct 15: pairs ~42 MB for 30 areas (a big state 3-7 MB), procedures ~50 MB
+PART_FILES, PART_MAX = {"net_overlap": 30, "net_proc": 30}, 7_000_000   # Oct 31: 30 each (California overflowed 12 pair files); site/control_cash_oon.py patches the page joins to match   # Oct 15: pairs ~42 MB for 30 areas (a big state 3-7 MB), procedures ~50 MB
 
 # ---------- markets (loaded one at a time in build(), so 30+ areas fit in memory) ----------
 MARKETS = {"DFW": {"name": "Dallas–Fort Worth", "page": "site/deploy/price-finder.html", "codes": f"site/every/{get_text('site/every/CURRENT')}/t/"}}

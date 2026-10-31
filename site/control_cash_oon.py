@@ -29,6 +29,23 @@ STEPS = [   # (marker that shows the step is done, anchor, replacement)
 ]
 
 
+NET_PARTS = {'net_overlap': 30, 'net_proc': 30}   # Oct 31, 2026: same counts as dashboard/build_network.py PART_FILES
+
+
+def net_joins(s):
+    """The Network access tab joins its split files in dash.calc('net_overlap_all' / 'net_proc_all'); make each list every
+    part build_network.py writes (missing parts would load as errors, so the list must match the bot's count)."""
+    import re
+    for name, n in NET_PARTS.items():
+        m = re.search(r"(dash\.calc\('%s_all', \{.*?inputs: \[)(.*?)(\],)" % name, s, re.S)
+        if not m:
+            print('control center layout changed; the', name, 'join was not updated'); continue
+        want = ', '.join(f"'{name}'" if i == 0 else f"'{name}_{i + 1}'" for i in range(n))
+        if m.group(2).replace('\n', ' ').split() != want.split():
+            s = s[:m.start(2)] + want + s[m.end(2):]
+    return s
+
+
 def patch(d):
     p = os.path.join(d, 'site', 'control', 'index.html')
     if not os.path.isfile(p):
@@ -41,6 +58,7 @@ def patch(d):
             print('control center layout changed; a cash/out-of-network tab step was skipped:', done)
             continue
         s = s.replace(a, b)
+    s = net_joins(s)
     tab = open(os.path.join(HERE, 'tab.html'), encoding='utf-8').read()
     start, end = '<!-- Control center: "Cash prices" and "Out of network" tabs', '<!-- /cash-oon tabs -->'
     block = tab.rstrip() + '\n' + end
