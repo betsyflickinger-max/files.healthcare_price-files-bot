@@ -430,13 +430,16 @@ def file_date(e):
     return '-'.join(m.groups()) if m else e.get('date')
 
 
-def summarize(D, code, t, h, loc=None, st=None, pst=None):
+def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     """Everything a procedure page shows, as plain data. Mirrors the Price Finder's own rules (see the page's main script):
     one line per provider per network = that provider's lowest standard rate (no modifier) in that network; $0 lines,
     percent-of-charges lines and lines the file flags as unusually low are kept out of the low/high figures.
     Oct 19, 2026: st = the area's state, pst = {fac index: state of the provider's practice ZIP} (Store.provider_states).
     A provider whose state is known and isn't the area's is left out of the figures (counted in 'n_out_of_state'); the
-    Alabama pages showed an Atlanta clinic whose registry entry says "Atlanta, AL 30329". Its rates stay in the files."""
+    Alabama pages showed an Atlanta clinic whose registry entry says "Atlanta, AL 30329". Its rates stay in the files.
+    Oct 31, 2026 (card #2): proof = {fac index: (state, info)} from site/proof.py, or None (pages exactly as before). With it,
+    providers whose state is 'no_record' stay listed but are held out of the lowest/highest 10 ('also_listed'), and ranked
+    providers with a Medicare or Medicaid record carry a proof line. Counts never change the order, which stays by price."""
     C = D['codes'][code]
     f = (t or {}).get('f') or C.get('f') or {}
     n_away = 0
@@ -564,6 +567,15 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         lines = kept
     # lowest 10 providers (each provider once, at its lowest network). Networks that pay every provider the same amount
     # stay in the network table, labeled, but are left out of this ranking (same rule as the procedure packages).
+    held = {}                            # card #2: listed, but no Medicare/Medicaid record where a volume file covers them
+    def ranked(e):
+        st_ = (proof or {}).get(e['fi'])
+        if st_ and st_[0] == 'no_record':
+            held.setdefault((e['name'], e['city']), dict(e, note=st_[1]))
+            return False
+        if st_ and st_[0] == 'proved':
+            e['proof'] = st_[1]
+        return True
     seen, lowest = set(), []
     for e in lines:
         if e['net'] in flat:
@@ -571,7 +583,8 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         k = (e['name'], e['city'])
         if k not in seen:
             seen.add(k)
-            lowest.append(e)
+            if ranked(e):
+                lowest.append(e)
         if len(lowest) == 10:
             break
     doc = sorted(per['doc'].values(), key=lambda e: e['v']) if kind == 'fac' else []
@@ -583,7 +596,8 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         k = (e['name'], e['city'])
         if k not in seen:
             seen.add(k)
-            highest.append(e)
+            if ranked(e):
+                highest.append(e)
         if len(highest) == 10:
             break
     # the biggest gap inside one network (what a patient on that plan could save by choosing where to go)
@@ -686,7 +700,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None):
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
         'med_ar': med_areas_of(D, code),
         'any': bool(lines or hcash or hrate or hoon or cash),
-        'highest': highest, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
+        'highest': highest, 'also_listed': sorted(held.values(), key=lambda e: e['v']), 'proof_on': proof is not None, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
         'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
     }
