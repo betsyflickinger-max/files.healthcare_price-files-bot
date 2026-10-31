@@ -1,7 +1,9 @@
 name: Proof of procedures (Medicare + Medicaid volume)
 
 # Oct 31, 2026 (card #2, Betsy OK'd Oct 30): saves the CMS Medicare utilization files and the HHS Medicaid provider
-# spending file once each (originals untouched in storage raw/utilization/), and builds the Texas proof table
+# spending file once each (originals untouched in storage raw/utilization/). Oct 31 (all states): builds one proof table per
+# state we cover from the saved originals (no new download): data/utilization/<year>/by_state/evidence_<st>.parquet. The yearly
+# run downloads the newest versions first (--fresh). The first Texas proof table is kept as is:
 # data/utilization/<year>/evidence_tx.parquet. Counts only: used to confirm a provider does a procedure, never to exclude
 # anyone or rank by size. utilization/build_evidence.py. Summary committed to reports/utilization/<year>/.
 # Runs: on a change to the script, by hand, and yearly on June 20 (CMS posts a new data year each spring).
@@ -39,7 +41,7 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 duckdb==1.5.6 requests==2.33.0 zstandard==0.23.0
       - run: sudo mkdir -p /mnt/u && sudo chown $USER /mnt/u && df -h / /mnt
-      - run: python utilization/build_evidence.py --work /mnt/u
+      - run: python utilization/build_evidence.py --work /mnt/u ${{ github.event_name == 'schedule' && '--fresh' || '' }}
       - name: Save the summary
         run: |
           git config user.name "price-files-bot"
