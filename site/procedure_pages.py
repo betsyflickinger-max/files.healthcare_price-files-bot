@@ -23,6 +23,7 @@ site/deploy/costs_state.json), so it is cheap to run daily. URLs never change on
 """
 import home_bits   # homepage hero pieces shared with site/ux_polish.py
 import visuals     # price line, bill slips, word cards on every price page
+import proof as proof_mod   # card #2: proof a provider does the procedure (Texas)
 import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -184,6 +185,28 @@ class Store:
         except Exception as e:
             print(f"  {area['slug']}: no out-of-state check ({type(e).__name__}: {e})", flush=True)
             return {}
+
+    def proof(self, area, n_fac):
+        """(Proof, npis) for Texas areas (card #2, Oct 31, 2026; site/proof.py), or (None, None): the page then builds exactly as
+        before. The proof table is Texas only for now."""
+        if self.offline or not self.s3 or area_state(area) != 'TX':
+            return None, None
+        try:
+            if not hasattr(self, '_proof'):
+                from proof import Proof, load_taxonomy
+                self._proof = Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B))
+            pre = self.prefix(area, 't')
+            if not pre or not pre.endswith('t/'):
+                return None, None
+            npis = json.loads(self.s3.get_object(Bucket=self.B, Key=pre[:-2] + 'npis.json')['Body'].read())
+            if len(npis) != n_fac:
+                print(f"  {area['slug']}: npis.json ({len(npis)}) and page providers ({n_fac}) differ; no proof", flush=True)
+                return None, None
+            return self._proof, npis
+        except Exception as e:
+            print(f"  {area['slug']}: no proof ({type(e).__name__}: {e})", flush=True)
+            self._proof = None
+            return None, None
 
     def get(self, area, kind, code):
         if self.offline:
@@ -438,8 +461,10 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     A provider whose state is known and isn't the area's is left out of the figures (counted in 'n_out_of_state'); the
     Alabama pages showed an Atlanta clinic whose registry entry says "Atlanta, AL 30329". Its rates stay in the files.
     Oct 31, 2026 (card #2): proof = {fac index: (state, info)} from site/proof.py, or None (pages exactly as before). With it,
-    providers whose state is 'no_record' stay listed but are held out of the lowest/highest 10 ('also_listed'), and ranked
-    providers with a Medicare or Medicaid record carry a proof line. Counts never change the order, which stays by price."""
+    providers whose state is 'no_record' stay listed but are held out of the lowest 10 only ('also_listed'; the highest 10 is
+    unchanged so overcharges stay visible), ranked providers with a Medicare or Medicaid record carry a proof line, and
+    'wrong_specialty' lines (anesthesia clinicians under a delivery/surgery/scan/lab code) are left out of the figures and
+    counted ('n_wrong_specialty'). Counts never change the order, which stays by price."""
     C = D['codes'][code]
     f = (t or {}).get('f') or C.get('f') or {}
     n_away = 0
@@ -507,7 +532,11 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     high = {'fac': set(), 'doc': set()}
     high_e = {'fac': [], 'doc': []}
     other_kind = set()
+    wrong_spec = set()
     for fi, rs in f.items():
+        if proof and (proof.get(int(fi)) or ('',))[0] == 'wrong_specialty':
+            wrong_spec.add(fi)
+            continue
         for r in rs:
             if anes:                     # anesthesia: every published dollar line is the anesthesia fee, however the file classes it
                 r = [r[0], 1] + list(r[2:])
@@ -596,8 +625,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
         k = (e['name'], e['city'])
         if k not in seen:
             seen.add(k)
-            if ranked(e):
-                highest.append(e)
+            highest.append(e)   # proof applies to the lowest 10 only: overcharges stay visible here (Betsy, Oct 31)
         if len(highest) == 10:
             break
     # the biggest gap inside one network (what a patient on that plan could save by choosing where to go)
@@ -700,7 +728,7 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
         'med': (D.get('med') or {}).get('codes', {}).get(code), 'med_src': (D.get('med') or {}).get('src', {}),
         'med_ar': med_areas_of(D, code),
         'any': bool(lines or hcash or hrate or hoon or cash),
-        'highest': highest, 'also_listed': sorted(held.values(), key=lambda e: e['v']), 'proof_on': proof is not None, 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
+        'highest': highest, 'also_listed': sorted(held.values(), key=lambda e: e['v']), 'proof_on': proof is not None, 'n_wrong_specialty': len(wrong_spec), 'gap': gap, 'flat_out': flat_out, 'high_counts': high_counts, 'high_ex': high_ex,
         'index': len(byp) >= 5 or len(cash) + len(hcash) >= 3,     # thin pages stay out of search until they have more data
         'spread': spread, 'sc_lo': sc_lo, 'h_lo': h_lo, 'cities': top_cities, 'h_stale': h_stale, 'h_total': len(hdates), 'csv': rows,
     }
@@ -1263,9 +1291,22 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"{'<th class=num>+ Doctor (typical)</th><th class=num>= Both bills, from</th>' if both_cols else ''}</tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
+    def proof_bit(e):
+        x = e.get('proof')
+        return (f" · <a href='{esc(x['url'])}' target='_blank' rel='noopener'>{esc(x['text'])}</a>") if isinstance(x, dict) else ''
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
-                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
-    low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol></div>") if low_li else ''
+                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{proof_bit(e)}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
+    al = S.get('also_listed') or []
+    also = (f"<details class='cap'><summary>Also listed, may not offer this procedure ({len(al)})</summary><p>{esc(al[0]['note'])} "
+            f"<a href='/methodology/#proof'>How we decide</a></p><ul>"
+            + ''.join(f"<li>{esc(e['name'])}{' · ' + esc(e['city']) if e['city'] else ''} · {esc(netname(e['ins'], e['plan']))} · "
+                      f"{money(e['v'])} · {src_link(e, e['date'])}</li>" for e in al) + "</ul></details>") if al else ''
+    pcap = (f"<p class='cap'>Ranked: places with a Medicare or Medicaid record for this procedure, and kinds of places no public volume "
+            f"file covers. Order is by price only. <a href='/methodology/#proof'>How we decide</a></p>") if S.get('proof_on') else ''
+    wcap = (f"<p class='cap'>{S['n_wrong_specialty']:,} anesthesia clinician{'s' if S['n_wrong_specialty'] != 1 else ''} listed under this "
+            f"code by an insurer {'are' if S['n_wrong_specialty'] != 1 else 'is'} left out of these figures: they don't perform it. "
+            f"Their rates stay in the Price Finder.</p>") if S.get('n_wrong_specialty') else ''
+    low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol>{pcap}{also}{wcap}</div>") if low_li else ''
     hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
                     f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>"
                     for e in (S.get('highest') or []))
@@ -1875,9 +1916,12 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
             if pst:
                 n_away = sum(1 for v in pst.values() if v != area_state(a))
                 print(f"  {a['slug']}: {n_away} provider(s) with a practice ZIP outside {area_state(a)} left out of the figures", flush=True)
+            P_, npis_ = store.proof(a, len(D['fac']))   # Oct 31, 2026 (card #2): Texas only; None = pages exactly as before
             def one(c):
                 try:
-                    return summarize(D, c, store.get(a, 't', c), store.get(a, 'h', c), loc, area_state(a), pst)
+                    t_, h_ = store.get(a, 't', c), store.get(a, 'h', c)
+                    pr = proof_mod.for_page(P_, D, c, t_, npis_, loc, kind_of) if P_ else None
+                    return summarize(D, c, t_, h_, loc, area_state(a), pst, pr)
                 except Exception as e:     # one bad file never stops the rest; that page keeps its last version
                     print(f"  {a['slug']} {c}: skipped ({type(e).__name__}: {e})", flush=True)
                     return None
@@ -2009,6 +2053,35 @@ def label_high(text):
     return text.replace(PF_OLD, PF_NEW, 1) if PF_OLD in text else None
 
 
+METHOD_PROOF = """<h2 id="proof">Who's ranked: proof a provider does the procedure</h2>
+<p>Insurer files list contract rates for providers who may never do a procedure. On our Texas procedure pages, the list of the 10 lowest prices includes a provider when we have evidence it does the procedure, or when no public file could show it either way:</p>
+<ul>
+<li><strong>Medicare:</strong> CMS's 2024 counts of services by doctor and procedure, and by hospital and procedure group (outpatient) or hospital-stay group (inpatient). A hospital's outpatient count is for the procedure's group (for example, "Level 1 Intraocular Procedures"), not the exact code. CMS moves codes between levels from year to year, so we accept a count anywhere in the same group family.</li>
+<li><strong>Medicaid:</strong> HHS's provider spending file (2023 and 2024), which counts doctors' and other professionals' bills. We use the counts only; we don't use its payment amounts.</li>
+<li><strong>Proof only says yes.</strong> Medicare is mostly people 65 and older, CMS hides counts under 11 patients, and HHS hides counts under 12 claims. So no record is never treated as proof a provider doesn't do something. We hold a provider out of the 10 lowest only when these files cover that kind of provider for that procedure and show nothing. It still appears on the page, with its price, under "Also listed, may not offer this procedure."</li>
+<li><strong>Not covered, so ranked as before:</strong> surgery centers, group practices, clinics, imaging centers and labs (no public volume file covers them); hospitals for procedures Medicare's outpatient file doesn't count (colonoscopy, scans, lab tests); and procedures where Medicare is a poor guide: births, children's care, fertility, birth control, vasectomy and sports injuries.</li>
+<li><strong>Counts never change the order.</strong> The list is sorted by price. A provider with 5,000 Medicare cases doesn't rank above one with 50.</li>
+<li><strong>The 10 highest prices are unchanged.</strong> High real prices stay visible.</li>
+<li><strong>Anesthesia clinicians:</strong> when an insurer lists a nurse anesthetist or anesthesiologist under a delivery, surgery, scan or lab code they don't perform, that line is left out of the page's figures and counted. It stays in the Price Finder.</li>
+</ul>
+<p>Sources: <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners/medicare-physician-other-practitioners-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Physician &amp; Other Practitioners ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-outpatient-hospitals/medicare-outpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Outpatient Hospitals ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals/medicare-inpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Inpatient Hospitals ↗</a>, <a href="https://opendata.hhs.gov/datasets/medicaid-provider-spending/" target="_blank" rel="noopener">HHS Medicaid Provider Spending ↗</a>. Texas pages only for now.</p>
+"""
+
+
+def patch_method_proof(d):
+    """Adds the "Who's ranked" section to the methodology page once (card #2, Oct 31, 2026)."""
+    p = os.path.join(d, 'site', 'methodology', 'index.html')
+    if not os.path.isfile(p):
+        return
+    s = open(p, encoding='utf-8').read()
+    if 'id="proof"' in s:
+        return
+    i = s.find('<h2 id="medicare-local">')
+    i = i if i > 0 else s.rfind('</main>')
+    if i > 0:
+        open(p, 'w', encoding='utf-8').write(s[:i] + METHOD_PROOF + s[i:])
+
+
 def deploy(force=False, only_areas=None):
     """only_areas: rebuild just these areas (others keep last run's figures, so the indexes still cover every area); not with --force."""
     if force and only_areas:
@@ -2064,6 +2137,7 @@ def deploy(force=False, only_areas=None):
         prev, first = dict(st, built=TODAY.isoformat()), False
         if attempt == 3:
             sys.exit('STOP: the live site kept changing; nothing deployed. The next daily run will try again.')
+    patch_method_proof(d)
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
