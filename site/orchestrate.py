@@ -176,7 +176,8 @@ def bundle():
             # the machines fell back to Texas tables (404) and Arkansas and Illinois never split (builds stuck since Oct 19-20)
             if f.endswith(('.py', '.csv', '.tsv', '.json')): t.add(os.path.join(HERE, f), arcname=f)
         t.add(os.path.join(HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv'), arcname='tx_zip_metro.csv')
-        t.add(os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), arcname='medicare_areas_zip.csv')   # Oct 31: regions.py (California split)   # Texas metro areas (tx_split.py)
+        t.add(os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), arcname='medicare_areas_zip.csv')
+        t.add(os.path.join(HERE, '..', 'data', 'hospital_zip_extra.csv'), arcname='hospital_zip_extra.csv')   # Oct 31: regions.py (California split)   # Texas metro areas (tx_split.py)
     s3.upload_file(p, B, SP + 'bundle.tgz')
 
 

@@ -316,7 +316,7 @@ def split_flow(O, st, a, done):
         return 0   # not 'busy': the split takes long, so the page job frees the site lock and the next run checks again
     plan = O.getj(SP + 'areas.json', {})
     changed = False
-    if any(plan.get(r, {}).get('prefix') != pre[r] or plan.get(r, {}).get('v') != _regions.SPLIT_V for r in R):
+    if any(plan.get(r, {}).get('prefix') != pre[r] or plan.get(r, {}).get('v') != _regions.SPLIT_V or plan.get(r, {}).get('hv') != _regions.HOSP_V for r in R):
         # each region's hospitals: the state's hospital files whose hospital ZIP (Medicare's hospital list) is in the region.
         # Oct 31 (Betsy): a hospital with no ZIP there is placed by the city its own price file gives (the state's hospital
         # index), when every provider placed in that city is in one region (split.json city_region); else it is left off and named.
@@ -326,9 +326,19 @@ def split_flow(O, st, a, done):
             for x in O.getj(src + 'hosp/hosp_index.json', {}).get('src', []):
                 if len(x) > 5 and x[5]: hcity[x[5]] = (x[1] or '').strip().lower()
         except Exception as e: O.log(a, 'state hospital index not read:', e)
+        xz = _regions.hospital_zips(_regions.STATE_CODE[a])
         def where(j):
-            return _regions.region_of_zip(a, j.get('zip')) or cr.get(hcity.get(j.get('id'), ''))
-        for r in R: plan[r] = {'prefix': pre[r], 'v': _regions.SPLIT_V, 'jobs': [j for j in plan[a]['jobs'] if where(j) == r]}
+            return (_regions.region_of_zip(a, j.get('zip')) or _regions.region_of_zip(a, xz.get(j.get('ccn', '')))
+                    or cr.get(hcity.get(j.get('id'), '')))
+        for r in R:
+            jobs = [j for j in plan[a]['jobs'] if where(j) == r]
+            if plan.get(r, {}).get('prefix') == pre[r] and {j['id'] for j in plan[r].get('jobs', [])} != {j['id'] for j in jobs}:
+                O.log(r, 'hospital files changed: building its hospital prices again')   # same split, more hospitals placed
+                st['published'].pop(r, None); st['launches'].pop(f'h2-{r}', None)
+                try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{r}.done')
+                except Exception: pass
+                done.discard(r)
+            plan[r] = {'prefix': pre[r], 'v': _regions.SPLIT_V, 'hv': _regions.HOSP_V, 'jobs': jobs}
         O.putj(SP + 'areas.json', plan)
         nz = [j for j in plan[a]['jobs'] if not _regions.region_of_zip(a, j.get('zip'))]
         lost = [j for j in nz if not where(j)]

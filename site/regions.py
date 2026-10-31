@@ -32,6 +32,7 @@ REGIONS = {
     },
 }
 LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
+HOSP_V = 2   # Oct 31: hospital placement; v2 adds ZIP-prefix and CMS Provider of Services ZIPs (raising it re-places hospitals)
 SPLIT_V = 2   # Oct 31: v2 keeps every state code and the 'coming' list on regional pages; raising it splits again
 STATE_CODE = {'california': 'CA'}
 PARENT = {r: s for s, R in REGIONS.items() for r in R}
@@ -68,9 +69,27 @@ def check(state):
 
 
 def region_of_zip(state, z, _cache={}):
-    if state not in _cache: _cache[state] = (zip_county(STATE_CODE[state]), county_region(state))
-    zc, cr = _cache[state]
-    return cr.get(zc.get(str(z or '')[:5]))
+    """the region of a ZIP's county; a ZIP that isn't a Census ZIP area (a PO box or a hospital's own ZIP, e.g. 90509) by its
+    first three digits, when every Census ZIP area starting with them is in the same region (else None)"""
+    if state not in _cache:
+        zc, cr = zip_county(STATE_CODE[state]), county_region(state)
+        z3 = {}
+        for k, c in zc.items(): z3.setdefault(k[:3], set()).add(cr.get(c))
+        _cache[state] = (zc, cr, {k: next(iter(v)) for k, v in z3.items() if len(v) == 1})
+    zc, cr, z3 = _cache[state]
+    z = str(z or '')[:5]
+    return cr.get(zc.get(z)) or (z3.get(z[:3]) if len(z) == 5 else None)
+
+
+def hospital_zips(state_code, _cache={}):
+    """{CMS number: ZIP} for hospitals missing from Medicare's Hospital General Information list (long-term care and rehab
+    hospitals), from CMS's Provider of Services file (data/hospital_zip_extra.csv, written by site/hosp_zip_lookup.py)"""
+    if state_code not in _cache:
+        _cache[state_code] = {}
+        for p in (os.path.join(HERE, '..', 'data', 'hospital_zip_extra.csv'), os.path.join(HERE, 'hospital_zip_extra.csv')):
+            if os.path.exists(p):
+                _cache[state_code] = {r['ccn']: r['zip'] for r in csv.DictReader(open(p)) if r['state'] == state_code and r['zip']}; break
+    return _cache[state_code]
 
 
 def by_county_text(counties):
