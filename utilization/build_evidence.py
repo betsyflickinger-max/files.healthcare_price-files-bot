@@ -18,7 +18,7 @@ Sources (newest version found in each catalog at run time; every original is sav
 
 Storage outputs:
   raw/utilization/<source>/<label>/<sha12>_<file>.zst   originals (parquet saved as-is)
-  data/utilization/<data_year>/evidence_tx.parquet       one row per provider x code/group x source (counts only)
+  data/utilization/<data_year>/evidence_tx.parquet       one row per provider x code/group x evidence_source (counts only)
   data/utilization/<data_year>/code_to_apc.parquet       HCPCS -> APC map used
   bot/utilization/manifest.csv                           one row per original saved (url, sha256, bytes, checked_on)
 Repo output: reports/utilization/<data_year>/summary.md, sources.json
@@ -210,8 +210,8 @@ def main():
     # ---- one evidence table ----
     dy = {s: m["label"][:4] for s, m in meta.items()}
     con.execute(f"""create or replace table ev as
-        select npi, null::varchar ccn, 'clinician' kind, 'medicare_physician' source, 'hcpcs' level, code, code_name group_name,
-               services count, 'services' unit, patients, places place_of_service, '{dy['medicare_physician']}' data_year,
+        select npi, null::varchar ccn, 'clinician' provider_kind, 'medicare_physician' evidence_source, 'hcpcs' code_level, code, code_name group_name,
+               services volume, 'services' unit, patients, places place_of_service, '{dy['medicare_physician']}' data_year,
                '{meta['medicare_physician']['url']}' file_url, '{TODAY}' checked_on from phy
         union all
         select e.npi, o.ccn, 'hospital', 'medicare_outpatient', 'apc', o.apc, o.apc_name, o.services, 'services', o.patients, null,
@@ -234,11 +234,11 @@ def main():
 
     # ---- summary for review ----
     q = lambda s: con.execute(s).fetchall()
-    by_src = q("select source, count(*), count(distinct coalesce(npi, ccn)), sum(count) from ev group by 1 order by 1")
-    no_npi = q("select source, count(distinct ccn) from ev where kind = 'hospital' and npi is null group by 1")
-    ob = q("""select source, count(distinct npi) from ev where code in ('59400','59409','59410','59510','59514','59515') group by 1""")
-    pk = q("""select c2a.code, ev.code apc, any_value(ev.group_name), count(distinct ev.ccn), sum(ev.count)
-              from c2a join ev on ev.source = 'medicare_outpatient' and ev.code = c2a.apc
+    by_src = q("select evidence_source, count(*), count(distinct coalesce(npi, ccn)), sum(volume) from ev group by 1 order by 1")
+    no_npi = q("select evidence_source, count(distinct ccn) from ev where provider_kind = 'hospital' and npi is null group by 1")
+    ob = q("""select evidence_source, count(distinct npi) from ev where code in ('59400','59409','59410','59510','59514','59515') group by 1""")
+    pk = q("""select c2a.code, ev.code apc, any_value(ev.group_name), count(distinct ev.ccn), sum(ev.volume)
+              from c2a join ev on ev.evidence_source = 'medicare_outpatient' and ev.code = c2a.apc
               where c2a.code in ('45378','29881','66984','64721','47562') group by all order by 1""")
     L = [f"# Proof a provider does the procedure: Texas, data year {year}", "",
          f"Built {TODAY} by utilization/build_evidence.py (card #2). Counts only; used to confirm, never to exclude or rank by size.", "",
