@@ -304,7 +304,7 @@ def _scope_states():
 # California is built as five regions (cities.json slugs); they were read as Texas too (Oct 31, 2026 preview)
 CA_REGIONS = {'los-angeles': 'CA', 'san-diego-inland-empire': 'CA', 'bay-area': 'CA', 'sacramento-northern-california': 'CA',
               'central-california': 'CA'}
-STATES = {**_scope_states(), **CA_REGIONS, **STATES}
+STATES = {**_scope_states(), **STATES}   # CA regions stay out: like Texas metros, they get their own Medicare localities
 
 # Card #2: which states' price pages use proof of procedures. Betsy switches each step on (Texas Oct 31; all states <date>).
 PROOF_STATES = os.environ.get('PROOF_STATES', 'ALL')
@@ -315,7 +315,7 @@ def proof_on(st):
 
 
 def area_state(a):
-    return STATES.get(a['slug'], 'TX')
+    return STATES.get(a['slug']) or CA_REGIONS.get(a['slug'], 'TX')
 
 
 def area_group(a):
