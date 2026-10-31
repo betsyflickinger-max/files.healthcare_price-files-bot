@@ -1,0 +1,32 @@
+name: Look at a state build (read-only)
+
+# Oct 30, 2026: prints which files a state build has in R2 and the shape of each kind (site/build_peek.py). Changes nothing.
+on:
+  workflow_dispatch:
+    inputs:
+      city:
+        description: "State page slug, e.g. california"
+        default: "california"
+
+permissions:
+  contents: read
+
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      CITY: ${{ inputs.city }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36
+      - run: python site/build_peek.py "$CITY"
