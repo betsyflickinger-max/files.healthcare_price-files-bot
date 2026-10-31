@@ -106,6 +106,10 @@ def calc_core(site):
           'window.HCF_CALC=(function(){\n' + money + '\n' + ins + '\n' + oop + '\n'
           'function isProFor(D){' + img + '\n' + ispro + '\nreturn isPro;}\n'
           'return {oop:oop,isProFor:isProFor,INS:INS,money:money};})();\n')
+    # the calculator's "places that don't do this procedure" rule, from the same file the Original loads (/calc-link.js)
+    cl = open(os.path.join(site, 'calc-link.js'), encoding='utf-8').read()
+    i, j = cl.index('  var NOT_HERE ='), cl.index('    return false;\n  };', cl.index('window.__calcSkip')) + len('    return false;\n  };')
+    js += '(function () {\n' + cl[i:j] + '\n})();\n'
     for piece in (money, oop, img, ispro):
         assert piece in s
     return js
