@@ -4,7 +4,7 @@ Reads the live site bundle and the DFW Price Finder's per-code files exactly as 
 without and with proof (site/proof.py), and writes reports/proof-preview/dfw.md: for each sample procedure, the lowest 10
 before and after, the proof line on each ranked provider, and who would be listed as "also listed, may not offer this procedure".
 
-  python site/proof_preview.py [--codes 29881,66984,...]
+  python site/proof_preview.py [--codes 29881,66984,...]   (also renders the DFW gallbladder page: reports/proof-preview/dfw-gallbladder.html)
 """
 import argparse
 import collections
