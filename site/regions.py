@@ -32,8 +32,16 @@ REGIONS = {
     },
 }
 LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
+SPLIT_V = 2   # Oct 31: v2 keeps every state code and the 'coming' list on regional pages; raising it splits again
 STATE_CODE = {'california': 'CA'}
-PARENT = {r: s for s, R in REGIONS.items() for r in R}   # region slug -> state page slug
+PARENT = {r: s for s, R in REGIONS.items() for r in R}
+NEIGHBORS = {   # regions that share a border, linked from each regional page for people who live near one
+    'los-angeles': ['san-diego-inland-empire', 'central-california'],
+    'san-diego-inland-empire': ['los-angeles', 'central-california'],
+    'bay-area': ['sacramento-northern-california', 'central-california'],
+    'sacramento-northern-california': ['bay-area', 'central-california'],
+    'central-california': ['los-angeles', 'bay-area', 'sacramento-northern-california', 'san-diego-inland-empire'],
+}   # region slug -> state page slug
 
 
 def zip_county(state_code):

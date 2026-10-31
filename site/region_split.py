@@ -72,7 +72,7 @@ def one(code):
                 if keep: np_[pid] = keep
             out['p'] = np_
             n += sum(len(v) for v in np_.values()); nets |= {e[0][0] for v in np_.values() for e in v}
-        if n:
+        if True:   # Oct 31: written even when empty, so the code stays on the regional page (its hospital prices still show)
             body = enc(out)
             for t in range(5):
                 try: s3.put_object(Bucket=B, Key=f"{G['dst'][r]}t/{code}.txt", Body=body, ContentType='text/plain'); break
@@ -83,24 +83,21 @@ def one(code):
     return code, res
 
 
-def main(state):
+def place(state, s3):
+    """the state's newest build and each provider's region (same rule every time, so a later code split matches the first)"""
     import city_page, duckdb
     from hosp_area import newest_build
-    s3 = s3c()
     regions.check(state)
     R = regions.REGIONS[state]
     src = newest_build(s3, B, state)
     if not src: sys.exit(f'{state}: no finished build to split')
     month = src.rstrip('/').rsplit('/', 1)[1]
     dst = {r: f'site/every-st/{r}/{month}/' for r in R}
-    src_mod = s3.head_object(Bucket=B, Key=src + 'embed.json')['LastModified'].isoformat()
-    log('splitting', src, 'into', ', '.join(R))
     E = json.loads(s3.get_object(Bucket=B, Key=src + 'embed.json')['Body'].read())
     npis = json.loads(s3.get_object(Bucket=B, Key=src + 'npis.json')['Body'].read())
     if len(npis) != len(E['fac']): sys.exit(f'STOP: npis.json has {len(npis)} providers, embed.json {len(E["fac"])}')
     s3.download_file(B, city_page.npis_key(state), '/tmp/split_npis.parquet')
     zip_of = dict(duckdb.connect().execute("select npi, zip5 from read_parquet('/tmp/split_npis.parquet')").fetchall())
-
     # each provider's region: practice ZIP's county; else by city name when that city is in one region only
     reg = [regions.region_of_zip(state, zip_of.get(n)) for n in npis]
     by_city = collections.defaultdict(set)
@@ -116,6 +113,19 @@ def main(state):
         m = [-1] * len(npis)
         for j, i in enumerate(pos[r]): m[i] = j
         newi[r] = m
+    city_region = {c.strip().lower(): next(iter(v)) for c, v in by_city.items() if len(v) == 1 and c}   # for hospitals without a ZIP
+    return dict(R=R, src=src, month=month, dst=dst, E=E, npis=npis, reg=reg, by_city_n=by_city_n, left_off=left_off, newi=newi,
+                pos=pos, city_region=city_region)
+
+
+def main(state):
+    import city_page
+    s3 = s3c()
+    P_ = place(state, s3)
+    R, src, dst, E, npis, newi, pos = (P_[k] for k in ('R', 'src', 'dst', 'E', 'npis', 'newi', 'pos'))
+    by_city_n, left_off = P_['by_city_n'], P_['left_off']
+    src_mod = s3.head_object(Bucket=B, Key=src + 'embed.json')['LastModified'].isoformat()
+    log('splitting', src, 'into', ', '.join(R))
     log('providers:', ', '.join(f'{r} {len(pos[r]):,}' for r in R), f'| placed by city {by_city_n:,} | left off (no usable ZIP or city) {left_off:,}')
 
     # per-code price files, the biggest first and fewer at a time (one huge code can need several GB once read)
@@ -142,11 +152,13 @@ def main(state):
 
     nidx = {k: i for i, k in enumerate(E['nets'])}
     summary = {'src': src, 'src_embed_modified': src_mod, 'at': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
-               'placed_by_city': by_city_n, 'left_off': left_off, 'regions': {}}
+               'placed_by_city': by_city_n, 'left_off': left_off, 'v': regions.SPLIT_V, 'city_region': P_['city_region'], 'regions': {}}
     for r in R:
-        codes = {c: dict(E['codes'][c], n=res[c][r][0]) for c in E['codes'] if c in res and res[c][r][0] > 0}
+        # Oct 31 (Betsy): every state code stays on every regional page, with the region's own row count (0 when no
+        # regional provider has an insurer rate), so a hospital's posted price for it still shows
+        codes = {c: dict(E['codes'][c], n=res[c][r][0]) for c in E['codes'] if c in res}
         has = {c: set(res[c][r][1]) for c in codes}
-        out = {k: v for k, v in E.items() if k not in ('codes', 'fac', 'prac', 'scope', 'coming')}
+        out = {k: v for k, v in E.items() if k not in ('codes', 'fac', 'prac', 'scope')}   # 'coming' kept: requests work (request_codes.py)
         out['codes'] = codes
         out['fac'] = [E['fac'][i] for i in pos[r]]
         if 'scope' in E:
@@ -162,13 +174,37 @@ def main(state):
         except Exception: pass
         s3.put_object(Bucket=B, Key=dst[r] + 'embed.json', Body=json.dumps(out, separators=(',', ':')).encode())
         lines = sum(c['n'] for c in codes.values())
-        summary['regions'][r] = {'providers': len(pos[r]), 'codes': len(codes), 'rate_lines': lines, 'practices': len(out.get('prac', {}))}
+        summary['regions'][r] = {'providers': len(pos[r]), 'codes': len(codes), 'codes_with_rates': sum(1 for c in codes.values() if c['n']),
+                                 'coming': len(out.get('coming', {})), 'rate_lines': lines, 'practices': len(out.get('prac', {}))}
         log(f"{r}: {len(pos[r]):,} providers, {len(codes):,} codes, {lines:,} rate lines, {len(out.get('prac', {})):,} practices, "
             f"embed {len(json.dumps(out, separators=(',', ':'))) / 1e6:.1f} MB")
     if TEST: log('TEST split done (no split.json):', json.dumps(summary['regions'])); return
     for r in R:   # written last: a region counts as split only when all of its files are there
         s3.put_object(Bucket=B, Key=dst[r] + 'split.json', Body=json.dumps(summary, indent=1).encode())
     log('split done:', json.dumps(summary['regions']))
+
+
+def split_codes(state, codes, log=log):
+    """Oct 31, 2026: codes just built into the state's build on request (request_codes.py) go to every region: the regional
+    price file, and the code moves from 'coming' to the region's codes with its regional row count."""
+    s3 = s3c()
+    P_ = place(state, s3)
+    E, nidx = P_['E'], {k: i for i, k in enumerate(P_['E']['nets'])}
+    codes = [c for c in codes if c in E['codes']]
+    if not codes: return []
+    _init(P_['newi'], P_['src'], P_['dst'])
+    res = dict(one(c) for c in codes)
+    for r in P_['R']:
+        k = P_['dst'][r] + 'embed.json'
+        emb = json.loads(s3.get_object(Bucket=B, Key=k)['Body'].read())
+        for c in codes:
+            n, nets = res[c][r]
+            emb['codes'][c] = dict(E['codes'][c], n=n); emb.get('coming', {}).pop(c, None)
+            for kk, lst in emb.get('scope', {}).items():
+                if nidx.get(kk) in set(nets) and c in E.get('scope', {}).get(kk, []) and c not in lst: lst.append(c)
+        s3.put_object(Bucket=B, Key=k, Body=json.dumps(emb, separators=(',', ':')).encode())
+        log(r, ': requested codes added:', ', '.join(f'{c} ({res[c][r][0]:,} rows)' for c in codes))
+    return codes
 
 
 if __name__ == '__main__':

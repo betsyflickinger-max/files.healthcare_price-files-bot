@@ -71,7 +71,29 @@ def finish(s3, B, key, area, code, **what):
     s3.delete_object(Bucket=B, Key=key)
 
 
-def run_area(s3, B, area, reqs, log):
+def run_region(s3, B, area, reqs, log):
+    """Oct 31, 2026: a request from a regional page (site/regions.py, e.g. bay-area) is built into its state's build, the
+    same as any request, then split into every region (region_split.split_codes), so the code reaches all of them at once.
+    A region's own build is never built into directly: its provider positions differ from the state's."""
+    import regions, region_split
+    st = regions.PARENT[area]
+    run_area(s3, B, st, reqs, log, regional=True)
+    pre = newest_build(s3, B, st)
+    emb = json.loads(s3.get_object(Bucket=B, Key=pre + 'embed.json')['Body'].read())
+    rpre = newest_build(s3, B, area)
+    remb = json.loads(s3.get_object(Bucket=B, Key=rpre + 'embed.json')['Body'].read()) if rpre else {'codes': {}}
+    todo = sorted({c for _, c, _ in reqs if c in emb['codes'] and (c not in remb['codes'] or c in remb.get('coming', {}))})
+    if todo:
+        log(area, f': splitting {len(todo)} built codes into the {st} regions:', ', '.join(todo))
+        region_split.split_codes(st, todo, log=lambda *a: log(*a))
+
+
+def run_area(s3, B, area, reqs, log, regional=False):
+    if not regional:
+        try:
+            sys.path.insert(0, HERE); import regions
+            if area in regions.PARENT: return run_region(s3, B, area, reqs, log)
+        except ImportError: pass
     pre = newest_build(s3, B, area)
     if not pre:
         log(area, ': no finished build yet; requests wait'); return

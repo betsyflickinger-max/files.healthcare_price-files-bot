@@ -329,7 +329,13 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     w.sub('content="summary_large_image"', 'content="summary"')
     w.sub('every DFW hospital, surgery center, doctor, lab and imaging center,',
           f'every {adj} hospital, surgery center, doctor, lab and imaging center,', n=2)   # page description (Oct 12 wording)
-    w.sub('<div class="eyebrow">Dallas–Fort Worth · published prices</div>', f'<div class="eyebrow">{name} · published prices</div>')
+    nb = ''
+    if slug in _regions.PARENT:   # Oct 31, 2026 (Betsy): regional pages link to the regions next to them
+        st_ = _regions.PARENT[slug]; R_ = _regions.REGIONS[st_]
+        nb = (f'<p class="note" style="margin:6px 0 0">{STATE_PAGES[st_][0]} is split into {len(R_)} regional pages. Near a border? Also see '
+              + ' · '.join(f'<a href="/{n}/price-finder/">{R_[n][0]}</a>' for n in _regions.NEIGHBORS.get(slug, []))
+              + f' · <a href="/{st_}/price-finder/">all {STATE_PAGES[st_][0]} regions</a></p>')
+    w.sub('<div class="eyebrow">Dallas–Fort Worth · published prices</div>', f'<div class="eyebrow">{name} · published prices</div>{nb}')
     w.sub(r'<div class="note" id="planNote">.*?</div>',
           f'<div class="note" id="planNote"><b>Have a HealthCare.gov plan?</b> Insurer prices below are not what you pay. Your share '
           f'depends on your plan\'s deductible, copay and coinsurance. Our plan calculator doesn\'t cover {adj} plans yet.</div>', regex=True)

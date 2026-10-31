@@ -294,13 +294,14 @@ def split_flow(O, st, a, done):
     if not _regions.LIVE: O.log(a, 'waiting: regional pages are being tested (regions.LIVE)'); return 0
     src = newest_build(O.s3, O.B, a); month = src.rstrip('/').rsplit('/', 1)[1]
     pre = {r: f'site/every-st/{r}/{month}/' for r in R}
-    split_ok = all(O.getj(pre[r] + 'split.json', {}).get('src') == src for r in R)
-    ss = st.setdefault('split_src', {})
+    sj = {r: O.getj(pre[r] + 'split.json', {}) for r in R}
+    split_ok = all(sj[r].get('src') == src and sj[r].get('v', 1) == _regions.SPLIT_V for r in R)
+    ss = st.setdefault('split_src', {}); want = f'{src}#v{_regions.SPLIT_V}'
     if not split_ok:
         role = f'split-{a}'
-        if ss.get(a) != src:   # a new state build: split again, and the regions start over
+        if ss.get(a) != want:   # a new state build: split again, and the regions start over
             O.log(a, 'too big for one page: splitting', src, 'into', ', '.join(R))
-            ss[a] = src; st['launches'].pop(role, None)
+            ss[a] = want; st['launches'].pop(role, None)
             for r in R:
                 st['published'].pop(r, None); st['launches'].pop(f'h2-{r}', None)
                 try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{r}.done')
@@ -315,13 +316,24 @@ def split_flow(O, st, a, done):
         return 0   # not 'busy': the split takes long, so the page job frees the site lock and the next run checks again
     plan = O.getj(SP + 'areas.json', {})
     changed = False
-    for r in R:   # each region's hospitals: the state's hospital files whose hospital ZIP is in the region
-        if plan.get(r, {}).get('prefix') != pre[r]:
-            plan[r] = {'prefix': pre[r], 'jobs': [j for j in plan[a]['jobs'] if _regions.region_of_zip(a, j.get('zip')) == r]}; changed = True
-    if changed:
+    if any(plan.get(r, {}).get('prefix') != pre[r] or plan.get(r, {}).get('v') != _regions.SPLIT_V for r in R):
+        # each region's hospitals: the state's hospital files whose hospital ZIP (Medicare's hospital list) is in the region.
+        # Oct 31 (Betsy): a hospital with no ZIP there is placed by the city its own price file gives (the state's hospital
+        # index), when every provider placed in that city is in one region (split.json city_region); else it is left off and named.
+        cr = sj[R[0]].get('city_region', {})
+        hcity = {}
+        try:
+            for x in O.getj(src + 'hosp/hosp_index.json', {}).get('src', []):
+                if len(x) > 5 and x[5]: hcity[x[5]] = (x[1] or '').strip().lower()
+        except Exception as e: O.log(a, 'state hospital index not read:', e)
+        def where(j):
+            return _regions.region_of_zip(a, j.get('zip')) or cr.get(hcity.get(j.get('id'), ''))
+        for r in R: plan[r] = {'prefix': pre[r], 'v': _regions.SPLIT_V, 'jobs': [j for j in plan[a]['jobs'] if where(j) == r]}
         O.putj(SP + 'areas.json', plan)
+        nz = [j for j in plan[a]['jobs'] if not _regions.region_of_zip(a, j.get('zip'))]
+        lost = [j for j in nz if not where(j)]
         O.log(a, 'hospital files by region:', ', '.join(f"{r} {len(plan[r]['jobs'])}" for r in R),
-              '| no region (no ZIP):', sum(1 for j in plan[a]['jobs'] if not _regions.region_of_zip(a, j.get('zip'))))
+              f'| placed by city {len(nz) - len(lost)} of {len(nz)} without a ZIP | left off: ' + ('; '.join(j.get('name', j.get('id', '?')) for j in lost) or 'none'))
     tries, busy = st.setdefault('publish_tries', {}), 0
     for r in R:
         if str(st['published'].get(r, '')).startswith('failed: page not published') and tries.get(r, 1) < PUBLISH_TRIES:
