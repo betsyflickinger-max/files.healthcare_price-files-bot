@@ -58,15 +58,15 @@ def main():
     pre = store.prefix(a, 't')
     npis = json.loads(s3.get_object(Bucket=B, Key=pre[:-2] + 'npis.json')['Body'].read())
     assert len(npis) == len(D['fac']), 'npis.json is not aligned with the page providers'
-    st = pp.area_state(a)
-    if st == 'TX':     # exactly what the live Texas pages use
+    area_st = pp.area_state(a)
+    if area_st == 'TX':     # exactly what the live Texas pages use
         P = Proof(s3, B, tax=load_taxonomy(s3, B))
     else:
-        P = Proof(s3, B, state=st, tax=load_taxonomy_state(s3, B, st))
+        P = Proof(s3, B, state=area_st, tax=load_taxonomy_state(s3, B, area_st))
     codes = [c for c in (A.codes.split(',') if A.codes else SAMPLE) if c in D['codes']]
     out = [f"# Card #2 preview: {a['name']} price pages, before and after", "",
            f"Built {dt.date.today().isoformat()} by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 "
-           f"({STATE_NAME.get(st, st)}). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.", ""]
+           f"({STATE_NAME.get(area_st, area_st)}). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.", ""]
     tot = collections.Counter()
     for c in codes:
         C = D['codes'][c]
@@ -83,8 +83,8 @@ def main():
             prf[i] = (st, {'text': line(info), 'url': info['url']} if st == 'proved' else info)
             why[(kind, st)] += 1
             tot[(kind, st)] += 1
-        S0 = pp.summarize(D, c, t, h, loc, st, pst)
-        S1 = pp.summarize(D, c, t, h, loc, st, pst, prf)
+        S0 = pp.summarize(D, c, t, h, loc, area_st, pst)
+        S1 = pp.summarize(D, c, t, h, loc, area_st, pst, prf)
         out += [f"## {C['name']} ({c})", "",
                 "Providers on the page by kind and proof: " + "; ".join(f"{pp.KIND.get(k, k)} {s}: {n}" for (k, s), n in sorted(why.items())), ""]
         out += [f"Check: per-code insurer file {'found' if t else 'NOT found'} ({store.prefix(a, 't')}); providers with rates {len(f)}; "
