@@ -81,7 +81,13 @@ def patch_calculator(site):
            "const okR=r=>(!window.__calcSkip||!window.__calcSkip(D.prov[r[2]][0],D.proc[pi]&&D.proc[pi][1]))&&!!p.cs[r[5]];"
            "const nU=f=>new Set(all.filter(r=>f(r)&&okR(r)).map(r=>r[2])).size;\n"
            "  $('kfac').textContent=`Facility fees (${nU(r=>!isPro(r))})`;$('kpro').textContent=`Doctor fees (${nU(isPro)})`;")
+    # root cause found Oct 31: /calc-link.js (which defines window.__calcSkip, the "places that don't do this" rule) loads with
+    # defer, so the FIRST render ran without it (60 facilities) and every later render with it (58). Render again once it is in.
+    tail = "fillIns();fillPlans();fillProcs();render();"
+    if tail in s and '/*F03b*/' not in s:
+        s = s.replace(tail, tail + "/*F03b*/document.addEventListener('DOMContentLoaded',function(){try{render()}catch(e){}});", 1)
     if '/*F03 Oct 31' in s:
+        open(p, 'w', encoding='utf-8').write(s)
         return 'already'
     if old not in s:
         log('STOP-ish: calculator tab-count code not found; F03 not applied')
