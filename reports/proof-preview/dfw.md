@@ -4,7 +4,7 @@ Built 2026-10-31 by site/proof_preview.py. Nothing deployed. Proof data: Medicar
 
 ## Knee arthroscopy with meniscectomy (29881)
 
-Providers on the page by kind and proof: surgery center not_covered: 229; surgery center proved: 9; practice, clinic, lab or imaging center not_covered: 12740; hospital no_record: 14; hospital not_covered: 159; hospital proved: 76; clinician no_record: 46666; clinician proved: 8
+Providers on the page by kind and proof: surgery center not_covered: 229; surgery center proved: 9; practice, clinic, lab or imaging center not_covered: 12740; hospital no_record: 14; hospital not_covered: 159; hospital proved: 76; clinician no_record: 43750; clinician proved: 8; clinician wrong_specialty: 2916
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -19,11 +19,13 @@ Providers on the page by kind and proof: surgery center not_covered: 229; surger
 | 9 | Texas Institute for Surgery, LLP $1,285 | Axis Surgery Center, LLC $1,291 |  |
 | 10 | USMD Hospital at Arlington, LLC $1,285 | Prg Dallas ASC, LLC $1,300 |  |
 
+Left out of the figures (anesthesia clinicians under this code): 2916; lowest before $1,018, after $1,018
+
 Also listed, may not offer this procedure: 2 (Prhc Ennis LP $1,018 [CCN 450833, 2 Medicare outpatient groups on record]; USMD Hospital at Arlington, LLC $1,285 [CCN 450872, 11 Medicare outpatient groups on record])
 
 ## Cataract surgery (66984)
 
-Providers on the page by kind and proof: surgery center not_covered: 202; surgery center proved: 37; practice, clinic, lab or imaging center not_covered: 12887; practice, clinic, lab or imaging center proved: 3; hospital no_record: 66; hospital not_covered: 144; hospital proved: 25; clinician no_record: 45601; clinician proved: 226
+Providers on the page by kind and proof: surgery center not_covered: 202; surgery center proved: 37; practice, clinic, lab or imaging center not_covered: 12887; practice, clinic, lab or imaging center proved: 3; hospital no_record: 66; hospital not_covered: 144; hospital proved: 25; clinician no_record: 42255; clinician proved: 226; clinician wrong_specialty: 3346
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -38,11 +40,13 @@ Providers on the page by kind and proof: surgery center not_covered: 202; surger
 | 9 | Breckenridge Surgery Center LP $1,048 | Muenster Hospital District $1,054 |  |
 | 10 | Muenster Hospital District $1,054 | Children 1St Grand Prairie, LLC $1,065 |  |
 
-Also listed, may not offer this procedure: 2 (Nocona Hospital District $975 [CCN 450641, 1 Medicare outpatient groups on record]; Metdalspi, LLC $14,738 [CCN 670073, 6 Medicare outpatient groups on record])
+Left out of the figures (anesthesia clinicians under this code): 3346; lowest before $814, after $814
+
+Also listed, may not offer this procedure: 1 (Nocona Hospital District $975 [CCN 450641, 1 Medicare outpatient groups on record])
 
 ## Gallbladder removal (laparoscopic) (47562)
 
-Providers on the page by kind and proof: surgery center not_covered: 235; surgery center proved: 3; practice, clinic, lab or imaging center not_covered: 12715; hospital no_record: 25; hospital not_covered: 161; hospital proved: 65; clinician no_record: 47679; clinician proved: 45
+Providers on the page by kind and proof: surgery center not_covered: 235; surgery center proved: 3; practice, clinic, lab or imaging center not_covered: 12715; hospital no_record: 25; hospital not_covered: 161; hospital proved: 65; clinician no_record: 44330; clinician proved: 45; clinician wrong_specialty: 3349
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -57,11 +61,13 @@ Providers on the page by kind and proof: surgery center not_covered: 235; surger
 | 9 | Baylor Medical Center at Irving $2,260 | Baylor Regional Medical Center at Grapevine $2,260 | Medicare: 132 services in the procedure group “Level 1 Laparoscopy and Related Services”, 2024 |
 | 10 | Baylor Medical Center at Waxahachie $2,260 | Baylor Regional Medical Center at Plano $2,260 | Medicare: 137 services in the procedure group “Level 1 Laparoscopy and Related Services”, 2024 |
 
-Also listed, may not offer this procedure: 3 (Prhc Ennis LP $1,978 [CCN 450833, 2 Medicare outpatient groups on record]; Nocona Hospital District $2,134 [CCN 450641, 1 Medicare outpatient groups on record]; Somervell County Hospital District $19,834 [CCN 450451, 3 Medicare outpatient groups on record])
+Left out of the figures (anesthesia clinicians under this code): 3349; lowest before $1,755, after $1,755
+
+Also listed, may not offer this procedure: 2 (Prhc Ennis LP $1,978 [CCN 450833, 2 Medicare outpatient groups on record]; Nocona Hospital District $2,134 [CCN 450641, 1 Medicare outpatient groups on record])
 
 ## Carpal tunnel release (64721)
 
-Providers on the page by kind and proof: surgery center not_covered: 219; surgery center proved: 12; practice, clinic, lab or imaging center not_covered: 8771; practice, clinic, lab or imaging center proved: 1; hospital no_record: 44; hospital not_covered: 143; hospital proved: 45; clinician no_record: 46385; clinician proved: 30
+Providers on the page by kind and proof: surgery center not_covered: 219; surgery center proved: 12; practice, clinic, lab or imaging center not_covered: 8771; practice, clinic, lab or imaging center proved: 1; hospital no_record: 44; hospital not_covered: 143; hospital proved: 45; clinician no_record: 43467; clinician proved: 30; clinician wrong_specialty: 2918
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -76,11 +82,13 @@ Providers on the page by kind and proof: surgery center not_covered: 219; surger
 | 9 | Grayson County Physician's Property, LLC $811 | Grayson County Physician's Property, LLC $811 | Medicare: 31 services in the procedure group “Level 1 Nerve Procedures”, 2024 |
 | 10 | Heritage Park Surgical Hospital LLC $811 | Heritage Park Surgical Hospital LLC $811 | Medicare: 31 services in the procedure group “Level 1 Nerve Procedures”, 2024 |
 
-Also listed, may not offer this procedure: 2 (Texas Regional Medical Center, LLC $8,405 [CCN 670060, 12 Medicare outpatient groups on record]; Metdalspi, LLC $8,495 [CCN 670073, 6 Medicare outpatient groups on record])
+Left out of the figures (anesthesia clinicians under this code): 2918; lowest before $763, after $763
+
+Also listed, may not offer this procedure: 0
 
 ## Colonoscopy (diagnostic) (45378)
 
-Providers on the page by kind and proof: surgery center not_covered: 213; surgery center proved: 27; practice, clinic, lab or imaging center not_covered: 13001; practice, clinic, lab or imaging center proved: 2; hospital not_covered: 238; hospital proved: 1; clinician no_record: 47849; clinician proved: 91
+Providers on the page by kind and proof: surgery center not_covered: 213; surgery center proved: 27; practice, clinic, lab or imaging center not_covered: 13001; practice, clinic, lab or imaging center proved: 2; hospital not_covered: 238; hospital proved: 1; clinician no_record: 44497; clinician proved: 91; clinician wrong_specialty: 3352
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -95,11 +103,13 @@ Providers on the page by kind and proof: surgery center not_covered: 213; surger
 | 9 | Hurst Ambulatory Surgery Center, LLC $404 | Hurst Ambulatory Surgery Center, LLC $404 |  |
 | 10 | Irving Specialists Surgical Center LLC $404 | Irving Specialists Surgical Center LLC $404 |  |
 
+Left out of the figures (anesthesia clinicians under this code): 3352; lowest before $403, after $403
+
 Also listed, may not offer this procedure: 0
 
 ## Total knee replacement (27447)
 
-Providers on the page by kind and proof: surgery center not_covered: 228; surgery center proved: 11; practice, clinic, lab or imaging center not_covered: 12702; practice, clinic, lab or imaging center proved: 1; hospital no_record: 14; hospital not_covered: 154; hospital proved: 76; clinician no_record: 46871; clinician proved: 215
+Providers on the page by kind and proof: surgery center not_covered: 228; surgery center proved: 11; practice, clinic, lab or imaging center not_covered: 12702; practice, clinic, lab or imaging center proved: 1; hospital no_record: 14; hospital not_covered: 154; hospital proved: 76; clinician no_record: 43491; clinician proved: 215; clinician wrong_specialty: 3380
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -114,11 +124,13 @@ Providers on the page by kind and proof: surgery center not_covered: 228; surger
 | 9 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Denton Subsidiary LP $3,682 |  |
 | 10 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Las Colinas Inc $3,682 |  |
 
+Left out of the figures (anesthesia clinicians under this code): 3380; lowest before $2,856, after $2,856
+
 Also listed, may not offer this procedure: 1 (Prhc Ennis LP $2,861 [CCN 450833, 2 Medicare outpatient groups on record])
 
 ## MRI knee/joint without contrast (73721)
 
-Providers on the page by kind and proof: surgery center not_covered: 126; practice, clinic, lab or imaging center not_covered: 13198; practice, clinic, lab or imaging center proved: 79; hospital not_covered: 200; clinician no_record: 48332; clinician proved: 106
+Providers on the page by kind and proof: surgery center not_covered: 126; practice, clinic, lab or imaging center not_covered: 13198; practice, clinic, lab or imaging center proved: 79; hospital not_covered: 200; clinician no_record: 45405; clinician proved: 106; clinician wrong_specialty: 2927
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -133,30 +145,34 @@ Providers on the page by kind and proof: surgery center not_covered: 126; practi
 | 9 | Texas Health Harris Methodist Hospital Southwest Fort Worth $227 | Texas Health Harris Methodist Hospital Southwest Fort Worth $227 |  |
 | 10 | Texas Health Hospital Frisco $227 | Texas Health Hospital Frisco $227 |  |
 
+Left out of the figures (anesthesia clinicians under this code): 2927; lowest before $216, after $216
+
 Also listed, may not offer this procedure: 0
 
 ## Vaginal delivery (global) (59400)
 
-Providers on the page by kind and proof: surgery center not_covered: 230; practice, clinic, lab or imaging center not_covered: 12516; hospital not_covered: 230; clinician not_covered: 47122
+Providers on the page by kind and proof: surgery center not_covered: 230; practice, clinic, lab or imaging center not_covered: 12516; hospital not_covered: 230; clinician not_covered: 43968; clinician wrong_specialty: 3154
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
 | 1 | Aaron Towler $435 | Aaron Towler $435 |  |
-| 2 | Alicia Magana, CRNA $435 | Alicia Magana, CRNA $435 |  |
-| 3 | Amber Walkington, CRNA $435 | Amber Walkington, CRNA $435 |  |
-| 4 | Ashley Childers, CRNA $435 | Ashley Childers, CRNA $435 |  |
-| 5 | Brandis Thompson, CRNA $435 | Brandis Thompson, CRNA $435 |  |
-| 6 | Brandon Mitchell, CRNA $435 | Brandon Mitchell, CRNA $435 |  |
-| 7 | Brittany Patino, CRNA $435 | Brittany Patino, CRNA $435 |  |
-| 8 | Bryan Dulock, CRNA $435 | Bryan Dulock, CRNA $435 |  |
-| 9 | Carol Yarbrough, CRNA $435 | Carol Yarbrough, CRNA $435 |  |
-| 10 | Carrie Weldon, DNP $435 | Carrie Weldon, DNP $435 |  |
+| 2 | Alicia Magana, CRNA $435 | Elizabeth Wolff, CRNA $435 |  |
+| 3 | Amber Walkington, CRNA $435 | Endo Sedation LLC $435 |  |
+| 4 | Ashley Childers, CRNA $435 | Endo Sedation LLC $435 |  |
+| 5 | Brandis Thompson, CRNA $435 | Gillian Nguwo, CRNA $435 |  |
+| 6 | Brandon Mitchell, CRNA $435 | Hannah Tanel, CRNA $435 |  |
+| 7 | Brittany Patino, CRNA $435 | Lashonda Kelly, CRNA, FNP-C $435 |  |
+| 8 | Bryan Dulock, CRNA $435 | Myra Cooper, CRNA $435 |  |
+| 9 | Carol Yarbrough, CRNA $435 | Pamela Tamang $435 |  |
+| 10 | Carrie Weldon, DNP $435 | Steven Lemoine, CRNA $435 |  |
+
+Left out of the figures (anesthesia clinicians under this code): 3154; lowest before $435, after $435
 
 Also listed, may not offer this procedure: 0
 
 ## Office visit, returning patient (low complexity, about 20 min) (99213)
 
-Providers on the page by kind and proof: surgery center not_covered: 224; surgery center proved: 2; practice, clinic, lab or imaging center not_covered: 14331; practice, clinic, lab or imaging center proved: 90; hospital not_covered: 211; hospital proved: 10; clinician no_record: 47232; clinician proved: 10407
+Providers on the page by kind and proof: surgery center not_covered: 224; surgery center proved: 2; practice, clinic, lab or imaging center not_covered: 14331; practice, clinic, lab or imaging center proved: 90; hospital not_covered: 211; hospital proved: 10; clinician no_record: 43953; clinician proved: 10292; clinician wrong_specialty: 3394
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -171,6 +187,8 @@ Providers on the page by kind and proof: surgery center not_covered: 224; surger
 | 9 | Desoto Surgicare Partners, Ltd $26 | Desoto Surgicare Partners, Ltd $26 |  |
 | 10 | FW Specialty Surgicare, LLC $26 | FW Specialty Surgicare, LLC $26 |  |
 
+Left out of the figures (anesthesia clinicians under this code): 3394; lowest before $26, after $26
+
 Also listed, may not offer this procedure: 0
 
 ## All sample procedures together
@@ -180,4 +198,4 @@ Also listed, may not offer this procedure: 0
 | surgery center | 101 | 1906 | 0 |
 | practice, clinic, lab or imaging center | 176 | 112861 | 0 |
 | hospital | 298 | 1640 | 163 |
-| clinician | 11128 | 47122 | 376615 |
+| clinician | 11013 | 43968 | 351148 |
