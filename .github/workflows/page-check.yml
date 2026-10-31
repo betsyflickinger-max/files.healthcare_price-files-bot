@@ -50,6 +50,14 @@ jobs:
           print('provider area string length', len(A['p']), 'unknown', A['p'].count('-'), '| codes with RVUs', len(A['r']), '+26:', len(A['r26']), '| exact overrides', len(A['x']))
           print('area data size', f"{len(json.dumps(A, separators=(',', ':'))):,}", 'chars')
           open('/tmp/city/D.json', 'w').write(json.dumps(D))
+          sz = lambda v: len(json.dumps(v, separators=(',', ':')))
+          print('data block', f"{len(s[i+42:s.find('</script>', i)]):,}", 'chars; html outside data', f"{len(s) - len(s[i+42:s.find('</script>', i)]):,}")
+          for k, v in sorted(D.items(), key=lambda kv: -sz(kv[1]))[:12]: print(f'  D.{k}: {sz(v):,}')
+          for k in ('fac', 'prac', 'codes'):
+              v = D.get(k)
+              if isinstance(v, list) and v: print(f'  {k}[0]:', json.dumps(v[0])[:300])
+              if isinstance(v, dict) and v: kk = next(iter(v)); print(f'  {k}[{kk}]:', json.dumps(v[kk])[:300]); [print(f'    {k}.{a}: {sz(b):,}') for a, b in (v.items() if k == 'prac' else [])]
+          for m in re.finditer(r'.{120}getElementById\(.data.\).{200}', s): print('reads data:', m.group(0))
           PY
       - name: Run the page's Medicare code (node)
         run: |
