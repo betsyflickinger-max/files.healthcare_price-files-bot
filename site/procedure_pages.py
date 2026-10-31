@@ -1304,7 +1304,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
     pcap = (f"<p class='cap'>Ranked: places with a Medicare or Medicaid record for this procedure, and kinds of places no public volume "
             f"file covers. Order is by price only. <a href='/methodology/#proof'>How we decide</a></p>") if S.get('proof_on') else ''
     wcap = (f"<p class='cap'>{S['n_wrong_specialty']:,} anesthesia clinician{'s' if S['n_wrong_specialty'] != 1 else ''} listed under this "
-            f"code by an insurer {'are' if S['n_wrong_specialty'] != 1 else 'is'} left out of these figures: they don't perform it. "
+            f"code by an insurer {'are' if S['n_wrong_specialty'] != 1 else 'is'} left out of this page's figures (including the doctor's fee): they don't perform it. "
             f"Their rates stay in the Price Finder.</p>") if S.get('n_wrong_specialty') else ''
     low_sec = (f"<div><p class='kicker'>Lowest published</p><h3 class='h3'>The 10 lowest {pl}</h3><ol class='word'>{low_li}</ol>{pcap}{also}{wcap}</div>") if low_li else ''
     hi_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
