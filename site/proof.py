@@ -47,6 +47,7 @@ class Proof:
         self.apc_fam = {}    # apc -> family name ("Level 3 Musculoskeletal Procedures" -> "Musculoskeletal Procedures")
         self.fam = {}        # (ccn, family) -> best record in that family (CMS moves codes between levels from year to year)
         self.ccn_groups = {} # ccn -> number of Medicare outpatient groups with volume (diagnostic)
+        self.ccn_drgs = set()  # ccns with any Medicare inpatient record
         for i in range(tb.num_rows):
             src = d['evidence_source'][i]
             rec = {'src': LABEL[src], 'n': int(d['volume'][i] or 0), 'unit': d['unit'][i], 'year': d['data_year'][i],
@@ -68,6 +69,7 @@ class Proof:
             elif src == 'medicare_inpatient':
                 if d['ccn'][i]:
                     self.drg[(d['ccn'][i], c.zfill(3))] = rec
+                    self.ccn_drgs.add(d['ccn'][i])
             elif d['npi'][i]:
                 if src == 'medicare_physician':
                     self.phy_codes.add(c)
@@ -95,14 +97,15 @@ class Proof:
                 rec = self.drg.get((ccn, g)) if ccn else None
                 if rec:
                     return 'proved', rec
-                return ('no_record', NO_RECORD.format(year=self.year)) if ccn else ('not_covered', 'no Medicare hospital ID matched')
+                return ('no_record', NO_RECORD.format(year=self.year)) if ccn in self.ccn_drgs else ('not_covered', 'no Medicare hospital ID matched')
             apc = self.c2a.get(code)
             if not apc or apc not in self.apcs:
                 return ('proved', rec) if rec else ('not_covered', "Medicare publishes no hospital volume for this kind of procedure")
             hrec = (self.apc.get((ccn, apc)) or self.fam.get((ccn, self.apc_fam.get(apc)))) if ccn else None
             if hrec or rec:
                 return 'proved', hrec or rec
-            return ('no_record', NO_RECORD.format(year=self.year)) if ccn else ('not_covered', 'no Medicare hospital ID matched')
+            # held out only when the hospital ID matches real Medicare records (a wrong ID must never look like "doesn't do it")
+            return ('no_record', NO_RECORD.format(year=self.year)) if ccn in self.ccn_groups else ('not_covered', 'no Medicare hospital ID matched')
         if kind == 'P':
             if rec:
                 return 'proved', rec
