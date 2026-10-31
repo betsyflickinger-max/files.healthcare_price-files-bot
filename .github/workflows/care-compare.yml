@@ -37,7 +37,8 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 duckdb==1.5.6 requests==2.33.0 zstandard==0.23.0 pyarrow==26.0.0 pillow==10.4.0
       - run: sudo mkdir -p /mnt/cc && sudo chown $USER /mnt/cc
-      - run: python site/care_compare.py build --work /mnt/cc | tee -a "$GITHUB_STEP_SUMMARY"
+      - if: ${{ !contains(github.event.head_commit.message, '[preview-only]') }}
+        run: python site/care_compare.py build --work /mnt/cc | tee -a "$GITHUB_STEP_SUMMARY"
       - run: python site/care_compare.py preview --area illinois,dfw | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the reports
         if: always()

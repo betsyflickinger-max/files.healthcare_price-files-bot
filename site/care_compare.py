@@ -373,7 +373,9 @@ def preview(area_slug):
     with tarfile.open(f"{d}/site.tgz") as t:
         mem = {m.name.lstrip("./"): m for m in t.getmembers() if m.isfile()}
         areas = json.load(t.extractfile(mem["site/cities.json"]))
-        a = next(x for x in areas if x["slug"] == area_slug)
+        a = next((x for x in areas if x["slug"] == area_slug), None)
+        if a is None:
+            raise SystemExit(f"no area {area_slug!r}; areas: {[x['slug'] for x in areas]}")
         want = f"site/{a['path'].strip('/')}/index.html"
         os.makedirs(os.path.dirname(f"{d}/{want}"), exist_ok=True)
         open(f"{d}/{want}", "wb").write(t.extractfile(mem[want]).read())
@@ -446,4 +448,15 @@ if __name__ == "__main__":
     ap.add_argument("--work", default="/tmp/care_compare")
     ap.add_argument("--area", default="illinois")
     A = ap.parse_args()
-    build(A.work) if A.cmd == "build" else [preview(x) for x in A.area.split(",")]
+    if A.cmd == "build":
+        build(A.work)
+    else:
+        import traceback
+        for x in A.area.split(","):
+            try:
+                preview(x)
+            except BaseException:      # keep going; the error goes into the report folder so it can be read from the repo
+                rp = ROOT / "reports" / "care-compare"
+                rp.mkdir(parents=True, exist_ok=True)
+                (rp / f"{x}-error.txt").write_text(traceback.format_exc())
+                print(traceback.format_exc())
