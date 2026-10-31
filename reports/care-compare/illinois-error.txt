@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "/home/runner/work/files.healthcare_price-files-bot/files.healthcare_price-files-bot/site/care_compare.py", line 457, in <module>
+    preview(x)
+  File "/home/runner/work/files.healthcare_price-files-bot/files.healthcare_price-files-bot/site/care_compare.py", line 385, in preview
+    npis = json.loads(c.get_object(Bucket=B, Key=pre[:-2] + "npis.json")["Body"].read())
+                                                 ~~~^^^^^
+TypeError: 'NoneType' object is not subscriptable
