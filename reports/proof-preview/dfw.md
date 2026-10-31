@@ -4,7 +4,7 @@ Built 2026-10-31 by site/proof_preview.py. Nothing deployed. Proof data: Medicar
 
 ## Knee arthroscopy with meniscectomy (29881)
 
-Providers on the page by kind and proof: surgery center not_covered: 229; surgery center proved: 9; practice, clinic, lab or imaging center not_covered: 12740; hospital no_record: 16; hospital not_covered: 157; hospital proved: 76; clinician no_record: 46666; clinician proved: 8
+Providers on the page by kind and proof: surgery center not_covered: 229; surgery center proved: 9; practice, clinic, lab or imaging center not_covered: 12740; hospital no_record: 14; hospital not_covered: 159; hospital proved: 76; clinician no_record: 46666; clinician proved: 8
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -19,11 +19,11 @@ Providers on the page by kind and proof: surgery center not_covered: 229; surger
 | 9 | Texas Institute for Surgery, LLP $1,285 | Axis Surgery Center, LLC $1,291 |  |
 | 10 | USMD Hospital at Arlington, LLC $1,285 | Prg Dallas ASC, LLC $1,300 |  |
 
-Also listed, may not offer this procedure: 3 (Prhc Ennis LP $1,018 [CCN 450833, 2 Medicare outpatient groups on record]; USMD Hospital at Arlington, LLC $1,285 [CCN 450872, 11 Medicare outpatient groups on record]; Columbia Hospital at Medical City Dallas Subsidiary LP $12,360 [CCN 45C0001100, 0 Medicare outpatient groups on record])
+Also listed, may not offer this procedure: 2 (Prhc Ennis LP $1,018 [CCN 450833, 2 Medicare outpatient groups on record]; USMD Hospital at Arlington, LLC $1,285 [CCN 450872, 11 Medicare outpatient groups on record])
 
 ## Cataract surgery (66984)
 
-Providers on the page by kind and proof: surgery center not_covered: 202; surgery center proved: 37; practice, clinic, lab or imaging center not_covered: 12887; practice, clinic, lab or imaging center proved: 3; hospital no_record: 68; hospital not_covered: 142; hospital proved: 25; clinician no_record: 45601; clinician proved: 226
+Providers on the page by kind and proof: surgery center not_covered: 202; surgery center proved: 37; practice, clinic, lab or imaging center not_covered: 12887; practice, clinic, lab or imaging center proved: 3; hospital no_record: 66; hospital not_covered: 144; hospital proved: 25; clinician no_record: 45601; clinician proved: 226
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -42,7 +42,7 @@ Also listed, may not offer this procedure: 2 (Nocona Hospital District $975 [CCN
 
 ## Gallbladder removal (laparoscopic) (47562)
 
-Providers on the page by kind and proof: surgery center not_covered: 235; surgery center proved: 3; practice, clinic, lab or imaging center not_covered: 12715; hospital no_record: 27; hospital not_covered: 159; hospital proved: 65; clinician no_record: 47679; clinician proved: 45
+Providers on the page by kind and proof: surgery center not_covered: 235; surgery center proved: 3; practice, clinic, lab or imaging center not_covered: 12715; hospital no_record: 25; hospital not_covered: 161; hospital proved: 65; clinician no_record: 47679; clinician proved: 45
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -57,11 +57,11 @@ Providers on the page by kind and proof: surgery center not_covered: 235; surger
 | 9 | Baylor Medical Center at Irving $2,260 | Baylor Regional Medical Center at Grapevine $2,260 | Medicare: 132 services in the procedure group “Level 1 Laparoscopy and Related Services”, 2024 |
 | 10 | Baylor Medical Center at Waxahachie $2,260 | Baylor Regional Medical Center at Plano $2,260 | Medicare: 137 services in the procedure group “Level 1 Laparoscopy and Related Services”, 2024 |
 
-Also listed, may not offer this procedure: 4 (Prhc Ennis LP $1,978 [CCN 450833, 2 Medicare outpatient groups on record]; Nocona Hospital District $2,134 [CCN 450641, 1 Medicare outpatient groups on record]; Somervell County Hospital District $19,834 [CCN 450451, 3 Medicare outpatient groups on record]; Columbia Hospital at Medical City Dallas Subsidiary LP $21,630 [CCN 45C0001100, 0 Medicare outpatient groups on record])
+Also listed, may not offer this procedure: 3 (Prhc Ennis LP $1,978 [CCN 450833, 2 Medicare outpatient groups on record]; Nocona Hospital District $2,134 [CCN 450641, 1 Medicare outpatient groups on record]; Somervell County Hospital District $19,834 [CCN 450451, 3 Medicare outpatient groups on record])
 
 ## Carpal tunnel release (64721)
 
-Providers on the page by kind and proof: surgery center not_covered: 219; surgery center proved: 12; practice, clinic, lab or imaging center not_covered: 8771; practice, clinic, lab or imaging center proved: 1; hospital no_record: 46; hospital not_covered: 141; hospital proved: 45; clinician no_record: 46385; clinician proved: 30
+Providers on the page by kind and proof: surgery center not_covered: 219; surgery center proved: 12; practice, clinic, lab or imaging center not_covered: 8771; practice, clinic, lab or imaging center proved: 1; hospital no_record: 44; hospital not_covered: 143; hospital proved: 45; clinician no_record: 46385; clinician proved: 30
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -76,7 +76,7 @@ Providers on the page by kind and proof: surgery center not_covered: 219; surger
 | 9 | Grayson County Physician's Property, LLC $811 | Grayson County Physician's Property, LLC $811 | Medicare: 31 services in the procedure group “Level 1 Nerve Procedures”, 2024 |
 | 10 | Heritage Park Surgical Hospital LLC $811 | Heritage Park Surgical Hospital LLC $811 | Medicare: 31 services in the procedure group “Level 1 Nerve Procedures”, 2024 |
 
-Also listed, may not offer this procedure: 3 (Texas Regional Medical Center, LLC $8,405 [CCN 670060, 12 Medicare outpatient groups on record]; Metdalspi, LLC $8,495 [CCN 670073, 6 Medicare outpatient groups on record]; Columbia Hospital at Medical City Dallas Subsidiary LP $8,858 [CCN 45C0001100, 0 Medicare outpatient groups on record])
+Also listed, may not offer this procedure: 2 (Texas Regional Medical Center, LLC $8,405 [CCN 670060, 12 Medicare outpatient groups on record]; Metdalspi, LLC $8,495 [CCN 670073, 6 Medicare outpatient groups on record])
 
 ## Colonoscopy (diagnostic) (45378)
 
@@ -99,7 +99,7 @@ Also listed, may not offer this procedure: 0
 
 ## Total knee replacement (27447)
 
-Providers on the page by kind and proof: surgery center not_covered: 228; surgery center proved: 11; practice, clinic, lab or imaging center not_covered: 12702; practice, clinic, lab or imaging center proved: 1; hospital no_record: 16; hospital not_covered: 152; hospital proved: 76; clinician no_record: 46871; clinician proved: 215
+Providers on the page by kind and proof: surgery center not_covered: 228; surgery center proved: 11; practice, clinic, lab or imaging center not_covered: 12702; practice, clinic, lab or imaging center proved: 1; hospital no_record: 14; hospital not_covered: 154; hospital proved: 76; clinician no_record: 46871; clinician proved: 215
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -108,13 +108,13 @@ Providers on the page by kind and proof: surgery center not_covered: 228; surger
 | 3 | Navarro Hospital LP $2,861 | Navarro Hospital LP $2,861 |  |
 | 4 | Prhc Ennis LP $2,861 | Tarrant County Hospital District $2,861 | Medicare: 29 services in the procedure group “Level 5 Musculoskeletal Procedures”, 2024 |
 | 5 | Tarrant County Hospital District $2,861 | Palo Pinto County Hospital District $3,477 |  |
-| 6 | Palo Pinto County Hospital District $3,477 | Columbia Medical Center of Arlington Subsidiary LP $3,682 |  |
-| 7 | Columbia Hospital at Medical City Dallas Subsidiary LP $3,682 | Columbia Medical Center of Denton Subsidiary LP $3,682 |  |
+| 6 | Palo Pinto County Hospital District $3,477 | Columbia Hospital at Medical City Dallas Subsidiary LP $3,682 |  |
+| 7 | Columbia Hospital at Medical City Dallas Subsidiary LP $3,682 | Columbia Medical Center of Arlington Subsidiary LP $3,682 |  |
 | 8 | Columbia Medical Center of Arlington Subsidiary LP $3,682 | Columbia Medical Center of Denton Subsidiary LP $3,682 |  |
-| 9 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Las Colinas Inc $3,682 |  |
-| 10 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Lewisville Subsidiary LP $3,682 | Medicare: 13 services in the procedure group “Level 6 Musculoskeletal Procedures”, 2024 |
+| 9 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Denton Subsidiary LP $3,682 |  |
+| 10 | Columbia Medical Center of Denton Subsidiary LP $3,682 | Columbia Medical Center of Las Colinas Inc $3,682 |  |
 
-Also listed, may not offer this procedure: 2 (Prhc Ennis LP $2,861 [CCN 450833, 2 Medicare outpatient groups on record]; Columbia Hospital at Medical City Dallas Subsidiary LP $3,682 [CCN 45C0001100, 0 Medicare outpatient groups on record])
+Also listed, may not offer this procedure: 1 (Prhc Ennis LP $2,861 [CCN 450833, 2 Medicare outpatient groups on record])
 
 ## MRI knee/joint without contrast (73721)
 
@@ -179,5 +179,5 @@ Also listed, may not offer this procedure: 0
 |---|---|---|---|
 | surgery center | 101 | 1906 | 0 |
 | practice, clinic, lab or imaging center | 176 | 112861 | 0 |
-| hospital | 298 | 1630 | 173 |
+| hospital | 298 | 1640 | 163 |
 | clinician | 11128 | 47122 | 376615 |
