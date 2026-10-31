@@ -8,12 +8,14 @@ included once its build is finished (embed.json), and a broken build is skipped 
 Writes to --out (default out/network):
   net_access.json                      one row per network (and per insurer) per market: providers by type, share of the
                                        market, providers no other insurer lists, procedures priced, prices vs the market
-  net_overlap.json .. net_overlap_N    one row per ordered pair (A, B): share of A's providers (and hospitals) also in B, and
+  net_ov_<area>.json (_2, _3 ...)      one row per ordered pair (A, B): share of A's providers (and hospitals) also in B, and
                                        at the providers both list, how often A's rate is lower and A's typical rate as a share of B's
-  net_proc.json .. net_proc_N          one row per network per featured procedure per fee type: providers, lowest / middle rate,
+                                       (packed as arrays; see write_areas)
+  net_pr_<area>.json (_2, _3 ...)      one row per network per featured procedure per fee type: providers, lowest / middle rate,
                                        middle vs the market middle, providers priced in the market's cheapest quarter
-Pair and procedure rows are packed whole-market into files under 7 MB (a dashboard file must stay under 8 MB); always the
-same number of files, empty ones as []. The dashboard joins the parts.
+  net_parts.json                       per area: how many of each file, and the middle overlap for the headline
+Since Oct 31, 2026 each area has its own files (under 7 MB each; a control-center file must stay under 8 MB), loaded only when
+the area is picked. Until then every area was in net_overlap / net_proc parts joined on load (300+ MB by Oct 31).
 
 Membership = a provider has at least one rate line for one of the 89 featured procedures in that network's file.
 Prices: dollar rates only; $99,999+ placeholders and percent-of-charge rates are left out. A provider's rate in a network =
@@ -55,7 +57,7 @@ OLDKEY = {"austin": "AUS", "san-antonio": "SAT", "houston": "HOU", "el-paso": "E
 KIND = {"H": "hospitals", "A": "surgery_centers", "G": "clinics_groups", "P": "clinicians"}
 FEE = {0: "Facility fee", 1: "Doctor fee"}
 MIN_NET, MIN_MKT = 5, 20   # a network middle needs 5+ providers, a market middle 20+ (provider, network) rates
-PART_FILES, PART_MAX = {"net_overlap": 30, "net_proc": 30}, 7_000_000   # Oct 31: 30 each (California overflowed 12 pair files); site/control_cash_oon.py patches the page joins to match   # Oct 15: pairs ~42 MB for 30 areas (a big state 3-7 MB), procedures ~50 MB
+PART_MAX = 7_000_000   # a control-center file must stay under 8 MB. Oct 31: files are now per area (see write_areas); the all-areas join had passed 300 MB
 
 # ---------- markets (loaded one at a time in build(), so 30+ areas fit in memory) ----------
 MARKETS = {"DFW": {"name": "Dallas–Fort Worth", "page": "site/deploy/price-finder.html", "codes": f"site/every/{get_text('site/every/CURRENT')}/t/"}}
@@ -200,20 +202,40 @@ def build(key, m):
     print(f"{m['name']}: {total:,} providers, {NN} networks, {len(proc_rows):,} network-procedure rows, {len(overlap)} pairs")
     return access, overlap, proc_rows
 
-def write_parts(out, name, by_market):
-    """rows in market order packed into PART_FILES[name] files under PART_MAX bytes each: <name>.json, <name>_2.json, ...
-    A big market may span two files (Oct 15: Colorado's 88 networks made 7.1 MB of pairs on its own); the dashboard joins them."""
-    n = PART_FILES[name]; parts = [[] for _ in range(n)]; size = [2] * n; i = 0
-    for mk, rows in by_market.items():
-        for r in rows:
-            b = len(json.dumps(r, separators=(",", ":"))) + 1
-            if size[i] + b > PART_MAX: i += 1
-            if i >= n: raise SystemExit(f"{name}: more than {n} files of {PART_MAX:,} bytes needed (at {mk}); raise PART_FILES and the dashboard's join")
-            parts[i].append(r); size[i] += b
+PAIR_KEYS = ["level", "a", "b", "shared", "a_providers", "share_of_a_in_b", "jaccard", "shared_hospitals", "a_hospitals",
+             "hospital_share_of_a_in_b", "matched_prices", "a_lower_share", "same_share", "a_vs_b_middle"]
+
+def file_id(prefix, key): return prefix + key.lower().replace("-", "_")
+
+def write_split(out, fid, rows, head=None):
+    """one area's rows in as few files as fit under PART_MAX: <fid>.json, <fid>_2.json, ... (each starts with head, if given)"""
+    parts, cur, size = [], [], 2
+    hb = len(json.dumps(head, separators=(",", ":"))) + 1 if head else 0
+    for r in rows:
+        b = len(json.dumps(r, separators=(",", ":"))) + 1
+        if cur and size + hb + b > PART_MAX: parts.append(cur); cur, size = [], 2
+        cur.append(r); size += b
+    parts.append(cur)
     for j, rows in enumerate(parts):
-        f = out / (f"{name}.json" if j == 0 else f"{name}_{j + 1}.json")
-        f.write_text(json.dumps(rows, separators=(",", ":")))
-        print(f.name, len(rows), "rows", f.stat().st_size, "bytes")
+        (out / (f"{fid}.json" if j == 0 else f"{fid}_{j + 1}.json")).write_text(json.dumps(([head] if head else []) + rows, separators=(",", ":")))
+    return len(parts)
+
+def write_areas(out, O, PR):
+    """Oct 31, 2026: one set of files per area, loaded by the control center only when that area is picked (all areas in
+    one join had grown past 300 MB once California and Idaho had 550+ networks each). Pairs are packed as arrays:
+    the first item is {"market", "labels", "keys"}, then [level (0 network, 1 insurer), a, b (label numbers), ...the rest of
+    PAIR_KEYS]. net_parts lists every area's file counts and its middle overlap (share of one network's providers in another)."""
+    idx = []
+    for k in O:
+        labels = sorted({r["a"] for r in O[k]} | {r["b"] for r in O[k]}); li = {x: i for i, x in enumerate(labels)}
+        packed = [[0 if r["level"] == "network" else 1, li[r["a"]], li[r["b"]]] + [r[f] for f in PAIR_KEYS[3:]] for r in O[k]]
+        ov = sorted(r["share_of_a_in_b"] for r in O[k] if r["level"] == "network" and r["share_of_a_in_b"] is not None)
+        n_ov = write_split(out, file_id("net_ov_", k), packed, {"market": k, "labels": labels, "keys": PAIR_KEYS})
+        n_pr = write_split(out, file_id("net_pr_", k), PR[k])
+        idx.append({"market": k, "pairs": len(O[k]), "pair_files": n_ov, "proc_rows": len(PR[k]), "proc_files": n_pr,
+                    "overlap_mid": ov[(len(ov) - 1) // 2] if ov else None})
+        print(f"{k}: {len(O[k])} pairs in {n_ov} file(s), {len(PR[k])} procedure rows in {n_pr} file(s)")
+    (out / "net_parts.json").write_text(json.dumps(idx, separators=(",", ":")))
 
 OUT = Path(ARGS.out); OUT.mkdir(parents=True, exist_ok=True)
 A, O, PR = [], {}, {}
@@ -224,6 +246,5 @@ for k, m in MARKETS.items():
     print(f"  {k} took {round(time.time() - t0)} s", flush=True)
 (OUT / "net_access.json").write_text(json.dumps(A, separators=(",", ":")))
 print("net_access.json", len(A), "rows", (OUT / "net_access.json").stat().st_size, "bytes")
-write_parts(OUT, "net_overlap", O)
-write_parts(OUT, "net_proc", PR)
+write_areas(OUT, O, PR)
 print("network access: markets", ",".join(O))
