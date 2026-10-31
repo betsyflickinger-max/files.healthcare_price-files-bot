@@ -600,8 +600,9 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     def ranked(e):
         st_ = (proof or {}).get(e['fi'])
         if st_ and st_[0] == 'no_record':
-            held.setdefault((e['name'], e['city']), dict(e, note=st_[1]))
-            return False
+            # Option B (Betsy, Oct 31, 2026): label, don't move. Everyone stays in price order; the label says no record was found.
+            e['noproof'] = True
+            return True
         if st_ and st_[0] == 'proved':
             e['proof'] = st_[1]
         return True
@@ -1293,7 +1294,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     def proof_bit(e):
         x = e.get('proof')
-        return (f" · <a href='{esc(x['url'])}' target='_blank' rel='noopener'>{esc(x['text'])}</a>") if isinstance(x, dict) else ''
+        if isinstance(x, dict):
+            return f" · <a href='{esc(x['url'])}' target='_blank' rel='noopener'>{esc(x['text'])}</a>"
+        return " · <a href='/methodology/#proof'>No Medicare or Medicaid record found</a>" if e.get('noproof') else ''
     low_li = ''.join(f"<li><span><b>{esc(e['name'])}</b>{' · ' + ctag(e['city']) if e['city'] else ''}<span class='m'>{esc(KIND.get(e['kind'], ''))} · "
                      f"{esc(netname(e['ins'], e['plan']))} · {src_link(e, e['date'])}{proof_bit(e)}{med_here_line(S, e, True)}</span></span><span class='n'>{money(e['v'])}</span></li>" for e in S['lowest'])
     al = S.get('also_listed') or []
@@ -1301,8 +1304,9 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
             f"<a href='/methodology/#proof'>How we decide</a></p><ul>"
             + ''.join(f"<li>{esc(e['name'])}{' · ' + esc(e['city']) if e['city'] else ''} · {esc(netname(e['ins'], e['plan']))} · "
                       f"{money(e['v'])} · {src_link(e, e['date'])}</li>" for e in al) + "</ul></details>") if al else ''
-    pcap = (f"<p class='cap'>Ranked: places with a Medicare or Medicaid record for this procedure, and kinds of places no public volume "
-            f"file covers. Order is by price only. <a href='/methodology/#proof'>How we decide</a></p>") if S.get('proof_on') else ''
+    pcap = (f"<p class='cap'>Order is by price only. Where Medicare or Medicaid billing records show a provider does this procedure, "
+            f"we say so and link the record. \"No record found\" doesn't mean they don't do it: Medicare is mostly people 65+, and small "
+            f"counts are hidden. <a href='/methodology/#proof'>About these records</a></p>") if S.get('proof_on') else ''
     wcap = (f"<p class='cap'>{S['n_wrong_specialty']:,} anesthesia clinician{'s' if S['n_wrong_specialty'] != 1 else ''} listed under this "
             f"code by an insurer {'are' if S['n_wrong_specialty'] != 1 else 'is'} left out of this page's figures (including the doctor's fee): they don't perform it. "
             f"Their rates stay in the Price Finder.</p>") if S.get('n_wrong_specialty') else ''
@@ -2053,13 +2057,13 @@ def label_high(text):
     return text.replace(PF_OLD, PF_NEW, 1) if PF_OLD in text else None
 
 
-METHOD_PROOF = """<h2 id="proof">Who's ranked: proof a provider does the procedure</h2>
-<p>Insurer files list contract rates for providers who may never do a procedure. On our Texas procedure pages, the list of the 10 lowest prices includes a provider when we have evidence it does the procedure, or when no public file could show it either way:</p>
+METHOD_PROOF = """<h2 id="proof">Medicare and Medicaid records: evidence a provider does the procedure</h2>
+<p>Insurer files list contract rates for providers who may never do a procedure. On our Texas procedure pages, the 10 lowest prices are in plain price order, and each line says whether public billing records show that provider does the procedure. We don't move anyone up or down because of these records.</p>
 <ul>
 <li><strong>Medicare:</strong> CMS's 2024 counts of services by doctor and procedure, and by hospital and procedure group (outpatient) or hospital-stay group (inpatient). A hospital's outpatient count is for the procedure's group (for example, "Level 1 Intraocular Procedures"), not the exact code. CMS moves codes between levels from year to year, so we accept a count anywhere in the same group family.</li>
 <li><strong>Medicaid:</strong> HHS's provider spending file (2023 and 2024), which counts doctors' and other professionals' bills. We use the counts only; we don't use its payment amounts.</li>
-<li><strong>Proof only says yes.</strong> Medicare is mostly people 65 and older, CMS hides counts under 11 patients, and HHS hides counts under 12 claims. So no record is never treated as proof a provider doesn't do something. We hold a provider out of the 10 lowest only when these files cover that kind of provider for that procedure and show nothing. It still appears on the page, with its price, under "Also listed, may not offer this procedure."</li>
-<li><strong>Not covered, so ranked as before:</strong> surgery centers, group practices, clinics, imaging centers and labs (no public volume file covers them); hospitals for procedures Medicare's outpatient file doesn't count (colonoscopy, scans, lab tests); and procedures where Medicare is a poor guide: births, children's care, fertility, birth control, vasectomy and sports injuries.</li>
+<li><strong>"No Medicare or Medicaid record found"</strong> appears only when these files cover that kind of provider for that procedure and show nothing. It is not proof a provider doesn't do it: Medicare is mostly people 65 and older, CMS hides counts under 11 patients, and HHS hides counts under 12 claims. Call the provider to confirm.</li>
+<li><strong>No label:</strong> surgery centers, group practices, clinics, imaging centers and labs (no public volume file covers them); hospitals for procedures Medicare's outpatient file doesn't count (colonoscopy, scans, lab tests); and procedures where Medicare is a poor guide: births, children's care, fertility, birth control, vasectomy and sports injuries.</li>
 <li><strong>Counts never change the order.</strong> The list is sorted by price. A provider with 5,000 Medicare cases doesn't rank above one with 50.</li>
 <li><strong>The 10 highest prices are unchanged.</strong> High real prices stay visible.</li>
 <li><strong>Anesthesia clinicians:</strong> when an insurer lists a nurse anesthetist or anesthesiologist under a delivery, surgery, scan or lab code they don't perform, that line is left out of the page's figures and counted. It stays in the Price Finder.</li>
@@ -2069,12 +2073,20 @@ METHOD_PROOF = """<h2 id="proof">Who's ranked: proof a provider does the procedu
 
 
 def patch_method_proof(d):
-    """Adds the "Who's ranked" section to the methodology page once (card #2, Oct 31, 2026)."""
+    """Puts the Medicare/Medicaid records section on the methodology page (card #2). Oct 31, 2026, option B: replaces the earlier
+    "Who's ranked" version in place (that section ran up to the next <h2>), so the page never carries both."""
     p = os.path.join(d, 'site', 'methodology', 'index.html')
     if not os.path.isfile(p):
         return
     s = open(p, encoding='utf-8').read()
-    if 'id="proof"' in s:
+    if METHOD_PROOF in s:
+        return
+    j = s.find('<h2 id="proof">')
+    if j >= 0:
+        k = s.find('<h2', j + 5)
+        k = k if k > 0 else s.find('</main>', j)
+        if k > 0:
+            open(p, 'w', encoding='utf-8').write(s[:j] + METHOD_PROOF + s[k:])
         return
     i = s.find('<h2 id="medicare-local">')
     i = i if i > 0 else s.rfind('</main>')

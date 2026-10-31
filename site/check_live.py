@@ -28,9 +28,11 @@ for p in PAGES:
     x = text(h)
     out += [f'## {p}', '',
             f"- proof lines: {len(re.findall(r'(Medicare|Medicaid): [0-9,]+ ', x))}",
-            f"- 'Ranked:' caption: {'Ranked: places with a Medicare' in x}",
+            f"- 'Ranked:' caption (old, option A): {'Ranked: places with a Medicare' in x}",
+            f"- price-order caption (option B): {'Order is by price only. Where Medicare or Medicaid' in x}",
+            f"- 'No record found' labels: {x.count('No Medicare or Medicaid record found')}",
             "- also-listed: " + ((re.search(r'Also listed, may not offer this procedure \(\d+\)', x) or [''])[0]),
-            "- 'Who's ranked' section: " + str('id="proof"' in h or "id='proof'" in h),
+            "- methodology records section: " + str('id="proof"' in h or "id='proof'" in h) + f" (old 'Who's ranked' title: {'Who' + chr(39) + 's ranked' in x})",
             f"- anesthesia caption: {(re.search(r'[0-9,]+ anesthesia clinicians? listed under this', x) or [''])[0]}",
             ]
     m = re.search(r'(Lowest|least expensive).{0,900}', x, re.I)
