@@ -67,7 +67,7 @@ def main():
             x = D['fac'][i]
             kind = pp.kind_of(x)
             ccn = (loc.get(i) or [None, None, None])[2]
-            st, info = P.status(kind, npis[i], ccn, c, C['name'], C.get('cat', ''), drg)
+            st, info = P.status(kind, npis[i], ccn, c, C['name'], C.get('cat', ''), drg, x[0])
             prf[i] = (st, {'text': line(info), 'url': info['url']} if st == 'proved' else info)
             why[(kind, st)] += 1
             tot[(kind, st)] += 1

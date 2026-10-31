@@ -32,7 +32,18 @@ POOR_GUIDE_NAME = re.compile(r'birth|deliver|c-section|cesarean|pregnan|prenatal
 LABEL = {'medicare_physician': 'Medicare', 'medicare_outpatient': 'Medicare', 'medicare_inpatient': 'Medicare',
          'medicaid_professional': 'Medicaid'}
 ANESTHESIA_TAX = ('207L', '367500000X', '367H00000X')     # anesthesiology, nurse anesthetist, anesthesiologist assistant
-ANESTHESIA_FREE_CATS = {'Office visits', 'Behavioral health', 'Physical therapy', 'Other', 'Heart'}   # pain clinics bill visits
+ANESTHESIA_WORDS = re.compile(r'\bCRNA\b|\bC\.R\.N\.A\b|anesthes|\bsedation\b', re.I)
+
+
+def performed_code(code):
+    """CPT surgery (incl. deliveries), radiology and lab ranges: services an anesthesia clinician doesn't perform. Visits, therapy,
+    psych and other medicine codes (90281-99607) are left alone: pain-medicine anesthesiologists bill office visits."""
+    return bool(re.fullmatch(r'\d{5}', code or '')) and 10004 <= int(code) <= 89398
+
+
+def is_anesthesia(t, name):
+    tax, cred = (t if isinstance(t, tuple) else (t, ''))
+    return str(tax or '').startswith(ANESTHESIA_TAX) or bool(ANESTHESIA_WORDS.search(f"{cred or ''} {name or ''}"))
 NO_RECORD = ("No Medicare or Medicaid record for this procedure ({year}). That doesn't mean they don't do it: "
              "Medicare is mostly people 65+, and rows under 11 patients are hidden.")
 
@@ -93,10 +104,9 @@ class Proof:
         except Exception:
             pass
 
-    def status(self, kind, npi, ccn, code, name, cat, drg):
+    def status(self, kind, npi, ccn, code, name, cat, drg, name_of=''):
         """kind: the page's provider kind (H hospital, A surgery center, G group/other place, P individual clinician)."""
-        if kind == 'P' and not re.match(r'0[01]\d\d\d$', code or '') and cat not in ANESTHESIA_FREE_CATS \
-                and str(self.tax.get(str(npi or ''), '')).startswith(ANESTHESIA_TAX):
+        if kind in ('P', 'G') and performed_code(code) and is_anesthesia(self.tax.get(str(npi or '')), name_of):
             return 'wrong_specialty', 'anesthesia clinician listed under a code they don\'t perform'
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
@@ -139,8 +149,8 @@ def line(rec):
 def load_taxonomy(s3, bucket, key='data/scope/tx_npis_all.parquet'):
     """npi -> primary taxonomy code from the Texas NPPES extract the bot already keeps."""
     import pyarrow.parquet as pq
-    tb = pq.read_table(io.BytesIO(s3.get_object(Bucket=bucket, Key=key)['Body'].read()), columns=['npi', 'taxonomy_1']).to_pydict()
-    return {str(n): t for n, t in zip(tb['npi'], tb['taxonomy_1']) if t}
+    tb = pq.read_table(io.BytesIO(s3.get_object(Bucket=bucket, Key=key)['Body'].read()), columns=['npi', 'taxonomy_1', 'credential']).to_pydict()
+    return {str(n): (t, c) for n, t, c in zip(tb['npi'], tb['taxonomy_1'], tb['credential']) if t or c}
 
 
 def for_page(P, D, code, t, npis, loc, kind_of):
@@ -152,6 +162,6 @@ def for_page(P, D, code, t, npis, loc, kind_of):
     for fi in f:
         i = int(fi)
         ccn = ((loc or {}).get(i) or [None, None, None])[2]
-        st, info = P.status(kind_of(D['fac'][i]), npis[i], ccn, code, C['name'], C.get('cat', ''), drg)
+        st, info = P.status(kind_of(D['fac'][i]), npis[i], ccn, code, C['name'], C.get('cat', ''), drg, D['fac'][i][0])
         out[i] = (st, {'text': line(info), 'url': info['url']} if st == 'proved' else info)
     return out
