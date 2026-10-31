@@ -1,0 +1,48 @@
+name: Care Compare ratings - build and preview (no deploy)
+
+# Oct 31, 2026 (card #3, Betsy OK'd): CMS Care Compare quality and patient-experience ratings for every state we cover
+# (hospital stars + HCAHPS, surgery-center measures + OAS CAHPS, clinician MIPS scores), keyed by CCN/NPI only.
+# Saves each CMS original in raw/care_compare/, writes reference/site/quality/<st>.json, and previews them on the Illinois
+# and DFW Price Finders (reports/care-compare/). Deploys nothing; switching the ratings on is a separate step Betsy OKs.
+
+on:
+  push:
+    branches: [main]
+    paths: [site/care_compare.py, .github/workflows/care-compare.yml]
+  workflow_dispatch:
+
+concurrency:
+  group: care-compare
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 duckdb==1.5.6 requests==2.33.0 zstandard==0.23.0 pyarrow==26.0.0 pillow==10.4.0
+      - run: sudo mkdir -p /mnt/cc && sudo chown $USER /mnt/cc
+      - run: python site/care_compare.py build --work /mnt/cc | tee -a "$GITHUB_STEP_SUMMARY"
+      - run: python site/care_compare.py preview --area illinois,dfw | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the reports
+        if: always()
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/care-compare 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Care Compare build + preview $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
