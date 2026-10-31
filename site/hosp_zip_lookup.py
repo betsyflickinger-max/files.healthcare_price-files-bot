@@ -11,8 +11,23 @@ plan = json.loads(s3.get_object(Bucket=B, Key=sp + 'areas.json')['Body'].read())
 src = {x[5]: x[0] for x in json.loads(s3.get_object(Bucket=B, Key=plan[slug]['prefix'] + 'hosp/hosp_index.json')['Body'].read())['src'] if len(x) > 5}
 norm = lambda s: re.sub(r'[^a-z0-9]+', ' ', (s or '').lower().replace('rehabilitaton', 'rehabilitation')).strip()
 out = []
+POS = 'https://data.cms.gov/data-api/v1/dataset/8ba0f9b4-9493-4aa0-9f82-44ea9468d1b5/data'   # Provider of Services, hospital & non-hospital
 for j in plan[slug]['jobs']:
     if regions.region_of_zip(slug, j.get('zip')): continue
+    # 1) CMS Provider of Services file (every Medicare provider by its CMS number, long-term care and rehab hospitals included)
+    pos = None
+    if j.get('ccn'):
+        try:
+            u = POS + '?' + urllib.parse.urlencode({'filter[PRVDR_NUM]': j['ccn'], 'size': 5})
+            rows = json.loads(urllib.request.urlopen(u, timeout=60).read())
+            rows = [r for r in rows if r.get('PRVDR_NUM') == j['ccn'] and (r.get('ZIP_CD') or '')[:5]]
+            if rows: pos = rows[0]
+        except Exception as e: print('  POS lookup failed', j['ccn'], e)
+    if pos:
+        z = pos['ZIP_CD'][:5]
+        print(f"{j.get('name')} | ccn {j.get('ccn')} | POS: {pos.get('FAC_NAME')}, {pos.get('CITY_NAME')} {z} -> {z}")
+        out.append({'state': st, 'ccn': j['ccn'], 'name': j.get('name', ''), 'zip': z, 'npi': '', 'region': regions.region_of_zip(slug, z) or '',
+                    'source': f"CMS Provider of Services file ({pos.get('FAC_NAME')}, {pos.get('CITY_NAME')})"}); continue
     names = {norm(j.get('name')), norm(src.get(j.get('id')))} - {''}
     cands = {}
     for nm in names:
