@@ -379,6 +379,10 @@ def preview(area_slug):
         want = f"site/{a['path'].strip('/')}/index.html"
         os.makedirs(os.path.dirname(f"{d}/{want}"), exist_ok=True)
         open(f"{d}/{want}", "wb").write(t.extractfile(mem[want]).read())
+        for name, m_ in mem.items():   # the area's Pages Functions say where its per-code files are (Store.prefix)
+            if name.startswith(f"functions/{a['slug']}/"):
+                os.makedirs(os.path.dirname(f"{d}/{name}"), exist_ok=True)
+                open(f"{d}/{name}", "wb").write(t.extractfile(m_).read())
     D = pp.page_data(f"{d}/{want}")[0]
     fac = D["fac"]
     pre = store.prefix(a, "t")

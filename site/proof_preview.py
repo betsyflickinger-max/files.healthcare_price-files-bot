@@ -47,6 +47,10 @@ def main():
         want = f"site/{a['path'].strip('/')}/index.html"
         os.makedirs(os.path.dirname(f'{d}/{want}'), exist_ok=True)
         open(f'{d}/{want}', 'wb').write(t.extractfile(mem[want]).read())
+        for name, m_ in mem.items():   # the area's Pages Functions say where its per-code files are (Store.prefix)
+            if name.startswith(f"functions/{a['slug']}/"):
+                os.makedirs(os.path.dirname(f"{d}/{name}"), exist_ok=True)
+                open(f"{d}/{name}", "wb").write(t.extractfile(m_).read())
         open(f'{d}/site/index.html', 'wb').write(t.extractfile(mem['site/index.html']).read())
     D = pp.page_data(f'{d}/{want}')[0]
     loc = store.local_medicare(a, len(D['fac']))
@@ -124,4 +128,11 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except BaseException:     # write the error where it can be read from the repo, then fail
+        import traceback
+        rp = HERE.parent / 'reports' / 'proof-preview'
+        rp.mkdir(parents=True, exist_ok=True)
+        (rp / 'preview-error.txt').write_text(traceback.format_exc())
+        raise

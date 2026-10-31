@@ -1,6 +1,6 @@
 name: Proof of procedures - price page preview (no deploy)
 
-# Oct 31, 2026 (card #2): before/after of the DFW price pages with proof (site/proof.py) switched on. Deploys nothing;
+# Oct 31, 2026 (card #2): before/after of one area's price pages (default Illinois; DFW first) with proof (site/proof.py) switched on. Deploys nothing;
 # writes reports/proof-preview/dfw.md. Runs on a change to the preview or proof code, or by hand.
 
 on:
@@ -36,6 +36,7 @@ jobs:
       - run: pip install boto3==1.35.36 pillow==10.4.0 pyarrow==26.0.0
       - run: python site/proof_preview.py | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the preview
+        if: always()
         run: |
           git config user.name "price-files-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
