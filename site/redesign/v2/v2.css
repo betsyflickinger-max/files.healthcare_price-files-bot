@@ -12,6 +12,7 @@
   color-scheme:light
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--warm);color:var(--ink);font:16px/1.5 var(--sans);
   border-top:8px solid;border-image:linear-gradient(90deg,#2E5BE6 0 20%,#F7C925 20% 40%,#F08A24 40% 60%,#3DB86B 60% 80%,#E6402E 80%) 1}
