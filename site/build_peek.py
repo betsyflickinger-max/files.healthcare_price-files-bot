@@ -16,6 +16,19 @@ def shape(v, d=0):
         ks = list(v)[:6]; return '{' + ', '.join(f'{k!r}: {shape(v[k], d+1)}' for k in ks) + (f', …{len(v)} keys' if len(v) > 6 else '') + '}' if d < 3 else f'dict({len(v)})'
     if isinstance(v, list): return f'[{len(v)}: ' + (shape(v[0], d+1) if v else '') + ']' if d < 4 else f'list({len(v)})'
     return repr(v)[:60]
+def hosp_check(slug, sp):
+    """Oct 31: the state's hospital jobs without a ZIP, next to the state's hospital index entries (by id and by name)"""
+    plan = json.loads(get(sp + 'areas.json')); jobs = plan[slug]['jobs']
+    src = json.loads(get(plan[slug]['prefix'] + 'hosp/hosp_index.json'))['src']
+    by_id = {x[5]: x for x in src if len(x) > 5}; by_nm = {}
+    for x in src: by_nm.setdefault(x[0].strip().lower(), []).append(x)
+    nz = [j for j in jobs if not j.get('zip')]
+    print(len(jobs), 'jobs,', len(nz), 'without zip;', len(src), 'index entries; job keys:', sorted(jobs[0]))
+    for j in nz:
+        print(' ', j.get('name'), '| ccn', j.get('ccn'), '| id', j.get('id'), '| by id:', (by_id.get(j.get('id')) or [None, None])[:2],
+              '| by name:', [x[1] for x in by_nm.get((j.get('name') or '').strip().lower(), [])], '|', (j.get('url') or '')[:90])
+if len(sys.argv) > 3 and sys.argv[2] == 'hosp': hosp_check(slug, sys.argv[3]); sys.exit(0)
+
 root = f'site/every-st/{slug}/'
 months = sorted({o['Key'][len(root):].split('/')[0] for o in ls(root)})
 print('builds:', months)

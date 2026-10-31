@@ -7,6 +7,9 @@ on:
       city:
         description: "State page slug, e.g. california"
         default: "california"
+      extra:
+        description: "Optional mode, e.g. hosp site/builds/hosp-stn5-2026-10/"
+        default: ""
 
 permissions:
   contents: read
@@ -29,4 +32,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install boto3==1.35.36
-      - run: python site/build_peek.py "$CITY"
+      - run: python site/build_peek.py "$CITY" $EXTRA
+        env:
+          EXTRA: ${{ inputs.extra }}
