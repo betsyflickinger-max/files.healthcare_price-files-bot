@@ -289,6 +289,28 @@ def area_state(a):
     return STATES.get(a['slug'], 'TX')
 
 
+def _scope_states():
+    """State pages built by the shared schedule (site/state_scopes.json): page slug -> state code."""
+    try:
+        sc = json.load(open(os.path.join(HERE, 'state_scopes.json'), encoding='utf-8'))
+        return {slug: code for k, v in sc.items() if not k.startswith('_') for code, slug in v.items()}
+    except Exception:
+        return {}
+
+
+CA_REGIONS = {'los-angeles': 'CA', 'san-diego-inland-empire': 'CA', 'bay-area': 'CA', 'sacramento-northern-california': 'CA',
+              'central-california': 'CA'}
+_PAGE_STATES = {**_scope_states(), **CA_REGIONS, **STATES}
+
+
+def page_state(a):
+    """The state an area is in, for display only: the homepage map and place lists, and the /costs/ place chips.
+    Oct 31, 2026: area_state() reads 14 state pages (Virginia, Wisconsin, Arkansas ...) and California's 5 regions as Texas, so
+    the map left them un-outlined and listed them under Texas. The full fix (price figures too) waits on Betsy's OK on branch
+    card2-all-states-switch; this changes no price."""
+    return _PAGE_STATES.get(a['slug'], 'TX')
+
+
 def area_group(a):
     return 'Texas' if area_state(a) == 'TX' else 'States'
 
@@ -1523,11 +1545,11 @@ def costs_index(areas, procs):
     # Plain <details>, so it works without script and the links stay in the page for search engines.
     by_st = {}
     for a, au, n in areas:
-        by_st.setdefault(area_state(a), []).append((a, au))
-    st_name = {'TX': 'Texas'}
+        by_st.setdefault(page_state(a), []).append((a, au))
+    st_name = {'TX': 'Texas', 'CA': 'California'}
     for a, au, n in areas:
-        if area_state(a) != 'TX':
-            st_name.setdefault(area_state(a), a['name'])
+        if page_state(a) != 'TX':
+            st_name.setdefault(page_state(a), a['name'])
     chips = []
     for st, items in sorted(by_st.items(), key=lambda x: (x[0] != 'TX', st_name[x[0]])):   # Texas first
         items.sort(key=lambda x: x[0]['name'])
@@ -1652,12 +1674,12 @@ def every_codes():
 def national_section(areas, summaries, procs, n_rates_note):
     """The homepage's front-page section. areas: [(area, au)]; summaries: {(slug, code): summary}."""
     tot, found = hospital_counts()
-    live_states = {area_state(a) for a, _ in areas}
-    state_link = {}
+    live_states = {page_state(a) for a, _ in areas}
+    state_link, n_in = {}, {}
     for a, au in areas:
-        st = area_state(a)
-        if st != 'TX':
-            state_link[st] = f'/costs/{au}/'
+        st = page_state(a)
+        n_in[st] = n_in.get(st, 0) + 1
+        state_link[st] = f'/costs/{au}/' if n_in[st] == 1 else '/costs/'   # a state with several places (California): the place list
     state_link['TX'] = '#tx-places'
     W, Hh = 12, 8
     cells = []
@@ -1673,8 +1695,8 @@ def national_section(areas, summaries, procs, n_rates_note):
         cells.append(f"<a href='{state_link[st]}' aria-label='{esc(label)}'><title>{esc(label)}</title>{inner}</a>" if st in state_link
                      else f"<g role='img' aria-label='{esc(label)}'><title>{esc(label)}</title>{inner}</g>")
     T, F = sum(tot.values()), sum(found.values())
-    tx = [(a, au) for a, au in areas if area_state(a) == 'TX']
-    st_areas = [(a, au) for a, au in areas if area_state(a) != 'TX']
+    tx = [(a, au) for a, au in areas if page_state(a) == 'TX']
+    st_areas = [(a, au) for a, au in areas if page_state(a) != 'TX']
 
     # the biggest spread among featured procedures, from the data (changes with every build)
     best = None
