@@ -158,6 +158,11 @@ def apply(d):
         changed += med_areas.patch_map(d)
     except Exception as e:
         print(f'sitewide: map Medicare areas not applied ({type(e).__name__}: {e})')
+    try:   # Oct 31, 2026 (Betsy): area dropdowns list states first; a state's places open beside it (site/area_menu.py)
+        import area_menu
+        changed += area_menu.apply(d)
+    except Exception as e:
+        print(f'sitewide: area menus not applied ({type(e).__name__}: {e})')
     print(f'sitewide: {changed} files updated (name, Units look, share image)')
     return changed
 

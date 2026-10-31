@@ -18,6 +18,7 @@ so /v2/ always shows the same figures as the price pages.
 import control_money   # sibling module: the control center's money tab
 import control_cash_oon   # sibling module: the control center's cash prices and out-of-network tabs (Oct 30)
 import control_state_lists   # sibling module: Every-state table names + completion colors (Oct 31)
+import area_menu   # sibling module: states-first area dropdowns on the site and control center (Oct 31)
 import csv
 import hashlib
 import html
@@ -838,6 +839,7 @@ def _deploy_once():
     changed = control_money.patch(d) or changed   # Oct 25: "Where the money goes" tab
     changed = control_cash_oon.patch(d) or changed   # Oct 30: "Cash prices" and "Out of network" tabs
     changed = control_state_lists.patch(d) or changed   # Oct 31: Every-state names behind each count, red/yellow/green
+    changed = area_menu.apply(d) > 0 or changed   # Oct 31: area dropdowns list states first, places beside each state
     control_money.upload(s3, B)
     changed = build(d) or changed
     if not changed:
