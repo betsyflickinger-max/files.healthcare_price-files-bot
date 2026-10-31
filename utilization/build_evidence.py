@@ -198,9 +198,11 @@ def main():
     apc_note = f"no {APC_KEY} in storage; hospital outpatient proof can't be tied to codes yet"
     if exists(c, APC_KEY):
         med = json.loads(c.get_object(Bucket=B, Key=APC_KEY)["Body"].read())
+        med = med.get("med", med)   # build_med_all.py writes {"med": {code: {...}}, "hcpcs_names": {...}}
         pairs = [(k, str(v["opps"][2]).strip().lstrip("0")) for k, v in med.items()
                  if isinstance(v, dict) and isinstance(v.get("opps"), list) and len(v["opps"]) > 2 and str(v["opps"][2]).strip()]
-        con.executemany("insert into c2a values (?, ?)", pairs)
+        if pairs:
+            con.executemany("insert into c2a values (?, ?)", pairs)
         apc_note = f"HCPCS -> APC for {len(pairs):,} codes from {APC_KEY} (CMS OPPS Addendum B, July 2026; 2024 volume matched to 2026 groups)"
 
     # ---- one evidence table ----
