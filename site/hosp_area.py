@@ -311,8 +311,8 @@ def split_flow(O, st, a, done):
             O.log(a, 'REGIONAL SPLIT FAILED 3 times: see the split machine log (run.log); nothing published'); return 0
         if not O.alive(role): O.bundle()   # the machine runs this repository's current code
         O.ensure(st, role, SIZE_SPLIT, f"/root/v/bin/python /root/h/hosp_area.py split {a} >> /root/run.log 2>&1", dict(SP=SP), False)
-        O.log(a, 'regional split running')
-        return 1
+        O.log(a, 'regional split running (about an hour); the publish lock is freed meanwhile')
+        return 0   # not 'busy': the split takes long, so the page job frees the site lock and the next run checks again
     plan = O.getj(SP + 'areas.json', {})
     changed = False
     for r in R:   # each region's hospitals: the state's hospital files whose hospital ZIP is in the region

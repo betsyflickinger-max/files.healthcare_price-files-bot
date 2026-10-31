@@ -31,7 +31,7 @@ REGIONS = {
                                 'Tuolumne', 'Calaveras', 'Mono', 'Inyo', 'Monterey', 'San Benito', 'San Luis Obispo', 'Santa Barbara']),
     },
 }
-LIVE = False   # Oct 31, 2026: hosp_area.py starts splitting only once a test split has been checked (region-test.yml)
+LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
 STATE_CODE = {'california': 'CA'}
 PARENT = {r: s for s, R in REGIONS.items() for r in R}   # region slug -> state page slug
 
