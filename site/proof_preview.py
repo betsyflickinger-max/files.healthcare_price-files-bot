@@ -81,7 +81,10 @@ def main():
             out.append(f"| {j + 1} | {(b['name'] + ' ' + money(b['v'])) if b else ''} | {(n['name'] + ' ' + money(n['v'])) if n else ''} | "
                        f"{n.get('proof', '') if n else ''} |")
         al = S1['also_listed']
-        out += ["", f"Also listed, may not offer this procedure: {len(al)}" + (" (" + "; ".join(f"{e['name']} {money(e['v'])}" for e in al[:8])
+        for e in al:
+            cc = (loc.get(e['fi']) or [None, None, None])[2]
+            e['diag'] = f"CCN {cc}, {P.ccn_groups.get(cc, 0)} Medicare outpatient groups on record" if cc else 'no CCN'
+        out += ["", f"Also listed, may not offer this procedure: {len(al)}" + (" (" + "; ".join(f"{e['name']} {money(e['v'])} [{e.get('diag', '')}]" for e in al[:8])
                                                                                + (" ..." if len(al) > 8 else "") + ")" if al else ""), ""]
     out += ["## All sample procedures together", "", "| Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |",
             "|---|---|---|---|"]

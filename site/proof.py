@@ -44,6 +44,9 @@ class Proof:
         self.apc = {}        # (ccn, apc) -> record
         self.drg = {}        # (ccn, drg) -> record
         self.apcs, self.phy_codes = set(), set()
+        self.apc_fam = {}    # apc -> family name ("Level 3 Musculoskeletal Procedures" -> "Musculoskeletal Procedures")
+        self.fam = {}        # (ccn, family) -> best record in that family (CMS moves codes between levels from year to year)
+        self.ccn_groups = {} # ccn -> number of Medicare outpatient groups with volume (diagnostic)
         for i in range(tb.num_rows):
             src = d['evidence_source'][i]
             rec = {'src': LABEL[src], 'n': int(d['volume'][i] or 0), 'unit': d['unit'][i], 'year': d['data_year'][i],
@@ -54,8 +57,14 @@ class Proof:
             c = (d['code'][i] or '').strip()
             if src == 'medicare_outpatient':
                 self.apcs.add(c)
+                fam = re.sub(r'^Level \d+\s+', '', rec['group']).strip().lower()
+                self.apc_fam[c] = fam
                 if d['ccn'][i]:
                     self.apc[(d['ccn'][i], c)] = rec
+                    self.ccn_groups[d['ccn'][i]] = self.ccn_groups.get(d['ccn'][i], 0) + 1
+                    k = (d['ccn'][i], fam)
+                    if k not in self.fam or rec['n'] > self.fam[k]['n']:
+                        self.fam[k] = rec
             elif src == 'medicare_inpatient':
                 if d['ccn'][i]:
                     self.drg[(d['ccn'][i], c.zfill(3))] = rec
@@ -90,7 +99,7 @@ class Proof:
             apc = self.c2a.get(code)
             if not apc or apc not in self.apcs:
                 return ('proved', rec) if rec else ('not_covered', "Medicare publishes no hospital volume for this kind of procedure")
-            hrec = self.apc.get((ccn, apc)) if ccn else None
+            hrec = (self.apc.get((ccn, apc)) or self.fam.get((ccn, self.apc_fam.get(apc)))) if ccn else None
             if hrec or rec:
                 return 'proved', hrec or rec
             return ('no_record', NO_RECORD.format(year=self.year)) if ccn else ('not_covered', 'no Medicare hospital ID matched')
