@@ -1,8 +1,8 @@
 <!-- Control center: "Every state" table, names behind each number + completion colors (Oct 31, 2026, Betsy) -->
 <style>
-#states-table td.n .sl-n{all:unset;cursor:pointer;font-weight:600;border-bottom:1px dotted currentColor}
-#states-table td.n .sl-n:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
-#states-table td.n .sl-zero{cursor:default;border-bottom:0;font-weight:400}
+.pt td .sl-n{all:unset;cursor:pointer;font-weight:600;border-bottom:1px dotted currentColor}
+.pt td .sl-n:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+.pt td .sl-zero{cursor:default;border-bottom:0;font-weight:400}
 .sl-key{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:0}
 .sl-key i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:4px;vertical-align:-1px}
 .sl-panel{border-top:1px solid var(--color-border-line);padding-top:var(--cds-gap-sm)}
@@ -15,35 +15,31 @@
 </style>
 <script>
 (function () {
-  // Each count in "Every state" lists the hospitals behind it (hover for the first names, click for all of them),
-  // using the same hospital rows (dataset "hospitals", dashboard/build.py) and the same status buckets the counts come from.
+  // 1. The public site's Oct 19 rule (sitewide.py: prices in Units blue, selector :is(.price,.n,.tv,...)) also matched every
+  //    number cell here. Remove that one rule on this page only, so the control center's own colors show again.
+  function dropBlue() {
+    for (const sh of document.styleSheets) {
+      let rules; try { rules = sh.cssRules; } catch (e) { continue; }
+      for (let i = rules.length - 1; i >= 0; i--) {
+        const t = rules[i].selectorText || '';
+        if (t.includes('.price') && t.includes('.tv') && /\.n\b/.test(t)) { try { sh.deleteRule(i); } catch (e) {} }
+      }
+    }
+  }
+  dropBlue();
+  document.querySelectorAll('link[rel=stylesheet]').forEach((l) => l.addEventListener('load', dropBlue));
+  window.addEventListener('load', dropBlue);
+
+  // 2. Numbers that list what is behind them (hover: first 12 names; click: the full list under the table), colored by
+  //    completion. Everything comes from datasets the page already loads (dashboard/build.py, dashboard/build_prices.py).
   const $ = (s) => document.querySelector(s);
   const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+  const fmtN = (v) => Number(v).toLocaleString('en-US');
+  const fmtM = (v) => v == null ? '—' : '$' + Number(v).toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
   const BUCKET = {'Have file': 'have', 'Download failed': 'failed', 'Known file, not downloaded': 'pending', 'Not checked yet': 'unchecked'};
   const bucket = (s) => BUCKET[s] || 'nofile';
-  const COLS = {
-    hospitals: {label: 'All hospitals on the CMS list', pick: () => true},
-    have: {label: 'Have a usable price file', pick: (h) => bucket(h.status) === 'have'},
-    coverage: {label: 'Still without a usable file', pick: (h) => bucket(h.status) !== 'have'},
-    failed: {label: 'Download failed', pick: (h) => bucket(h.status) === 'failed'},
-    nofile: {label: 'No file found yet', pick: (h) => bucket(h.status) === 'nofile'},
-  };
-  // completion: green 90%+, yellow 75-89%, red under 75%, grey not started
-  const band = (c) => c == null || c === '' ? null : Number(c) >= 0.9 ? 'g' : Number(c) >= 0.75 ? 'y' : 'r';
   const PAL = {light: {g: '#15803D', y: '#A16207', r: '#B91C1C'}, dark: {g: '#4ADE80', y: '#FACC15', r: '#F87171'}};
-  const fmtN = (v) => Number(v).toLocaleString('en-US');
-  let byState = null, src = null, open = null;
-
-  function index() {
-    const hs = rowsOf('hospitals');
-    if (!hs) return null;
-    if (hs !== src) {
-      src = hs; byState = new Map();
-      hs.forEach((h) => { (byState.get(h.state) || byState.set(h.state, []).get(h.state)).push(h); });
-      byState.forEach((l) => l.sort((a, b) => String(a.hospital).localeCompare(String(b.hospital))));
-    }
-    return byState;
-  }
+  const band = (c) => c == null || c === '' || isNaN(c) ? null : Number(c) >= 0.9 ? 'g' : Number(c) >= 0.75 ? 'y' : 'r';
   function palette() {
     const res = window.PT && window.PT.resolve ? window.PT.resolve('var(--color-panel)') : '';
     const c = window.d3 && d3.color(res);
@@ -51,87 +47,252 @@
     const {r, g, b} = c.rgb();
     return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5 ? PAL.dark : PAL.light;
   }
-  function namesFor(st, f) {
-    const ix = index();
-    return ix ? (ix.get(st) || []).filter(COLS[f].pick) : null;
+  const hospLink = (h) => ({text: h.website || '—', href: h.website && /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(h.website) ? 'https://' + h.website : null});
+  const HOSP_HEAD = ['Hospital', 'City', 'Status', 'What the bot found', 'File date', 'File website'];
+  const hospRow = (h) => [h.hospital, h.city, h.status, h.detail, h.file_date ? h.file_date + (h.stale ? ' (old)' : '') : '—', hospLink(h)];
+  const hospLine = (h) => h.hospital + (h.city ? ', ' + h.city : '');
+
+  // hospitals grouped by state, sorted by name (rebuilt only when the dataset changes)
+  let hsrc = null, byState = null;
+  function hospIndex() {
+    const hs = rowsOf('hospitals');
+    if (!hs) return null;
+    if (hs !== hsrc) {
+      hsrc = hs; byState = new Map();
+      hs.forEach((h) => { (byState.get(h.state) || byState.set(h.state, []).get(h.state)).push(h); });
+      byState.forEach((l) => l.sort((a, b) => String(a.hospital).localeCompare(String(b.hospital))));
+    }
+    return byState;
   }
 
-  function showPanel() {
-    const card = $('#states-table-card');
-    let p = card.querySelector('.sl-panel');
-    if (!open) { if (p) p.remove(); return; }
-    const list = namesFor(open.st, open.f);
+  // one open list per card
+  const openLists = {};
+  function showPanel(card) {
+    const o = openLists[card.id];
+    let p = card.querySelector(':scope > .sl-panel');
+    if (!o) { if (p) p.remove(); return; }
+    const got = o.get();
     if (!p) { p = document.createElement('div'); p.className = 'sl-panel'; card.appendChild(p); }
     p.replaceChildren();
     const h = document.createElement('div'); h.className = 'sl-h';
-    const t = document.createElement('h4');
-    t.textContent = `${open.name}: ${COLS[open.f].label}` + (list ? ` (${fmtN(list.length)})` : '');
+    const t = document.createElement('h4'); t.textContent = o.title + (got ? ` (${fmtN(got.rows.length)})` : '');
     const x = document.createElement('button'); x.type = 'button'; x.className = 'sl-x'; x.textContent = 'Close';
-    x.onclick = () => { open = null; showPanel(); };
+    x.onclick = () => { delete openLists[card.id]; showPanel(card); };
     h.append(t, x); p.appendChild(h);
-    if (!list) { const m = document.createElement('p'); m.className = 'muted'; m.textContent = 'Loading the hospital list…'; p.appendChild(m); return; }
+    if (!got) { const m = document.createElement('p'); m.className = 'muted'; m.textContent = 'Loading the list…'; p.appendChild(m); return; }
     const wrap = document.createElement('div'); wrap.className = 'tbl';
-    const tb = document.createElement('table');
-    tb.innerHTML = '<thead><tr><th>Hospital</th><th>City</th><th>Status</th><th>What the bot found</th><th style="text-align:right">File date</th><th>File website</th></tr></thead><tbody></tbody>';
-    const body = tb.querySelector('tbody');
-    list.forEach((r) => {
+    const tb = document.createElement('table'), thead = document.createElement('thead'), hr = document.createElement('tr'), body = document.createElement('tbody');
+    got.head.forEach((c, i) => { const th = document.createElement('th'); th.textContent = c; if (got.right && got.right.includes(i)) th.style.textAlign = 'right'; hr.appendChild(th); });
+    thead.appendChild(hr); tb.append(thead, body);
+    got.rows.forEach((r) => {
       const tr = document.createElement('tr');
-      [r.hospital, r.city, r.status, r.detail, r.file_date ? r.file_date + (r.stale ? ' (old)' : '') : '—'].forEach((v, i) => {
-        const td = document.createElement('td'); if (i === 4) { td.style.textAlign = 'right'; td.style.whiteSpace = 'nowrap'; } td.textContent = v == null || v === '' ? '—' : String(v); tr.appendChild(td);
+      r.forEach((v, i) => {
+        const td = document.createElement('td');
+        if (got.right && got.right.includes(i)) { td.style.textAlign = 'right'; td.style.whiteSpace = 'nowrap'; }
+        if (v && typeof v === 'object') {
+          if (v.href) { const a = document.createElement('a'); a.href = v.href; a.target = '_blank'; a.rel = 'noopener'; a.textContent = v.text; td.appendChild(a); }
+          else td.textContent = v.text;
+        } else td.textContent = v == null || v === '' ? '—' : String(v);
+        tr.appendChild(td);
       });
-      const td = document.createElement('td');
-      if (r.website && /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(r.website)) { const a = document.createElement('a'); a.href = 'https://' + r.website; a.target = '_blank'; a.rel = 'noopener'; a.textContent = r.website; td.appendChild(a); }
-      else td.textContent = r.website || '—';
-      tr.appendChild(td); body.appendChild(tr);
+      body.appendChild(tr);
     });
     wrap.appendChild(tb); p.appendChild(wrap);
   }
 
-  function decorate() {
-    const table = $('#states-table'), card = $('#states-table-card');
-    if (!table || !card || !window.PT) return;
-    const states = new Map((rowsOf('states') || []).map((s) => [s.state, s]));
-    const fields = [...table.querySelectorAll('thead tr:first-child th')].map((th) => th.dataset.field);
-    const pal = palette(), tip = window.PT.tipper(card);
-    if (!card.querySelector('.sl-key')) {
-      const k = document.createElement('p'); k.className = 'sl-key';
-      k.innerHTML = '<span><i data-b="g"></i>90% or more have a file</span><span><i data-b="y"></i>75 to 89%</span><span><i data-b="r"></i>under 75%</span><span>Hover a number for the hospitals behind it; click for the full list.</span>';
-      card.querySelector('.tbl').after(k);
+  // turn one cell's number into a button: spec = {title, count, lines(): [..] | null, list(): {head, rows, right} | null}
+  function makeList(td, card, spec) {
+    const target = td.querySelector('.bar span') || td;
+    if (target.querySelector('.sl-n')) return;
+    const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sl-n' + (spec.count ? '' : ' sl-zero');
+    btn.textContent = target.textContent; target.replaceChildren(btn);
+    if (!spec.count) return;
+    const tip = window.PT.tipper(card);
+    const hover = (e) => {
+      const lines = spec.lines();
+      if (!lines) { tip.show(e, spec.title, ['Loading the list…']); return; }
+      const out = lines.slice(0, 12);
+      if (lines.length > 12) out.push(`+ ${fmtN(lines.length - 12)} more. Click for the full list.`);
+      if (!lines.length) out.push('None listed.');
+      tip.show(e, `${spec.title} (${fmtN(lines.length)})`, out);
+    };
+    btn.addEventListener('mousemove', hover);
+    btn.addEventListener('mouseleave', () => tip.hide());
+    btn.addEventListener('focus', () => { const b = btn.getBoundingClientRect(); hover({clientX: b.left, clientY: b.bottom}); });
+    btn.addEventListener('blur', () => tip.hide());
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation(); tip.hide();
+      openLists[card.id] = {title: spec.title, get: spec.list};
+      showPanel(card);
+      card.querySelector(':scope > .sl-panel').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+    });
+  }
+  function colorCell(td, col) {
+    td.style.color = col;
+    const bar = td.querySelector('.bar i'); if (bar) bar.style.background = col;
+  }
+  function addKey(table, pal, words) {   // the key sits right under its own table
+    const box = table.closest('.tbl');
+    let k = box.nextElementSibling && box.nextElementSibling.classList.contains('sl-key') ? box.nextElementSibling : null;
+    if (!k) {
+      k = document.createElement('p'); k.className = 'sl-key';
+      k.innerHTML = `<span><i data-b="g"></i>${words[0]}</span><span><i data-b="y"></i>${words[1]}</span><span><i data-b="r"></i>${words[2]}</span>` + (words[3] ? `<span>${words[3]}</span>` : '');
+      box.after(k);
     }
-    card.querySelectorAll('.sl-key i').forEach((i) => { i.style.background = pal[i.dataset.b]; });
-    table.querySelectorAll('tbody tr').forEach((tr) => {
-      const s = states.get(tr.dataset.key); if (!s) return;
+    k.querySelectorAll('i').forEach((i) => { i.style.background = pal[i.dataset.b]; });
+  }
+  // every body row with its cells keyed by header field
+  function rowsWithCells(table) {
+    const fields = [...table.querySelectorAll('thead tr:first-child th')].map((th) => th.dataset.field);
+    return [...table.querySelectorAll('tbody tr')].map((tr) => {
+      const cells = {}; tr.querySelectorAll('td').forEach((td, i) => { cells[fields[i]] = td; });
+      return {tr, key: tr.dataset.key, cells};
+    });
+  }
+  const HOSP_LIST = (rows) => () => rows() ? {head: HOSP_HEAD, rows: rows().map(hospRow), right: [4]} : null;
+  const COMPLETE_WORDS = ['90% or more have a file', '75 to 89%', 'under 75%', 'Hover a number for the names behind it; click for the full list.'];
+
+  // ---- Every state
+  function everyState(pal) {
+    const table = $('#states-table'), card = $('#states-table-card'); if (!table || !card) return;
+    const states = new Map((rowsOf('states') || []).map((s) => [s.state, s]));
+    addKey(table, pal, COMPLETE_WORDS);
+    const COLS = {
+      hospitals: ['All hospitals on the CMS list', () => true, (s) => s.hospitals],
+      have: ['Have a usable price file', (h) => bucket(h.status) === 'have', (s) => s.have],
+      coverage: ['Still without a usable file', (h) => bucket(h.status) !== 'have', (s) => (s.hospitals || 0) - (s.have || 0)],
+      failed: ['Download failed', (h) => bucket(h.status) === 'failed', (s) => s.failed],
+      nofile: ['No file found yet', (h) => bucket(h.status) === 'nofile', (s) => s.nofile],
+    };
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const s = states.get(key); if (!s) return;
       const col = pal[band(s.coverage)] || 'var(--color-fg-muted)';
-      tr.querySelectorAll('td').forEach((td, i) => {
-        const f = fields[i]; if (!COLS[f]) return;
-        td.style.color = col;
-        const bar = td.querySelector('.bar i'); if (bar) bar.style.background = col;
-        const target = td.querySelector('.bar span') || td;
-        const val = f === 'coverage' ? (s.hospitals || 0) - (s.have || 0) : s[f];
-        if (target.querySelector('.sl-n') || s.coverage == null && f !== 'hospitals') return;
-        const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sl-n' + (val ? '' : ' sl-zero');
-        btn.textContent = target.textContent; target.replaceChildren(btn);
-        if (!val) return;
-        const hover = (e) => {
-          const list = namesFor(s.state, f);
-          if (!list) { tip.show(e, `${s.name}: ${COLS[f].label}`, ['Loading the hospital list…']); return; }
-          const lines = list.slice(0, 12).map((h) => h.hospital + (h.city ? ', ' + h.city : ''));
-          if (list.length > 12) lines.push(`+ ${fmtN(list.length - 12)} more. Click for the full list.`);
-          tip.show(e, `${s.name}: ${COLS[f].label} (${fmtN(list.length)})`, lines);
-        };
-        btn.addEventListener('mousemove', hover);
-        btn.addEventListener('mouseleave', () => tip.hide());
-        btn.addEventListener('focus', () => { const b = btn.getBoundingClientRect(); hover({clientX: b.left, clientY: b.bottom}); });
-        btn.addEventListener('blur', () => tip.hide());
-        btn.addEventListener('click', (e) => {
-          e.stopPropagation(); tip.hide();
-          open = {st: s.state, name: s.name, f};
-          showPanel();
-          card.querySelector('.sl-panel').scrollIntoView({behavior: 'smooth', block: 'nearest'});
-        });
+      Object.entries(COLS).forEach(([f, [label, pick, count]]) => {
+        const td = cells[f]; if (!td) return;
+        colorCell(td, col);
+        if (s.coverage == null && f !== 'hospitals') return;
+        const rows = () => { const ix = hospIndex(); return ix ? (ix.get(s.state) || []).filter(pick) : null; };
+        makeList(td, card, {title: `${s.name}: ${label}`, count: count(s), lines: () => rows() && rows().map(hospLine), list: HOSP_LIST(rows)});
       });
     });
-    if (open && card.querySelector('.sl-panel h4') && !/\(\d/.test(card.querySelector('.sl-panel h4').textContent)) showPanel();
+  }
+
+  // ---- Who's publishing: file websites (systems) in the picked state
+  function systems(pal) {
+    const table = $('#sys-table'); if (!table) return;
+    const card = table.closest('.card'); if (!card.id) card.id = 'sys-table-card';
+    const sys = new Map((rowsOf('systems') || []).map((r) => [r.id, r]));
+    addKey(table, pal, COMPLETE_WORDS);
+    const COLS = {
+      hospitals: ['All hospitals', () => true], have: ['Have a usable price file', (h) => bucket(h.status) === 'have'],
+      failed: ['Download failed', (h) => h.status === 'Download failed'],
+      nofile: ['No file found yet', (h) => h.status === 'No file found' || h.status === 'Known file, not downloaded'],
+      stale: ['File over 6 months old', (h) => !!h.stale], unchecked: ['Not checked yet', (h) => h.status === 'Not checked yet'],
+    };
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const r = sys.get(key); if (!r) return;
+      const done = r.hospitals ? (r.unchecked === r.hospitals ? null : r.have / r.hospitals) : null;
+      const col = pal[band(done)] || 'var(--color-fg-muted)';
+      Object.entries(COLS).forEach(([f, [label, pick]]) => {
+        const td = cells[f]; if (!td) return;
+        colorCell(td, col);
+        const rows = () => { const ix = hospIndex(); return ix ? (ix.get(r.state) || []).filter((h) => (h.website || '(no file website known)') === r.website && pick(h)) : null; };
+        makeList(td, card, {title: `${r.website}: ${label}`, count: r[f], lines: () => rows() && rows().map(hospLine), list: HOSP_LIST(rows)});
+      });
+    });
+  }
+
+  // ---- Hospitals list: status colored (file = green, failed = red, no file yet = yellow, not checked = grey)
+  function hospitals(pal) {
+    const table = $('#hosp-table'); if (!table) return;
+    const hs = new Map((rowsOf('hospitals') || []).map((h) => [h.id, h]));
+    addKey(table, pal, ['Have a usable file', 'No file found yet', 'Download failed']);
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const h = hs.get(key); if (!h) return;
+      const b = bucket(h.status), col = b === 'have' ? pal.g : b === 'failed' ? pal.r : b === 'unchecked' ? 'var(--color-fg-muted)' : pal.y;
+      if (cells.status) cells.status.style.color = col;
+      if (cells.file_date) cells.file_date.style.color = h.stale ? pal.r : col;
+      if (cells.stale && h.stale) cells.stale.style.color = pal.r;
+    });
+  }
+
+  // ---- DFW hospital files: file age (6 months is where the site flags a price as old)
+  function files(pal) {
+    const table = $('#files-table'); if (!table) return;
+    const fs = new Map((rowsOf('hospital_files') || []).map((r) => [r.id, r]));
+    const card = table.closest('.card');
+    addKey(table, pal, ['File under 3 months old', '3 to 6 months', 'over 6 months (flagged old) or no date']);
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const r = fs.get(key); if (!r) return;
+      const d = r.days_old, col = d == null ? pal.r : d <= 92 ? pal.g : d <= 183 ? pal.y : pal.r;
+      ['file_date', 'age_flag'].forEach((f) => { if (cells[f]) cells[f].style.color = col; });
+    });
+  }
+
+  // ---- By insurer: networks and procedures priced list their names; colored by share of the featured procedures priced
+  function insurers(pal) {
+    const table = $('#ins-table'); if (!table) return;
+    const card = table.closest('.card'); if (!card.id) card.id = 'insurer-card';
+    const ins = new Map((rowsOf('insurers') || []).map((r) => [r.id, r]));
+    const rates = rowsOf('procedure_rates_all'), procs = rowsOf('procedures');
+    addKey(table, pal, ['Rates for 90% or more of the featured procedures', '75 to 89%', 'under 75%', 'Hover Networks or Procedures priced for the names; click for the full list.']);
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const r = ins.get(key); if (!r) return;
+      const total = procs ? procs.filter((p) => p.market === r.market).length : 0;
+      const col = pal[band(total ? r.procedures_priced / total : null)] || 'var(--color-fg)';
+      ['networks', 'providers', 'hospitals', 'surgery_centers', 'rate_lines', 'procedures_priced'].forEach((f) => { if (cells[f]) colorCell(cells[f], col); });
+      if (cells.networks) {
+        const names = String(r.network_names || '').split(';').map((x) => x.trim()).filter(Boolean).sort((a, b) => a.localeCompare(b));
+        makeList(cells.networks, card, {title: `${r.insurer}: networks`, count: r.networks, lines: () => names,
+          list: () => ({head: ['Network'], rows: names.map((n) => [n])})});
+      }
+      if (cells.procedures_priced) {
+        const got = () => {
+          const rs = rowsOf('procedure_rates_all'); if (!rs) return null;
+          const m = new Map();
+          rs.forEach((x) => { if (x.market === r.market && x.insurer === r.insurer && x.place === 'All places' && x.providers > 0) {
+            const k = x.code, e = m.get(k) || {code: x.code, procedure: x.procedure, category: x.category, fac: null, doc: null};
+            if (x.fee === 'Facility fee') e.fac = x; else e.doc = x; m.set(k, e); } });
+          return [...m.values()].sort((a, b) => String(a.procedure).localeCompare(String(b.procedure)));
+        };
+        makeList(cells.procedures_priced, card, {title: `${r.insurer}: procedures with rates`, count: r.procedures_priced,
+          lines: () => got() && got().map((e) => `${e.procedure} (${e.code})`),
+          list: () => got() && {head: ['Procedure', 'Code', 'Category', 'Providers, facility fee', 'Middle facility fee', 'Providers, doctor fee', 'Middle doctor fee'], right: [3, 4, 5, 6],
+            rows: got().map((e) => [e.procedure, e.code, e.category, e.fac ? fmtN(e.fac.providers) : '—', e.fac ? fmtM(e.fac.middle) : '—', e.doc ? fmtN(e.doc.providers) : '—', e.doc ? fmtM(e.doc.middle) : '—'])}});
+      }
+    });
+  }
+
+  // ---- By procedure: "Providers" on an All-insurers row lists each insurer's count; colored by share of insurers with rates
+  function procedures(pal) {
+    const table = $('#proc-table'); if (!table) return;
+    const card = table.closest('.card'); if (!card.id) card.id = 'proc-table-card';
+    const rs = rowsOf('procedure_rates_all'), insr = rowsOf('insurers'); if (!rs) return;
+    const byId = new Map(rs.map((r) => [r.id, r]));
+    addKey(table, pal, ['90% or more of the market\'s insurers have rates', '75 to 89%', 'under 75%', 'On the All insurers view, hover Providers for each insurer\'s count; click for the full list.']);
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const r = byId.get(key); if (!r) return;
+      const each = rs.filter((x) => x.market === r.market && x.code === r.code && x.fee === r.fee && x.place === r.place && x.insurer !== 'All insurers' && x.providers > 0)
+        .sort((a, b) => b.providers - a.providers);
+      const nIns = insr ? insr.filter((i) => i.market === r.market).length : 0;
+      const col = r.insurer === 'All insurers' ? (pal[band(nIns ? each.length / nIns : null)] || 'var(--color-fg)') : 'var(--color-fg)';
+      ['providers', 'lowest', 'middle', 'highest', 'pct_medicare_middle', 'spread'].forEach((f) => { if (cells[f]) cells[f].style.color = col; });
+      if (r.insurer !== 'All insurers' || !cells.providers) return;
+      makeList(cells.providers, card, {title: `${r.procedure} (${r.code}), ${r.fee.toLowerCase()}, ${String(r.place).toLowerCase()}: providers by insurer`, count: each.length,
+        lines: () => each.map((x) => `${x.insurer}: ${fmtN(x.providers)} providers, middle ${fmtM(x.middle)}`),
+        list: () => ({head: ['Insurer', 'Providers', 'Lowest', 'Middle', 'Highest', '× Medicare (middle)'], right: [1, 2, 3, 4, 5],
+          rows: each.map((x) => [x.insurer, fmtN(x.providers), fmtM(x.lowest), fmtM(x.middle), fmtM(x.highest), x.pct_medicare_middle == null ? '—' : x.pct_medicare_middle.toFixed(1) + '×'])})});
+    });
+  }
+
+  function decorate() {
+    if (!window.PT) return;
+    const pal = palette();
+    [everyState, systems, hospitals, files, insurers, procedures].forEach((fn) => { try { fn(pal); } catch (e) { console.error('[control] lists', fn.name, e); } });
+    Object.keys(openLists).forEach((id) => {   // a list opened before its data arrived fills in once it has
+      const card = document.getElementById(id), h = card && card.querySelector(':scope > .sl-panel h4');
+      if (h && !/\(\d/.test(h.textContent)) showPanel(card);
+    });
   }
   dash.onData(decorate);
 })();
