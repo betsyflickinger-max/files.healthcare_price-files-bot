@@ -16,11 +16,11 @@ def run(w, out, local_pf=None):
     shots = os.path.join(out, 'shots'); os.makedirs(shots, exist_ok=True)
     getter = None
     if not local_pf:
-        from site_files import s3, B
-        cur = s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip()
+        from site_files import s3, B as BK
+        cur = s3.get_object(Bucket=BK, Key='site/every/CURRENT')['Body'].read().decode().strip()
         def getter(kind, name):
             try:
-                return s3.get_object(Bucket=B, Key=f'site/every/{cur}/{kind}/{name}' if kind in 't h' else f'site/every/{cur}/{name}')['Body'].read()
+                return s3.get_object(Bucket=BK, Key=f'site/every/{cur}/{kind}/{name}' if kind in 't h' else f'site/every/{cur}/{name}')['Body'].read()
             except Exception as ex:
                 print('shots: R2 read failed', kind, name, repr(ex)[:160], flush=True)
                 return None
