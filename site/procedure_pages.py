@@ -23,7 +23,7 @@ site/deploy/costs_state.json), so it is cheap to run daily. URLs never change on
 """
 import home_bits   # homepage hero pieces shared with site/ux_polish.py
 import visuals     # price line, bill slips, word cards on every price page
-import proof as proof_mod   # card #2: proof a provider does the procedure (Texas)
+import proof as proof_mod   # card #2: proof a provider does the procedure (every state, Betsy OK'd <switch-on date>)
 import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
 from concurrent.futures import ThreadPoolExecutor
 
@@ -187,14 +187,21 @@ class Store:
             return {}
 
     def proof(self, area, n_fac):
-        """(Proof, npis) for Texas areas (card #2, Oct 31, 2026; site/proof.py), or (None, None): the page then builds exactly as
-        before. The proof table is Texas only for now."""
-        if self.offline or not self.s3 or area_state(area) != 'TX':
+        """(Proof, npis) for areas in PROOF_STATES (card #2; site/proof.py), or (None, None): the page then builds exactly as
+        before. Texas reads the table it has used since Oct 31; every other state reads its own (by_state/evidence_<st>.parquet)."""
+        st = area_state(area)
+        if self.offline or not self.s3 or not proof_on(st):
             return None, None
+        if not hasattr(self, '_proofs'):
+            self._proofs = {}
         try:
-            if not hasattr(self, '_proof'):
-                from proof import Proof, load_taxonomy
-                self._proof = Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B))
+            if st not in self._proofs:
+                from proof import Proof, load_taxonomy, load_taxonomy_state
+                self._proofs[st] = None
+                self._proofs[st] = (Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B)) if st == 'TX' else
+                                    Proof(self.s3, self.B, state=st, tax=load_taxonomy_state(self.s3, self.B, st)))
+            if self._proofs[st] is None:
+                return None, None
             pre = self.prefix(area, 't')
             if not pre or not pre.endswith('t/'):
                 return None, None
@@ -202,10 +209,9 @@ class Store:
             if len(npis) != n_fac:
                 print(f"  {area['slug']}: npis.json ({len(npis)}) and page providers ({n_fac}) differ; no proof", flush=True)
                 return None, None
-            return self._proof, npis
+            return self._proofs[st], npis
         except Exception as e:
             print(f"  {area['slug']}: no proof ({type(e).__name__}: {e})", flush=True)
-            self._proof = None
             return None, None
 
     def get(self, area, kind, code):
@@ -283,6 +289,26 @@ STATES = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL'
           'north-carolina': 'NC', 'connecticut': 'CT', 'illinois': 'IL', 'new-york': 'NY', 'california': 'CA', 'louisiana': 'LA',
           'florida': 'FL', 'kentucky': 'KY', 'arizona': 'AZ', 'new-mexico': 'NM', 'north-dakota': 'ND', 'south-dakota': 'SD',
           'michigan': 'MI', 'indiana': 'IN', 'washington-dc': 'DC'}
+
+
+def _scope_states():
+    """State pages built by the shared schedule (site/state_scopes.json): page slug -> state code. Oct 31, 2026: 29 of these
+    (Virginia, Ohio, Pennsylvania ...) were missing from STATES, so area_state() called them Texas."""
+    try:
+        sc = json.load(open(os.path.join(HERE, 'state_scopes.json')))
+        return {slug: code for k, v in sc.items() if not k.startswith('_') for code, slug in v.items()}
+    except Exception:
+        return {}
+
+
+STATES = {**_scope_states(), **STATES}
+
+# Card #2: which states' price pages use proof of procedures. Betsy switches each step on (Texas Oct 31; all states <date>).
+PROOF_STATES = os.environ.get('PROOF_STATES', 'ALL')
+
+
+def proof_on(st):
+    return PROOF_STATES == 'ALL' or st in {x.strip().upper() for x in PROOF_STATES.split(',')}
 
 
 def area_state(a):
@@ -1916,7 +1942,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
             if pst:
                 n_away = sum(1 for v in pst.values() if v != area_state(a))
                 print(f"  {a['slug']}: {n_away} provider(s) with a practice ZIP outside {area_state(a)} left out of the figures", flush=True)
-            P_, npis_ = store.proof(a, len(D['fac']))   # Oct 31, 2026 (card #2): Texas only; None = pages exactly as before
+            P_, npis_ = store.proof(a, len(D['fac']))   # card #2: states in PROOF_STATES; None = pages exactly as before
             def one(c):
                 try:
                     t_, h_ = store.get(a, 't', c), store.get(a, 'h', c)
@@ -2054,7 +2080,7 @@ def label_high(text):
 
 
 METHOD_PROOF = """<h2 id="proof">Who's ranked: proof a provider does the procedure</h2>
-<p>Insurer files list contract rates for providers who may never do a procedure. On our Texas procedure pages, the list of the 10 lowest prices includes a provider when we have evidence it does the procedure, or when no public file could show it either way:</p>
+<p>Insurer files list contract rates for providers who may never do a procedure. On our procedure pages, the list of the 10 lowest prices includes a provider when we have evidence it does the procedure, or when no public file could show it either way:</p>
 <ul>
 <li><strong>Medicare:</strong> CMS's 2024 counts of services by doctor and procedure, and by hospital and procedure group (outpatient) or hospital-stay group (inpatient). A hospital's outpatient count is for the procedure's group (for example, "Level 1 Intraocular Procedures"), not the exact code. CMS moves codes between levels from year to year, so we accept a count anywhere in the same group family.</li>
 <li><strong>Medicaid:</strong> HHS's provider spending file (2023 and 2024), which counts doctors' and other professionals' bills. We use the counts only; we don't use its payment amounts.</li>
@@ -2064,7 +2090,7 @@ METHOD_PROOF = """<h2 id="proof">Who's ranked: proof a provider does the procedu
 <li><strong>The 10 highest prices are unchanged.</strong> High real prices stay visible.</li>
 <li><strong>Anesthesia clinicians:</strong> when an insurer lists a nurse anesthetist or anesthesiologist under a delivery, surgery, scan or lab code they don't perform, that line is left out of the page's figures and counted. It stays in the Price Finder.</li>
 </ul>
-<p>Sources: <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners/medicare-physician-other-practitioners-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Physician &amp; Other Practitioners ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-outpatient-hospitals/medicare-outpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Outpatient Hospitals ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals/medicare-inpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Inpatient Hospitals ↗</a>, <a href="https://opendata.hhs.gov/datasets/medicaid-provider-spending/" target="_blank" rel="noopener">HHS Medicaid Provider Spending ↗</a>. Texas pages only for now.</p>
+<p>Sources: <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-physician-other-practitioners/medicare-physician-other-practitioners-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Physician &amp; Other Practitioners ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-outpatient-hospitals/medicare-outpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Outpatient Hospitals ↗</a>, <a href="https://data.cms.gov/provider-summary-by-type-of-service/medicare-inpatient-hospitals/medicare-inpatient-hospitals-by-provider-and-service" target="_blank" rel="noopener">CMS Medicare Inpatient Hospitals ↗</a>, <a href="https://opendata.hhs.gov/datasets/medicaid-provider-spending/" target="_blank" rel="noopener">HHS Medicaid Provider Spending ↗</a>. Medicaid counts are placed in a state by the provider's practice address in the federal NPI registry.</p>
 """
 
 
@@ -2075,6 +2101,13 @@ def patch_method_proof(d):
         return
     s = open(p, encoding='utf-8').read()
     if 'id="proof"' in s:
+        if METHOD_PROOF.strip() in s:
+            return
+        j = s.find('<h2 id="proof">')     # an older version of the section (Texas only): replace it
+        k = s.find('<h2', j + 5)
+        k = k if k > 0 else s.find('</main>', j)
+        if j > 0 and k > j:
+            open(p, 'w', encoding='utf-8').write(s[:j] + METHOD_PROOF + s[k:])
         return
     i = s.find('<h2 id="medicare-local">')
     i = i if i > 0 else s.rfind('</main>')
