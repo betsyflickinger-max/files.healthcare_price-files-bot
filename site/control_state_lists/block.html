@@ -285,10 +285,42 @@
     });
   }
 
+  // ---- Network access, "Every network": same red/yellow/green as the Reach vs. price and Low-price options charts
+  //      (Oct 31, Betsy). Typical rate: green under 95% of the market middle, yellow 95-105%, red over 105%.
+  //      Rates in the cheapest quarter: green over 30%, yellow 20-30%, red under 20% (a typical network: about 25%).
+  function networks(pal) {
+    const table = $('#n-table'); if (!table || !table.querySelector('tbody tr')) return;
+    const acc = new Map((rowsOf('net_access') || []).map((r) => [r.id, r]));
+    const tv = (v) => v == null ? null : v < 0.95 ? 'g' : v <= 1.05 ? 'y' : 'r';
+    const cq = (v) => v == null ? null : v > 0.30 ? 'g' : v >= 0.20 ? 'y' : 'r';
+    let any = false;
+    rowsWithCells(table).forEach(({key, cells}) => {
+      const r = acc.get(key); if (!r) return;
+      const a = tv(r.typical_vs_market), b = cq(r.cheap_share);
+      if (cells.typical_vs_market) { cells.typical_vs_market.style.color = a ? pal[a] : ''; cells.typical_vs_market.style.fontWeight = a ? 600 : ''; }
+      if (cells.cheap_share) { cells.cheap_share.style.color = b ? pal[b] : ''; cells.cheap_share.style.fontWeight = b ? 600 : ''; }
+      if (cells.label) cells.label.style.color = a ? pal[a] : '';
+      any = any || !!(a || b);
+    });
+    addKey(table, pal, ['Cheaper: typical rate under 95% of the market middle, or over 30% of rates in the cheapest quarter',
+      'About the market: 95 to 105%, or 20 to 30%', 'Pricier: over 105%, or under 20%',
+      ' ']);   // the 4th span is the note below, set on every redraw
+    const k = table.closest('.tbl').nextElementSibling;
+    if (k && k.classList.contains('sl-key')) { const note = k.lastElementChild; if (note && !note.querySelector('i')) note.textContent = any ? '' : 'Insurer rows have no typical rate; pick Networks to see the colors.'; }
+    // "Cheapest network by procedure" table: middle rate vs. the market middle, same bands (read from its own % cell)
+    const pt = $('#n-proc-table'); if (!pt || !pt.querySelector('tbody tr')) return;
+    rowsWithCells(pt).forEach(({cells}) => {
+      const t = cells.vs_market ? parseFloat(cells.vs_market.textContent.replace(/[^\d.]/g, '')) : NaN;
+      const c = isNaN(t) ? null : tv(t / 100);
+      ['label', 'middle', 'vs_market'].forEach((f) => { if (cells[f]) { cells[f].style.color = c ? pal[c] : ''; cells[f].style.fontWeight = c && f !== 'label' ? 600 : ''; } });
+    });
+    addKey(pt, pal, ['Cheaper: middle rate under 95% of the market middle', '95 to 105%', 'Pricier: over 105%']);
+  }
+
   function decorate() {
     if (!window.PT) return;
     const pal = palette();
-    [everyState, systems, hospitals, files, insurers, procedures].forEach((fn) => { try { fn(pal); } catch (e) { console.error('[control] lists', fn.name, e); } });
+    [everyState, systems, hospitals, files, insurers, procedures, networks].forEach((fn) => { try { fn(pal); } catch (e) { console.error('[control] lists', fn.name, e); } });
     Object.keys(openLists).forEach((id) => {   // a list opened before its data arrived fills in once it has
       const card = document.getElementById(id), h = card && card.querySelector(':scope > .sl-panel h4');
       if (h && !/\(\d/.test(h.textContent)) showPanel(card);

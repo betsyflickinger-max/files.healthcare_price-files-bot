@@ -65,6 +65,17 @@ NET_STEPS = [   # (marker, anchor, replacement) for the Network access tab
     # Oct 31 (later): the headline boxes read net_headline, worked out by the bot (board/net_headline.py); the in-page
     # net_summary calc is only a fallback (it left the boxes blank on the live page).
     ("rowsOf('net_headline')", "summary = rowsOf('net_summary')", "summary = rowsOf('net_headline') || rowsOf('net_summary')"),
+    # Oct 31: "How much networks overlap" sized to fit one screen (Betsy): squares shrink to the window height, never
+    # wider than 40px, and the chart is drawn at that size instead of being stretched to the card's width.
+    ("fitH = ", "const W = Math.max(560, el.clientWidth), cell = Math.max(14, Math.floor((W - lab - 8) / cn.length)), top = 150, H = top + cell * rn.length + 4;",
+     "const top = Math.min(150, 16 + Math.max(0, ...cn.map((t) => short(t).length)) * 5.8), fitH = Math.floor((Math.max(380, window.innerHeight - 250) - top) / Math.max(1, rn.length));\n"
+     "    const cell = Math.max(14, Math.min(Math.floor((Math.max(560, el.clientWidth) - lab - 8) / cn.length), fitH, 40)), W = Math.max(360, lab + cell * cn.length + 120), H = top + cell * rn.length + 4;"),
+    ("attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Network overlap",
+     "attr('width', W > el.clientWidth ? W : '100%').attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Network overlap",
+     "attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`).attr('role', 'img').attr('aria-label', 'Network overlap"),
+    # Oct 31: the procedure chart's middle-rate dots use the tab's red/yellow/green bands (95% / 105% of the market middle)
+    ("d.vs_market < 0.95 ? accent()", ".style('fill', (d) => d.middle <= mk ? accent() : second());",
+     ".style('fill', (d) => d.vs_market < 0.95 ? accent() : d.vs_market <= 1.05 ? (PT.resolve ? PT.resolve('var(--color-warn)') : '#F5C542') : second());"),
 ]
 
 
