@@ -93,7 +93,8 @@ def h2(areas):
             print(area, 'h2_build failed', flush=True); continue
         s3.upload_file(f'{d}/out/hosp_index.json', B, a['prefix'] + 'hosp/hosp_index.json')
         n = len(json.load(open(f'{d}/out/hosp_index.json'))['src'])
-        s3.put_object(Bucket=B, Key=SP + f'h2/{area}.done', Body=json.dumps({'files': n, 'secs': round(time.time() - t0)}).encode())
+        s3.put_object(Bucket=B, Key=SP + f'h2/{area}.done', Body=json.dumps({'files': n, 'secs': round(time.time() - t0),
+                      'jobs': sorted(j['id'] for j in a['jobs'])}).encode())   # Oct 31: which hospital files (regions check it)
         subprocess.run(['rm', '-rf', d])
         print(area, 'done', n, 'hospital files', round(time.time() - t0), 's', flush=True)
 
@@ -344,14 +345,21 @@ def split_flow(O, st, a, done):
         lost = [j for j in nz if not where(j)]
         O.log(a, 'hospital files by region:', ', '.join(f"{r} {len(plan[r]['jobs'])}" for r in R),
               f'| placed by city {len(nz) - len(lost)} of {len(nz)} without a ZIP | left off: ' + ('; '.join(j.get('name', j.get('id', '?')) for j in lost) or 'none'))
-    tries, busy = st.setdefault('publish_tries', {}), 0
+    tries, busy, bundled = st.setdefault('publish_tries', {}), 0, False
     for r in R:
+        if r in done and r not in st['published']:   # a region's hospital build counts only for its current hospital list
+            if O.getj(SP + f'h2/{r}.done', {}).get('jobs') != sorted(j['id'] for j in plan[r]['jobs']):
+                O.log(r, 'hospital build was for an older hospital list: building again')
+                try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{r}.done')
+                except Exception: pass
+                done.discard(r); st['launches'].pop(f'h2-{r}', None)
         if str(st['published'].get(r, '')).startswith('failed: page not published') and tries.get(r, 1) < PUBLISH_TRIES:
             tries[r] = tries.get(r, 1) + 1; st['published'].pop(r, None)
             O.log(r, 'publish failed before: trying again (try', tries[r], 'of', PUBLISH_TRIES, ')')
         if r in st['published']: continue
         role = f'h2-{r}'
         gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
+        if not (r in done or gave_up or bundled or O.alive(role)): O.bundle(); bundled = True   # machines get today's code
         O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {r} >> /root/run.log 2>&1",
                  dict(SP=SP, NP='8', MEM='11GB'), r in done or gave_up)
         if r in done: publish_one(O, st, r, 'live with hospitals')
