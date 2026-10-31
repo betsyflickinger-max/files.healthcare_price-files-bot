@@ -12,10 +12,15 @@ Rules (Betsy, Oct 30):
         vasectomy, sports injuries such as ACL repair): Medicare is mostly people 65+
   * Texas only for now (the proof table is Texas). Other states' pages are unchanged.
 
+  * Anesthesia clinicians (nurse anesthetists, anesthesiologists) listed by an insurer under a delivery, surgery, scan or lab
+    code they don't perform (Oct 31: CRNAs at $435 were the "lowest" vaginal delivery in DFW) are left out of that page's
+    figures and counted, like the existing kind-of-place test. Their rates stay in the files and the Price Finder.
+
 status(...) returns (state, record):
   ('proved', rec)       rec = {'src', 'n', 'unit', 'year', 'url', 'group'}: shown as a proof line with link and year
   ('not_covered', why)  ranked as before; why says which rule applied
-  ('no_record', why)    held out of the rankings, still listed; why is the plain note shown with it
+  ('no_record', why)    held out of the lowest-10 ranking, still listed; why is the plain note shown with it
+  ('wrong_specialty', why) left out of the page's figures (anesthesia clinician on a code they don't perform)
 """
 import io
 import re
@@ -26,12 +31,15 @@ POOR_GUIDE_NAME = re.compile(r'birth|deliver|c-section|cesarean|pregnan|prenatal
                              r'|well[- ]child|vaccin|immuniz', re.I)
 LABEL = {'medicare_physician': 'Medicare', 'medicare_outpatient': 'Medicare', 'medicare_inpatient': 'Medicare',
          'medicaid_professional': 'Medicaid'}
+ANESTHESIA_TAX = ('207L', '367500000X', '367H00000X')     # anesthesiology, nurse anesthetist, anesthesiologist assistant
+ANESTHESIA_FREE_CATS = {'Office visits', 'Behavioral health', 'Physical therapy', 'Other', 'Heart'}   # pain clinics bill visits
 NO_RECORD = ("No Medicare or Medicaid record for this procedure ({year}). That doesn't mean they don't do it: "
              "Medicare is mostly people 65+, and rows under 11 patients are hidden.")
 
 
 class Proof:
-    def __init__(self, s3=None, bucket=None, year='2024', path=None):
+    def __init__(self, s3=None, bucket=None, year='2024', path=None, tax=None):
+        self.tax = tax or {}     # npi -> primary taxonomy (NPPES), for the anesthesia check
         import pyarrow.parquet as pq
         if path:
             tb = pq.read_table(path)
@@ -87,6 +95,10 @@ class Proof:
 
     def status(self, kind, npi, ccn, code, name, cat, drg):
         """kind: the page's provider kind (H hospital, A surgery center, G group/other place, P individual clinician)."""
+        if kind == 'P' and not re.match(r'0[01]\d\d\d$', code or '') and cat not in ANESTHESIA_FREE_CATS \
+                and str(self.tax.get(str(npi or ''), '')).startswith(ANESTHESIA_TAX):
+            return 'wrong_specialty', 'anesthesia clinician listed under a code they don\'t perform'
+
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
             return 'not_covered', 'Medicare is a poor guide for this procedure (mostly people 65+)'
         npi = str(npi or '')
@@ -122,3 +134,24 @@ def line(rec):
     g = f" in the procedure group “{rec['group']}”" if rec['group'] and rec['unit'] != 'claim lines' and rec['src'] == 'Medicare' \
         and rec.get('level_group') else ''
     return f"{rec['src']}: {rec['n']:,} {rec['unit']}{g}, {rec['year']}"
+
+
+def load_taxonomy(s3, bucket, key='data/scope/tx_npis_all.parquet'):
+    """npi -> primary taxonomy code from the Texas NPPES extract the bot already keeps."""
+    import pyarrow.parquet as pq
+    tb = pq.read_table(io.BytesIO(s3.get_object(Bucket=bucket, Key=key)['Body'].read()), columns=['npi', 'taxonomy_1']).to_pydict()
+    return {str(n): t for n, t in zip(tb['npi'], tb['taxonomy_1']) if t}
+
+
+def for_page(P, D, code, t, npis, loc, kind_of):
+    """{fac index: (state, info)} for one code on one page. info for 'proved' = {'text', 'url'}; otherwise the note."""
+    C = D['codes'][code]
+    drg = 'DRG' in (C.get('type') or '')
+    f = (t or {}).get('f') or C.get('f') or {}
+    out = {}
+    for fi in f:
+        i = int(fi)
+        ccn = ((loc or {}).get(i) or [None, None, None])[2]
+        st, info = P.status(kind_of(D['fac'][i]), npis[i], ccn, code, C['name'], C.get('cat', ''), drg)
+        out[i] = (st, {'text': line(info), 'url': info['url']} if st == 'proved' else info)
+    return out
