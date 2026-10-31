@@ -1,0 +1,33 @@
+{
+ "medicare_physician": {
+  "title": "Medicare Physician & Other Practitioners - by Provider and Service : 2024-12-01",
+  "url": "https://data.cms.gov/sites/default/files/2026-05/b5ebab5a-f490-418a-9bce-4b9f31419356/PHY_R26_P05_V10_D24_Prov_Svc.csv",
+  "label": "2024-12-01",
+  "bytes": 3250282192
+ },
+ "medicare_outpatient": {
+  "title": "Medicare Outpatient Hospitals - by Provider and Service : 2024-01-01",
+  "url": "https://data.cms.gov/sites/default/files/2026-06/794975f5-e335-4cbf-8e87-982c834a9639/MUP_OUT_RY26_P04_V10_DY24_Prov_Svc.csv",
+  "label": "2024-01-01",
+  "bytes": 28075954
+ },
+ "medicare_inpatient": {
+  "title": "Medicare Inpatient Hospitals - by Provider and Service : 2024-01-01",
+  "url": "https://data.cms.gov/sites/default/files/2026-04/828defb5-c9e6-4442-8c1b-f27bc0799daf/MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV",
+  "label": "2024-01-01",
+  "bytes": 37976130
+ },
+ "hospital_enrollments": {
+  "title": "Hospital Enrollments : 2026-10-01",
+  "url": "https://data.cms.gov/sites/default/files/2026-10/961708ac-2136-43cb-9587-ac64af23b6ab/Hospital_Enrollments_2026.09.29.csv",
+  "label": "2026-10-01",
+  "bytes": 2518365
+ },
+ "medicaid_professional": {
+  "title": "Medicaid Provider Spending by HCPCS",
+  "url": "https://stopendataprod.blob.core.windows.net/datasets/medicaid-provider-spending/2026-02-09/dataset/medicaid-provider-spending.parquet",
+  "label": "2026-02-09",
+  "bytes": 3072545478,
+  "page": "https://opendata.hhs.gov/datasets/medicaid-provider-spending/"
+ }
+}
