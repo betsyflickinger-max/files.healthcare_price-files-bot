@@ -84,8 +84,9 @@ if __name__ == '__main__':
     mode = os.environ.get('MODE', 'devkit')
     if mode == 'devkit':
         devkit()
-    elif mode == 'preview':
+    elif mode in ('preview', 'check'):
+        sys.path.insert(0, str(HERE))
         import build_preview
-        build_preview.main(OUT)
+        build_preview.main(str(OUT), [] if mode == 'preview' else ['--no-deploy', '--shots'])
     else:
         sys.exit('unknown mode')
