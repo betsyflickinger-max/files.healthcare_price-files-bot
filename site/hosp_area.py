@@ -37,6 +37,10 @@ HSCOPE = os.environ.get('HOSP_SCOPE', '')
 S7 = HSCOPE in SCOPE_STATES   # a state scope (s7 or nc), not the Texas areas
 STATES = SCOPE_STATES.get(HSCOPE, SCOPE_STATES['s7'])
 STATE_SLUGS = {v for d in SCOPE_STATES.values() for v in d.values()}
+try:   # Oct 31, 2026: regional pages of a state too big for one page (site/regions.py) have state-style builds too
+    sys.path.insert(0, HERE); import regions as _regions; STATE_SLUGS |= set(_regions.PARENT)
+except Exception: _regions = None
+SIZE_SPLIT = 's-8vcpu-32gb-amd'   # region_split.py reads one code's whole price file at a time; the biggest need several GB
 STB = 'st' if HSCOPE in ('', 's7') else 'st' + HSCOPE   # build ids: st-YYYY-MM / hosp-st-YYYY-MM, stnc-YYYY-MM / hosp-stnc-YYYY-MM
 
 
@@ -281,6 +285,62 @@ def redo(areas):
     O.log('next hosp-areas.yml runs with BUILD', O.BID, 'rebuild and republish', ', '.join(areas))
 
 
+def split_flow(O, st, a, done):
+    """Oct 31, 2026 (Betsy chose regional pages): a state too big for one page (California) is split into regional builds
+    (site/region_split.py, on a rented machine), each region gets its own hospital files (h2, same as a state) and is
+    published as its own page, and the state's address is published last as a page linking to the regions
+    (city_page.py landing_page). Returns how many machines are still working. A new state build splits again."""
+    SP, R = O.SP, list(_regions.REGIONS[a])
+    if not _regions.LIVE: O.log(a, 'waiting: regional pages are being tested (regions.LIVE)'); return 0
+    src = newest_build(O.s3, O.B, a); month = src.rstrip('/').rsplit('/', 1)[1]
+    pre = {r: f'site/every-st/{r}/{month}/' for r in R}
+    split_ok = all(O.getj(pre[r] + 'split.json', {}).get('src') == src for r in R)
+    ss = st.setdefault('split_src', {})
+    if not split_ok:
+        role = f'split-{a}'
+        if ss.get(a) != src:   # a new state build: split again, and the regions start over
+            O.log(a, 'too big for one page: splitting', src, 'into', ', '.join(R))
+            ss[a] = src; st['launches'].pop(role, None)
+            for r in R:
+                st['published'].pop(r, None); st['launches'].pop(f'h2-{r}', None)
+                try: O.s3.delete_object(Bucket=O.B, Key=SP + f'h2/{r}.done')
+                except Exception: pass
+            try: O.s3.delete_object(Bucket=O.B, Key=f'site/deploy/cities/{a}/price-finder.html')   # the too-big statewide page
+            except Exception: pass
+        if st['launches'].get(role, 0) >= 3 and not O.alive(role):
+            O.log(a, 'REGIONAL SPLIT FAILED 3 times: see the split machine log (run.log); nothing published'); return 0
+        if not O.alive(role): O.bundle()   # the machine runs this repository's current code
+        O.ensure(st, role, SIZE_SPLIT, f"/root/v/bin/python /root/h/hosp_area.py split {a} >> /root/run.log 2>&1", dict(SP=SP), False)
+        O.log(a, 'regional split running')
+        return 1
+    plan = O.getj(SP + 'areas.json', {})
+    changed = False
+    for r in R:   # each region's hospitals: the state's hospital files whose hospital ZIP is in the region
+        if plan.get(r, {}).get('prefix') != pre[r]:
+            plan[r] = {'prefix': pre[r], 'jobs': [j for j in plan[a]['jobs'] if _regions.region_of_zip(a, j.get('zip')) == r]}; changed = True
+    if changed:
+        O.putj(SP + 'areas.json', plan)
+        O.log(a, 'hospital files by region:', ', '.join(f"{r} {len(plan[r]['jobs'])}" for r in R),
+              '| no region (no ZIP):', sum(1 for j in plan[a]['jobs'] if not _regions.region_of_zip(a, j.get('zip'))))
+    tries, busy = st.setdefault('publish_tries', {}), 0
+    for r in R:
+        if str(st['published'].get(r, '')).startswith('failed: page not published') and tries.get(r, 1) < PUBLISH_TRIES:
+            tries[r] = tries.get(r, 1) + 1; st['published'].pop(r, None)
+            O.log(r, 'publish failed before: trying again (try', tries[r], 'of', PUBLISH_TRIES, ')')
+        if r in st['published']: continue
+        role = f'h2-{r}'
+        gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
+        O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {r} >> /root/run.log 2>&1",
+                 dict(SP=SP, NP='8', MEM='11GB'), r in done or gave_up)
+        if r in done: publish_one(O, st, r, 'live with hospitals')
+        elif gave_up: publish_one(O, st, r, 'live, insurer rates only: its hospital machine failed twice')
+        else: busy += 1
+    live = [r for r in R if str(st['published'].get(r, '')).startswith('live')]
+    O.log(a, 'regional pages:', len(live), 'of', len(R), 'live')
+    if len(live) == len(R) and not busy: publish_one(O, st, a, 'live: page linking to its regional pages')
+    return busy
+
+
 IDLE = '/tmp/hosp_idle'   # the workflow stops looping (and frees the site-build lock) when this exists
 H2_RETRIES = 1             # Oct 24, 2026: a page live without hospitals (machine failed twice) gets this many more tries
 MED_AREAS_V = 1   # Oct 30, 2026: Medicare doctor fees by each provider's own area (site/med_areas.py); raise to republish
@@ -369,6 +429,8 @@ def state_by_state(O, st):
     busy = 0
     for a in ready:
         if a in st['published']: continue
+        if _regions and a in _regions.REGIONS:   # Oct 31, 2026: published as regional pages (split_flow)
+            busy += split_flow(O, st, a, done); continue
         role = f'h2-{a}'
         gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
         O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {a} >> /root/run.log 2>&1",
@@ -389,4 +451,5 @@ def state_by_state(O, st):
 if __name__ == '__main__':
     if sys.argv[1] == 'redo': redo(sys.argv[2:])
     elif sys.argv[1] == 'h2': h2(sys.argv[2:])
+    elif sys.argv[1] == 'split': import region_split; region_split.main(sys.argv[2])   # Oct 31, 2026: on a rented machine
     else: run()

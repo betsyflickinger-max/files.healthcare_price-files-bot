@@ -108,7 +108,9 @@ STATE_PAGES = {'tennessee': ('Tennessee', '35', 'Tennessee'), 'colorado': ('Colo
                'wisconsin': ('Wisconsin', '00', 'Wisconsin')}   # Oct 23: localities checked against GPCI2026.csv (rvu26d). MI, PA, NJ, MA, ME, WA, OR have 2; the page uses the metro one (Detroit, Philadelphia, Northern NJ, Boston, Southern Maine, Seattle, Portland) and says so   # Oct 22: MD has 2 localities (01 Baltimore/surr. counties, 99 rest of MD); the page uses 01 and says so. NM 05, MT 01 statewide (GPCI2026.csv checked)   # IL has 4 doctor-fee localities; the page uses Chicago (16) and says so, like GA and MO   # CT: one statewide locality (the build stops if GPCI2026.csv disagrees)
 for _k, (_n, _l, _ln) in STATE_PAGES.items(): CITIES[_k] = (_n, f'in {_n}', _l, _ln)
 def root(slug): return 'site/every-st/' if slug in STATE_OF else 'site/every-tx/'   # where an area's insurer builds are
-def npis_key(slug): return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
+def npis_key(slug):
+    slug = _regions.PARENT.get(slug, slug) if '_regions' in globals() else slug   # a region's providers are in its state's list (Oct 31)
+    return f'data/{SCOPE_OF.get(slug, "s7")}/state/{slug}/npis.parquet' if slug in STATE_OF else f'data/tx/metro/{slug}/npis.parquet'
 # how a sentence names the area ("every El Paso-area hospital", "no rate ... in the El Paso area"), when the name doesn't fit
 AREA = {'small-towns': ('small-town Texas', 'small-town Texas'), **{k: (v[0], v[0]) for k, v in STATE_PAGES.items()}}
 # map area per city: a location outside this box is treated as a bad match and left off the map (geo_build.py GEO_BBOX).
@@ -130,6 +132,18 @@ GEO_BBOX = {'el-paso': '-106.7,29.2,-102.4,32.1', 'austin': '-99.2,29.4,-96.6,31
             'michigan': '-90.5,41.6,-82.1,48.4', 'north-dakota': '-104.1,45.9,-96.5,49.0', 'south-dakota': '-104.1,42.4,-96.4,45.95', 'iowa': '-96.7,40.3,-90.1,43.6', 'minnesota': '-97.3,43.4,-89.4,49.4', 'nebraska': '-104.1,39.9,-95.3,43.1', 'kansas': '-102.1,36.9,-94.5,40.1', 'pennsylvania': '-80.6,39.7,-74.6,42.3', 'delaware': '-75.8,38.4,-75.0,39.9', 'west-virginia': '-82.7,37.2,-77.7,40.7', 'new-jersey': '-75.6,38.9,-73.8,41.4', 'massachusetts': '-73.6,41.2,-69.9,42.9', 'rhode-island': '-71.9,41.1,-71.1,42.1', 'vermont': '-73.5,42.7,-71.4,45.1', 'new-hampshire': '-72.6,42.6,-70.6,45.4', 'maine': '-71.1,42.9,-66.9,47.5', 'south-carolina': '-83.4,32.0,-78.5,35.3', 'washington': '-124.8,45.5,-116.9,49.1', 'oregon': '-124.6,41.9,-116.4,46.3', 'idaho': '-117.3,41.9,-111.0,49.1', 'utah': '-114.1,36.9,-109.0,42.1', 'alaska': '-179.2,51.2,-129.9,71.5', 'nevada': '-120.1,35.0,-114.0,42.1', 'hawaii': '-160.3,18.9,-154.8,22.3', 'wyoming': '-111.1,40.9,-104.0,45.1',
             'new-york': '-80.1,40.2,-71.5,45.3', 'california': '-124.8,32.2,-113.8,42.3', 'virginia': '-84.0,36.2,-74.9,39.8',
             'district-of-columbia': '-77.4,38.5,-76.6,39.3', 'florida': '-87.9,24.2,-79.7,31.3', 'wisconsin': '-93.2,42.2,-86.0,47.4'}
+# Oct 31, 2026 (Betsy chose regional pages): a state too big for one page file (California, 32.5 MB; the host takes 25 MB) is
+# published as regional pages built from its own split builds (site/regions.py, site/region_split.py). Each region is a page like
+# any other; the state's own address becomes a short page linking to them (landing_page below).
+import regions as _regions
+for _st, _R in _regions.REGIONS.items():
+    for _r, (_n, _l, _ln, _box, _cs) in _R.items():
+        CITIES[_r] = (_n, _regions.by_county_text(_cs), _l, _ln)
+        STATE_OF[_r] = STATE_OF[_st]
+        if _st in SCOPE_OF: SCOPE_OF[_r] = SCOPE_OF[_st]
+        AREA[_r] = (_n, _n)
+        GEO_BBOX[_r] = _box
+PAGE_MAX = 24 * 1024 * 1024   # Cloudflare Pages takes files up to 25 MiB; a bigger page stops before the deploy, saying why
 MAP_NOTE = ('<p><b>Map.</b> The map places each provider at the practice address it gives the federal NPI Registry, using the '
             'U.S. Census Bureau\'s geocoder. Roads, lakes, county lines and city names come from the Census Bureau\'s TIGERweb. '
             'Places we couldn\'t place are still listed, marked "not on map". A ZIP code or location you enter is used only on '
@@ -326,7 +340,7 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     ins = sorted({n.split('|', 1)[0] for n in D['nets'] if D.get('scope', {}).get(n)}) or sorted({n.split('|', 1)[0] for n in D['nets']})
     w.sub(r'<p><b>Sources\.</b>.*?</p>',
           f'<p><b>Sources.</b> Insurer Transparency in Coverage files dated {dates[0]} to {dates[-1]}: {", ".join(ins)}. Each file was read '
-          f'for every {STATE_PAGES[slug][0] + " provider" if slug in SCOPE_OF else "provider in Tennessee, Colorado, Oklahoma, Alabama, Mississippi, Missouri and Georgia" if slug in STATE_OF else "Texas provider"}, then narrowed to providers whose practice address in the federal NPI Registry is '
+          f'for every {STATE_PAGES[_regions.PARENT.get(slug, slug)][0] + " provider" if slug in SCOPE_OF else "provider in Tennessee, Colorado, Oklahoma, Alabama, Mississippi, Missouri and Georgia" if slug in STATE_OF else "Texas provider"}, then narrowed to providers whose practice address in the federal NPI Registry is '
           f'{where}. Each rate links to the file it came from. Some insurer links expire and must be re-opened from the '
           f'insurer\'s own page. ' + (f'Hospital price files: {nh} files from hospitals {where}, each line linked to its file. Providers\' posted cash '
           f'prices are not on the {name} page yet.</p>' if hosp_index else f'Hospital price files and providers\' posted cash prices are not on the {name} page yet.</p>'), regex=True)
@@ -407,7 +421,7 @@ def make_map(A, E, s3, B, written, prefix, page):
     older than BASEMAP_V. If either fails, the page goes out without its Map button, exactly as before maps existed for cities."""
     gkey, bkey, gpath, bpath = prefix + 'geo.json', f'site/deploy/cities/{A.city}/basemap.json', f'{A.out}/geo.json', f'{A.out}/basemap.json'
     env = dict(E, NPIS=npis_key(A.city), GEO_NPIS_JSON=prefix + 'npis.json', GEO_OUT=gkey, GEO_BBOX=GEO_BBOX[A.city],
-               GEO_STATE=STATE_OF.get(A.city, 'TX'), GEO_STATE_NAME=CITIES[A.city][0] if A.city in STATE_OF else 'Texas')
+               GEO_STATE=STATE_OF.get(A.city, 'TX'), GEO_STATE_NAME=CITIES[_regions.PARENT.get(A.city, A.city)][0] if A.city in STATE_OF else 'Texas')
     try:
         s = open(page, encoding='utf-8').read()
         nh = len(json.loads(re.search(r'<script type="application/json" id="data">(.*?)</script>', s, re.S).group(1))['hosp']['src'])
@@ -452,6 +466,8 @@ def main():
     if A.city not in CITIES: sys.exit(f'unknown city {A.city!r}; choose one of {", ".join(CITIES)}')
     name = CITIES[A.city][0]
     os.makedirs(A.out, exist_ok=True)
+    if A.city in _regions.REGIONS:   # Oct 31, 2026: a state split into regional pages gets a short page linking to them
+        return landing_page(A)
     if A.template:   # offline test: local files only
         empty_quality(A.quality, f'{A.out}/quality.txt')
         return build(A.city, A.template, A.embed, A.rvu, A.med_all, A.t5, A.out)
@@ -488,7 +504,10 @@ def main():
         page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
     else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json', f'{A.out}/npis.parquet')
     if not A.map_only: practice_and_list_price(page, s3, B, A.out)
-    if A.check: print('check only: page built in', page, '(not saved, not deployed)'); return
+    if A.check: print('check only: page built in', page, f'({os.path.getsize(page) / 2**20:.1f} MiB; not saved, not deployed)'); return
+    if os.path.getsize(page) > PAGE_MAX:   # Oct 31, 2026: say why instead of failing inside the deploy
+        sys.exit(f'STOP: the {name} page is {os.path.getsize(page) / 2**20:.1f} MiB; the website host takes files up to 25 MiB. '
+                 f'Split it into regional pages (site/regions.py) like California.')
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return
@@ -509,7 +528,7 @@ def main():
     os.makedirs(f'{d}/site/{A.city}/price-finder/pf/q', exist_ok=True)
     dq = f'{d}/site/price-finder/pf/q/quality.txt'
     empty_quality(dq if os.path.isfile(dq) else None, f'{d}/site/{A.city}/price-finder/pf/q/quality.txt')
-    live_list(d, A.city, name)
+    live_list(d, A.city, f'{name}, {CITIES[_regions.PARENT[A.city]][0]}' if A.city in _regions.PARENT else name)   # region: 'Bay Area, California'
     fn = f'{d}/functions/{A.city}/price-finder/pf/t'; os.makedirs(fn, exist_ok=True)
     open(f'{fn}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(prefix)))
     fh = f'{d}/functions/{A.city}/price-finder/pf/h'
@@ -519,6 +538,68 @@ def main():
     else: shutil.rmtree(fh, ignore_errors=True)
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
+    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    print(r.stdout[-2000:], r.stderr[-2000:])
+    if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
+    with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
+    s3.upload_file(f'{A.out}/site.tgz', B, 'site/deploy/current.tgz')
+    print(f'live: https://files.healthcare/{A.city}/price-finder/')
+
+
+def landing_page(A):
+    """Oct 31, 2026: the state's own address (/<state>/price-finder/) for a state published as regional pages (site/regions.py).
+    Lists each region with its counties and provider count (from the split, site/region_split.py) and links to its Price Finder.
+    Published by hosp_area.py after every regional page is live; the state is left out of cities.json (the regions are listed
+    there instead), so the area picker and the procedure pages only see real Price Finder pages."""
+    import boto3, html
+    sys.path.insert(0, HERE); import procedure_pages as pp
+    E = os.environ
+    for k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET', 'CLOUDFLARE_API_TOKEN'):
+        if k in E: E[k] = ''.join(E[k].split())
+    B = E.get('R2_BUCKET', 'upfrontdfwdata')
+    s3 = boto3.client('s3', endpoint_url=(E.get('STORAGE_ENDPOINT') or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
+                      aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(E.get('STORAGE_REGION') or 'auto'))
+    st, R = CITIES[A.city][0], _regions.REGIONS[A.city]
+    d = f'{A.out}/deploy'; shutil.rmtree(d, ignore_errors=True)
+    s3.download_file(B, 'site/deploy/current.tgz', f'{A.out}/site.tgz')
+    with tarfile.open(f'{A.out}/site.tgz') as t: t.extractall(d)
+    if not os.path.isfile(f'{d}/site/index.html'): sys.exit('STOP: site/deploy/current.tgz has no site/index.html; nothing deployed')
+    live = {c['slug'] for c in json.load(open(f'{d}/site/cities.json', encoding='utf-8'))} if os.path.isfile(f'{d}/site/cities.json') else set()
+    if set(R) - live: sys.exit(f'STOP: regional pages not live yet: {", ".join(sorted(set(R) - live))}; the {st} page waits for them')
+    pp.site_settings(f'{d}/site')
+    esc = html.escape; rows = []
+    for r, (n, _l, _ln, _box, cs) in R.items():
+        try:
+            sp = json.loads(s3.get_object(Bucket=B, Key=f"{s3.list_objects_v2(Bucket=B, Prefix=f'site/every-st/{r}/', Delimiter='/')['CommonPrefixes'][-1]['Prefix']}split.json")['Body'].read())
+            np_ = sp['regions'][r]['providers']
+        except Exception: np_ = None
+        rows.append(f'<section class="sec"><h2><a href="/{r}/price-finder/">{esc(n)}</a></h2><p class="lede">{esc(", ".join(cs))} '
+                    f'{"county" if len(cs) == 1 else "counties"}{f" · {np_:,} providers" if np_ else ""}.</p>'
+                    f'<p class="ctas"><a class="btn hi" href="/{r}/price-finder/">Open the {esc(n)} Price Finder</a></p></section>')
+    title = f'{st} Price Finder · {pp.SITE["name"]}'
+    desc = (f'What insurers have agreed to pay {st} hospitals, surgery centers, doctors, labs and imaging centers, from the price files '
+            f'they have to publish. {st} is split into {len(R)} regional Price Finders.')
+    body = f"""<main><section class="board"><div class="wrap"><p class="eyebrow">{esc(st)} · published prices</p>
+<h1 class="letters">{esc(st)} Price Finder<em> by region</em></h1>
+<p class="lead">{esc(st)} has too many providers for one page, so its prices are split into {len(R)} regional Price Finders. Each one has every
+provider whose practice address is in that region's counties, with the same insurer price files, hospital price files and Medicare comparison
+as the rest of the site. Pick the region where you're getting care.</p></div></section>
+<div class="wrap">{''.join(rows)}</div></main><!-- written by city_page.py landing_page -->"""
+    jsonld = {'@context': 'https://schema.org', '@type': 'CollectionPage', 'name': title, 'description': desc,
+              'url': pp.SITE['origin'] + f'/{A.city}/price-finder/'}
+    os.makedirs(f'{d}/site/{A.city}/price-finder', exist_ok=True)
+    for sub in ('pf', 'basemap.json'):   # nothing left over from a statewide page
+        x = f'{d}/site/{A.city}/price-finder/{sub}'
+        shutil.rmtree(x, ignore_errors=True) if os.path.isdir(x) else (os.remove(x) if os.path.exists(x) else None)
+    shutil.rmtree(f'{d}/functions/{A.city}/price-finder', ignore_errors=True)
+    open(f'{d}/site/{A.city}/price-finder/index.html', 'w', encoding='utf-8').write(pp.shell(title, desc, f'/{A.city}/price-finder/', body, jsonld))
+    L = json.load(open(f'{d}/site/cities.json', encoding='utf-8'))
+    json.dump([c for c in L if c['slug'] != A.city], open(f'{d}/site/cities.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    print(f'{st} landing page: {len(R)} regions')
+    if not A.deploy: print('built, not deployed'); return
+    env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
+    subprocess.run([sys.executable, os.path.join(HERE, 'sitewide.py'), d], check=True)
     r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
                         '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
