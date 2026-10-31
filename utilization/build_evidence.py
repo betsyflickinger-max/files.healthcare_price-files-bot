@@ -14,7 +14,7 @@ Sources (newest version found in each catalog at run time; every original is sav
   medicare_inpatient    CMS Medicare Inpatient Hospitals - by Provider and Service (CCN x DRG hospital-stay group)
   medicaid_professional HHS Medicaid Provider Spending by HCPCS (billing + servicing NPI x HCPCS x month)
   hospital_enrollments  CMS Hospital Enrollments (CCN -> NPI)
-  code_to_apc           CMS OPPS Addendum B already in storage (reference/medicare/), HCPCS -> APC
+  code_to_apc           HCPCS -> APC from the site's Medicare benchmark file (storage reference/site/med_all.json, OPPS Addendum B)
 
 Storage outputs:
   raw/utilization/<source>/<label>/<sha12>_<file>.zst   originals (parquet saved as-is)
@@ -56,7 +56,7 @@ MEDICAID_PAGE = "https://opendata.hhs.gov/datasets/medicaid-provider-spending/"
 MEDICAID_FALLBACK = ("https://stopendataprod.blob.core.windows.net/datasets/medicaid-provider-spending/2026-02-09/dataset/"
                      "medicaid-provider-spending.parquet")
 MEDICAID_YEARS = ("2023", "2024")   # 2024 is marked preliminary (Nov-Dec look incomplete); 2023 is the last full year
-APC_PREFIX = "reference/medicare/"
+APC_KEY = "reference/site/med_all.json"   # site Medicare benchmarks; opps = [rate, status, APC]
 
 
 def s3():
@@ -193,19 +193,15 @@ def main():
         group by all""")
     mp.unlink()
 
-    # ---- HCPCS -> APC (CMS OPPS Addendum B already in storage) ----
-    keys = [o["Key"] for pg in c.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix=APC_PREFIX) for o in pg.get("Contents", [])
-            if re.search(r"addendum b.*\.csv$", o["Key"], re.I)]
-    apc_note = "no Addendum B found in storage; hospital outpatient proof can't be tied to codes yet"
+    # ---- HCPCS -> APC: the site's Medicare benchmark file (site/build_med_all.py: CMS OPPS Addendum B, July 2026) ----
     con.execute("create or replace table c2a (code varchar, apc varchar)")
-    if keys:
-        k = sorted(keys)[-1]
-        rows = list(csv.reader(io.StringIO(c.get_object(Bucket=B, Key=k)["Body"].read().decode("latin-1"))))
-        i = next(j for j, r in enumerate(rows) if r and r[0].strip() == "HCPCS Code")
-        hdr = [h.strip().upper() for h in rows[i]]
-        ai = hdr.index("APC") if "APC" in hdr else 3
-        con.executemany("insert into c2a values (?, ?)", [(r[0].strip(), r[ai].strip()) for r in rows[i + 1:] if len(r) > ai and r[ai].strip()])
-        apc_note = f"HCPCS -> APC from CMS OPPS Addendum B in storage: {k}"
+    apc_note = f"no {APC_KEY} in storage; hospital outpatient proof can't be tied to codes yet"
+    if exists(c, APC_KEY):
+        med = json.loads(c.get_object(Bucket=B, Key=APC_KEY)["Body"].read())
+        pairs = [(k, str(v["opps"][2]).strip().lstrip("0")) for k, v in med.items()
+                 if isinstance(v, dict) and isinstance(v.get("opps"), list) and len(v["opps"]) > 2 and str(v["opps"][2]).strip()]
+        con.executemany("insert into c2a values (?, ?)", pairs)
+        apc_note = f"HCPCS -> APC for {len(pairs):,} codes from {APC_KEY} (CMS OPPS Addendum B, July 2026; 2024 volume matched to 2026 groups)"
 
     # ---- one evidence table ----
     dy = {s: m["label"][:4] for s, m in meta.items()}
@@ -214,7 +210,7 @@ def main():
                services volume, 'services' unit, patients, places place_of_service, '{dy['medicare_physician']}' data_year,
                '{meta['medicare_physician']['url']}' file_url, '{TODAY}' checked_on from phy
         union all
-        select e.npi, o.ccn, 'hospital', 'medicare_outpatient', 'apc', o.apc, o.apc_name, o.services, 'services', o.patients, null,
+        select e.npi, o.ccn, 'hospital', 'medicare_outpatient', 'apc', ltrim(o.apc, '0'), o.apc_name, o.services, 'services', o.patients, null,
                '{dy['medicare_outpatient']}', '{meta['medicare_outpatient']['url']}', '{TODAY}'
         from opd o left join enr e using (ccn)
         union all
