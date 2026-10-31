@@ -87,6 +87,9 @@ def main():
         S1 = pp.summarize(D, c, t, h, loc, st, pst, prf)
         out += [f"## {C['name']} ({c})", "",
                 "Providers on the page by kind and proof: " + "; ".join(f"{pp.KIND.get(k, k)} {s}: {n}" for (k, s), n in sorted(why.items())), ""]
+        out += [f"Check: per-code insurer file {'found' if t else 'NOT found'} ({store.prefix(a, 't')}); providers with rates {len(f)}; "
+                f"left out as out of state {S0.get('n_out_of_state')}; ranked providers {S0.get('providers')}; kind {S0.get('kind')}; "
+                f"states seen {dict(collections.Counter(pst.values()).most_common(4)) if pst else 'none'}", ""]
         out += ["| # | Before (today) | After | Proof shown |", "|---|---|---|---|"]
         for j in range(max(len(S0['lowest']), len(S1['lowest']))):
             b = S0['lowest'][j] if j < len(S0['lowest']) else None
