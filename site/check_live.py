@@ -38,3 +38,25 @@ for p in PAGES:
     m = re.search(r'(Lowest|least expensive).{0,900}', x, re.I)
     out += [f"- lowest excerpt: {m.group(0)[:900] if m else '(not found)'}", '']
 print('\n'.join(out))
+
+# Oct 31, 2026: states-first area dropdowns (site/area_menu.py): the script, its place -> state list, and which pages link it
+import json, collections
+out = ['# Area dropdowns (states first)', '']
+js = names.get('site/area-menu.js')
+if not js:
+    out.append('- /area-menu.js: MISSING')
+else:
+    s = t.extractfile(js).read().decode()
+    m = re.search(r'/\*AREA_MAP\*/(.*?)/\*AREA_MAP_END\*/', s, re.S)
+    M = json.loads(m.group(1)) if m else {'names': {}}
+    by = collections.defaultdict(list)
+    for n, st in M['names'].items():
+        by[st].append(n)
+    out.append(f"- /area-menu.js: present, {len(M['names'])} places in {len(by)} states")
+    out += [f"  - {st}: {len(v)} ({', '.join(sorted(v)) if len(v) > 1 else v[0]})" for st, v in sorted(by.items())]
+for k in ('site/index.html', 'site/v2/index.html', 'site/story/index.html', 'site/price-finder/index.html', 'site/control/index.html'):
+    if k in names:
+        out.append(f"- {k}: linked {'area-menu.js' in t.extractfile(names[k]).read().decode()}")
+miss = [n for n in names if n.endswith('.html') and b'<select' in t.extractfile(names[n]).read() and b'area-menu.js' not in t.extractfile(names[n]).read()]
+out.append(f"- pages with a dropdown but no link: {len(miss)} {miss[:5]}")
+print('\n'.join(out))
