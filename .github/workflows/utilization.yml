@@ -1,0 +1,48 @@
+name: Proof of procedures (Medicare + Medicaid volume)
+
+# Oct 31, 2026 (card #2, Betsy OK'd Oct 30): saves the CMS Medicare utilization files and the HHS Medicaid provider
+# spending file once each (originals untouched in storage raw/utilization/), and builds the Texas proof table
+# data/utilization/<year>/evidence_tx.parquet. Counts only: used to confirm a provider does a procedure, never to exclude
+# anyone or rank by size. utilization/build_evidence.py. Summary committed to reports/utilization/<year>/.
+# Runs: on a change to the script, by hand, and yearly on June 20 (CMS posts a new data year each spring).
+
+on:
+  schedule:
+    - cron: "17 15 20 6 *"
+  push:
+    branches: [main]
+    paths: [utilization/build_evidence.py, .github/workflows/utilization.yml]
+  workflow_dispatch:
+
+concurrency:
+  group: utilization
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 duckdb==1.5.6 requests==2.33.0 zstandard==0.23.0
+      - run: sudo mkdir -p /mnt/u && sudo chown $USER /mnt/u && df -h / /mnt
+      - run: python utilization/build_evidence.py --work /mnt/u
+      - name: Save the summary
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/utilization 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Proof of procedures summary $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
