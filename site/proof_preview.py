@@ -1,10 +1,13 @@
-"""Before/after preview of card #2 (proof a provider does the procedure) on Dallas-Fort Worth price pages. Deploys nothing.
+"""Before/after preview of card #2 (proof a provider does the procedure) on one area's price pages. Deploys nothing.
 
 Reads the live site bundle and the DFW Price Finder's per-code files exactly as site/procedure_pages.py does, runs summarize()
-without and with proof (site/proof.py), and writes reports/proof-preview/dfw.md: for each sample procedure, the lowest 10
+without and with proof (site/proof.py), and writes reports/proof-preview/<area>.md: for each sample procedure, the lowest 10
 before and after, the proof line on each ranked provider, and who would be listed as "also listed, may not offer this procedure".
 
-  python site/proof_preview.py [--codes 29881,66984,...]   (also renders the DFW gallbladder page: reports/proof-preview/dfw-gallbladder.html)
+  python site/proof_preview.py [--area illinois] [--codes 29881,66984,...]
+      (also renders the area's gallbladder page: reports/proof-preview/<area>-gallbladder.html)
+Oct 31, 2026 (all states): a non-Texas area reads its own state's proof file (by_state/evidence_<st>.parquet). The report also
+lists every area with the state the page code gives it, to catch a state page treated as Texas.
 """
 import argparse
 import collections
@@ -18,7 +21,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import procedure_pages as pp   # noqa: E402
-from proof import Proof, line, load_taxonomy, for_page  # noqa: E402
+from proof import Proof, line, load_taxonomy, load_taxonomy_state, for_page, STATE_NAME  # noqa: E402
 
 SAMPLE = ['29881', '66984', '47562', '64721', '45378', '27447', '73721', '59400', '99213']
 
@@ -30,6 +33,7 @@ def money(v):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--codes')
+    ap.add_argument('--area', default=os.environ.get('PROOF_PREVIEW_AREA') or 'illinois')
     A = ap.parse_args()
     d = '/tmp/proofprev'
     os.makedirs(d, exist_ok=True)
@@ -39,7 +43,7 @@ def main():
     with tarfile.open(f'{d}/site.tgz') as t:
         mem = {m.name.lstrip('./'): m for m in t.getmembers() if m.isfile()}
         areas = json.load(t.extractfile(mem['site/cities.json']))
-        a = next(x for x in areas if x['slug'] == 'dfw')
+        a = next(x for x in areas if x['slug'] == A.area)
         want = f"site/{a['path'].strip('/')}/index.html"
         os.makedirs(os.path.dirname(f'{d}/{want}'), exist_ok=True)
         open(f'{d}/{want}', 'wb').write(t.extractfile(mem[want]).read())
@@ -50,11 +54,15 @@ def main():
     pre = store.prefix(a, 't')
     npis = json.loads(s3.get_object(Bucket=B, Key=pre[:-2] + 'npis.json')['Body'].read())
     assert len(npis) == len(D['fac']), 'npis.json is not aligned with the page providers'
-    P = Proof(s3, B, tax=load_taxonomy(s3, B))
+    st = pp.area_state(a)
+    if st == 'TX':     # exactly what the live Texas pages use
+        P = Proof(s3, B, tax=load_taxonomy(s3, B))
+    else:
+        P = Proof(s3, B, state=st, tax=load_taxonomy_state(s3, B, st))
     codes = [c for c in (A.codes.split(',') if A.codes else SAMPLE) if c in D['codes']]
-    out = [f"# Card #2 preview: Dallas-Fort Worth price pages, before and after", "",
+    out = [f"# Card #2 preview: {a['name']} price pages, before and after", "",
            f"Built {dt.date.today().isoformat()} by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 "
-           f"(Texas). Order stays by price; proof only decides who is in the ranked lists.", ""]
+           f"({STATE_NAME.get(st, st)}). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.", ""]
     tot = collections.Counter()
     for c in codes:
         C = D['codes'][c]
@@ -71,8 +79,8 @@ def main():
             prf[i] = (st, {'text': line(info), 'url': info['url']} if st == 'proved' else info)
             why[(kind, st)] += 1
             tot[(kind, st)] += 1
-        S0 = pp.summarize(D, c, t, h, loc, 'TX', pst)
-        S1 = pp.summarize(D, c, t, h, loc, 'TX', pst, prf)
+        S0 = pp.summarize(D, c, t, h, loc, st, pst)
+        S1 = pp.summarize(D, c, t, h, loc, st, pst, prf)
         out += [f"## {C['name']} ({c})", "",
                 "Providers on the page by kind and proof: " + "; ".join(f"{pp.KIND.get(k, k)} {s}: {n}" for (k, s), n in sorted(why.items())), ""]
         out += ["| # | Before (today) | After | Proof shown |", "|---|---|---|---|"]
@@ -91,16 +99,27 @@ def main():
         if c == '47562':   # one full page, rendered exactly as the live build would, to check the HTML
             pp.site_settings(f'{d}/site')
             slug = pp.load_slugs([c], {c: C['name']})[c]
-            html_ = pp.procedure_page(a, S1, [], [], pp.page_data(f'{d}/{want}')[1], a['path'], pp.area_url_slug('dfw'), slug)
+            html_ = pp.procedure_page(a, S1, [], [], pp.page_data(f'{d}/{want}')[1], a['path'], pp.area_url_slug(a['slug']), slug)
             (HERE.parent / 'reports' / 'proof-preview').mkdir(parents=True, exist_ok=True)
-            (HERE.parent / 'reports' / 'proof-preview' / 'dfw-gallbladder.html').write_text(html_)
+            (HERE.parent / 'reports' / 'proof-preview' / f"{a['slug']}-gallbladder.html").write_text(html_)
     out += ["## All sample procedures together", "", "| Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |",
             "|---|---|---|---|"]
     for k in sorted({k for k, _ in tot}):
         out.append(f"| {pp.KIND.get(k, k)} | {tot[(k, 'proved')]} | {tot[(k, 'not_covered')]} | {tot[(k, 'no_record')]} |")
     rp = HERE.parent / 'reports' / 'proof-preview'
     rp.mkdir(parents=True, exist_ok=True)
-    (rp / 'dfw.md').write_text("\n".join(out) + "\n")
+    # every area and the state the page code gives it (a state page read as Texas would get Texas proof and Texas benchmarks)
+    try:
+        sc = json.load(open(HERE / 'state_scopes.json'))
+        known = {slug: code for k, v in sc.items() if not k.startswith('_') for code, slug in v.items()}
+    except Exception:
+        known = {}
+    out += ["", "## Areas and the state the page code gives them", "", "| Area | Slug | State in page code | State it should be |", "|---|---|---|---|"]
+    for x in areas:
+        should = known.get(x['slug'], pp.area_state(x))
+        flag = " **wrong**" if should != pp.area_state(x) else ""
+        out.append(f"| {x.get('name', '')} | {x['slug']} | {pp.area_state(x)} | {should}{flag} |")
+    (rp / f"{a['slug']}.md").write_text("\n".join(out) + "\n")
     print("\n".join(out))
 
 

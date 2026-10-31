@@ -1,6 +1,8 @@
 """Proof a provider does a procedure, for the price pages (card #2, Betsy OK'd Oct 30-31, 2026).
 
-Reads the Texas proof table built by utilization/build_evidence.py (storage data/utilization/<year>/evidence_tx.parquet).
+Reads the proof table built by utilization/build_evidence.py: one file per state (storage
+data/utilization/<year>/by_state/evidence_<st>.parquet, Oct 31, 2026), or, with no state given, the first Texas table
+(data/utilization/<year>/evidence_tx.parquet), which is what the live Texas pages have used since Oct 31.
 Rules (Betsy, Oct 30):
   * Medicare and Medicaid counts only confirm ("yes, they do this"). They never rank anyone by size and are never a price.
   * A provider is held out of the "lowest/highest" rankings ("also listed, may not offer this procedure") only when a public
@@ -10,7 +12,7 @@ Rules (Betsy, Oct 30):
         colonoscopy, scans, lab tests)
       - procedures where Medicare is a poor guide (births and maternity, children's care, fertility, birth control,
         vasectomy, sports injuries such as ACL repair): Medicare is mostly people 65+
-  * Texas only for now (the proof table is Texas). Other states' pages are unchanged.
+  * Which states use it is decided in procedure_pages.py (PROOF_STATES). Betsy switches each step on.
 
   * Anesthesia clinicians (nurse anesthetists, anesthesiologists) listed by an insurer under a delivery, surgery, scan or lab
     code they don't perform (Oct 31: CRNAs at $435 were the "lowest" vaginal delivery in DFW) are left out of that page's
@@ -49,13 +51,16 @@ NO_RECORD = ("No Medicare or Medicaid record for this procedure ({year}). That d
 
 
 class Proof:
-    def __init__(self, s3=None, bucket=None, year='2024', path=None, tax=None):
+    def __init__(self, s3=None, bucket=None, year='2024', path=None, tax=None, state=None):
         self.tax = tax or {}     # npi -> primary taxonomy (NPPES), for the anesthesia check
+        self.state = (state or 'TX').upper()
+        self.state_name = STATE_NAME.get(self.state, self.state)
         import pyarrow.parquet as pq
         if path:
             tb = pq.read_table(path)
         else:
-            body = s3.get_object(Bucket=bucket, Key=f'data/utilization/{year}/evidence_tx.parquet')['Body'].read()
+            key = evidence_key(year, state)
+            body = s3.get_object(Bucket=bucket, Key=key)['Body'].read()
             tb = pq.read_table(io.BytesIO(body))
         d = tb.select(['npi', 'ccn', 'evidence_source', 'code', 'group_name', 'volume', 'unit', 'data_year', 'file_url']).to_pydict()
         self.year = year
@@ -97,7 +102,7 @@ class Proof:
                     self.code[k] = rec
         self.c2a = {}
         try:
-            body = (pq.read_table(path.replace('evidence_tx', 'code_to_apc')) if path else
+            body = (pq.read_table(re.sub(r'(by_state/)?evidence_[a-z]{2}', 'code_to_apc', path)) if path else
                     pq.read_table(io.BytesIO(s3.get_object(Bucket=bucket, Key=f'data/utilization/{year}/code_to_apc.parquet')['Body'].read())))
             x = body.to_pydict()
             self.c2a = dict(zip(x['code'], x['apc']))
@@ -133,7 +138,7 @@ class Proof:
                 return 'proved', rec
             if code in self.phy_codes:
                 return 'no_record', NO_RECORD.format(year=self.year)
-            return 'not_covered', 'no Medicare volume for this code in Texas'
+            return 'not_covered', f'no Medicare volume for this code in {self.state_name}'
         if rec:                       # groups and other places: a Medicaid or Medicare record is proof, no record changes nothing
             return 'proved', rec
         return 'not_covered', 'no public volume file covers this kind of provider'
@@ -144,6 +149,26 @@ def line(rec):
     g = f" in the procedure group “{rec['group']}”" if rec['group'] and rec['unit'] != 'claim lines' and rec['src'] == 'Medicare' \
         and rec.get('level_group') else ''
     return f"{rec['src']}: {rec['n']:,} {rec['unit']}{g}, {rec['year']}"
+
+
+STATE_NAME = {'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California', 'CO': 'Colorado', 'CT': 'Connecticut',
+              'DE': 'Delaware', 'DC': 'the District of Columbia', 'FL': 'Florida', 'GA': 'Georgia', 'HI': 'Hawaii', 'ID': 'Idaho',
+              'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa', 'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine',
+              'MD': 'Maryland', 'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+              'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey', 'NM': 'New Mexico',
+              'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio', 'OK': 'Oklahoma', 'OR': 'Oregon',
+              'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina', 'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas',
+              'UT': 'Utah', 'VT': 'Vermont', 'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming'}
+
+
+def evidence_key(year, state=None):
+    """Storage key of the proof table: the state's own file, or (no state) the first Texas table."""
+    return f'data/utilization/{year}/by_state/evidence_{state.lower()}.parquet' if state else f'data/utilization/{year}/evidence_tx.parquet'
+
+
+def load_taxonomy_state(s3, bucket, state, year='2024'):
+    """npi -> (primary taxonomy, credential) for one state, from the per-state file build_evidence.py writes (NPPES practice state)."""
+    return load_taxonomy(s3, bucket, key=f'data/utilization/{year}/by_state/npi_tax_{state.lower()}.parquet')
 
 
 def load_taxonomy(s3, bucket, key='data/scope/tx_npis_all.parquet'):
