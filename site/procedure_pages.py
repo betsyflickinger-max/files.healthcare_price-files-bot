@@ -1340,11 +1340,11 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         hr = S['hrate']
         rows = ''.join(f"<li><span><b>{esc(e['name'])}</b><span class='m'>{esc(e['ins'])} · {esc(e['plan'])} · {hosp_link(e)}</span></span>"
                        f"<span class='n'>{money(e['v'])}</span></li>" for e in hr[:5])
-        lede = (f"{S['hfiles']:,} hospital {'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from "
+        hlede = (f"{S['hfiles']:,} hospital {'file lists' if S['hfiles'] == 1 else 'files list'} this code; their insurer rates run from "
                 f"{money(hr[0]['v'])} to {money(hr[-1]['v'])} (hospital fee only, one line per hospital per insurer). The five lowest:</p>"
                 f"<ol class='word'>{rows}</ol>") if hr else "None of the hospital files that list this code give an in-network insurer rate for it.</p>"
         hosp_sec = (f"<section class='sec' id='hospital-files'><p class='kicker'>In hospitals' own price files</p><h2>What hospitals say they're paid</h2>"
-                    f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {lede}{oon_sec}</section>")
+                    f"<p class='lede'>Hospitals must post every rate they've agreed with each insurer. {hlede}{oon_sec}</section>")
 
     inc, exc = includes(S)
     doc_line = ''
