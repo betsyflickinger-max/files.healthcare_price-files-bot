@@ -349,7 +349,8 @@ def split_flow(O, st, a, done):
         else: busy += 1
     live = [r for r in R if str(st['published'].get(r, '')).startswith('live')]
     O.log(a, 'regional pages:', len(live), 'of', len(R), 'live')
-    if len(live) == len(R) and not busy: publish_one(O, st, a, 'live: page linking to its regional pages')
+    if len(live) == len(R) and not busy and not str(st['published'].get(a, '')).startswith('live'):
+        publish_one(O, st, a, 'live: page linking to its regional pages')
     return busy
 
 
@@ -440,9 +441,9 @@ def state_by_state(O, st):
     done = {k.rsplit('/', 1)[1][:-5] for k in O.ls(SP + 'h2/')}
     busy = 0
     for a in ready:
+        if _regions and a in _regions.REGIONS:   # Oct 31, 2026: published as regional pages (split_flow), checked every run
+            busy += split_flow(O, st, a, done); continue   # even once its page is live: a new split version or build redoes the regions
         if a in st['published']: continue
-        if _regions and a in _regions.REGIONS:   # Oct 31, 2026: published as regional pages (split_flow)
-            busy += split_flow(O, st, a, done); continue
         role = f'h2-{a}'
         gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
         O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {a} >> /root/run.log 2>&1",
