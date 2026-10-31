@@ -25,7 +25,7 @@
   var PAR = /par\s*plan/i;
   var T = {all: false, n: 25, q: '', k: '', sel: {}, col: {}};
   var ML = null, LEGAL = {};
-  var CHILD = /child|pediatric|scottish rite/i, VA = /\bVA\b|\bVAMC\b|veterans/i, WRONG = /dallascohospital\.org/i;
+  var CHILD = /child|pediatric|scottish rite/i, VA = /\bVA\b|\bVAMC\b|veterans/i, WRONG = window.HCF_Q && window.HCF_Q.rx ? window.HCF_Q.rx : /dallascohospital\.org/i;
   var PERSON = /(^|[ ,])(M\.?D\.?|D\.?O\.?|DPM|DDS|DMD|PA-C|NP|FNP|APRN|CRNA|LCSW|LPC|PhD)($|[ ,])/;
   var MDDO = /(^|[ ,])(M\.?D\.?|D\.?O\.?)($|[ ,])/;
   // the files' spelling slips (the page's own tidy() fixes them on screen; these keep one row per place)
@@ -431,12 +431,18 @@
     } catch (e) {}
     try {
       var C = D.codes[S.code], sl = document.querySelectorAll('.ux-bills .ux-slip');
+      sl.forEach(function (el) { if (el.__orig == null) el.__orig = el.innerHTML; else el.innerHTML = el.__orig; });
       if (S.view === 'table' && C && C.f && sl.length >= 2) {
         var B = build(S.code), n = /^\d+$/.test(S.pay) && !document.getElementById('pay').classList.contains('ux-ask') && B.cnt[S.pay] ? +S.pay : null;
-        var vs = []; B.rows.forEach(function (o) { Object.keys(o.fees).forEach(function (k) { if ((n == null ? !B.flat[k] && !PAR.test(NET[k].n) : +k === n)) vs.push(o.fees[k][3]); }); });
+        // Oct 31, 2026 (review F02): the slips follow the payment choice. Paying cash used to keep the insurer range
+        // ("any network"); each slip now starts from its own original wording and shows only figures for the current choice.
+        var cash = S.pay === 'cash';
+        var vs = [];
+        if (cash) (B.cashAll || []).forEach(function (c) { if (c && c.v > 0) vs.push(c.v); });
+        else B.rows.forEach(function (o) { Object.keys(o.fees).forEach(function (k) { if ((n == null ? !B.flat[k] && !PAR.test(NET[k].n) : +k === n)) vs.push(o.fees[k][3]); }); });
         vs.sort(function (a, b) { return a - b; });
         var put = function (el, v, note) { var b = el.querySelector('.v b'), t = el.querySelector('.v span'); if (b) b.textContent = v; if (t) t.textContent = 'RANGE'; var s2 = el.querySelector('.s'); if (s2) s2.textContent = note; };
-        if (vs.length && !B.useDoc) put(sl[0], M$(vs[0]) + '–' + M$(vs[vs.length - 1]), n == null ? 'lowest to highest, any network, in the table above' : 'lowest to highest in ' + netLab(n));
+        if (vs.length && !B.useDoc) put(sl[0], M$(vs[0]) + '–' + M$(vs[vs.length - 1]), cash ? 'lowest to highest cash price, in the table above' : n == null ? 'lowest to highest, any network, in the table above' : 'lowest to highest in ' + netLab(n));
         var g = n != null && B.doc[n];
         if (g && !B.useDoc) put(sl[1], M$(g.lo) + '–' + M$(g.hi), 'typical (middle listed fee) ' + M$(g.mid) + ' in ' + netLab(n));
       }

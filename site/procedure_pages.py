@@ -448,7 +448,16 @@ HOSP_NAME = re.compile(r'\bhospital\b', re.I)
 PARPLAN = re.compile(r'par\s*plan', re.I)
 # Hospital price files filed under the wrong area by name alone (Oct 18 audit: "Dallas County Hospital" in Perry, Iowa sat in
 # Dallas-Fort Worth). Left out of every page's figures here; the real fix is a state/address check where files are assigned to areas.
-WRONG_AREA = re.compile(r'dallascohospital\.org', re.I)
+# Oct 31, 2026: the list lives in site/source_quarantine.csv, shared with the map (geo_build.py), hospital profiles
+# (hospital_file_ccn.csv) and the browser pages (/shared/hcf-data.js), so every view leaves out the same files.
+def _quarantine_rx():
+    import csv as _csv
+    try:
+        qs = [r['url_contains'] for r in _csv.DictReader(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source_quarantine.csv'), encoding='utf-8')) if r.get('url_contains')]
+    except OSError:
+        qs = []
+    return re.compile('|'.join(re.escape(q) for q in qs) or r'(?!x)x', re.I)
+WRONG_AREA = _quarantine_rx()
 
 
 def mostly_one(es):

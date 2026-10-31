@@ -219,12 +219,18 @@ def near_zip(g, z, miles_=15):   # a location found by search must be within ~15
     h = math.sin(dl / 2) ** 2 + math.cos(g[0] * t) * math.cos(c[0] * t) * math.sin(dn / 2) ** 2
     return 2 * 3958.8 * math.asin(math.sqrt(h)) <= miles_
 WHY = {}   # why a hospital file couldn't be placed, for the hand list (reference/geo/unplaced/)
+QUARANTINE = list(csv.DictReader(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'source_quarantine.csv'), encoding='utf-8')))
+
+
 def place_hosp(src):
     """hand-checked (site/geo_places.csv, by "ccn:<CCN>" or "name|city") > Medicare's address for the file's own CCN > the address
     the file gives for itself (or its NPI's NPPES address) > Medicare's address for a CCN matched by name > the older name matching.
     Official addresses are geocoded (Census, then OpenStreetMap by street) and may sit outside the map's frame if in the page's state;
     anything found by searching a name must be within ~15 miles of the hospital's ZIP code."""
     name, city = src[0], src[1]; sid = src[5] if len(src) > 5 else name
+    if any(q['url_contains'] and q['url_contains'] in str(src[4] or '') and GST in q['excluded_from'].split() for q in QUARANTINE):
+        WHY[name] = 'quarantined: price file belongs to another state (site/source_quarantine.csv)'
+        return None   # Oct 31, 2026: never placed on this area's map; listed as unplaced with the reason
     c, k, exact = HKEY.get(sid, (None, None, False))
     if c and f'ccn:{c}' in HAND: return HAND[f'ccn:{c}']
     if f'{name}|{city}'.lower() in HAND: return HAND[f'{name}|{city}'.lower()]
