@@ -62,6 +62,9 @@ NET_STEPS = [   # (marker, anchor, replacement) for the Network access tab
      "const ov = net_overlap.filter((r) => r.market === m && r.level === 'network').map((r) => Number(r.share_of_a_in_b)).sort((a, b) => a - b);",
      "const np = (net_overlap || []).find((r) => r.market === m);   // net_parts: the middle overlap is worked out by the bot"),
     ("overlap_mid: np ? np.overlap_mid", "overlap_mid: ov.length ? ov[Math.floor((ov.length - 1) / 2)] : null", "overlap_mid: np ? np.overlap_mid : null"),
+    # Oct 31 (later): the headline boxes read net_headline, worked out by the bot (board/net_headline.py); the in-page
+    # net_summary calc is only a fallback (it left the boxes blank on the live page).
+    ("rowsOf('net_headline')", "summary = rowsOf('net_summary')", "summary = rowsOf('net_headline') || rowsOf('net_summary')"),
 ]
 
 

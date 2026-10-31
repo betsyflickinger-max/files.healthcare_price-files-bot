@@ -169,7 +169,9 @@ jobs:
           python-version: "3.12"
       - name: Copy the day's files to R2 for the private control center (files.healthcare/control)
         continue-on-error: true
-        run: pip install -q boto3==1.35.36 && python bot/board/to_r2_control.py out/dashboard '*.json'
+        run: |
+          python bot/board/net_headline.py out/dashboard
+          pip install -q boto3==1.35.36 && python bot/board/to_r2_control.py out/dashboard '*.json'
       - name: Publish (private repo when its token is set, else the public dashboard-data branch)
         env:
           DATA_TOKEN: ${{ secrets.DASHBOARD_DATA_TOKEN }}
