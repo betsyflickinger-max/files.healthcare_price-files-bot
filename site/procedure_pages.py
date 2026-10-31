@@ -285,10 +285,6 @@ STATES = {'tennessee': 'TN', 'colorado': 'CO', 'oklahoma': 'OK', 'alabama': 'AL'
           'michigan': 'MI', 'indiana': 'IN', 'washington-dc': 'DC'}
 
 
-def area_state(a):
-    return STATES.get(a['slug'], 'TX')
-
-
 def _scope_states():
     """State pages built by the shared schedule (site/state_scopes.json): page slug -> state code."""
     try:
@@ -300,15 +296,17 @@ def _scope_states():
 
 CA_REGIONS = {'los-angeles': 'CA', 'san-diego-inland-empire': 'CA', 'bay-area': 'CA', 'sacramento-northern-california': 'CA',
               'central-california': 'CA'}
-_PAGE_STATES = {**_scope_states(), **CA_REGIONS, **STATES}
+STATES = {**_scope_states(), **STATES}   # CA regions stay out: like Texas metros, they get their own Medicare localities
 
 
-def page_state(a):
-    """The state an area is in, for display only: the homepage map and place lists, and the /costs/ place chips.
-    Oct 31, 2026: area_state() reads 14 state pages (Virginia, Wisconsin, Arkansas ...) and California's 5 regions as Texas, so
-    the map left them un-outlined and listed them under Texas. The full fix (price figures too) waits on Betsy's OK on branch
-    card2-all-states-switch; this changes no price."""
-    return _PAGE_STATES.get(a['slug'], 'TX')
+def area_state(a):
+    """Oct 31, 2026 (Betsy OK'd): 14 live state pages (Virginia, Wisconsin, Arkansas ...) and California's 5 regions were missing
+    here and read as Texas: Texas proof lines, Texas anesthesia rates, left off the homepage map. STATES now includes every
+    state_scopes.json page; California's regions return CA."""
+    return STATES.get(a['slug']) or CA_REGIONS.get(a['slug'], 'TX')
+
+
+page_state = area_state   # the homepage map and place lists used this display-only copy earlier on Oct 31
 
 
 def area_group(a):
@@ -1003,11 +1001,21 @@ def anes_med(S, area):
     bu, cf = _ANES
     if code not in bu:
         return None
-    st = 'TEXAS' if area_state(area) == 'TX' else area['slug'].replace('-', ' ').upper()
-    if area['slug'] == 'washington-dc':
+    st = ('TEXAS' if area_state(area) == 'TX' else 'CALIFORNIA' if area['slug'] in CA_REGIONS
+          else area['slug'].replace('-', ' ').upper())
+    if area['slug'] in ('washington-dc', 'district-of-columbia'):
         locs = [r for r in cf if r['locality_name'].startswith('DC')]
+    elif area['slug'] in CA_REGIONS:   # Oct 31, 2026: the Medicare localities of the region's counties (site/regions.py)
+        if HERE not in sys.path:
+            sys.path.insert(0, HERE)
+        import regions
+        cty = set(regions.REGIONS['california'][area['slug']][4])
+        nums = {z['area'].split('-')[1] for z in csv.DictReader(open(os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv')))
+                if z['state'] == 'CA' and z['county'] in cty}
+        cons = {r['contractor'] for r in cf if r['locality_name'] == 'REST OF CALIFORNIA' or r['locality_name'].startswith('LOS ANGELES-')}
+        locs = [r for r in cf if r['contractor'] in cons and r['locality'] in nums]
     else:
-        cons = {r['contractor'] for r in cf if r['locality_name'] in (st, 'REST OF ' + st)}
+        cons = {r['contractor'] for r in cf if r['locality_name'] in (st, 'REST OF ' + st) or r['locality_name'].startswith(st + ', ')}   # 'HAWAII, GUAM'
         locs = [r for r in cf if r['contractor'] in cons]
         if area['slug'] not in STATES:          # a metro or town: its own Medicare localities, else the rest of the state
             words = ' ' + re.sub(r'[^A-Z]+', ' ', area['name'].upper()) + ' '
@@ -1016,7 +1024,7 @@ def anes_med(S, area):
         return None
     v = sorted(float(r['cf_nonqualifying_apm']) for r in locs)
     where = ', '.join(sorted(r['locality_name'].title().replace('Dc ', 'DC ').replace('Md/Va', 'MD/VA').replace(' Of ', ' of ') for r in locs))
-    return {'bu': bu[code], 'lo': v[0], 'hi': v[-1], 'where': where if len(locs) <= 3 else f"{len(locs)} Medicare areas in the state"}
+    return {'bu': bu[code], 'lo': v[0], 'hi': v[-1], 'where': where if len(locs) <= 3 else f"{len(locs)} Medicare areas in the {'region' if area['slug'] in CA_REGIONS else 'state'}"}
 
 
 LABOR = {'H': 0.60, 'A': 0.50}    # labor-related share: OPPS 60% (CY2026 OPPS final rule), ASC 50% (MedPAC ASC Payment Basics, Oct 2026)
