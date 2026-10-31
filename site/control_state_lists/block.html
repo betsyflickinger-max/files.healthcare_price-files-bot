@@ -1,0 +1,139 @@
+<!-- Control center: "Every state" table, names behind each number + completion colors (Oct 31, 2026, Betsy) -->
+<style>
+#states-table td.n .sl-n{all:unset;cursor:pointer;font-weight:600;border-bottom:1px dotted currentColor}
+#states-table td.n .sl-n:focus-visible{outline:2px solid var(--color-fg);outline-offset:2px}
+#states-table td.n .sl-zero{cursor:default;border-bottom:0;font-weight:400}
+.sl-key{display:flex;flex-wrap:wrap;gap:var(--cds-gap-sm);font-size:var(--cds-font-size-caption);color:var(--color-fg-muted);margin:0}
+.sl-key i{display:inline-block;width:.6rem;height:.6rem;border-radius:50%;margin-right:4px;vertical-align:-1px}
+.sl-panel{border-top:1px solid var(--color-border-line);padding-top:var(--cds-gap-sm)}
+.sl-panel .sl-h{display:flex;justify-content:space-between;align-items:baseline;gap:var(--cds-gap-sm)}
+.sl-panel h4{margin:0;font-size:var(--cds-font-size-body)}
+.sl-panel button.sl-x{font:inherit;font-size:var(--cds-font-size-caption);color:var(--color-fg);background:var(--color-bg);border:1px solid var(--color-border-line);border-radius:var(--cds-radius);padding:2px 8px;cursor:pointer}
+.sl-panel .tbl{max-height:26rem;overflow:auto}
+.sl-panel td a{color:inherit}
+.sl-panel th{padding:var(--cds-pad-xs) var(--cds-pad-sm)}
+</style>
+<script>
+(function () {
+  // Each count in "Every state" lists the hospitals behind it (hover for the first names, click for all of them),
+  // using the same hospital rows (dataset "hospitals", dashboard/build.py) and the same status buckets the counts come from.
+  const $ = (s) => document.querySelector(s);
+  const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+  const BUCKET = {'Have file': 'have', 'Download failed': 'failed', 'Known file, not downloaded': 'pending', 'Not checked yet': 'unchecked'};
+  const bucket = (s) => BUCKET[s] || 'nofile';
+  const COLS = {
+    hospitals: {label: 'All hospitals on the CMS list', pick: () => true},
+    have: {label: 'Have a usable price file', pick: (h) => bucket(h.status) === 'have'},
+    coverage: {label: 'Still without a usable file', pick: (h) => bucket(h.status) !== 'have'},
+    failed: {label: 'Download failed', pick: (h) => bucket(h.status) === 'failed'},
+    nofile: {label: 'No file found yet', pick: (h) => bucket(h.status) === 'nofile'},
+  };
+  // completion: green 90%+, yellow 75-89%, red under 75%, grey not started
+  const band = (c) => c == null || c === '' ? null : Number(c) >= 0.9 ? 'g' : Number(c) >= 0.75 ? 'y' : 'r';
+  const PAL = {light: {g: '#15803D', y: '#A16207', r: '#B91C1C'}, dark: {g: '#4ADE80', y: '#FACC15', r: '#F87171'}};
+  const fmtN = (v) => Number(v).toLocaleString('en-US');
+  let byState = null, src = null, open = null;
+
+  function index() {
+    const hs = rowsOf('hospitals');
+    if (!hs) return null;
+    if (hs !== src) {
+      src = hs; byState = new Map();
+      hs.forEach((h) => { (byState.get(h.state) || byState.set(h.state, []).get(h.state)).push(h); });
+      byState.forEach((l) => l.sort((a, b) => String(a.hospital).localeCompare(String(b.hospital))));
+    }
+    return byState;
+  }
+  function palette() {
+    const res = window.PT && window.PT.resolve ? window.PT.resolve('var(--color-panel)') : '';
+    const c = window.d3 && d3.color(res);
+    if (!c) return PAL.light;
+    const {r, g, b} = c.rgb();
+    return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5 ? PAL.dark : PAL.light;
+  }
+  function namesFor(st, f) {
+    const ix = index();
+    return ix ? (ix.get(st) || []).filter(COLS[f].pick) : null;
+  }
+
+  function showPanel() {
+    const card = $('#states-table-card');
+    let p = card.querySelector('.sl-panel');
+    if (!open) { if (p) p.remove(); return; }
+    const list = namesFor(open.st, open.f);
+    if (!p) { p = document.createElement('div'); p.className = 'sl-panel'; card.appendChild(p); }
+    p.replaceChildren();
+    const h = document.createElement('div'); h.className = 'sl-h';
+    const t = document.createElement('h4');
+    t.textContent = `${open.name}: ${COLS[open.f].label}` + (list ? ` (${fmtN(list.length)})` : '');
+    const x = document.createElement('button'); x.type = 'button'; x.className = 'sl-x'; x.textContent = 'Close';
+    x.onclick = () => { open = null; showPanel(); };
+    h.append(t, x); p.appendChild(h);
+    if (!list) { const m = document.createElement('p'); m.className = 'muted'; m.textContent = 'Loading the hospital list…'; p.appendChild(m); return; }
+    const wrap = document.createElement('div'); wrap.className = 'tbl';
+    const tb = document.createElement('table');
+    tb.innerHTML = '<thead><tr><th>Hospital</th><th>City</th><th>Status</th><th>What the bot found</th><th style="text-align:right">File date</th><th>File website</th></tr></thead><tbody></tbody>';
+    const body = tb.querySelector('tbody');
+    list.forEach((r) => {
+      const tr = document.createElement('tr');
+      [r.hospital, r.city, r.status, r.detail, r.file_date ? r.file_date + (r.stale ? ' (old)' : '') : '—'].forEach((v, i) => {
+        const td = document.createElement('td'); if (i === 4) { td.style.textAlign = 'right'; td.style.whiteSpace = 'nowrap'; } td.textContent = v == null || v === '' ? '—' : String(v); tr.appendChild(td);
+      });
+      const td = document.createElement('td');
+      if (r.website && /^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(r.website)) { const a = document.createElement('a'); a.href = 'https://' + r.website; a.target = '_blank'; a.rel = 'noopener'; a.textContent = r.website; td.appendChild(a); }
+      else td.textContent = r.website || '—';
+      tr.appendChild(td); body.appendChild(tr);
+    });
+    wrap.appendChild(tb); p.appendChild(wrap);
+  }
+
+  function decorate() {
+    const table = $('#states-table'), card = $('#states-table-card');
+    if (!table || !card || !window.PT) return;
+    const states = new Map((rowsOf('states') || []).map((s) => [s.state, s]));
+    const fields = [...table.querySelectorAll('thead tr:first-child th')].map((th) => th.dataset.field);
+    const pal = palette(), tip = window.PT.tipper(card);
+    if (!card.querySelector('.sl-key')) {
+      const k = document.createElement('p'); k.className = 'sl-key';
+      k.innerHTML = '<span><i data-b="g"></i>90% or more have a file</span><span><i data-b="y"></i>75 to 89%</span><span><i data-b="r"></i>under 75%</span><span>Hover a number for the hospitals behind it; click for the full list.</span>';
+      card.querySelector('.tbl').after(k);
+    }
+    card.querySelectorAll('.sl-key i').forEach((i) => { i.style.background = pal[i.dataset.b]; });
+    table.querySelectorAll('tbody tr').forEach((tr) => {
+      const s = states.get(tr.dataset.key); if (!s) return;
+      const col = pal[band(s.coverage)] || 'var(--color-fg-muted)';
+      tr.querySelectorAll('td').forEach((td, i) => {
+        const f = fields[i]; if (!COLS[f]) return;
+        td.style.color = col;
+        const bar = td.querySelector('.bar i'); if (bar) bar.style.background = col;
+        const target = td.querySelector('.bar span') || td;
+        const val = f === 'coverage' ? (s.hospitals || 0) - (s.have || 0) : s[f];
+        if (target.querySelector('.sl-n') || s.coverage == null && f !== 'hospitals') return;
+        const btn = document.createElement('button'); btn.type = 'button'; btn.className = 'sl-n' + (val ? '' : ' sl-zero');
+        btn.textContent = target.textContent; target.replaceChildren(btn);
+        if (!val) return;
+        const hover = (e) => {
+          const list = namesFor(s.state, f);
+          if (!list) { tip.show(e, `${s.name}: ${COLS[f].label}`, ['Loading the hospital list…']); return; }
+          const lines = list.slice(0, 12).map((h) => h.hospital + (h.city ? ', ' + h.city : ''));
+          if (list.length > 12) lines.push(`+ ${fmtN(list.length - 12)} more. Click for the full list.`);
+          tip.show(e, `${s.name}: ${COLS[f].label} (${fmtN(list.length)})`, lines);
+        };
+        btn.addEventListener('mousemove', hover);
+        btn.addEventListener('mouseleave', () => tip.hide());
+        btn.addEventListener('focus', () => { const b = btn.getBoundingClientRect(); hover({clientX: b.left, clientY: b.bottom}); });
+        btn.addEventListener('blur', () => tip.hide());
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation(); tip.hide();
+          open = {st: s.state, name: s.name, f};
+          showPanel();
+          card.querySelector('.sl-panel').scrollIntoView({behavior: 'smooth', block: 'nearest'});
+        });
+      });
+    });
+    if (open && card.querySelector('.sl-panel h4') && !/\(\d/.test(card.querySelector('.sl-panel h4').textContent)) showPanel();
+  }
+  dash.onData(decorate);
+})();
+</script>
+<!-- /state-lists -->
