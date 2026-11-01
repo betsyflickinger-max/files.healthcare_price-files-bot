@@ -79,12 +79,24 @@ def sizes(prefix):
             for o in pg.get('Contents', []) if o['Key'].endswith('.parquet')}
 
 
+# Nov 1, 2026 (Betsy: "do it"): insurers a scope's build doesn't wait for. Geisinger is 3,291 of the Northeast's 3,648 networks,
+# its server allows only 2 machines at once (insurers/fleet.py HOST_CAPS), so 10 states sat waiting on one Pennsylvania insurer.
+# The build uses every Geisinger network already read; the rest are added later as an update build (state_rebuild.json), the
+# way Montana's Mountain Health was added in October.
+WAIT_WITHOUT = {'c2': ('Geisinger Health Plan',)}
+
+
 def s7_busy():
     try: m = s3.get_object(Bucket=B, Key=f'bot/insurers/{SCOPE}/manifest.csv')['Body'].read().decode()
     except Exception: return 1   # Oct 18, 2026: a new state whose files haven't been checked yet counts as busy
     rows = list(csv.DictReader(io.StringIO(m)))
     if not any(r.get('status') == 'processed' for r in rows): return max(1, len(rows))   # nothing read yet: never build empty
-    return sum(1 for r in rows if r.get('status') in ('running', 'queued'))
+    skip = WAIT_WITHOUT.get(SCOPE, ())
+    left = [r for r in rows if r.get('status') in ('running', 'queued')]
+    n_skip = sum(1 for r in left if r.get('insurer') in skip)
+    if n_skip:
+        log(f'not waiting for {n_skip} {", ".join(skip)} files still queued or being read (added later as an update)')
+    return len(left) - n_skip
 
 
 def state_npis():
