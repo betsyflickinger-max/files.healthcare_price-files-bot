@@ -11,10 +11,13 @@ Nothing is averaged; every rate keeps its insurer file. Machines delete themselv
 Env: as orchestrate.py, plus [ST_BUILD=YYYY-MM] [FORCE=1]."""
 import csv, io, json, os, subprocess, sys, time
 
-MONTH = os.environ.get('ST_BUILD') or time.strftime('%Y-%m')
 # Oct 16, 2026: ST_SCOPE=nc builds North Carolina (its own insurer tables data/nc/, build id stnc-YYYY-MM); default s7.
 SCOPE = os.environ.get('ST_SCOPE', 's7')
 STB = 'st' if SCOPE == 's7' else 'st' + SCOPE   # no '-' inside, so '<STB>-<YYYY-MM>'.split('-', 1) still gives the month
+# Nov 1, 2026: last month's build is finished first when it is still under way (site/build_month.py)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_month import month_for
+MONTH = os.environ.get('ST_BUILD') or month_for(STB)
 # Oct 16, 2026: rebuild some states only, after new insurer tables landed for them (Anthem's Colorado, Georgia and Missouri
 # networks). Named in site/state_rebuild.json (this repo), e.g. {"st": {"base": "2026-10", "build": "2026-10b", "states":
 # ["CO", "GA", "MO"]}}, and used while "base" is this month's build. It is a fresh build (its own folder, so its own stage-B
@@ -65,7 +68,10 @@ WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
         # 120 GB / 157k), so its batches are ~90-100M rows and don't fit a worker's 6 GB: 6 machines landed 1.2 batches an
         # hour (Indiana ~1 a minute per machine) and the price check projected $303. Split each unfinished batch into 4
         # pieces (~25M rows, Indiana-size); finished batches are kept.
-        'ohio': dict(SPLIT='4', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
+        'ohio': dict(SPLIT='4', STALL_MIN='240'),
+        # Nov 1, 2026: every Washington helper died with "Out of Memory" (5.5 GB) loading the state's flat-rate list at the
+        # start of its first batch (every_code.py FLAT), so 0 of 256 batches landed in 39 hours. One 26 GB worker per machine.
+        'washington': dict(WORKERS='1', WMEM='26GB', WTHREADS='8', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
 # so each piece (~25-40M rows) fits in a worker's 6 GB like other states' batches. Finished whole batches are kept.
 # Oct 14: STALL_MIN 360 (default 60; 180 was still too short: georgia-c5 went 3h12m without its first batch): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.

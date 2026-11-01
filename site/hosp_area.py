@@ -184,7 +184,7 @@ def fix_names(O, prefix):
 
 
 def run():
-    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
+    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + (os.environ.get('HOSP_MONTH') if S7 and os.environ.get('HOSP_MONTH') else time.strftime('%Y-%m')))   # Nov 1, 2026: HOSP_MONTH from pages_loop.py (build_month.py)
     sys.path.insert(0, HERE)
     import orchestrate as O
     SP = O.SP
@@ -265,7 +265,7 @@ def redo(areas):
     next monthly build. Drops those files from the build's areas.json and clears the areas' h2 and publish marks, so the
     next runs of hosp-areas.yml (same BUILD / HOSP_SCOPE) rebuild and republish just them. New files come with the next build.
     Usage: BUILD=hosp-tx-2026-10 python site/hosp_area.py redo houston odessa ...   (HOSP_SCOPE=s7 for state pages)"""
-    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + time.strftime('%Y-%m'))
+    os.environ.setdefault('BUILD', (f'hosp-{STB}-' if S7 else 'hosp-tx-') + (os.environ.get('HOSP_MONTH') if S7 and os.environ.get('HOSP_MONTH') else time.strftime('%Y-%m')))   # Nov 1, 2026: HOSP_MONTH from pages_loop.py (build_month.py)
     sys.path.insert(0, HERE); sys.path.insert(0, f'{HERE}/../bot')
     import orchestrate as O, identity
     wrong = identity.load(O.s3, O.B)

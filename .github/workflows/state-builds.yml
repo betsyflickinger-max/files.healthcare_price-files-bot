@@ -68,7 +68,7 @@ jobs:
           for i in $(seq 1 64); do
             git pull -q --ff-only origin main || true
             python site/orchestrate_states.py | tee -a "$GITHUB_STEP_SUMMARY"
-            if [ "$(python site/build_stage.py site/builds/st${ST_SCOPE}-$(date +%Y-%m)/state.json)" = hosp ]; then exit 0; fi
+            if [ "$(python site/build_stage.py site/builds/$(cat /tmp/st_bid 2>/dev/null || echo st${ST_SCOPE}-$(date +%Y-%m))/state.json)" = hosp ]; then exit 0; fi
             [ -f /tmp/st_waiting ] && exit 0   # still reading the state's insurer files: the next hourly run checks again
             sleep 300
           done

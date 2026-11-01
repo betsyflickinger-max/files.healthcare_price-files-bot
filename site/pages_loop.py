@@ -14,6 +14,8 @@ Usage: python site/pages_loop.py
 """
 import json, os, subprocess, sys, time
 import boto3
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from build_month import month_for
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 IDLE = '/tmp/hosp_idle'                        # hosp_area.py writes this when its scope has nothing to do for now
@@ -37,13 +39,14 @@ def stb(scope): return 'st' if scope == 's7' else 'st' + scope
 def main():
     t0 = time.time()
     while True:
-        month = time.strftime('%Y-%m'); working = []
+        working = []
         for scope in OWN + SHARED:
+            month = month_for(stb(scope), s3, E['R2_BUCKET'])   # Nov 1, 2026: last month's build first while it's under way
             if scope in SHARED and stage(f'site/builds/{stb(scope)}-{month}/state.json') not in ('build', 'hosp'):
                 continue   # no insurer build for this state yet (same check the per-scope jobs made)
             if os.path.exists(IDLE): os.remove(IDLE)
             print(f'--- {scope}', flush=True)
-            r = subprocess.run([sys.executable, f'{HERE}/hosp_area.py', 'run'], env={**os.environ, 'HOSP_SCOPE': scope})
+            r = subprocess.run([sys.executable, f'{HERE}/hosp_area.py', 'run'], env={**os.environ, 'HOSP_SCOPE': scope, 'HOSP_MONTH': month})
             if r.returncode: print(f'{scope}: hosp_area.py stopped with code {r.returncode}', flush=True)
             elif stage(f'site/builds/hosp-{stb(scope)}-{month}/state.json') != 'done' and not os.path.exists(IDLE):
                 working.append(scope)   # hospital machines still working: come back to it next pass
