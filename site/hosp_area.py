@@ -16,7 +16,7 @@ Nothing is averaged; every hospital line keeps its file and line number (h2_buil
 HOSP_SCOPE=s7 (state pages, Oct 13, 2026): build id hosp-st-YYYY-MM, one area per state of the first national batch (by the
 hospital's state in data/hospitals.csv), next to each state's insurer build under site/every-st/<state>/.
 """
-import csv, io, json, os, subprocess, sys, time
+import csv, io, json, os, re, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HGI = ('https://data.cms.gov/provider-data/sites/default/files/resources/893c372430d9d71a1c52737d01239d47_1785189955/'
@@ -311,7 +311,11 @@ def split_flow(O, st, a, done):
                 try: O.s3.delete_object(Bucket=O.B, Key=f'site/deploy/cities/{a}/price-finder.html')
                 except Exception: pass
         if st['launches'].get(role, 0) >= 3 and not O.alive(role):
-            O.log(a, 'REGIONAL SPLIT FAILED 3 times: see the split machine log (run.log); nothing published'); return 0
+            O.log(a, 'REGIONAL SPLIT FAILED 3 times: see the split machine log (run.log); nothing published')
+            alert_once(O, st, f'split-failed-{a}', f'{a}: regional split failed 3 times',
+                       f'The machine that splits {a} into regional pages failed 3 times, so none of its regional pages are '
+                       'published. See the split machine log (run.log).')
+            return 0
         if not O.alive(role): O.bundle()   # the machine runs this repository's current code
         O.ensure(st, role, SIZE_SPLIT, f"/root/v/bin/python /root/h/hosp_area.py split {a} >> /root/run.log 2>&1", dict(SP=SP), False)
         O.log(a, 'regional split running (about an hour); the publish lock is freed meanwhile')
@@ -379,16 +383,92 @@ MED_AREAS_V = 1   # Oct 30, 2026: Medicare doctor fees by each provider's own ar
 PUBLISH_TRIES = 3          # Oct 21, 2026: how many times a state page's publish step is tried before it is left failed
 
 
+# Nov 1, 2026 (Betsy: "so that we aren't continually trapped"): Michigan's page came out at 48.1 MiB, failed the host's
+# 25 MiB limit three times in a row (the same build makes the same page, so retries can't help) and then sat unpublished
+# with one line in a log. Now: every page's size is recorded (st['page_mib']); a page over the limit is marked "too big"
+# at once (no retries) and Betsy gets a GitHub issue saying what to do; a page over SIZE_WARN_MIB gets a heads-up issue
+# while there is still room, so the regions can be drawn before it breaks; and any page or split the bot gives up on
+# opens an issue instead of only a log line. Each alert is sent once per build (st['alerts']).
+SIZE_LIMIT_MIB = 24        # city_page.PAGE_MAX: the host takes 25 MiB, the builder stops at 24
+SIZE_WARN_MIB = 19         # about 80% of the limit: time to draw regions (site/regions.py)
+TOO_BIG = 'failed: too big for one page'
+SIZE_RX = re.compile(r'(?:page is|page size:|\() ?([0-9.]+) MiB')
+
+
+def alert_once(O, st, key, title, body):
+    sent = st.setdefault('alerts', {})
+    if key in sent: return
+    sent[key] = time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())
+    try: O.issue(title, body + f'\n\n(Sent once by site/hosp_area.py for build {O.BID}.)')
+    except Exception as e: O.log('alert not sent:', e)
+
+
+def page_size(out):
+    m = SIZE_RX.findall(out or '')
+    return float(m[-1]) if m else None
+
+
+def size_alerts(O, st, a, mib, built_from=''):
+    """record a page's size; open an issue when it is too big or getting close"""
+    if mib is None: return
+    st.setdefault('page_mib', {})[a] = mib
+    if mib > SIZE_LIMIT_MIB:
+        alert_once(O, st, f'too-big-{a}', f'{a}: Price Finder page too big to publish ({mib:.1f} MiB; the host takes 25)',
+                   f'The {a} page came out at {mib:.1f} MiB, over the website host\'s 25 MiB limit, so it was not published. '
+                   'Retrying won\'t help: the same build makes the same page. Nothing is lost: the insurer build '
+                   f'({built_from or "this month"}) is kept and is split into regional pages without being rebuilt.\n\n'
+                   f'**To fix:** add {a} to `REGIONS`, `STATE_CODE`, `ON` and `NEIGHBORS` in `site/regions.py` (whole counties, '
+                   'each region well under 19 MiB; see Michigan, Nov 1, 2026). The next hourly state-pages run splits it.')
+    elif mib >= SIZE_WARN_MIB:
+        alert_once(O, st, f'near-limit-{a}', f'{a}: Price Finder page is {mib:.1f} MiB, close to the 25 MiB limit',
+                   f'The {a} page is {mib:.1f} MiB. It still publishes, but a few more networks or codes next month could push '
+                   'it over the website host\'s 25 MiB limit. Draw its regional pages now (site/regions.py) so it never gets stuck.')
+
+
 def publish_one(O, st, a, how):
     fix_names(O, O.getj(O.SP + 'areas.json', {})[a]['prefix'])
     r = subprocess.run([sys.executable, f'{HERE}/city_page.py', a, '--deploy', '--out', f'/tmp/city-{a}'],
                        capture_output=True, text=True, timeout=3600)
     print(r.stdout[-1200:], r.stderr[-1200:], flush=True)
-    st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
+    out = (r.stdout or '') + (r.stderr or '')
+    mib = page_size(out)
+    if r.returncode != 0 and 'website host takes files up to' in out:
+        st['published'][a] = f'{TOO_BIG} ({mib:.1f} MiB; the host takes 25): needs regional pages (site/regions.py)' if mib else \
+            f'{TOO_BIG}: needs regional pages (site/regions.py)'
+        size_alerts(O, st, a, mib if mib else SIZE_LIMIT_MIB + 1, newest_build(O.s3, O.B, a))
+    else:
+        st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
+        if r.returncode == 0: size_alerts(O, st, a, mib)
     st.setdefault('published_from', {})[a] = newest_build(O.s3, O.B, a)
     if r.returncode == 0: st.setdefault('med_areas', {})[a] = MED_AREAS_V
     O.log('published', a, '->', st['published'][a])
     O.putj(O.SP + 'state.json', st)
+
+
+def early_size_ok(O, st, a):
+    """Nov 1, 2026: as soon as a state's insurer build is done, and before a hospital machine is rented for it, build its page
+    once in check mode (no deploy; a few minutes on GitHub's free machine) and look at the size. Over the limit: the page is
+    marked too big and Betsy gets an issue right away, instead of after the hospital build and three failed publishes.
+    Hospital files add a little, so the near-limit heads-up uses the same 80% mark. Once per insurer build; any error
+    in the check lets the build go on as before."""
+    src = newest_build(O.s3, O.B, a)
+    chk = st.setdefault('size_checked', {})
+    if chk.get(a, {}).get('src') == src:
+        return chk[a].get('ok', True)
+    try:
+        r = subprocess.run([sys.executable, f'{HERE}/city_page.py', a, '--check', '--out', f'/tmp/check-{a}'],
+                           capture_output=True, text=True, timeout=3600)
+        mib = page_size((r.stdout or '') + (r.stderr or ''))
+    except Exception as e:
+        O.log(a, 'early size check skipped:', e); mib = None
+    ok = mib is None or mib <= SIZE_LIMIT_MIB
+    chk[a] = {'src': src, 'mib': mib, 'ok': ok}
+    O.log(a, 'early size check:', f'{mib:.1f} MiB' if mib is not None else 'no size (check failed; going on)', '' if ok else '-> TOO BIG')
+    if not ok:
+        st['published'][a] = f'{TOO_BIG} ({mib:.1f} MiB before hospital prices; the host takes 25): needs regional pages (site/regions.py)'
+    size_alerts(O, st, a, mib, src)
+    O.putj(O.SP + 'state.json', st)
+    return ok
 
 
 def state_by_state(O, st):
@@ -436,6 +516,10 @@ def state_by_state(O, st):
                 st['published'].pop(a, None)
             else:
                 O.log(a, 'STILL NOT PUBLISHED after', PUBLISH_TRIES, 'tries: see the publish step in earlier runs')
+                alert_once(O, st, f'gave-up-{a}', f'{a}: Price Finder page not published after {PUBLISH_TRIES} tries',
+                           f'The {a} page failed its publish step {PUBLISH_TRIES} times and the bot has stopped trying. The reason '
+                           'is in the "pages" job log of the State Price Finder pages (shared) runs. Its tries start over '
+                           'by themselves when site/city_page.py changes.')
     # Oct 30, 2026 (Betsy): a live page in a state with more than one Medicare doctor-fee area, published before each
     # provider was compared with their own area (site/med_areas.py), is published once more with the same build.
     try:
@@ -464,6 +548,7 @@ def state_by_state(O, st):
             busy += split_flow(O, st, a, done)   # even once its page is live: a new split version or build redoes the regions
             if a not in _regions.ALONGSIDE: continue   # California: its address is the page linking to the regions
         if a in st['published']: continue
+        if a not in done and not early_size_ok(O, st, a): continue   # Nov 1, 2026: too big: no hospital machine, an issue instead
         role = f'h2-{a}'
         gave_up = st['launches'].get(role, 0) >= 2 and not O.alive(role)
         O.ensure(st, role, O.SIZE_H2, f"/root/v/bin/python /root/h/hosp_area.py h2 {a} >> /root/run.log 2>&1",
@@ -472,8 +557,10 @@ def state_by_state(O, st):
         elif gave_up: publish_one(O, st, a, 'live, insurer rates only: its hospital machine failed twice')
         else: busy += 1
     waiting = [a for a in areas if a not in ready]
-    O.log('state pages:', len(st['published']), 'of', len(areas), 'published;', busy, 'hospital machines working;',
-          'insurer build still running for ' + ', '.join(waiting) if waiting else 'every state built')
+    live = sum(str(st['published'].get(a, '')).startswith('live') for a in areas)   # Nov 1: failed pages no longer count as published
+    failed = [a for a in areas if str(st['published'].get(a, '')).startswith('failed')]
+    O.log('state pages:', live, 'of', len(areas), 'live;', ('FAILED: ' + ', '.join(failed) + ';') if failed else '',
+          busy, 'hospital machines working;', 'insurer build still running for ' + ', '.join(waiting) if waiting else 'every state built')
     if all(a in st['published'] for a in areas):
         st['stage'] = 'done'; O.log('published:', st['published'])
     elif not busy:

@@ -68,18 +68,32 @@ REGIONS = {
         'central-eastern-pennsylvania': ('Central & Eastern Pennsylvania', '99', 'Rest of Pennsylvania', '-78.4,39.5,-74.5,42.2',
             ['Adams', 'Berks', 'Bradford', 'Carbon', 'Centre', 'Clinton', 'Columbia', 'Cumberland', 'Dauphin', 'Franklin', 'Fulton', 'Huntingdon', 'Juniata', 'Lackawanna', 'Lancaster', 'Lebanon', 'Lehigh', 'Luzerne', 'Lycoming', 'Mifflin', 'Monroe', 'Montour', 'Northampton', 'Northumberland', 'Perry', 'Pike', 'Potter', 'Schuylkill', 'Snyder', 'Sullivan', 'Susquehanna', 'Tioga', 'Union', 'Wayne', 'Wyoming', 'York']),
     },
+    # Nov 1, 2026: Michigan's statewide page came out at 48.1 MiB (2,708 networks), so its address links to four regions,
+    # like California. Lines follow Medicare's two Michigan areas (Detroit = Wayne, Oakland, Macomb, Washtenaw; Rest of
+    # Michigan), with each area halved so no region holds more than about a third of the state's providers (NPI Registry
+    # practice ZIPs: Oakland & Macomb 33%, Wayne & Washtenaw 24%, West Michigan 18%, the rest 25%), about 16 MiB at most.
+    'michigan': {
+        'oakland-macomb': ('Oakland & Macomb Counties', '01', 'Detroit', '-83.7,42.4,-82.7,43.0',
+            ['Oakland', 'Macomb']),
+        'detroit-ann-arbor': ('Detroit & Ann Arbor', '01', 'Detroit', '-84.2,42.0,-82.9,42.5',
+            ['Wayne', 'Washtenaw']),
+        'west-michigan': ('West Michigan', '99', 'Rest of Michigan', '-87.2,41.7,-84.6,44.2',
+            ['Kent', 'Ottawa', 'Muskegon', 'Kalamazoo', 'Allegan', 'Berrien', 'Van Buren', 'Cass', 'St. Joseph', 'Barry', 'Ionia', 'Montcalm', 'Newaygo', 'Oceana', 'Mecosta', 'Calhoun', 'Branch', 'Mason', 'Lake', 'Osceola']),
+        'mid-northern-michigan': ('Mid-Michigan, Northern Michigan & the U.P.', '99', 'Rest of Michigan', '-90.5,41.7,-82.1,47.5',
+            ['Alcona', 'Alger', 'Alpena', 'Antrim', 'Arenac', 'Baraga', 'Bay', 'Benzie', 'Charlevoix', 'Cheboygan', 'Chippewa', 'Clare', 'Clinton', 'Crawford', 'Delta', 'Dickinson', 'Eaton', 'Emmet', 'Genesee', 'Gladwin', 'Gogebic', 'Grand Traverse', 'Gratiot', 'Hillsdale', 'Houghton', 'Huron', 'Ingham', 'Iosco', 'Iron', 'Isabella', 'Jackson', 'Kalkaska', 'Keweenaw', 'Lapeer', 'Leelanau', 'Lenawee', 'Livingston', 'Luce', 'Mackinac', 'Manistee', 'Marquette', 'Menominee', 'Midland', 'Missaukee', 'Monroe', 'Montmorency', 'Ogemaw', 'Ontonagon', 'Oscoda', 'Otsego', 'Presque Isle', 'Roscommon', 'Saginaw', 'Sanilac', 'Schoolcraft', 'Shiawassee', 'St. Clair', 'Tuscola', 'Wexford']),
+    },
 }
 LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
 HOSP_V = 2   # Oct 31: hospital placement; v2 adds ZIP-prefix and CMS Provider of Services ZIPs (raising it re-places hospitals)
 SPLIT_V = 2   # Oct 31: v2 keeps every state code and the 'coming' list on regional pages; raising it splits again
-STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois': 'IL', 'pennsylvania': 'PA'}
+STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois': 'IL', 'pennsylvania': 'PA', 'michigan': 'MI'}
 # Oct 31, 2026 (Betsy): New York, Florida, Illinois and Pennsylvania fit on one page, so their statewide page stays live (its
 # address and /costs/ pages never change) and the regions are added beside it. California's statewide page was too big, so its
 # address became a page linking to the regions.
 ALONGSIDE = {'new-york', 'florida', 'illinois', 'pennsylvania'}
 # States whose regional pages are switched on (hosp_area.py splits them on its next hourly run). A state not listed here is
 # built and published exactly as before. Pennsylvania: its first state build is split as soon as it is done (no rebuild).
-ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
+ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania', 'michigan'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
 PARENT = {r: s for s, R in REGIONS.items() for r in R}
 NEIGHBORS = {   # regions that share a border, linked from each regional page for people who live near one
     'los-angeles': ['san-diego-inland-empire', 'central-california'],
@@ -96,6 +110,8 @@ NEIGHBORS = {   # regions that share a border, linked from each regional page fo
     'chicago-area': ['central-southern-illinois'], 'central-southern-illinois': ['chicago-area'],
     'philadelphia-area': ['central-eastern-pennsylvania'], 'western-pennsylvania': ['central-eastern-pennsylvania'],
     'central-eastern-pennsylvania': ['philadelphia-area', 'western-pennsylvania'],
+    'oakland-macomb': ['detroit-ann-arbor', 'mid-northern-michigan'], 'detroit-ann-arbor': ['oakland-macomb', 'mid-northern-michigan'],
+    'west-michigan': ['mid-northern-michigan'], 'mid-northern-michigan': ['oakland-macomb', 'detroit-ann-arbor', 'west-michigan'],
 }   # region slug -> state page slug
 
 

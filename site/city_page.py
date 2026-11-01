@@ -515,6 +515,7 @@ def main():
     if os.path.getsize(page) > PAGE_MAX:   # Oct 31, 2026: say why instead of failing inside the deploy
         sys.exit(f'STOP: the {name} page is {os.path.getsize(page) / 2**20:.1f} MiB; the website host takes files up to 25 MiB. '
                  f'Split it into regional pages (site/regions.py) like California.')
+    print(f'page size: {os.path.getsize(page) / 2**20:.1f} MiB (the website host takes up to 25 MiB)', flush=True)   # Nov 1, 2026: hosp_area.py records it and warns near the limit
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return
