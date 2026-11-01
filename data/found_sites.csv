@@ -1,1 +1,7 @@
 ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
+011311,LAKELAND COMMUNITY HOSPITAL,HALEYVILLE,AL,Critical Access Hospitals,lakelandcommunityhospital.com,osm,100,Lakeland Community Hospital,https://lakelandcommunityhospital.com/cms-hpt.txt,yes
+050336,ADVENTIST HEALTH LODI MEMORIAL,LODI,CA,Acute Care Hospitals,adventisthealth.org,osm,90,ADVENTIST HEALTH LODI MEMORIAL MEDICAL CENTER,https://adventisthealth.org/cms-hpt.txt,yes
+051310,ADVENTIST HEALTH HOWARD MEMORIAL,WILLITS,CA,Critical Access Hospitals,adventisthealth.org,osm,91,ADVENTIST HEALTH HOWARD MEMORIAL MEDICAL CENTER,https://adventisthealth.org/cms-hpt.txt,yes
+062011,CRAIG HOSPITAL,ENGLEWOOD,CO,Long-term,craighospital.org,osm,100,Craig Hospital,https://craighospital.org/cms-hpt.txt,yes
+120001,THE QUEENS MEDICAL CENTER,HONOLULU,HI,Acute Care Hospitals,queens.org,osm,100,The Queen's Medical Center,https://www.queens.org/cms-hpt.txt,yes
+394063,GEISINGER BEHAVIORAL HEALTH CENTER DANVILLE,DANVILLE,PA,Psychiatric,geisingerbehavioral.com,sibling,100,Geisinger Behavioral Health Center Danville,https://www.geisingerbehavioral.com/cms-hpt.txt,yes

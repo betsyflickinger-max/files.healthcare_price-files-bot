@@ -107,7 +107,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 011307,MEDICAL CENTER BARBOUR,EUFAULA,AL,Critical Access Hospitals,,https://medicalcenterbarbour.pg.quadax.revenuemasters.com/cdm-files/680640677_medical-center-barbour_standardcharges.csv,raw/hospitals/2026-10/AL/efdb6aea41cd_680640677_medical-center-barbour_standardcharges.csv.zst,efdb6aea41cde7a2beb2e7fd4a304d55a146619ef62a8ba578a13561c4264646,11150214,2026-10-09/find,
 011308,CRENSHAW COMMUNITY HOSPITAL,LUVERNE,AL,Critical Access Hospitals,,https://crenshawcommunityhospital.com/wp-content/uploads/2025/10/000817582_crenshaw-community-hospital_standardcharges-2.csv,raw/hospitals/2026-10/AL/74191035a7db_000817582_crenshaw-community-hospital_standardcharges-2.csv.zst,74191035a7db6f4ae65ede98d3fb09801c45da8fa7069dd63f1ac0dcf331651d,4176920,2026-10-08/fill7,
 011309,WIREGRASS MEDICAL CENTER,GENEVA,AL,Critical Access Hospitals,wiregrassmedicalcenter.org,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbWMCGENEVAAL&type=CDMWithoutLabel&fileType=CSV,,,,,
-011311,LAKELAND COMMUNITY HOSPITAL,HALEYVILLE,AL,Critical Access Hospitals,,,,,,,
+011311,LAKELAND COMMUNITY HOSPITAL,HALEYVILLE,AL,Critical Access Hospitals,lakelandcommunityhospital.com,,,,,,osm 2026-11-01
 012006,INFIRMARY LTAC HOSPITAL,MOBILE,AL,Long-term,infirmaryhealth.org,,,,,,sibling 2026-10-18
 012008,SELECT SPECIALTY HOSPITAL - BIRMINGHAM,BIRMINGHAM,AL,Long-term,,https://resources.selectmedical.com/Pricing-Transparency/critical-illness-recovery/25-1813128_Select_Specialty_Hospital-Birmingham_standardcharges.csv,,,,,web 2026-10-14
 012009,"NOLAND HOSPITAL BIRMINGHAM II, LLC",BIRMINGHAM,AL,Long-term,nolandhospitals.com,,,,,,osm 2026-10-10
@@ -506,7 +506,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 050329,CORONA REGIONAL MEDICAL CENTER,CORONA,CA,Acute Care Hospitals,swhcoronaregional.com,,,,,,web 2026-10-14
 050334,SALINAS VALLEY HEALTH MEDICAL CENTER,SALINAS,CA,Acute Care Hospitals,salinasvalleyhealth.com,,,,,,osm 2026-10-18
 050335,ADVENTIST HEALTH SONORA,SONORA,CA,Acute Care Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbAHSSONORACA&type=CDMWithoutLabel&fileType=CSV,,,,,held review Oct 19 (address match)
-050336,ADVENTIST HEALTH LODI MEMORIAL,LODI,CA,Acute Care Hospitals,,,,,,,
+050336,ADVENTIST HEALTH LODI MEMORIAL,LODI,CA,Acute Care Hospitals,adventisthealth.org,,,,,,osm 2026-11-01
 050342,PIONEERS MEMORIAL HEALTHCARE DISTRICT,BRAWLEY,CA,Acute Care Hospitals,,https://pmhd.org/wp-content/uploads/2026/05/994231206_Pioneers-Memorial-Hospital-standardcharges2026B.csv,,,,,hand check 2026-10-30 (Claude: name/address inside the file)
 050348,UCI HEALTH-ORANGE,ORANGE,CA,Acute Care Hospitals,,https://www.ucihealth.org/-/media/files/xlsx/patients-visitors/2025-price-transparency/952226406-regentsoftheuniversityofcaliforniaatirvinehospital-standardcharges.json,,,,,web 2026-10-14
 050350,ADVENTIST HEALTH WHITE MEMORIAL MONTEBELLO,MONTEBELLO,CA,Acute Care Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbAHWMLOSANGELESCA&type=CDMWithoutLabel,,,,,web 2026-10-19
@@ -652,7 +652,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 051307,CATALINA ISLAND MEDICAL CENTER,AVALON,CA,Critical Access Hospitals,,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbCIMCAVALONCA&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/CA/2fe8692dc464_Reports.aspx.zst,2fe8692dc464f7badb86c4f6f7e18b1d69420bdf4aceb75b4d6fa23a914501b6,19213589,2026-10-09/find,
 051308,SURPRISE VALLEY COMMUNITY HOSPITAL,CEDARVILLE,CA,Critical Access Hospitals,,,,,,,
 051309,JEROLD PHELPS COMMUNITY HOSPITAL,GARBERVILLE,CA,Critical Access Hospitals,,https://sohumhealth.org/app/uploads/2026/08/942664285_jerold-phelps-community-hospital_standardcharges.csv,raw/hospitals/2026-10/CA/192ab5ea644a_942664285_jerold-phelps-community-hospital_standardcharges.csv.zst,192ab5ea644a8069bb5ffa9b3080a4f6a3acf7e420b824bfe34d18cffd6f21fe,925669,2026-10-09/find,
-051310,ADVENTIST HEALTH HOWARD MEMORIAL,WILLITS,CA,Critical Access Hospitals,,,,,,,
+051310,ADVENTIST HEALTH HOWARD MEMORIAL,WILLITS,CA,Critical Access Hospitals,adventisthealth.org,,,,,,osm 2026-11-01
 051311,ORCHARD HOSPITAL,GRIDLEY,CA,Critical Access Hospitals,orchardhospital.com,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbOHGRIDLEYCA&type=CDMWithoutLabel&fileType=CSV,raw/hospitals/2026-10/CA/6e7cbb59ad06_Reports.aspx.zst,6e7cbb59ad062ee5c8814cfbbace24c32e270317855e1c8a82eeba5d7587daca,7498225,2026-10-08/fill11,
 051312,MOUNTAINS COMMUNITY HOSPITAL,LAKE ARROWHEAD,CA,Critical Access Hospitals,,https://mountains.pt.panaceainc.com/MRFDownload/mountains/mountainscommunityhospital,raw/hospitals/2026-10/CA/a5e1e7972942_mountainscommunityhospital.zst,a5e1e797294208f1dc6e811b48333f8128e996717da5b072d5fb53abe2f38c5b,53330144,2026-10-09/find,
 051314,KERN VALLEY HEALTHCARE DISTRICT,LAKE ISABELLA,CA,Critical Access Hospitals,kvhd.org,,,,,,web 2026-10-14
@@ -848,7 +848,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 061343,KEEFE MEMORIAL HOSPITAL,CHEYENNE WELLS,CO,Critical Access Hospitals,,https://keefemh.org/wp-content/uploads/2025/07/472340447_keefe-memorial-health-service-district_standardcharges.csv,,,,,web 2026-10-14
 061344,ST THOMAS MORE HOSPITAL,CANON CITY,CO,Critical Access Hospitals,centura.org,https://csdam.widen.net/content/2auijugc1s/original/840405257-1922012350_catholic-health-initiatives-colorado_standardcharges.csv,raw/hospitals/2026-10/CO/1ec0e5527706_840405257-1922012350_catholic-health-initiatives-colorado_standardcharges.csv.zst,1ec0e5527706c0a57e463380e57ec41cadbc5e3d71ddf1ed70699f37dd023733,531765588,2026-10-05/nat,
 062009,KINDRED HOSPITAL-DENVER,DENVER,CO,Long-term,kindredhospitals.com,,,,,,osm 2026-10-10
-062011,CRAIG HOSPITAL,ENGLEWOOD,CO,Long-term,,,,,,,
+062011,CRAIG HOSPITAL,ENGLEWOOD,CO,Long-term,craighospital.org,,,,,,osm 2026-11-01
 062012,PAM SPECIALTY HOSPITAL OF DENVER,DENVER,CO,Long-term,pamhealth.com,,,,,,chain 2026-10-10
 062013,KINDRED HOSPITAL AURORA,AURORA,CO,Long-term,kindredhospitals.com,,,,,,chain 2026-10-10
 062014,VIBRA HOSPITAL OF DENVER,THORNTON,CO,Long-term,vhdenver.com,,,,,,osm 2026-10-10
@@ -1383,7 +1383,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 114037,RIDGEVIEW INSTITUTE MONROE,MONROE,GA,Psychiatric,ridgeviewmonroe.com,,,,,,guess 2026-10-10
 650001,GUAM MEMORIAL  HOSPITAL AUTHORITY,TAMUNING,GU,Acute Care Hospitals,,,,,,,
 650003,GUAM REGIONAL MEDICAL CITY,DEDEDO,GU,Acute Care Hospitals,,,,,,,
-120001,THE QUEENS MEDICAL CENTER,HONOLULU,HI,Acute Care Hospitals,,,,,,,
+120001,THE QUEENS MEDICAL CENTER,HONOLULU,HI,Acute Care Hospitals,queens.org,,,,,,osm 2026-11-01
 120002,MAUI MEMORIAL MEDICAL CENTER,WAILUKU,HI,Acute Care Hospitals,mauihealthsystem.org,,,,,,osm 2026-10-10
 120005,HILO BENIOFF MEDICAL CENTER,HILO,HI,Acute Care Hospitals,,https://tq-consumer-static-prd.turquoise.health/consumer-downloads/machine-readable-files/943282424_hilo-benioff-medical-center_standardcharges.csv,,,,,
 120006,ADVENTIST HEALTH CASTLE,KAILUA,HI,Acute Care Hospitals,adventisthealth.org,https://apps.para-hcfs.com/PTT/FinalLinks/Reports.aspx?dbName=dbAHCKAILUAHI&type=CDMWithoutLabel&fileType=CSV,,,,,web 2026-10-22
@@ -4520,7 +4520,7 @@ ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,la
 394058,BERWICK HOSPITAL CENTER,BERWICK,PA,Psychiatric,,https://berwickhospitalcenter.com/wp-content/uploads/2026/05/23-2975836_BerwickHospitalCenter_standardcharges.csv,raw/hospitals/2026-10/PA/27efa459e786_23-2975836_BerwickHospitalCenter_standardcharges.csv.zst,27efa459e786faf068ac5eb581c04695626619190120c280b2577cee17eede55,1726,2026-10-05/nat,
 394059,GEISINGER BEHAVIORAL HEALTH CENTER NORTHEAST,MOOSIC,PA,Psychiatric,geisingerbehavioral.com,,,,,,web 2026-10-14
 394062,HAVEN BEHAVIORAL HOSPITAL OF WEST CHESTER,WEST CHESTER,PA,Psychiatric,oceanshealthcare.com,https://oceanshealthcare.com/wp-content/uploads/2026/07/881405126_Haven-Behavioral-Hospital-of-West-Chester_standardcharges.csv,raw/hospitals/2026-10/PA/b75e37a83502_881405126_Haven-Behavioral-Hospital-of-West-Chester_standardcharges.csv.zst,b75e37a835022bdd22e0c68b0d8ee6692b8d87eab9de1450441ba515b630e94e,93903,2026-10-05/nat,
-394063,GEISINGER BEHAVIORAL HEALTH CENTER DANVILLE,DANVILLE,PA,Psychiatric,,,,,,,
+394063,GEISINGER BEHAVIORAL HEALTH CENTER DANVILLE,DANVILLE,PA,Psychiatric,geisingerbehavioral.com,,,,,,sibling 2026-11-01
 400001,PRESBYTERIAN COMMUNITY HOSPITAL,SAN JUAN,PR,Acute Care Hospitals,presbypr.com,,,,,,osm 2026-10-10
 400003,HOSPITAL METROPOLITANO DR PILA,PONCE,PR,Acute Care Hospitals,,,,,,,
 400004,"ASOCIACION HOSPITAL DEL MAESTRO, INC",SAN JUAN,PR,Acute Care Hospitals,,,,,,,
