@@ -6,7 +6,7 @@ import json, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import regions, region_split as rs
 from hosp_area import newest_build
-st = sys.argv[1]; codes = sys.argv[2:] or ['27447', '70553', '99213', '45378', '93000', '80053']
+st = sys.argv[1]; codes = sys.argv[2:] or ['27447', '70553', '45378', '93000', '80053']   # Oct 31: featured codes only (99213 isn't one, so a test split never has it)
 s3 = rs.s3c(); B = rs.B
 src = newest_build(s3, B, st); month = src.rstrip('/').rsplit('/', 1)[1]
 g = lambda k: s3.get_object(Bucket=B, Key=k)['Body'].read()

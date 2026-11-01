@@ -79,7 +79,7 @@ STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois':
 ALONGSIDE = {'new-york', 'florida', 'illinois', 'pennsylvania'}
 # States whose regional pages are switched on (hosp_area.py splits them on its next hourly run). A state not listed here is
 # built and published exactly as before. Pennsylvania: its first state build is split as soon as it is done (no rebuild).
-ON = {'california'}
+ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
 PARENT = {r: s for s, R in REGIONS.items() for r in R}
 NEIGHBORS = {   # regions that share a border, linked from each regional page for people who live near one
     'los-angeles': ['san-diego-inland-empire', 'central-california'],
