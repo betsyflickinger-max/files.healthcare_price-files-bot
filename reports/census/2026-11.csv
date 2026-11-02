@@ -1,4 +1,8 @@
 scope,insurer,network,source_file,checked_on,rows,billing_codes,npis,additional_information_filled,bundled_codes_filled,covered_services_filled,billing_code_modifier_filled,service_code_filled,expiration_date_filled,setting_filled,billing_code_type_version_filled,percent_of_charges_rows,arrangements,rate_types,classes,settings
+data_b1,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-11_690_08Q0_in-network-rates_30_of_35.json.gz,2026-11-02,0,,,,,,,,,,,,,,,
+data_b1,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-11_690_08Q0_in-network-rates_31_of_35.json.gz,2026-11-02,0,,,,,,,,,,,,,,,
+data_b1,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-11_690_08Q0_in-network-rates_32_of_35.json.gz,2026-11-02,0,,,,,,,,,,,,,,,
+data_b1,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-11_690_08Q0_in-network-rates_33_of_35.json.gz,2026-11-02,0,,,,,,,,,,,,,,,
 data_b1,"Kaiser Foundation Health Plan of the Mid-Atlantic States, Inc.","Kaiser Permanente Mid-Atlantic (VA, DC, MD individual and group)",2026-11-01_NEW_MA-COMMERCIAL-01_in-network-rates.zip,2026-11-01,0,,,,,,,,,,,,,,,
 data_b4,Molina-Healthcare-of-Kentuky,Molina Kentucky marketplace (contract GMZCT26533),innetwork-G-GMZCT26533.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_b4,Molina-Healthcare-of-Kentuky,Molina Kentucky marketplace (contract GMZCT35676),innetwork-G-GMZCT35676.json,2026-11-02,0,,,,,,,,,,,,,,,
@@ -12,26 +16,26 @@ data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract GMZCT36266),
 data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT10626),innetwork-G-QMXCT10626.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT15518),innetwork-G-QMXCT15518.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT16003),innetwork-G-QMXCT16003.json,2026-11-02,0,,,,,,,,,,,,,,,
-data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT19675),innetwork-G-QMXCT19675.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT20252),innetwork-G-QMXCT20252.json,2026-11-01,0,,,,,,,,,,,,,,,
+data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT19675),innetwork-G-QMXCT19675.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT20252),innetwork-G-QMXCT20252.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_b4,Molina-Healthcare-of-Ohio,Molina Ohio marketplace (contract QMXCT22980),innetwork-G-QMXCT22980.json,2026-11-02,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT0000351],innetwork-G-QMXCT0000351.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT02299],innetwork-G-QMXCT02299.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT22955],innetwork-G-QMXCT22955.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT22967],innetwork-G-QMXCT22967.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT23432],innetwork-G-QMXCT23432.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT24726],innetwork-G-QMXCT24726.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25022],innetwork-G-QMXCT25022.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25133],innetwork-G-QMXCT25133.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25158],innetwork-G-QMXCT25158.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25214],innetwork-G-QMXCT25214.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25217],innetwork-G-QMXCT25217.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25506],innetwork-G-QMXCT25506.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25542],innetwork-G-QMXCT25542.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25554],innetwork-G-QMXCT25554.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25819],innetwork-G-QMXCT25819.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25896],innetwork-G-QMXCT25896.json,2026-11-01,0,,,,,,,,,,,,,,,
-data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT26172],innetwork-G-QMXCT26172.json,2026-11-01,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT0000351],innetwork-G-QMXCT0000351.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT02299],innetwork-G-QMXCT02299.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT22955],innetwork-G-QMXCT22955.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT22967],innetwork-G-QMXCT22967.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT23432],innetwork-G-QMXCT23432.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT24726],innetwork-G-QMXCT24726.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25022],innetwork-G-QMXCT25022.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25133],innetwork-G-QMXCT25133.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25158],innetwork-G-QMXCT25158.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25214],innetwork-G-QMXCT25214.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25217],innetwork-G-QMXCT25217.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25506],innetwork-G-QMXCT25506.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25542],innetwork-G-QMXCT25542.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25554],innetwork-G-QMXCT25554.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25819],innetwork-G-QMXCT25819.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT25896],innetwork-G-QMXCT25896.json,2026-11-02,0,,,,,,,,,,,,,,,
+data_c2,Molina-Healthcare-of-SouthCarolina,Molina SC marketplace (individual) [innetwork-G-QMXCT26172],innetwork-G-QMXCT26172.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_ct,,,innetwork-G-CCIASC000083-file-1,2026-11-02,0,,,,,,,,,,,,,,,
 data_ct,,,innetwork-G-CCIASC000086-file-1,2026-11-02,0,,,,,,,,,,,,,,,
 data_ct,,,innetwork-G-CCIASC000089-file-1,2026-11-02,0,,,,,,,,,,,,,,,
@@ -681,7 +685,6 @@ data_ct,"United HealthCare Services, Inc.",UnitedHealthcare Core EPO,2026-10-01_
 data_ct,"United HealthCare Services, Inc.",UnitedHealthcare NEXUS ACO Open Access,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_NEXUSACO-OA_453_in-network-rates.json.gz,2026-11-01,504374159,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.1%, inpatient 32.9%"
 data_ct,"United HealthCare Services, Inc.",UnitedHealthcare Select Plus,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_Select-Plus_657_in-network-rates.json.gz,2026-11-01,506791044,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, per diem 0.0%, percentage 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.0%, inpatient 33.0%"
 data_ct,"UnitedHealthcare of Colorado, Inc.",UnitedHealthcare of New England Navigate HMO,2026-10-01_UnitedHealthcare-of-Colorado--Inc-_Insurer_Navigate-HMO_637_in-network-rates.json.gz,2026-11-01,502883885,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.0%, inpatient 33.0%"
-data_full,,,innetwork-G-QMXCT09501,2026-11-02,0,,,,,,,,,,,,,,,
 data_full,Aetna Health Inc. - Texas,Aetna Texas HMO - Open Access Health Network Only,2026-09-05_pl-4wr-hr23_Aetna-Health-Inc.---Texas.json.gz,2026-11-01,1829574424,25988,48778,0.0%,0.0%,0.0%,75.4%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 78.9%, negotiated 19.3%, derived 1.2%, percentage 0.6%","professional 99.8%, institutional 0.2%","both 100.0%, outpatient 0.0%"
 data_full,Aetna Health Inc. - Texas,Aetna Texas HMO - Open Access Health Network Option,2026-09-05_pl-22z-hr23_Aetna-Health-Inc.---Texas.json.gz,2026-11-01,1771929382,25988,48778,0.0%,0.0%,0.0%,75.4%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 78.5%, negotiated 19.7%, derived 1.1%, percentage 0.6%","professional 99.8%, institutional 0.2%","both 100.0%, outpatient 0.0%"
 data_full,Aetna Life Insurance Company,Aetna Choice POS II,2026-10-05_pl-7-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-01,2493255575,74020,53642,0.0%,0.0%,0.0%,76.9%,100.0%,100.0%,100.0%,100.0%,0.5%,ffs 100.0%,"fee schedule 84.6%, negotiated 14.9%, percentage 0.5%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 100.0%, outpatient 0.0%"
@@ -760,6 +763,7 @@ data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT035
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT03528),innetwork-G-QMXCT03528.json,2026-11-01,18393852,15990,91,0.0%,0.0%,0.0%,0.0%,43.7%,100.0%,100.0%,46.5%,0.0%,ffs 100.0%,"STANDARD 78.0%, RVS 11.0%, FFS 7.3%, PERUNIT 2.7%",Professional 100.0%,"both 50.0%, outpatient 50.0%"
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT08829),innetwork-G-QMXCT08829.json,2026-11-01,256407,11056,3,0.0%,0.0%,0.0%,0.0%,55.7%,100.0%,100.0%,46.2%,0.0%,"ffs 99.8%, capitation 0.2%","STANDARD 95.6%, PERUNIT 3.5%, FFS 0.7%, FLATRATE 0.1%",Professional 100.0%,both 100.0%
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT08895),innetwork-G-QMXCT08895.json,2026-11-01,109251,11652,1,0.0%,0.0%,0.0%,0.0%,59.9%,100.0%,100.0%,46.7%,0.0%,"ffs 99.8%, capitation 0.2%","STANDARD 96.6%, PERUNIT 2.7%, FFS 0.6%, FLATRATE 0.1%",Professional 100.0%,both 100.0%
+data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT09501),innetwork-G-QMXCT09501.json,2026-11-02,0,,,,,,,,,,,,,,,
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT12962),innetwork-G-QMXCT12962.json,2026-11-01,240031227,11410,83,0.0%,0.0%,0.0%,0.0%,40.0%,100.0%,100.0%,47.6%,0.0%,ffs 100.0%,"RVS 99.7%, FFS 0.2%, PERUNIT 0.0%, ASC 0.0%",Professional 100.0%,outpatient 100.0%
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT13496),innetwork-G-QMXCT13496.json,2026-11-01,169282,14531,2,0.0%,0.0%,0.0%,0.0%,59.3%,100.0%,100.0%,47.1%,0.0%,ffs 100.0%,"STANDARD 87.2%, FFS 9.0%, RVS 2.9%, PERUNIT 0.9%",Professional 100.0%,outpatient 100.0%
 data_full,Molina-Healthcare-of-Texas,Molina Marketplace TX (innetwork-G-QMXCT14657),innetwork-G-QMXCT14657.json,2026-11-01,9629,3382,1,0.0%,0.0%,0.0%,0.0%,23.8%,100.0%,100.0%,46.3%,0.0%,ffs 100.0%,"STANDARD 46.0%, FFS 28.1%, RVS 25.9%",Professional 100.0%,outpatient 100.0%
