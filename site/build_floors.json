@@ -5,16 +5,11 @@
   "why": "NY, CA, VA, DC, FL, WI build sat at 1 machine and 0 of 256 batches for 10 hours; its insurer files were 92% read"
  },
  "stc2-2026-11": {
-  "machines": 12,
-  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Pennsylvania, New Jersey, Massachusetts, South Carolina)"
+  "machines": 14,
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Pennsylvania, New Jersey, Massachusetts, South Carolina); noon: only Pennsylvania left, 14"
  },
  "stc3-2026-10": {
-  "machines": 5,
-  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington); most 5 so the other five states get machines too",
-  "most": 5
- },
- "stc1-2026-10": {
-  "machines": 4,
-  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Minnesota)"
+  "machines": 6,
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington); most 5 so the other five states get machines too; noon: most removed, floor 6 (the other states are done)"
  }
 }
