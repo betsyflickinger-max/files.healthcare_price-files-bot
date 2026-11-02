@@ -73,10 +73,13 @@ REGIONS = {
     # Michigan), with each area halved so no region holds more than about a third of the state's providers (NPI Registry
     # practice ZIPs: Oakland & Macomb 33%, Wayne & Washtenaw 24%, West Michigan 18%, the rest 25%), about 16 MiB at most.
     'michigan': {
-        'oakland-macomb': ('Oakland & Macomb Counties', '01', 'Detroit', '-83.7,42.4,-82.7,43.0',
-            ['Oakland', 'Macomb']),
-        'detroit-ann-arbor': ('Detroit & Ann Arbor', '01', 'Detroit', '-84.2,42.0,-82.9,42.5',
-            ['Wayne', 'Washtenaw']),
+        # Nov 2, 2026 (Betsy OK'd): the first Detroit-area regions came out at 22.6 MiB (Oakland & Macomb) and 20.6 MiB
+        # (Wayne & Washtenaw), close to the limit: Detroit-area providers carry far more rates than the provider count
+        # suggested. Now one county each (estimated Oakland ~18, Wayne ~15, Macomb ~5, Washtenaw ~6 MiB).
+        'oakland-county': ('Oakland County', '01', 'Detroit', '-83.7,42.4,-83.0,42.9', ['Oakland']),
+        'macomb-county': ('Macomb County', '01', 'Detroit', '-83.1,42.4,-82.7,42.9', ['Macomb']),
+        'detroit-wayne-county': ('Detroit & Wayne County', '01', 'Detroit', '-83.6,42.0,-82.9,42.5', ['Wayne']),
+        'ann-arbor-washtenaw': ('Ann Arbor & Washtenaw County', '01', 'Detroit', '-84.2,42.0,-83.5,42.5', ['Washtenaw']),
         'west-michigan': ('West Michigan', '99', 'Rest of Michigan', '-87.2,41.7,-84.6,44.2',
             ['Kent', 'Ottawa', 'Muskegon', 'Kalamazoo', 'Allegan', 'Berrien', 'Van Buren', 'Cass', 'St. Joseph', 'Barry', 'Ionia', 'Montcalm', 'Newaygo', 'Oceana', 'Mecosta', 'Calhoun', 'Branch', 'Mason', 'Lake', 'Osceola']),
         'mid-northern-michigan': ('Mid-Michigan, Northern Michigan & the U.P.', '99', 'Rest of Michigan', '-90.5,41.7,-82.1,47.5',
@@ -110,9 +113,13 @@ NEIGHBORS = {   # regions that share a border, linked from each regional page fo
     'chicago-area': ['central-southern-illinois'], 'central-southern-illinois': ['chicago-area'],
     'philadelphia-area': ['central-eastern-pennsylvania'], 'western-pennsylvania': ['central-eastern-pennsylvania'],
     'central-eastern-pennsylvania': ['philadelphia-area', 'western-pennsylvania'],
-    'oakland-macomb': ['detroit-ann-arbor', 'mid-northern-michigan'], 'detroit-ann-arbor': ['oakland-macomb', 'mid-northern-michigan'],
-    'west-michigan': ['mid-northern-michigan'], 'mid-northern-michigan': ['oakland-macomb', 'detroit-ann-arbor', 'west-michigan'],
+    'oakland-county': ['macomb-county', 'detroit-wayne-county', 'mid-northern-michigan'], 'macomb-county': ['oakland-county', 'detroit-wayne-county', 'mid-northern-michigan'],
+    'detroit-wayne-county': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw'], 'ann-arbor-washtenaw': ['detroit-wayne-county', 'oakland-county', 'mid-northern-michigan'],
+    'west-michigan': ['mid-northern-michigan'], 'mid-northern-michigan': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw', 'west-michigan'],
 }   # region slug -> state page slug
+# Nov 2, 2026: regional pages replaced by smaller ones. When the state's address page is next published (city_page.py
+# landing_page), each one's address becomes a short page pointing to the state's regions and it leaves the area lists.
+RETIRED = {'oakland-macomb': 'michigan', 'detroit-ann-arbor': 'michigan'}
 
 
 def zip_county(state_code):

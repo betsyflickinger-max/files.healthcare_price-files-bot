@@ -602,9 +602,16 @@ as the rest of the site. Pick the region where you're getting care.</p></div></s
         shutil.rmtree(x, ignore_errors=True) if os.path.isdir(x) else (os.remove(x) if os.path.exists(x) else None)
     shutil.rmtree(f'{d}/functions/{A.city}/price-finder', ignore_errors=True)
     open(f'{d}/site/{A.city}/price-finder/index.html', 'w', encoding='utf-8').write(pp.shell(title, desc, f'/{A.city}/price-finder/', body, jsonld))
+    gone = [g for g, ps in getattr(_regions, 'RETIRED', {}).items() if ps == A.city]   # Nov 2, 2026: replaced regional pages
+    for g in gone:
+        shutil.rmtree(f'{d}/site/{g}/price-finder', ignore_errors=True); shutil.rmtree(f'{d}/functions/{g}/price-finder', ignore_errors=True)
+        os.makedirs(f'{d}/site/{g}/price-finder', exist_ok=True)
+        open(f'{d}/site/{g}/price-finder/index.html', 'w', encoding='utf-8').write(
+            f'<!doctype html><meta charset="utf-8"><meta name="robots" content="noindex"><meta http-equiv="refresh" content="0; url=/{A.city}/price-finder/">'
+            f'<link rel="canonical" href="/{A.city}/price-finder/"><title>Moved</title><p>This page moved: <a href="/{A.city}/price-finder/">{st} Price Finder</a>.</p>')
     L = json.load(open(f'{d}/site/cities.json', encoding='utf-8'))
-    json.dump([c for c in L if c['slug'] != A.city], open(f'{d}/site/cities.json', 'w', encoding='utf-8'), ensure_ascii=False)
-    print(f'{st} landing page: {len(R)} regions')
+    json.dump([c for c in L if c['slug'] != A.city and c['slug'] not in gone], open(f'{d}/site/cities.json', 'w', encoding='utf-8'), ensure_ascii=False)
+    print(f'{st} landing page: {len(R)} regions' + (f'; old regional pages now point here: {", ".join(gone)}' if gone else ''))
     if not A.deploy: print('built, not deployed'); return
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(HERE, 'sitewide.py'), d], check=True)

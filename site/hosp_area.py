@@ -372,8 +372,12 @@ def split_flow(O, st, a, done):
         else: busy += 1
     live = [r for r in R if str(st['published'].get(r, '')).startswith('live')]
     O.log(a, 'regional pages:', len(live), 'of', len(R), 'live')
+    lr = st.setdefault('landing_regions', {})   # Nov 2, 2026: a changed region list (Michigan's Detroit area) republishes the state's address page
+    if a not in _regions.ALONGSIDE and str(st['published'].get(a, '')).startswith('live') and lr.get(a) != R and len(live) == len(R) and not busy:
+        O.log(a, 'region list changed since its address page was published: publishing it again'); st['published'].pop(a, None)
     if a not in _regions.ALONGSIDE and len(live) == len(R) and not busy and not str(st['published'].get(a, '')).startswith('live'):
         publish_one(O, st, a, 'live: page linking to its regional pages')
+        if str(st['published'].get(a, '')).startswith('live'): lr[a] = R
     return busy
 
 
