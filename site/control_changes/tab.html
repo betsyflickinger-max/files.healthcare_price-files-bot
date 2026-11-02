@@ -4,13 +4,14 @@
 .co .chg td.k{white-space:nowrap}
 .co .chg tr.big td.k{font-weight:var(--cds-font-weight-medium)}
 .co .chg .ren{color:var(--color-fg-muted);font-size:11px;display:block}
+.co .chg .ck{display:block;font-size:11px;color:var(--color-bad);margin-top:2px}
 </style>
 
 <template id="tpl-changes">
   <div class="cw">
     <section class="sec" id="chg-top">
       <div><h2>Changes</h2>
-        <p class="muted">Big changes in what insurers publish: networks that drop out of or appear in an insurer's file list, files that shrink or grow by a third, indexes that stop answering. Checked every 6 hours from what the bot already reads. Nothing here is ever deleted. When something disappears, the site keeps the last good rates, and the insurer's public page is saved to the Wayback Machine that day.</p></div>
+        <p class="muted">Big changes in what insurers publish: networks that drop out of or appear in an insurer's file list, files that shrink or grow by a third, indexes that stop answering or change format. Checked every 6 hours from what the bot already reads; every other insurer's index is compared once a month. Nothing here is ever deleted. When something disappears, the site keeps the last good rates, and the insurer's public page is saved to the Wayback Machine that day.</p></div>
       <nav class="cjump" aria-label="Sections"><a href="#chg-gone">Missing right now</a><a href="#chg-log">Every change</a><a href="#chg-method">How this works</a></nav>
       <div class="ctiles" id="chg-tiles" data-source="changes"></div>
     </section>
@@ -27,6 +28,7 @@
         <label for="chg-ins">Insurer</label><select id="chg-ins"></select>
         <label for="chg-kind">Change</label><select id="chg-kind"></select>
         <label><input type="checkbox" id="chg-big"> Big ones only</label>
+        <label><input type="checkbox" id="chg-chk"> To check only</label>
         <label for="chg-q">Search</label><input type="search" id="chg-q" placeholder="network, area…">
       </div>
       <div class="ccard"><div class="ctw"><table class="chg" id="chg-tbl" data-source="changes"><thead><tr><th>Seen</th><th>Change</th><th>Insurer</th><th>Network</th><th>Area</th><th>Before → after</th><th>Detail</th><th>Evidence</th></tr></thead><tbody></tbody></table></div>
@@ -39,6 +41,8 @@
         <li><b>Pick-list networks</b> (every 6 hours): the bot already checks each network's file. A network whose file vanishes from the insurer's list is logged "gone from index", and "back in index" when it returns. A new file a third smaller or half again bigger than the last one, or a rate count that moves that much, is logged too.</li>
         <li><b>Whole indexes</b> (monthly, the 2nd): the insurer file catalog reads Anthem's, Cigna's, UnitedHealthcare's, Aetna's and HCSC's full indexes, and logs every network new or dropped since last month.</li>
         <li><b>Every known index and price-file page</b> (daily): logged when one stops answering, or answers again.</li>
+        <li><b>Every other insurer's index</b> (monthly, after the deep check on the 3rd): each index under 400 MB is read and every file it names is kept on a receipt. This month's receipt is compared with last month's, ignoring dates and part numbers in file names: files dropped from or new in the index, an index a third smaller or half again bigger, an index that went empty. An index we could read last month and can't now is logged "index format changed?". Indexes naming more than 20,000 files are compared by count only.</li>
+        <li><b>Check our reader first</b>: when half or more of an insurer's networks (at least 3), or of an index's files, vanish at once, the row is marked "check first". That is more often our reader breaking than the insurer dropping them: on Nov 1, 2026 Cigna changed its index to a zip and every Cigna network looked gone. Each run with such a row opens a GitHub issue.</li>
         <li><b>Possible rename</b>: a network that disappears and a new one from the same insurer within 31 days, with similar names. It's a hint to check by hand, never merged automatically.</li>
         <li><b>Logged by hand</b>: changes a person spotted that no check sees on its own, like an insurer changing the format of its index.</li>
         <li>The first run (Nov 2, 2026) recorded where everything stood. Networks already missing that day are logged once with "already missing when the change ledger started".</li>
@@ -53,7 +57,7 @@
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const ok = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
   const fmtN = (n) => Number(n).toLocaleString('en-US');
-  const S = {built: false, ins: '', kind: '', big: false, all: false};
+  const S = {built: false, ins: '', kind: '', big: false, chk: false, all: false};
   const LIMIT = 300;
 
   function msg(tb, cols, text) { tb.textContent = ''; const tr = el('tr'), td = el('td', 'cmsg', text); td.colSpan = cols; tr.appendChild(td); tb.appendChild(tr); }
@@ -84,6 +88,7 @@
     tile(tiles, 'Last 30 days', fmtN(m.length), fmtN(m.filter((r) => r.big).length) + ' big');
     tile(tiles, 'Missing right now', gone ? fmtN(gone.length) : '—', 'pick-list networks');
     tile(tiles, 'Possible renames', fmtN(m.filter((r) => r.possible_rename).length), 'last 30 days');
+    tile(tiles, 'To check', fmtN(m.filter((r) => r.check).length), 'may be our reader, last 30 days');
 
     const gtb = $('#chg-gtbl tbody'); gtb.textContent = '';
     if (!gone || !gone.length) msg(gtb, 6, gone ? 'None: every pick-list network is in its insurer’s list.' : 'Loading…');
@@ -92,19 +97,19 @@
     S.ins = fill($('#chg-ins'), [['', 'All insurers']].concat([...new Set(rows.map((r) => r.insurer))].filter(Boolean).sort().map((i) => [i, i])), S.ins);
     S.kind = fill($('#chg-kind'), [['', 'All changes']].concat([...new Set(rows.map((r) => r.kind))].sort().map((k) => [k, k])), S.kind);
     const q = $('#chg-q').value.trim().toLowerCase();
-    const sel = rows.filter((r) => (!S.ins || r.insurer === S.ins) && (!S.kind || r.kind === S.kind) && (!S.big || r.big)
-      && (!q || [r.network, r.area, r.detail, r.possible_rename].join(' ').toLowerCase().includes(q)));
+    const sel = rows.filter((r) => (!S.ins || r.insurer === S.ins) && (!S.kind || r.kind === S.kind) && (!S.big || r.big) && (!S.chk || r.check)
+      && (!q || [r.network, r.area, r.detail, r.possible_rename, r.check].join(' ').toLowerCase().includes(q)));
     const tb = $('#chg-tbl tbody'); tb.textContent = '';
     if (!sel.length) msg(tb, 8, 'No changes match.');
     (S.all ? sel : sel.slice(0, LIMIT)).forEach((r) => {
       const tr = el('tr', r.big ? 'big' : '');
       tr.appendChild(el('td', 'k', r.seen_on));
-      const k = el('td', 'k'); k.appendChild(el('span', r.big ? 'chk' : 'tag', r.kind)); tr.appendChild(k);
+      const k = el('td', 'k'); k.appendChild(el('span', r.big ? 'chk' : 'tag', r.kind)); if (r.check) k.appendChild(el('span', 'ck', 'check first')); tr.appendChild(k);
       tr.appendChild(el('td', '', r.insurer));
       const n = el('td', '', r.network); if (r.possible_rename) n.appendChild(el('span', 'ren', 'possible rename: ' + r.possible_rename)); tr.appendChild(n);
       tr.appendChild(el('td', '', r.area));
       tr.appendChild(el('td', '', [r.before, r.after].filter(Boolean).join(' → ')));
-      tr.appendChild(el('td', '', (r.detail || '') + (r.source ? ' (' + r.source + ')' : '')));
+      const dt = el('td', '', (r.detail || '') + (r.source ? ' (' + r.source + ')' : '')); if (r.check) dt.appendChild(el('span', 'ck', r.check)); tr.appendChild(dt);
       const e = el('td'); e.appendChild(links(r.evidence)); tr.appendChild(e);
       tb.appendChild(tr);
     });
@@ -116,6 +121,7 @@
     $('#chg-ins').addEventListener('change', (e) => { S.ins = e.target.value; draw(); });
     $('#chg-kind').addEventListener('change', (e) => { S.kind = e.target.value; draw(); });
     $('#chg-big').addEventListener('change', (e) => { S.big = e.target.checked; draw(); });
+    $('#chg-chk').addEventListener('change', (e) => { S.chk = e.target.checked; draw(); });
     $('#chg-q').addEventListener('input', () => draw());
     $('#chg-more').addEventListener('click', () => { S.all = true; draw(); });
   }

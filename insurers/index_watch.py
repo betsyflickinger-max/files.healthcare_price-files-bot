@@ -84,6 +84,8 @@ def sources():
         for k, v in catalog.INSURERS.items():
             for u in [v.get("latest"), *(v.get("metas") or [])]:
                 add(u, v.get("name", k), "national", "index", "catalog")
+                if u and u == v.get("latest") and u in out:   # Nov 2, 2026: a pointer (Cigna's latest.json); the deep
+                    out[u]["resolve"] = k                     # check reads the index it names, not the pointer
     except Exception as e:
         print("catalog list not read:", e)
     extra = HERE / "index_watch_extra.csv"
@@ -131,6 +133,39 @@ def index_links(path):
     return list(dict.fromkeys(links))
 
 
+def zip_members(path, td):
+    """[(None, path)] for a plain index; for a ZIP, every member written out as its own file: [(member name, path)].
+    Nov 2, 2026: Cigna's table of contents became a zip holding Cigna's own index and four partners' (HealthPartners,
+    MVP, Priority Health, Sagamore). Reading every member means the partners' files are checked and get receipts too."""
+    import zipfile
+    with open(path, "rb") as f:
+        if f.read(2) != b"PK":
+            return [(None, path)]
+    out = []
+    with zipfile.ZipFile(path) as z:
+        for i, info in enumerate(z.infolist()):
+            if info.is_dir():
+                continue
+            p = os.path.join(td, f"member{i}")
+            with z.open(info) as src, open(p, "wb") as dst:
+                while chunk := src.read(1 << 20):
+                    dst.write(chunk)
+            out.append((info.filename.rsplit("/", 1)[-1], p))
+    return out
+
+
+def member_insurer(member, insurer):
+    """The insurer a zip member's index belongs to, from its file name (2026-11-01_mvp-health-plan_index.json -> Mvp
+    Health Plan). Cigna's own member keeps the source's name."""
+    if not member or "cigna-health" in member.lower():
+        return insurer
+    s = re.sub(r"\.(json|gz|zip)", "", member.lower())
+    s = re.sub(r"^\d{4}[-_]\d{2}[-_]\d{2}[-_]", "", s)
+    s = re.sub(r"[-_](index|toc|table[-_]of[-_]contents)$", "", s)
+    return " ".join(w.upper() if len(w) <= 3 else w.capitalize() for w in re.split(r"[-_ ]+", s) if w) + \
+        f" (in {insurer}'s index)"
+
+
 def ia_upload_index(path, name, month):
     if not store.ia_enabled():
         return "archive.org keys not set"
@@ -168,27 +203,44 @@ def deep_check(src, month, archive):
     row = dict(checked_on=date.today().isoformat(), insurer=src["insurer"], state=src["state"], url=src["url"],
                index_bytes="", links=0, checked=0, missing=0, hosts="", missing_examples="", archived="", error="",
                allowed_files="")
-    h = check.headers(src["url"])
+    fetch = src["url"]
+    if src.get("resolve"):   # the receipts keep the pointer's URL, which stays the same month to month
+        try:
+            import catalog
+            fetch = catalog.find_index(src["resolve"])[0]
+        except Exception as e:
+            row["error"] = f"pointer did not resolve: {type(e).__name__}: {str(e)[:120]}"
+            return row, []
+    h = check.headers(fetch)
     if h["size"].isdigit() and int(h["size"]) > DEEP_MAX_MB * 2**20:
         row["error"] = f"index over {DEEP_MAX_MB} MB, left to the catalog"
         return row, []
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "index")
-        ok, err, _ = check.download(src["url"], path, max_time=1800)
+        ok, err, _ = check.download(fetch, path, max_time=1800)
         if not ok:
             row["error"] = f"index did not download: {err[:150]}"
             return row, []
         row["index_bytes"] = os.path.getsize(path)
-        try:
-            links = index_links(path)
-            row["allowed"] = ALLOWED_LINKS.pop(path, [])
-            row["allowed_files"] = len(row["allowed"])
-        except Exception as e:
-            row["error"] = f"index unreadable: {type(e).__name__}: {str(e)[:120]}"
-            links = []
+        links, member_of, allowed, errs = [], {}, [], []
+        for label, p in zip_members(path, td):   # Nov 2, 2026: Cigna's index became a zip of five insurers' indexes
+            try:
+                got = index_links(p)
+                allowed += ALLOWED_LINKS.pop(p, [])
+            except Exception as e:
+                errs.append(f"{label + ': ' if label else ''}{type(e).__name__}: {str(e)[:100]}")
+                continue
+            for u in got:
+                member_of.setdefault(u, label)
+            links += got
+        links = list(dict.fromkeys(links))
+        row["allowed"] = list(dict.fromkeys(allowed))
+        row["allowed_files"] = len(row["allowed"])
+        if errs:
+            row["error"] = ("index unreadable: " + "; ".join(errs))[:240]
         if archive:
             name = f"{month}_{slug(src['insurer'])}_{hashlib.sha256(src['url'].encode()).hexdigest()[:8]}" + \
-                   os.path.splitext(urlparse(src["url"]).path)[1]
+                   os.path.splitext(urlparse(fetch).path)[1]
             row["archived"] = ia_upload_index(path, name, month)
     row["links"] = len(links)
     row["hosts"] = "; ".join(sorted({urlparse(u).netloc for u in links}))[:300]
@@ -200,8 +252,11 @@ def deep_check(src, month, archive):
                missing_examples=" | ".join(u.split("?")[0].rsplit("/", 1)[-1] for u, _ in missing[:3]))
     # Receipts (Oct 20, 2026): one row per rate file checked, from the server's own answer (no download), so there is
     # a record of every file the index named, its size and date, even if the insurer later deletes or changes it.
-    row["receipts"] = [dict(checked_on=row["checked_on"], insurer=src["insurer"], state=src["state"],
-                            index_url=src["url"].split("?")[0], file_name=u.split("?")[0].rsplit("/", 1)[-1],
+    # A zip's members each get their own index_url ("<zip url>#<member>") and insurer name, so the change ledger can
+    # compare each one month to month (insurers/change_ledger.py receipts()).
+    row["receipts"] = [dict(checked_on=row["checked_on"], insurer=member_insurer(member_of.get(u), src["insurer"]),
+                            state=src["state"], index_url=src["url"].split("?")[0] + (f"#{member_of[u]}" if member_of.get(u) else ""),
+                            file_name=u.split("?")[0].rsplit("/", 1)[-1],
                             url=u.split("?")[0], http=r["http"], bytes=r["size"], last_modified=r["last_modified"],
                             etag=r["etag"], answered="yes" if r["ok"] else "no", error=r["error"][:120]) for u, r in res]
     return row, missing

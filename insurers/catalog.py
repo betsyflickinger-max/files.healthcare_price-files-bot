@@ -627,7 +627,8 @@ def compare(rows, prev):
         return dict(first_run=True)
     old = {r["network"]: r for r in prev.get("networks", [])}
     new = {r["network"]: r for r in rows}
-    ch = dict(new=[k for k in new if k not in old], dropped=[k for k in old if k not in new], shrank=[], grew=[], newly_empty=[])
+    ch = dict(new=[k for k in new if k not in old], dropped=[k for k in old if k not in new], shrank=[], grew=[], newly_empty=[],
+              counts=dict(before=len(old), now=len(new)))   # Nov 2, 2026: the change ledger's "check our reader first" rule
     for k in set(new) & set(old):
         a, b = old[k].get("bytes") or 0, new[k].get("bytes") or 0
         if a and b < a * 0.67: ch["shrank"].append(dict(network=k, before_gb=round(a / 1e9, 2), now_gb=round(b / 1e9, 2)))
