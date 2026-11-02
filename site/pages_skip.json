@@ -36,6 +36,7 @@
       "051_06X0",
       "102_11R0",
       "748_29S0"
-    ]
+    ],
+    "temporary": "Betsy, Nov 1, 2026: eventually every network goes on the pages; this only keeps the November build fast so every state is up first. Add these 17 back as an update build (state_rebuild.json, mode update) after launch, then empty this list."
   }
 }
