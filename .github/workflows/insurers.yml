@@ -166,6 +166,13 @@ jobs:
             [ "$(wc -c < out/insurer_alerts.md)" -gt 60000 ] && printf '\n\n(cut: the full list is in this run'"'"'s summary)\n' >> out/insurer_alerts_short.md
             gh issue create --title "Insurer file problems $(date -u +%F)" --body-file out/insurer_alerts_short.md --label insurer-file-alert
           fi
+      - name: Record how long this full check took (Nov 2, 2026; Betsy)
+        if: always() && !(github.event.schedule == '*/10 * * * *' || inputs.fill)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_STATUS: ${{ job.status }}
+        run: python insurers/full_check_times.py
       - name: Clear the full check lock
         if: always() && !(github.event.schedule == '*/10 * * * *' || inputs.fill)
         run: |

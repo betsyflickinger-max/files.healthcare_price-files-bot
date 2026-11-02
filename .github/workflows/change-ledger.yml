@@ -3,7 +3,8 @@ name: Change ledger (every 6 hours)
 # index, files that shrank or grew, indexes that stopped answering), read from what the other jobs already store.
 # Downloads no insurer files. Runs ~1.5 hours after each 6-hourly insurer check. See insurers/change_ledger.py.
 on:
-  # schedule: turned on after its first run (Nov 2): see the commit that adds it back
+  schedule:
+    - cron: "17 2-23/6 * * *"   # every 6 hours, ~1.5 hours after each 6-hourly insurer check (first run Nov 2, 2026)
   workflow_dispatch:
     inputs:
       dry_run:
