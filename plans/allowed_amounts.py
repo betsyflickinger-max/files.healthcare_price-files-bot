@@ -39,6 +39,12 @@ from employer_plans import MONTH, TODAY, UA, fname, get  # noqa: E402
 
 import requests  # noqa: E402
 
+from pathlib import Path as _P
+import sys as _sys
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent / "bot"))
+from cigna_zip import cigna_index_bytes  # noqa: E402
+
+
 COLS = ["insurer", "file_name", "source_url", "bytes", "sha256", "last_updated_on", "reporting_entity_name",
         "plan_name", "plan_id", "plan_market_type", "services", "payments", "plans_using", "status", "checked_on"]
 
@@ -93,7 +99,7 @@ def describe(b):
 def cigna_list():
     latest = json.loads(get("https://www.cigna.com/static/mrf/latest.json"))
     url = next(f["url"] for m in latest["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
-    toc = json.loads(get(url, timeout=600))
+    toc = json.loads(cigna_index_bytes(get(url, timeout=600)))   # Nov 2, 2026: now a zip of five indexes
     plans = Counter()
     for rs in toc.get("reporting_structure", []):
         a = rs.get("allowed_amount_file") or {}

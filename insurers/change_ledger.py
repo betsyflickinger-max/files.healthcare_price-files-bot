@@ -13,6 +13,9 @@ Where each kind of change comes from (all already in storage):
   every index/page    the daily index watch (index_watch.py): an index or price-file page that stopped answering, or
                       answers again
 
+  by hand             insurers/change_ledger_notes.csv: changes a person spotted that no check sees on its own (e.g. an
+                      insurer changing the format of its index). Each row is added to the ledger once, by its id.
+
 On top of that:
   possible renames    a network that disappears and a new one from the same insurer within 31 days, with similar names,
                       are marked as a possible rename of each other (a hint for Betsy to check, never merged)
@@ -197,6 +200,20 @@ def indexes(s3, b, st, first):
     return out, cur
 
 
+def notes(seen_ids):
+    p = HERE / "change_ledger_notes.csv"
+    if not p.exists():
+        return []
+    out = []
+    for r in csv.DictReader(open(p, encoding="utf-8")):
+        if r.get("id") and r["id"] not in seen_ids:
+            e = ev(r.get("kind", "note"), r.get("insurer", ""), r.get("area", ""), r.get("network", ""), key=r["id"],
+                   before=r.get("before", ""), after=r.get("after", ""), detail=r.get("detail", ""), source="logged by hand")
+            e.update(seen_on=r.get("seen_on") or e["seen_on"], big=r.get("big", ""), evidence=r.get("evidence", ""))
+            out.append(e)
+    return out
+
+
 def mark_renames(new, ledger):
     """A disappearing network and a new one from the same insurer, close in time and name: a possible rename."""
     cutoff = (date.today() - timedelta(days=RENAME_DAYS)).isoformat()
@@ -280,7 +297,7 @@ def main():
     new_m, nets = manifests(s3, b, st.get("nets", {}), first)
     new_i, idx = indexes(s3, b, st.get("idx", {}), first)
     new_c = catalogs(s3, b, ids)
-    new = [e for e in new_m + new_i + new_c if e["id"] not in ids]
+    new = [e for e in new_m + new_i + new_c + notes(ids) if e["id"] not in ids]
     mark_renames(new, ledger)
     if not a.dry_run:
         save_evidence(new, idx, not a.no_wayback)

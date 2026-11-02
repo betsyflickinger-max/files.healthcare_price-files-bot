@@ -331,7 +331,12 @@ def read_index(url, limit_bytes=0, employers_path=None):
         r.raise_for_status()
         r.raw.decode_content = False
         raw = Counted(r.raw, limit_bytes)
-        src = gzip.GzipFile(fileobj=io.BufferedReader(raw, 1 << 22)) if url.endswith(".gz") else io.BufferedReader(raw, 1 << 22)
+        if url.split("?")[0].endswith(".zip"):   # Nov 2, 2026: Cigna's index is now a zip of five (find_links.cigna_index_bytes)
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bot"))
+            from cigna_zip import cigna_index_bytes
+            src = io.BytesIO(cigna_index_bytes(raw.read()))
+        else:
+            src = gzip.GzipFile(fileobj=io.BufferedReader(raw, 1 << 22)) if url.endswith(".gz") else io.BufferedReader(raw, 1 << 22)
         structures = None
     nets = {}
     head = {}

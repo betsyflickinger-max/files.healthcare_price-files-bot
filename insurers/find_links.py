@@ -7,6 +7,7 @@ We try the dates from newest to oldest, from today back to the date we already h
 first link that answers. Networks with no date in the link (Molina, Wellpoint) keep the same link.
 A network whose new file can't be found keeps its current file and is flagged "no new file yet".
 """
+import io
 import re
 import sys
 from concurrent.futures import ThreadPoolExecutor
@@ -14,7 +15,8 @@ from datetime import timedelta
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "bot"))
-import check  # noqa: E402  (same header check as the hospital bot: HEAD, then a 1-byte GET)
+import check  # noqa: E402
+from cigna_zip import cigna_index_bytes  # noqa: E402,F401  (Nov 2, 2026)  (same header check as the hospital bot: HEAD, then a 1-byte GET)
 
 
 def fill(template, d):
@@ -67,7 +69,10 @@ def cigna_toc(arg):
     import json
     latest = json.loads(_get("https://www.cigna.com/static/mrf/latest.json"))
     toc_url = next(f["url"] for m in latest["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
-    toc = _get(toc_url)
+    import requests
+    if toc_url not in _CACHE:   # Nov 2, 2026: Cigna's table of contents became a .zip (cigna_index_bytes)
+        _CACHE[toc_url] = cigna_index_bytes(requests.get(toc_url, headers={"User-Agent": check.UA}, timeout=600).content).decode("utf-8")
+    toc = _CACHE[toc_url]
     for u in re.findall(r'"location"\s*:\s*"([^"]+)"', toc):
         if f"_{arg}_in-network-rates" in u.split("?")[0]:
             d = re.search(r"(\d{4}-\d{2}-\d{2})_cigna", u)

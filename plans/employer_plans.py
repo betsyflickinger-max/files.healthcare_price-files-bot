@@ -37,6 +37,12 @@ from pathlib import Path
 
 import requests
 
+from pathlib import Path as _P
+import sys as _sys
+_sys.path.insert(0, str(_P(__file__).resolve().parent.parent / "bot"))
+from cigna_zip import cigna_index_bytes  # noqa: E402
+
+
 UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/price-files-bot)"}
 TODAY = date.today().isoformat()
 MONTH = TODAY[:7]
@@ -89,7 +95,7 @@ def rows_from_toc(insurer, toc, source_url):
 def cigna(limit=0):
     latest = json.loads(get("https://www.cigna.com/static/mrf/latest.json"))
     url = next(f["url"] for m in latest["mrfs"] if m.get("kind") == "TOC" for f in m["files"])
-    toc = json.loads(get(url, timeout=600, keep="cigna"))
+    toc = json.loads(cigna_index_bytes(get(url, timeout=600, keep="cigna")))   # Nov 2, 2026: now a zip of five indexes
     return rows_from_toc("Cigna", toc, url.split("?")[0])
 
 
