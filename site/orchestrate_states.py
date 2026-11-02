@@ -154,6 +154,19 @@ def pages_tables_key(slug):
     s3.put_object(Bucket=B, Key=key, Body=json.dumps(keep).encode())
     log(slug, ': leaving', len(tabs) - len(keep), 'tables off the page (pages_skip.json),', len(keep), 'used')
     return key
+def month_hold():
+    """Nov 1, 2026 (Betsy: "pause the rebuild after the current states that are already live"): while the builds listed in
+    site/month_hold.json (states not live yet) haven't finished their hospital step, a build that hasn't started ('wait')
+    stays waiting. Builds already under way carry on. Releases itself when every listed build is done; returns what's left."""
+    try: h = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'month_hold.json')))
+    except Exception: return []
+    if not h.get('hold') or O.BID in h.get('until_done', []): return []
+    left = []
+    for bid in h.get('until_done', []):
+        try: done = getj(f'site/builds/hosp-{bid}/state.json', {}).get('stage') == 'done'
+        except Exception: done = False
+        if not done: left.append(bid)
+    return left
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
 CODE_OF = {v: k for k, v in STATES.items()}
@@ -480,6 +493,12 @@ def cost_hold(st, left):
 def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': []})
     log('state pages build', MONTH, 'stage', st['stage'])
+    if st['stage'] == 'wait' and not E.get('FORCE'):
+        held = month_hold()
+        if held:
+            log('new-month build held (site/month_hold.json) until these finish publishing:', ', '.join(held))
+            open('/tmp/st_waiting', 'w').write('hold')
+            return putj(SP + 'state.json', st)
     if st['stage'] == 'wait':
         busy = s7_busy()
         if busy and not E.get('FORCE'):
