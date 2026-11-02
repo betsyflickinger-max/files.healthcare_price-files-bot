@@ -19,6 +19,7 @@ city's Medicare locality; DFW-only parts are left out (hospital price files, pos
 city's own provider locations and background (geo_build.py, basemap_build.py); the words that name DFW. Every price shown still comes from an insurer file and links to it.
 Any wording change that no longer matches the DFW page stops the build, so a city page never goes out half-edited."""
 import argparse, csv, io, json, os, re, shutil, subprocess, sys, tarfile, zipfile
+import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 def _in(*c): return 'in a ZIP code that lies mostly in ' + (', '.join(c[:-1]) + ' or ' if len(c) > 1 else '') + c[-1] + ' County'
@@ -546,8 +547,9 @@ def main():
     else: shutil.rmtree(fh, ignore_errors=True)
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
-    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
-                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    with pages_spill.offload(d):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                            '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
     if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
@@ -615,8 +617,9 @@ as the rest of the site. Pick the region where you're getting care.</p></div></s
     if not A.deploy: print('built, not deployed'); return
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(HERE, 'sitewide.py'), d], check=True)
-    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
-                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    with pages_spill.offload(d):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                            '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
     if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')

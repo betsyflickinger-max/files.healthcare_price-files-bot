@@ -261,13 +261,21 @@ def rebake(store, threads=64):
 FUNCTION_JS = r'''// /costs/* : pages kept in R2 (site/more/) by site/more_pages.py, for procedures beyond the featured ones.
 // Written by price-files-bot site/procedure_pages.py; edits here are replaced on the next run.
 // R2 is checked first only for paths that look like those pages; everything else (and any R2 miss) goes to the static site.
+// Nov 2, 2026: the featured procedure pages are served from here too (site/pages_spill.py keeps the site under
+// Cloudflare's 20,000-file limit), and /costs/<place>/<procedure> without the last slash is sent to the page with it.
 const PFX = 'site/more/';
 const TYPES = {html: 'text/html; charset=utf-8', csv: 'text/csv; charset=utf-8', xml: 'application/xml', json: 'application/json'};
 export async function onRequest(ctx) {
   const url = new URL(ctx.request.url);
-  const m = url.pathname.match(/^\/costs\/(more-sitemap\.xml|[a-z0-9-]+\/[a-z0-9-]+\/(?:index\.html|prices\.csv)?)$/);
+  const m = url.pathname.match(/^\/costs\/(more-sitemap\.xml|[a-z0-9-]+\/[a-z0-9-]+(?:\/(?:index\.html|prices\.csv)?)?)$/);
   if (!m || !ctx.env.PF || !['GET', 'HEAD'].includes(ctx.request.method)) return ctx.next();
-  const key = PFX + (m[1].endsWith('/') ? m[1] + 'index.html' : m[1]);
+  const p = m[1];
+  const bare = p !== 'more-sitemap.xml' && !p.endsWith('/') && !/\.(html|csv)$/.test(p);
+  if (bare) {
+    const there = await ctx.env.PF.head(PFX + p + '/index.html');
+    return there ? Response.redirect(url.origin + url.pathname + '/' + url.search, 301) : ctx.next();
+  }
+  const key = PFX + (p.endsWith('/') ? p + 'index.html' : p);
   const obj = await ctx.env.PF.get(key);
   if (!obj) return ctx.next();
   const ext = key.split('.').pop();

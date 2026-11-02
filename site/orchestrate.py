@@ -11,6 +11,7 @@ One build per month (build id = YYYY-MM). State lives in R2 site/builds/<id>/sta
 Dead machines are relaunched (up to 3 times per role). Machines delete themselves when done.
 Env: R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET DIGITALOCEAN_TOKEN [CLOUDFLARE_API_TOKEN] [FORCE=1] [BUILD=YYYY-MM]"""
 import csv, io, json, os, subprocess, sys, tarfile, time, urllib.request
+import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 import boto3
 
 E = os.environ
@@ -328,8 +329,9 @@ def publish(st):
     s3.put_object(Bucket=B, Key='site/every/CURRENT', Body=BID.encode())
     env = dict(os.environ, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), '/tmp/pub/deploy'], check=True)   # name, Units look, share image (Oct 18)
-    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main', '--commit-dirty=true'],
-                       cwd='/tmp/pub/deploy', env=env, capture_output=True, text=True)
+    with pages_spill.offload('/tmp/pub/deploy'):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main', '--commit-dirty=true'],
+                           cwd='/tmp/pub/deploy', env=env, capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
     if r.returncode != 0:
         s3.put_object(Bucket=B, Key='site/every/CURRENT', Body=prev.encode())

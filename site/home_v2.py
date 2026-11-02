@@ -28,6 +28,7 @@ import os
 import re
 import shutil
 import subprocess
+import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 import sys
 import tarfile
 
@@ -851,8 +852,9 @@ def _deploy_once():
         raise Retry()
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
-    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
-                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    with pages_spill.offload(d):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                            '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-1500:])
     if r.returncode != 0:
         sys.exit('deploy failed; the preview site is unchanged')

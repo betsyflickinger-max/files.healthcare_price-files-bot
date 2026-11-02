@@ -25,6 +25,7 @@ import home_bits   # homepage hero pieces shared with site/ux_polish.py
 import visuals     # price line, bill slips, word cards on every price page
 import proof as proof_mod   # card #2: proof a provider does the procedure (Texas)
 import argparse, base64, csv, datetime as dt, gzip, hashlib, html, json, os, re, shutil, subprocess, sys, tarfile
+import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 from concurrent.futures import ThreadPoolExecutor
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -2188,8 +2189,9 @@ def deploy(force=False, only_areas=None):
     patch_method_proof(d)
     env = dict(os.environ, **E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
-    r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
-                        '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
+    with pages_spill.offload(d):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main',
+                            '--commit-dirty=true'], cwd=d, env=env, capture_output=True, text=True)
     print(r.stdout[-1500:], r.stderr[-1500:])
     if r.returncode != 0:
         sys.exit('deploy failed; the preview site is unchanged')

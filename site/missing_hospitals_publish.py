@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 import sys
 import tarfile
 from pathlib import Path
@@ -72,9 +73,10 @@ def main():
     if not E.get("CLOUDFLARE_API_TOKEN"):
         sys.exit("CLOUDFLARE_API_TOKEN is not set; built but not deployed")
     subprocess.run([sys.executable, str(HERE / "sitewide.py"), str(d)], check=True)   # name, Units look, share image
-    r = subprocess.run(["npx", "--yes", "wrangler@3.114.0", "pages", "deploy", "site", "--project-name", "upfront-dfw-preview",
-                        "--branch", "main", "--commit-dirty=true"], cwd=d, env=dict(E, CLOUDFLARE_ACCOUNT_ID=E["R2_ACCOUNT_ID"]),
-                       capture_output=True, text=True)
+    with pages_spill.offload(d):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
+        r = subprocess.run(["npx", "--yes", "wrangler@3.114.0", "pages", "deploy", "site", "--project-name", "upfront-dfw-preview",
+                            "--branch", "main", "--commit-dirty=true"], cwd=d, env=dict(E, CLOUDFLARE_ACCOUNT_ID=E["R2_ACCOUNT_ID"]),
+                           capture_output=True, text=True)
     print(r.stdout[-2000:], r.stderr[-2000:])
     if r.returncode:
         sys.exit("deploy failed; the preview site is unchanged")

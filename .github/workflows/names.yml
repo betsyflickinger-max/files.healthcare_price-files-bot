@@ -68,4 +68,5 @@ jobs:
           export CLOUDFLARE_API_TOKEN=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')
           export CLOUDFLARE_ACCOUNT_ID=$(echo -n "$R2_ACCOUNT_ID" | tr -d '[:space:]')
           python3 site/sitewide.py /tmp/site   # name, Units look, share image (Oct 18)
-          cd /tmp/site && npx -y wrangler@4 pages deploy site --project-name upfront-dfw-preview --branch main --commit-dirty=true
+          # Nov 2, 2026: pages_spill keeps the deploy under Cloudflare's 20,000-file limit (procedure pages served from R2)
+          python3 site/pages_spill.py /tmp/site -- npx -y wrangler@4 pages deploy site --project-name upfront-dfw-preview --branch main --commit-dirty=true
