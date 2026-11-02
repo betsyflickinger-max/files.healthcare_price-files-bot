@@ -1,0 +1,41 @@
+name: Change ledger (every 6 hours)
+# Nov 2, 2026 (Betsy): one append-only record of big changes in what insurers publish (networks gone from or new in an
+# index, files that shrank or grew, indexes that stopped answering), read from what the other jobs already store.
+# Downloads no insurer files. Runs ~1.5 hours after each 6-hourly insurer check. See insurers/change_ledger.py.
+on:
+  schedule:
+    - cron: "17 2-23/6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Work it out and print only; write nothing"
+        type: boolean
+        default: false
+concurrency:
+  group: change-ledger
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  ledger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      IA_ACCESS_KEY: ${{ secrets.IA_ACCESS_KEY }}
+      IA_SECRET_KEY: ${{ secrets.IA_SECRET_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - run: python insurers/change_ledger.py ${{ inputs.dry_run && '--dry-run' || '' }}
+      - run: cat out/change_summary.md >> "$GITHUB_STEP_SUMMARY"
+        if: always()
