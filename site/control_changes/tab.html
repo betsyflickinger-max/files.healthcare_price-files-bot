@@ -1,0 +1,127 @@
+<!-- Control center: "Changes" tab (Nov 2, 2026). Added by site/control_changes.py; data from insurers/change_ledger.py in R2 control/data/changes.json and changes_gone.json. Uses the .co styles from the Cash prices tab. -->
+<style>
+.co .chk{display:inline-block;font-size:11px;padding:0 6px;border-radius:9px;border:1px solid var(--color-bad);color:var(--color-bad);white-space:nowrap}
+.co .chg td.k{white-space:nowrap}
+.co .chg tr.big td.k{font-weight:var(--cds-font-weight-medium)}
+.co .chg .ren{color:var(--color-fg-muted);font-size:11px;display:block}
+</style>
+
+<template id="tpl-changes">
+  <div class="cw">
+    <section class="sec" id="chg-top">
+      <div><h2>Changes</h2>
+        <p class="muted">Big changes in what insurers publish: networks that drop out of or appear in an insurer's file list, files that shrink or grow by a third, indexes that stop answering. Checked every 6 hours from what the bot already reads. Nothing here is ever deleted. When something disappears, the site keeps the last good rates, and the insurer's public page is saved to the Wayback Machine that day.</p></div>
+      <nav class="cjump" aria-label="Sections"><a href="#chg-gone">Missing right now</a><a href="#chg-log">Every change</a><a href="#chg-method">How this works</a></nav>
+      <div class="ctiles" id="chg-tiles" data-source="changes"></div>
+    </section>
+
+    <section class="sec" id="chg-gone">
+      <h3>Missing from their insurer's list right now</h3>
+      <p class="cnote">Networks on the pick lists whose file the insurer no longer lists. The site still shows their last good rates. A network leaves this list when its file comes back.</p>
+      <div class="ccard"><div class="ctw"><table class="chg" id="chg-gtbl" data-source="changes_gone"><thead><tr><th>Insurer</th><th>Network</th><th>Area</th><th>Missing since</th><th>Last good file</th><th>Why</th></tr></thead><tbody></tbody></table></div></div>
+    </section>
+
+    <section class="sec" id="chg-log">
+      <h3>Every change</h3>
+      <div class="cctrl">
+        <label for="chg-ins">Insurer</label><select id="chg-ins"></select>
+        <label for="chg-kind">Change</label><select id="chg-kind"></select>
+        <label><input type="checkbox" id="chg-big"> Big ones only</label>
+        <label for="chg-q">Search</label><input type="search" id="chg-q" placeholder="network, area…">
+      </div>
+      <div class="ccard"><div class="ctw"><table class="chg" id="chg-tbl" data-source="changes"><thead><tr><th>Seen</th><th>Change</th><th>Insurer</th><th>Network</th><th>Area</th><th>Before → after</th><th>Detail</th><th>Evidence</th></tr></thead><tbody></tbody></table></div>
+        <button type="button" class="more" id="chg-more" hidden>Show all</button></div>
+    </section>
+
+    <section class="sec" id="chg-method">
+      <h3>How this works</h3>
+      <ul class="cmethod">
+        <li><b>Pick-list networks</b> (every 6 hours): the bot already checks each network's file. A network whose file vanishes from the insurer's list is logged "gone from index", and "back in index" when it returns. A new file a third smaller or half again bigger than the last one, or a rate count that moves that much, is logged too.</li>
+        <li><b>Whole indexes</b> (monthly, the 2nd): the insurer file catalog reads Anthem's, Cigna's, UnitedHealthcare's, Aetna's and HCSC's full indexes, and logs every network new or dropped since last month.</li>
+        <li><b>Every known index and price-file page</b> (daily): logged when one stops answering, or answers again.</li>
+        <li><b>Possible rename</b>: a network that disappears and a new one from the same insurer within 31 days, with similar names. It's a hint to check by hand, never merged automatically.</li>
+        <li><b>Logged by hand</b>: changes a person spotted that no check sees on its own, like an insurer changing the format of its index.</li>
+        <li>The first run (Nov 2, 2026) recorded where everything stood. Networks already missing that day are logged once with "already missing when the change ledger started".</li>
+      </ul>
+    </section>
+  </div>
+</template>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const ok = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };
+  const fmtN = (n) => Number(n).toLocaleString('en-US');
+  const S = {built: false, ins: '', kind: '', big: false, all: false};
+  const LIMIT = 300;
+
+  function msg(tb, cols, text) { tb.textContent = ''; const tr = el('tr'), td = el('td', 'cmsg', text); td.colSpan = cols; tr.appendChild(td); tb.appendChild(tr); }
+  function links(s) {
+    const span = el('span'); (s || '').split(/\s+/).filter((u) => /^https?:\/\//i.test(u)).forEach((u, i) => {
+      const a = el('a', '', i ? 'copy ' + (i + 1) : 'saved copy'); a.href = u; a.target = '_blank'; a.rel = 'noopener'; if (i) span.appendChild(document.createTextNode(' · ')); span.appendChild(a); });
+    return span;
+  }
+  function fill(sel, opts, cur) {
+    sel.textContent = ''; opts.forEach(([v, t]) => { const o = el('option', '', t); o.value = v; sel.appendChild(o); });
+    sel.value = opts.some(([v]) => v === cur) ? cur : ''; return sel.value;
+  }
+  function tile(box, lab, big, sub) { const t = el('div', 'ctile'); t.appendChild(el('div', 'lab', lab)); t.appendChild(el('div', 'big', big)); t.appendChild(el('div', 'sub', sub)); box.appendChild(t); }
+
+  function draw() {
+    if (!S.built) return;
+    const rows = ok('changes'), gone = ok('changes_gone');
+    const st = dash.data('changes').status;
+    const tiles = $('#chg-tiles'); tiles.textContent = '';
+    if (!rows) {
+      msg($('#chg-tbl tbody'), 8, st === 'loading' ? 'Loading…' : 'No changes logged yet. The change ledger fills this in after its first run.');
+      msg($('#chg-gtbl tbody'), 6, st === 'loading' ? 'Loading…' : 'Nothing yet.');
+      return;
+    }
+    const day = (n) => new Date(Date.now() - n * 864e5).toISOString().slice(0, 10);
+    const w = rows.filter((r) => r.seen_on >= day(7)), m = rows.filter((r) => r.seen_on >= day(30));
+    tile(tiles, 'Last 7 days', fmtN(w.length), fmtN(w.filter((r) => r.big).length) + ' big');
+    tile(tiles, 'Last 30 days', fmtN(m.length), fmtN(m.filter((r) => r.big).length) + ' big');
+    tile(tiles, 'Missing right now', gone ? fmtN(gone.length) : '—', 'pick-list networks');
+    tile(tiles, 'Possible renames', fmtN(m.filter((r) => r.possible_rename).length), 'last 30 days');
+
+    const gtb = $('#chg-gtbl tbody'); gtb.textContent = '';
+    if (!gone || !gone.length) msg(gtb, 6, gone ? 'None: every pick-list network is in its insurer’s list.' : 'Loading…');
+    else gone.forEach((g) => { const tr = el('tr'); [g.insurer, g.network, g.area, g.missing_since, g.last_good_file, g.why].forEach((v) => tr.appendChild(el('td', '', v || ''))); gtb.appendChild(tr); });
+
+    S.ins = fill($('#chg-ins'), [['', 'All insurers']].concat([...new Set(rows.map((r) => r.insurer))].filter(Boolean).sort().map((i) => [i, i])), S.ins);
+    S.kind = fill($('#chg-kind'), [['', 'All changes']].concat([...new Set(rows.map((r) => r.kind))].sort().map((k) => [k, k])), S.kind);
+    const q = $('#chg-q').value.trim().toLowerCase();
+    const sel = rows.filter((r) => (!S.ins || r.insurer === S.ins) && (!S.kind || r.kind === S.kind) && (!S.big || r.big)
+      && (!q || [r.network, r.area, r.detail, r.possible_rename].join(' ').toLowerCase().includes(q)));
+    const tb = $('#chg-tbl tbody'); tb.textContent = '';
+    if (!sel.length) msg(tb, 8, 'No changes match.');
+    (S.all ? sel : sel.slice(0, LIMIT)).forEach((r) => {
+      const tr = el('tr', r.big ? 'big' : '');
+      tr.appendChild(el('td', 'k', r.seen_on));
+      const k = el('td', 'k'); k.appendChild(el('span', r.big ? 'chk' : 'tag', r.kind)); tr.appendChild(k);
+      tr.appendChild(el('td', '', r.insurer));
+      const n = el('td', '', r.network); if (r.possible_rename) n.appendChild(el('span', 'ren', 'possible rename: ' + r.possible_rename)); tr.appendChild(n);
+      tr.appendChild(el('td', '', r.area));
+      tr.appendChild(el('td', '', [r.before, r.after].filter(Boolean).join(' → ')));
+      tr.appendChild(el('td', '', (r.detail || '') + (r.source ? ' (' + r.source + ')' : '')));
+      const e = el('td'); e.appendChild(links(r.evidence)); tr.appendChild(e);
+      tb.appendChild(tr);
+    });
+    const more = $('#chg-more'); more.hidden = S.all || sel.length <= LIMIT; more.textContent = 'Show all ' + fmtN(sel.length) + ' changes';
+  }
+
+  function build() {
+    const pg = $('#pg-changes'); pg.classList.add('co'); pg.appendChild($('#tpl-changes').content.cloneNode(true)); S.built = true;
+    $('#chg-ins').addEventListener('change', (e) => { S.ins = e.target.value; draw(); });
+    $('#chg-kind').addEventListener('change', (e) => { S.kind = e.target.value; draw(); });
+    $('#chg-big').addEventListener('change', (e) => { S.big = e.target.checked; draw(); });
+    $('#chg-q').addEventListener('input', () => draw());
+    $('#chg-more').addEventListener('click', () => { S.all = true; draw(); });
+  }
+
+  window.CHGTAB = {show() { if (!S.built) build(); dash.setParams({_t: Date.now()}); draw(); }};
+  if (location.hash === '#changes') { const t = document.querySelector('#tabs [data-tab=changes]'); if (t) setTimeout(() => t.click(), 0); }
+  dash.onData(() => draw());
+})();
+</script>
