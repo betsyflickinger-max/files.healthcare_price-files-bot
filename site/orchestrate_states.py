@@ -154,6 +154,35 @@ def pages_tables_key(slug):
     s3.put_object(Bucket=B, Key=key, Body=json.dumps(keep).encode())
     log(slug, ': leaving', len(tabs) - len(keep), 'tables off the page (pages_skip.json),', len(keep), 'used')
     return key
+def big_waiting(wk):
+    """Nov 2, 2026: True when another machine has marked a batch too big (work/.../Bbig/<batch>) and it isn't built yet."""
+    try: return any(not exists(f'{wk}B/{k.rsplit("/", 1)[1]}.json') for k in ls(wk + 'Bbig/'))
+    except Exception as e: log('big-batch check failed (starting the big machine to be safe):', repr(e)[:150]); return True
+def stop_idle_big(st, slug):
+    """Nov 2, 2026: shut a state's big-memory machine while no batch waits for it (it only waits, at 0% CPU, and bills).
+    The orchestrator starts it again within the hour if a batch is marked too big; its launch count is reset, so these
+    planned stops never count as failures."""
+    name = f'upfront-site-{O.BID}-{slug}-big'
+    for d in O.droplets():
+        if d['name'] == name:
+            try: O.do('DELETE', f"/droplets/{d['id']}"); log('stopped', name, '(no batch waiting for the big-memory machine)')
+            except Exception as e: log('stop failed', name, repr(e)[:150]); return
+    st['launches'][f'{slug}-big'] = 0
+def pause_for_hold():
+    """Nov 2, 2026 (Betsy OK'd): a scope listed in site/month_hold.json "pause_scopes" (the seven-state November rebuild,
+    s7: every one of its states already has a live page) stops while the hold is on, even mid-build, so the states not
+    live yet get its machines. Its machines are shut down; finished batches stay in R2, and ensure() starts the machines
+    again when the hold lifts (only the batch each was on is redone). Returns the builds it is waiting for."""
+    try: h = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'month_hold.json')))
+    except Exception: return []
+    if not h.get('hold') or SCOPE not in h.get('pause_scopes', []): return []
+    held = month_hold()
+    if not held: return []
+    for d in O.droplets():
+        if d['name'].startswith(f'upfront-site-{O.BID}-'):
+            try: O.do('DELETE', f"/droplets/{d['id']}"); log('paused: stopped', d['name'])
+            except Exception as e: log('pause stop failed', d['name'], repr(e)[:150])
+    return held
 def month_hold():
     """Nov 1, 2026 (Betsy: "pause the rebuild after the current states that are already live"): while the builds listed in
     site/month_hold.json (states not live yet) haven't finished their hospital step, a build that hasn't started ('wait')
@@ -499,6 +528,12 @@ def main():
             log('new-month build held (site/month_hold.json) until these finish publishing:', ', '.join(held))
             open('/tmp/st_waiting', 'w').write('hold')
             return putj(SP + 'state.json', st)
+    if st['stage'] in ('split', 'build') and not E.get('FORCE'):
+        held = pause_for_hold()
+        if held:
+            log('build paused (site/month_hold.json pause_scopes) until these finish publishing:', ', '.join(held))
+            open('/tmp/st_waiting', 'w').write('hold')
+            return putj(SP + 'state.json', st)
     if st['stage'] == 'wait':
         busy = s7_busy()
         if busy and not E.get('FORCE'):
@@ -617,7 +652,10 @@ def main():
                     # one big-memory machine per state: it builds only the batches the others mark as too big (one huge code)
                     big = {k_: v_ for k_, v_ in env.items() if k_ not in ('BCLAIM', 'BCLAIM_H', 'SPLIT')}
                     big.update(BIG='1', WORKERS='1', WMEM=ps.get('big_mem', '24GB'), WTHREADS='8', STALL_MIN='240', OUTP=f'{SP}{slug}-big/')
-                    ensure(st, f'{slug}-big', ps.get('big_size', SIZE), O.RUN_INS, big, False)
+                    # Nov 2, 2026 (Betsy OK'd): start it only when a batch is actually waiting for it. Before, it sat idle
+                    # for days (Washington's 62 hours at 0% CPU), billing and holding a machine slot the state needed.
+                    if big_waiting(env['WK']): ensure(st, f'{slug}-big', ps.get('big_size', SIZE), O.RUN_INS, big, False)
+                    else: stop_idle_big(st, slug)
         release_finished(left)
         relaunch_old(left)
         # Oct 24, 2026 (Betsy OK'd): a build with a floor (site/build_floors.json) tells the insurer machines how many
