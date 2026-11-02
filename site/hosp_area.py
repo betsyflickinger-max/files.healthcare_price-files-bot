@@ -422,7 +422,9 @@ def size_alerts(O, st, a, mib, built_from=''):
     elif mib >= SIZE_WARN_MIB:
         alert_once(O, st, f'near-limit-{a}', f'{a}: Price Finder page is {mib:.1f} MiB, close to the 25 MiB limit',
                    f'The {a} page is {mib:.1f} MiB. It still publishes, but a few more networks or codes next month could push '
-                   'it over the website host\'s 25 MiB limit. Draw its regional pages now (site/regions.py) so it never gets stuck.')
+                   'it over the website host\'s 25 MiB limit. ' + ('It is already a regional page: split it into smaller regions (fewer '
+                   'counties) in site/regions.py, or move prices to per-code files (healthcare-files-plan #11).'
+                   if _regions and a in _regions.PARENT else 'Draw its regional pages now (site/regions.py) so it never gets stuck.'))
 
 
 def publish_one(O, st, a, how):
