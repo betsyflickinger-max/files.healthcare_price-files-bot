@@ -4,8 +4,9 @@ Runs as the last step of every full check (insurers.yml, not the 10-minute fills
 GitHub and adds one row to R2 control/data/full_check_times.json (newest first, last 400 runs), plus a line in the
 run's summary. Parts of a full check:
   wait     waiting for the lock and for machines (a full check waits for a running fill)
-  links    checking every pick-list network's file link (the 6-hourly check itself)
-  reads    Texas and every national batch: queueing and reading new files (the long part; capped by the 4-hour limit)
+  dfw      checking DFW's networks (the first area)
+  states   checking Texas and every other state group and queueing their new files (the long part: 2 h 42 min on
+           Nov 2, 2026; the whole run is capped at 4 hours). The machines read the queued files on their own time.
 """
 import json
 import os
@@ -31,7 +32,7 @@ def main():
     job = json.load(urllib.request.urlopen(req, timeout=30))["jobs"][0]
     now = datetime.now(timezone.utc)
     start = t(job["started_at"])
-    part = {"wait": None, "links": None, "reads": None}
+    part = {"wait": None, "dfw": None, "states": None}
     for s in job["steps"]:
         a, b = t(s.get("started_at")), t(s.get("completed_at")) or now
         n = s["name"].lower()
@@ -40,9 +41,9 @@ def main():
         if n.startswith("full check lock") or n.startswith("machines only"):
             part["wait"] = round((part["wait"] or 0) + (mins(a, b) or 0), 1)
         elif n == "check insurer files":
-            part["links"] = mins(a, b)
+            part["dfw"] = mins(a, b)
         elif n.startswith("all of texas"):
-            part["reads"] = mins(a, b)
+            part["states"] = mins(a, b)
     row = dict(run=int(run), started=job["started_at"], minutes=mins(start, now), **part,
                how=E.get("GITHUB_EVENT_NAME", ""), result=E.get("JOB_STATUS", ""),
                hit_time_limit=(mins(start, now) or 0) >= 235)
@@ -56,8 +57,8 @@ def main():
         rows = []
     rows = [row] + [r for r in rows if r.get("run") != row["run"]][:399]
     s3.put_object(Bucket=b, Key=key, Body=json.dumps(rows).encode(), ContentType="application/json", CacheControl="no-cache")
-    line = (f"Full check took {row['minutes']} min (waiting {part['wait']}, link check {part['links']}, "
-            f"reading new files {part['reads']})" + (" and hit the 4-hour limit" if row["hit_time_limit"] else ""))
+    line = (f"Full check took {row['minutes']} min (waiting {part['wait']}, DFW {part['dfw']}, "
+            f"Texas and the other states {part['states']})" + (" and hit the 4-hour limit" if row["hit_time_limit"] else ""))
     print(line)
     if E.get("GITHUB_STEP_SUMMARY"):
         open(E["GITHUB_STEP_SUMMARY"], "a").write(f"\n**{line}.**\n")
