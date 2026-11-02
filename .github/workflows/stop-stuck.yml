@@ -1,0 +1,25 @@
+name: Stop stuck machines
+# Nov 2, 2026 (Betsy OK'd): stops queue machines the stall watch flagged, after re-checking they are still idle.
+# Their files go back in line. Website-build machines are never stopped here. See insurers/stop_stuck.py.
+on:
+  workflow_dispatch:
+    inputs:
+      stop:
+        description: "comma-separated machine names (or unique parts) from the 'Machine stalled' issue"
+        required: true
+permissions:
+  contents: read
+jobs:
+  stop:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      STOP: ${{ inputs.stop }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests==2.32.3
+      - run: python insurers/stop_stuck.py
