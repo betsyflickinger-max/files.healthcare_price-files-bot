@@ -1,0 +1,41 @@
+{
+  "_about": "Nov 1, 2026 (Betsy OK'd): insurer networks kept OFF a scope's Price Finder pages. They stay read and stored (nothing deleted); the page build just leaves them out. A table is left out when its name contains one of the network codes. orchestrate_states.py applies it to the split step and, through ONLY_KEY, to every_code.py; each build's build_env.json records the exact tables used.",
+  "s7": {
+    "why": "Anthem pick list (claude/anthem-pick-list.md, approved Oct 18, 2026): on the pages, only Anthem's 3 most-used employer networks per state (Colorado 94% of employers, Georgia 93%, Missouri 91%). 17 of the other 20 Anthem catalog networks (25-1,491 employers each, about two thirds of the data) are left off. They were all switched on for the November seven-state build, the same setup behind the paused Oct 16 rebuild's ~20-day estimate. 051_06X0, 102_11R0 and 748_29S0 are NOT skipped: they are the same files as the Blue High Performance networks (HCSC rows in insurers/networks_s7.csv) already on the live pages.",
+    "networks": [
+      "CO_CCBAMED0000",
+      "CO_GCEAMEDCO01",
+      "CO_HXJQMED0000",
+      "CO_JBEVMED0000",
+      "CO_JBEXMED0000",
+      "CO_JBEYMED0000",
+      "CO_PCBCMED0000",
+      "GA_AHPNMEDGA00",
+      "GA_HGKEMED0000",
+      "GA_HNGAMEDGA36",
+      "GA_POAPMEDGA12",
+      "GA_POHMMED0000",
+      "748_29A0",
+      "748_29M0",
+      "MO_GZHAMEDAP76",
+      "MO_HXDRMED0000",
+      "MO_OSBHMED0000"
+    ],
+    "kept": [
+      "051_06E0",
+      "CO_AHPGMEDCO06",
+      "CO_HYLYMED0000",
+      "102_11D0",
+      "GA_AHPPMEDGAHF",
+      "102_11M0",
+      "MO_CEFPMED0000",
+      "MO_GHRAMEDMO11",
+      "MO_HXWUMED0000"
+    ],
+    "kept_also": [
+      "051_06X0",
+      "102_11R0",
+      "748_29S0"
+    ]
+  }
+}

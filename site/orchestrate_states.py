@@ -139,6 +139,21 @@ def update_tables():
         REBUILD['tables'] = key
         return set(tabs)
     return set(json.loads(s3.get_object(Bucket=B, Key=REBUILD['tables'])['Body'].read()))
+# Nov 1, 2026 (Betsy OK'd): networks kept off this scope's pages (site/pages_skip.json; Anthem pick list for s7). Read and
+# stored as always; the split skips them and the build gets the rest as an ONLY_KEY list (every_code.py already filters by it).
+try: PAGE_SKIP = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'pages_skip.json'))).get(SCOPE, {}).get('networks', [])
+except Exception: PAGE_SKIP = []
+def page_skip(t): return any(c in t for c in PAGE_SKIP)
+def pages_tables_key(slug):
+    """Full builds only: R2 list of the state's tables minus page_skip ones, or None when nothing is skipped."""
+    if UPDATE or not PAGE_SKIP: return None
+    tabs = sorted(sizes(f'data/{SCOPE}/state/{slug}/rates/'))
+    keep = [t for t in tabs if not page_skip(t)]
+    if len(keep) == len(tabs): return None
+    key = f'{SP}{slug}_pages_tables.json'
+    s3.put_object(Bucket=B, Key=key, Body=json.dumps(keep).encode())
+    log(slug, ': leaving', len(tabs) - len(keep), 'tables off the page (pages_skip.json),', len(keep), 'used')
+    return key
 MERGE_SIZE = 's-4vcpu-8gb'
 RUN_MERGE = "for t in 1 2 3; do /root/v/bin/python /root/h/merge_build.py >> /root/run.log 2>&1 && break; sleep 5; done"
 CODE_OF = {v: k for k, v in STATES.items()}
@@ -488,14 +503,15 @@ def main():
         # so st-2026-10c (CO/MO Anthem) spent hours on GA_POHMMED0000, a 44 GB table it doesn't use. Other tables wait for a
         # build that needs them (or a full rebuild).
         need = update_tables()
-        if need is not None:
+        def use(t): return (need is None or t in need) and not page_skip(t)   # Nov 1: pages_skip.json tables aren't split either
+        if need is not None or PAGE_SKIP:
             todo_all = [t for t in sz if t not in done]
-            todo_all and log('update mode: not splitting', len([t for t in todo_all if t not in need]), 'tables this build does not use')
+            todo_all and log('not splitting', len([t for t in todo_all if not use(t)]), 'tables this build does not use')
             for key in ('split_jobs', 'back_jobs'):
                 for i, job in enumerate(st.get(key, [])):
-                    keep = [t for t in job if t in need]
+                    keep = [t for t in job if use(t)]
                     if keep == job: continue
-                    log('update mode: dropped', [t for t in job if t not in need], 'from', key)
+                    log('dropped', [t for t in job if not use(t)], 'from', key)
                     st[key][i] = keep
                     if not [t for t in keep if t not in done]:   # nothing left for that machine: stop it now (it holds a slot)
                         name = f"upfront-site-{O.BID}-split-{i + 1}{'b' if key == 'back_jobs' else ''}"
@@ -503,7 +519,7 @@ def main():
                             if d['name'] == name:
                                 try: O.do('DELETE', f"/droplets/{d['id']}"); log('stopped', name)
                                 except Exception as e: log('stop failed', name, repr(e)[:150])
-        todo = sorted((t for t in sz if t not in done and (need is None or t in need)), key=lambda t: -sz[t])
+        todo = sorted((t for t in sz if t not in done and use(t)), key=lambda t: -sz[t])
         if 'split_jobs' not in st:
             jobs = [[] for _ in range(min(SPLIT_MACHINES, max(1, len(todo))))]
             for i, t in enumerate(todo): jobs[i % len(jobs)].append(t)
@@ -528,7 +544,7 @@ def main():
             st['split_failed'] = todo
             st['providers'] = state_npis()
             only_ = update_tables()   # update mode: size the machines by the new tables only
-            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(v for t, v in sizes(f'data/{SCOPE}/state/{s}/rates/').items() if only_ is None or t in only_) // int(GB_PER_MACHINE * 1e9))))
+            st['machines'] = {s: min(MAX_PER_STATE, max(1, -(-sum(v for t, v in sizes(f'data/{SCOPE}/state/{s}/rates/').items() if (only_ is None or t in only_) and not page_skip(t)) // int(GB_PER_MACHINE * 1e9))))
                               for s in STATES.values()}
             st['stage'] = 'build'
             log('providers per state', st['providers'], 'machines', st['machines'])
@@ -566,6 +582,10 @@ def main():
                 env['LABEL_TABLES_KEY'] = label_tables(st)
                 if common_first() and not UPDATE:   # Oct 18: common codes first (priority list + DRGs, the rest listed as coming)
                     env.update(PHASE='1', PRIORITY_KEY=f'site/priority/{CODE_OF[slug]}.json')
+                if not UPDATE:   # Nov 1: pages_skip.json networks left out (the list is written once per state)
+                    pk = st.setdefault('pages_tables', {}).get(slug)
+                    if pk is None: pk = st['pages_tables'][slug] = pages_tables_key(slug) or ''
+                    if pk: env['ONLY_KEY'] = pk
                 if UPDATE:
                     if 'tables' not in REBUILD: update_tables()   # tables_from: writes the list to R2 first
                     env['ONLY_KEY'] = REBUILD['tables']
