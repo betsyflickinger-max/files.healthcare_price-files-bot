@@ -1,4 +1,19 @@
 {
  "_note": "Oct 24, 2026 (Betsy OK'd): a page build listed here gets at least this many machines while it runs. Insurer queue machines step aside between files (never mid-file) until it has them. Remove a line to drop its floor.",
- "stn5-2026-10": {"machines": 8, "why": "NY, CA, VA, DC, FL, WI build sat at 1 machine and 0 of 256 batches for 10 hours; its insurer files were 92% read"}
+ "stn5-2026-10": {
+  "machines": 8,
+  "why": "NY, CA, VA, DC, FL, WI build sat at 1 machine and 0 of 256 batches for 10 hours; its insurer files were 92% read"
+ },
+ "stc2-2026-11": {
+  "machines": 12,
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Pennsylvania, New Jersey, Massachusetts, South Carolina)"
+ },
+ "stc3-2026-10": {
+  "machines": 5,
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington)"
+ },
+ "stc1-2026-10": {
+  "machines": 4,
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Minnesota)"
+ }
 }

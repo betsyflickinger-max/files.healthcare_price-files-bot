@@ -9,7 +9,9 @@
   ],
   "why": "Not live yet: Minnesota (c1), Pennsylvania, New Jersey, Massachusetts, New Hampshire, Maine, South Carolina (c2), Washington (c3).",
   "pause_scopes": [
-    "s7"
+    "s7",
+    "n5",
+    "nc"
   ],
-  "_pause": "Nov 2, 2026 (Betsy OK'd): the seven-state November rebuild (s7: CO, GA, MO, TN, OK, AL, MS, all live with October pages) is paused mid-build while the hold is on, so its machines go to the states not live yet. It resumes by itself when the hold lifts. stc2-2026-11 added: Massachusetts, New Jersey, Pennsylvania and South Carolina are building in it."
+  "_pause": "Nov 2, 2026 (Betsy OK'd): the seven-state November rebuild (s7: CO, GA, MO, TN, OK, AL, MS, all live with October pages) is paused mid-build while the hold is on, so its machines go to the states not live yet. It resumes by itself when the hold lifts. stc2-2026-11 added: Massachusetts, New Jersey, Pennsylvania and South Carolina are building in it. Later Nov 2: n5 (NY, CA, VA, DC, FL, WI) and nc (North Carolina) November rebuilds paused too; every one of those states is live."
 }
