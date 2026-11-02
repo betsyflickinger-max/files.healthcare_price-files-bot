@@ -50,6 +50,18 @@ def floor(bid):
         return 0
 
 
+def most(bid):
+    """Nov 2, 2026: the most machines this build may hold (site/build_floors.json "most"), 0 = no limit. Washington's build
+    took 10 machines while Pennsylvania, New Jersey, Massachusetts and South Carolina had one each; a build over its most
+    has its newest machines stopped by make_room() (finished batches stay in R2)."""
+    import json, os
+    try:
+        f = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "site", "build_floors.json")))
+        return int((f.get(bid) or {}).get("most", 0))
+    except Exception:
+        return 0
+
+
 def build_cap(bid, limit, reserve, names, s3, bucket, log=print):
     """Most machines build `bid` may hold right now, given every machine on the account (`names`).
     Counts only website-build machines (upfront-site-*) of OTHER builds against the shared build share."""
@@ -66,5 +78,7 @@ def build_cap(bid, limit, reserve, names, s3, bucket, log=print):
         rcap = math.floor(REBUILD_SHARE * limit)
         if rcap < cap: cap, why = rcap, why + f"; rebuild share {rcap}"
     cap = max(cap, 1, floor(bid))   # a build always keeps at least one machine (or its floor), so it still moves
+    mx = most(bid)
+    if mx and cap > mx: cap, why = mx, why + f"; its most {mx} (build_floors.json)"
     log(f"machine shares: {bid} may hold {cap} of {limit} ({why}; {others} on other builds)")
     return cap

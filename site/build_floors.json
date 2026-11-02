@@ -10,7 +10,8 @@
  },
  "stc3-2026-10": {
   "machines": 5,
-  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington)"
+  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington); most 5 so the other five states get machines too",
+  "most": 5
  },
  "stc1-2026-10": {
   "machines": 4,
