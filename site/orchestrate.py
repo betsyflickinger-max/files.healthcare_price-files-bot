@@ -125,7 +125,11 @@ setsid nohup /root/run.sh < /dev/null > /root/run.out 2>&1 &
 def launch(role, size, script, env):
     name = f'upfront-site-{BID}-{role}'
     ud = userdata(script, dict(env, ROLE=role))
-    for region in REGIONS:
+    # Nov 3, 2026: m-8vcpu-64gb-intel is only offered in nyc2/sfo2, so every launch in REGIONS failed quietly (Washington's
+    # 64 GB test, and the NY/CA/FL big-memory machines). After REGIONS, try every region that actually offers the size.
+    try: offered = next((z['regions'] for z in do('GET', '/sizes?per_page=200')['sizes'] if z['slug'] == size and z.get('available')), [])
+    except Exception: offered = []
+    for region in REGIONS + [r for r in offered if r not in REGIONS]:
         try:
             d = do('POST', '/droplets', {'name': name, 'region': region, 'size': size, 'image': 'ubuntu-24-04-x64', 'user_data': ud, 'tags': ['site-build'], 'monitoring': True})
             log('launched', name, region, d['droplet']['id']); return True
