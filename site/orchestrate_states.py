@@ -657,6 +657,12 @@ def main():
                 # (build_defaults.json per_state "size"). A running machine of the old size is stopped once, so
                 # the next step relaunches it at the new size; the planned swap never counts as a failure.
                 want = ps.get('size', SIZE); name = f'upfront-site-{O.BID}-{slug}-c{i + 1}'
+                # Nov 3, 2026: a new size gives every slot a clean start once. washington-c3..c6 had "failed 8 times"
+                # on 32 GB machines, so ensure() refused them even after the 64 GB fix and the state stayed at 2.
+                sz = st.setdefault('size_reset', {})
+                if want != SIZE and sz.get(f'{slug}-c{i + 1}') != want:
+                    sz[f'{slug}-c{i + 1}'] = want; st['launches'][f'{slug}-c{i + 1}'] = 0
+                    st['problems'] = [p for p in st.get('problems', []) if not p.startswith(f'{slug}-c{i + 1} ')]
                 for d in O.droplets():
                     if d['name'] == name and d.get('size_slug') and d['size_slug'] != want:
                         try: O.do('DELETE', f"/droplets/{d['id']}"); log('resized', name, d['size_slug'], '->', want, '(stopped; relaunching)')
