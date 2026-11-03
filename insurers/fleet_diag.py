@@ -224,3 +224,14 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ta
         lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
         print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M} UTC, {len(lines)} lines)")
         print("    " + "\n    ".join(l[:300] for l in lines[-40:]))
+
+# Nov 2, 2026: "ls:<R2 prefix>" counts the files under a prefix (total size, newest 15 with dates), and prints the text of
+# up to 3 newest small ones (claims, error tracebacks). Read-only.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ls:")]:
+    pre = x.split(":", 1)[1]
+    objs = sorted([o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=pre) for o in page.get("Contents", [])],
+                  key=lambda o: o["LastModified"], reverse=True)
+    print(f"=== ls {pre}: {len(objs)} files, {sum(o['Size'] for o in objs) / 1e9:.2f} GB")
+    for o in objs[:15]: print(f"  {o['LastModified']:%m-%d %H:%M} {o['Size']:>14,} {o['Key'][len(pre):]}")
+    for o in [o for o in objs if o["Size"] < 20000][:3]:
+        print(f"--- {o['Key']}:\n    " + "\n    ".join(s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()[-12:]))
