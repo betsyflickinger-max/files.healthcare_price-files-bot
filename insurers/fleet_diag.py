@@ -264,3 +264,13 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("mo
                   f"{_t.strftime('%H:%M', _t.gmtime(lo[0]))} UTC; free GB over the hour: {trace}")
         except Exception as e:
             print(f"  {d['name']}: monitoring failed {repr(e)[:150]}")
+
+# Nov 3, 2026: "sizes:<slug>" (in builds) prints where DigitalOcean offers a machine size and the account limit (read-only)
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("sizes:")]:
+    import requests as _rq
+    slug = x.split(":", 1)[1]
+    z = [s for s in _rq.get(f"{droplets.API}/sizes", params={"per_page": 200}, headers=droplets._h(), timeout=60).json()["sizes"] if s["slug"] == slug]
+    print(f"=== size {slug}:", (f"regions {z[0]['regions']}, available {z[0]['available']}, ${z[0]['price_hourly']}/h, "
+                                 f"{z[0]['memory']} MB, {z[0]['disk']} GB disk") if z else "not offered")
+    acct = _rq.get(f"{droplets.API}/account", headers=droplets._h(), timeout=60).json()["account"]
+    print("  account droplet limit:", acct.get("droplet_limit"), "| status:", acct.get("status"))
