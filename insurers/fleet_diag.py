@@ -235,3 +235,29 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("ls
     for o in objs[:15]: print(f"  {o['LastModified']:%m-%d %H:%M} {o['Size']:>14,} {o['Key'][len(pre):]}")
     for o in [o for o in objs if o["Size"] < 20000][:3]:
         print(f"--- {o['Key']}:\n    " + "\n    ".join(s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()[-12:]))
+
+# Nov 2, 2026: "mon:<part of a machine name>" prints, for every machine on the account whose name has it (page-build
+# machines too), CPU busy share and memory (lowest free and its time, plus the free-memory trace) over the last 60 min
+# from DigitalOcean monitoring, so a worker killed for memory can be seen from outside. Read-only.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("mon:")]:
+    import time as _t, requests as _rq
+    part = x.split(":", 1)[1]
+    ds = [d for d in _rq.get(f"{droplets.API}/droplets", params={"per_page": 200}, headers=droplets._h(), timeout=60).json()["droplets"]
+          if part in d["name"]]
+    print(f"=== mon '{part}': {len(ds)} machines")
+    for d in sorted(ds, key=lambda d: d["name"]):
+        end = int(_t.time()); q = dict(host_id=str(d["id"]), start=str(end - 3600), end=str(end))
+        try:
+            res = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/cpu", params=q, headers=droplets._h(), timeout=60).json()["data"]["result"]
+            tot = {r["metric"].get("mode"): float(r["values"][-1][1]) - float(r["values"][0][1]) for r in res if len(r["values"]) >= 2}
+            cpu = f"{100 * (1 - (tot.get('idle', 0) + tot.get('iowait', 0)) / sum(tot.values())):.0f}%" if sum(tot.values()) else "?"
+            av = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/memory_available", params=q, headers=droplets._h(), timeout=60).json()["data"]["result"]
+            tt = _rq.get(f"{droplets.API}/monitoring/metrics/droplet/memory_total", params=q, headers=droplets._h(), timeout=60).json()["data"]["result"]
+            pts = [(int(t_), float(v_) / 1e9) for t_, v_ in (av[0]["values"] if av else [])]
+            total = float(tt[0]["values"][-1][1]) / 1e9 if tt else 0
+            lo = min(pts, key=lambda p: p[1]) if pts else (0, 0)
+            trace = " ".join(f"{p[1]:.0f}" for p in pts[::max(1, len(pts) // 20)])
+            print(f"  {d['name']}: CPU {cpu}; memory {total:.0f} GB, lowest free {lo[1]:.1f} GB at "
+                  f"{_t.strftime('%H:%M', _t.gmtime(lo[0]))} UTC; free GB over the hour: {trace}")
+        except Exception as e:
+            print(f"  {d['name']}: monitoring failed {repr(e)[:150]}")
