@@ -24,6 +24,7 @@ jobs:
     timeout-minutes: 10
     env:
       GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN || secrets.BOT_GITHUB_TOKEN }}
+      GH_BASIC_TOKEN: ${{ github.token }}
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
       STORAGE_REGION: ${{ vars.STORAGE_REGION }}

@@ -30,18 +30,19 @@ OWNER = os.environ.get("GITHUB_TRAFFIC_OWNER", "betsyflickinger-max")
 OUT = "out/board"
 KEY = "control/data/github_traffic.json"
 TOKEN = "".join(os.environ.get("GH_TRAFFIC_TOKEN", "").split())
+BASIC = "".join(os.environ.get("GH_BASIC_TOKEN", "").split())   # the workflow's own key: reads public lists (stars, watchers)
 NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
 
 
-def gh(path, accept="application/vnd.github+json", auth=True):
+def gh(path, accept="application/vnd.github+json", auth=True, key=None):
     """(status, data) for one GitHub API GET; status 0 = network error. Follows Link pages for lists (up to 10)."""
     url, out = f"https://api.github.com/{path}", None
     for _ in range(10):
         req = urllib.request.Request(url, headers={"Accept": accept, "X-GitHub-Api-Version": "2022-11-28",
                                                    "User-Agent": "files-healthcare-traffic"})
-        if TOKEN and auth:
-            req.add_header("Authorization", f"Bearer {TOKEN}")
+        if auth and (key or TOKEN):
+            req.add_header("Authorization", f"Bearer {key or TOKEN}")
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
                 data, link = json.loads(r.read() or b"null"), r.headers.get("Link", "")
@@ -89,8 +90,11 @@ def repos():
 
 def gh_public(path, accept="application/vnd.github+json"):
     """A public list (stars, watchers, followers): with the key, and without it if the key is refused (Nov 3: the
-    traffic-only fine-grained key gets HTTP 403 on stargazers and subscribers, though both are public)."""
+    traffic-only fine-grained key gets HTTP 403 on stargazers and subscribers, and GitHub answers 401 with no key;
+    the workflow's own key, GH_BASIC_TOKEN, reads them)."""
     st, data = gh(path, accept)
+    if st != 200 and BASIC:
+        st, data = gh(path, accept, key=BASIC)
     return (st, data) if st == 200 else gh(path, accept, auth=False)
 
 
