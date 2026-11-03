@@ -34,13 +34,13 @@ NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
 
 
-def gh(path, accept="application/vnd.github+json"):
+def gh(path, accept="application/vnd.github+json", auth=True):
     """(status, data) for one GitHub API GET; status 0 = network error. Follows Link pages for lists (up to 10)."""
     url, out = f"https://api.github.com/{path}", None
     for _ in range(10):
         req = urllib.request.Request(url, headers={"Accept": accept, "X-GitHub-Api-Version": "2022-11-28",
                                                    "User-Agent": "files-healthcare-traffic"})
-        if TOKEN:
+        if TOKEN and auth:
             req.add_header("Authorization", f"Bearer {TOKEN}")
         try:
             with urllib.request.urlopen(req, timeout=30) as r:
@@ -81,10 +81,17 @@ def load_previous(dry):
 
 
 def repos():
-    st, data = gh(f"users/{OWNER}/repos?per_page=100&type=owner")
+    st, data = gh_public(f"users/{OWNER}/repos?per_page=100&type=owner")
     names = [r["name"] for r in (data or []) if not r.get("fork") and not r.get("private")] if st == 200 else []
     extra = [n.strip().split("/")[-1] for n in os.environ.get("GITHUB_TRAFFIC_REPOS", "").split(",") if n.strip()]
     return sorted(set(names) | set(extra)) or ["files.healthcare_price-files-bot"]
+
+
+def gh_public(path, accept="application/vnd.github+json"):
+    """A public list (stars, watchers, followers): with the key, and without it if the key is refused (Nov 3: the
+    traffic-only fine-grained key gets HTTP 403 on stargazers and subscribers, though both are public)."""
+    st, data = gh(path, accept)
+    return (st, data) if st == 200 else gh(path, accept, auth=False)
 
 
 def main():
@@ -112,13 +119,13 @@ def main():
         referrers += [{"repo": name, "site": r["referrer"], "views": r["count"], "uniques": r["uniques"]} for r in (refs or [])] if st_r == 200 else []
         paths += [{"repo": name, "page": p["path"], "title": p.get("title", ""), "views": p["count"], "uniques": p["uniques"]} for p in (pops or [])] if st_p == 200 else []
         # people who left a trace (public: works with any token)
-        st_s, stars = gh(f"{full}/stargazers?per_page=100", accept="application/vnd.github.star+json")
+        st_s, stars = gh_public(f"{full}/stargazers?per_page=100", accept="application/vnd.github.star+json")
         for s in stars or []:
             people.setdefault((s["user"]["login"], "starred", name), {"who": s["user"]["login"], "what": "starred", "repo": name, "when": s["starred_at"][:10], "first_seen": TODAY})
-        st_k, forks = gh(f"{full}/forks?per_page=100")
+        st_k, forks = gh_public(f"{full}/forks?per_page=100")
         for f in forks or []:
             people.setdefault((f["owner"]["login"], "forked", name), {"who": f["owner"]["login"], "what": "forked", "repo": name, "when": f["created_at"][:10], "first_seen": TODAY})
-        st_w, subs = gh(f"{full}/subscribers?per_page=100")
+        st_w, subs = gh_public(f"{full}/subscribers?per_page=100")
         for s in subs or []:
             people.setdefault((s["login"], "watching", name), {"who": s["login"], "what": "watching", "repo": name, "when": "", "first_seen": TODAY})
         print(f"{name}: traffic HTTP {st_v}; stargazers HTTP {st_s} ({len(stars or [])}), forks HTTP {st_k} ({len(forks or [])}), watchers HTTP {st_w} ({len(subs or [])})")
@@ -128,7 +135,7 @@ def main():
                         "stars": (info or {}).get("stargazers_count"), "forks": (info or {}).get("forks_count"),
                         "watchers": (info or {}).get("subscribers_count")})
 
-    st_f, followers = gh(f"users/{OWNER}/followers?per_page=100")
+    st_f, followers = gh_public(f"users/{OWNER}/followers?per_page=100")
     for f in followers or []:
         people.setdefault((f["login"], "follows you", ""), {"who": f["login"], "what": "follows you", "repo": "", "when": "", "first_seen": TODAY})
     # Betsy's own stars/watches aren't visitors
