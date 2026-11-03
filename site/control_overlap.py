@@ -48,6 +48,26 @@ STEPS = [   # (marker that shows the step is done, anchor, replacement)
      "      ci.forEach((v, j) => { if (j && v !== ci[j - 1]) sep.append('line').attr('x1', lab + j * cell - 0.5).attr('x2', lab + j * cell - 0.5).attr('y1', top - 4).attr('y2', top + cell * rn.length); });\n"
      "    }"),
 ]
+# Nov 3 (later): "Download crosswalk (CSV)": every network-to-network pair in the picked area (or insurer-to-insurer in
+# Insurers combined), as listed in the grid, ignoring the Rows/Columns menus so the file is the whole crosswalk.
+COLS_SEL = '<label class="muted" for="nh-vs">Columns</label><select id="nh-vs" aria-label="Insurer in the columns"></select>'
+HEAT_CALL = "drawHeat(acc, vs ? accAll.filter((r) => r.insurer === vs) : accAll, ov, pick);"
+STEPS += [
+    ('id="nh-csv"', COLS_SEL, COLS_SEL + '<button type="button" id="nh-csv" title="Every pair in this area, one row each">Download crosswalk (CSV)</button>'),
+    ("window.NH_CSV = ", HEAT_CALL, HEAT_CALL + "\n      window.NH_CSV = {ov, accAll, market: p.market, level: LEVEL()};"),
+    ("$('#nh-csv').addEventListener", "    if ($('#nh-vs')) $('#nh-vs').addEventListener",
+     "    if ($('#nh-csv')) $('#nh-csv').addEventListener('click', () => {   // Nov 3: the whole crosswalk for the picked area\n"
+     "      const X = window.NH_CSV; if (!X || !X.ov || !X.ov.length) return;\n"
+     "      const ins = new Map((X.accAll || []).map((r) => [r.label, r.insurer])), q = (v) => v == null ? '' : /[\",\\n]/.test(String(v)) ? '\"' + String(v).replace(/\"/g, '\"\"') + '\"' : String(v);\n"
+     "      const F = ['shared', 'a_providers', 'share_of_a_in_b', 'jaccard', 'shared_hospitals', 'a_hospitals', 'hospital_share_of_a_in_b', 'matched_prices', 'a_lower_share', 'same_share', 'a_vs_b_middle'];\n"
+     "      const head = ['area', 'level', 'row_insurer', 'row_' + X.level, 'column_insurer', 'column_' + X.level, ...F];\n"
+     "      const rows = X.ov.slice().sort((a, b) => (ins.get(a.a) || '').localeCompare(ins.get(b.a) || '') || a.a.localeCompare(b.a) || (ins.get(a.b) || '').localeCompare(ins.get(b.b) || '') || a.b.localeCompare(b.b))\n"
+     "        .map((r) => [X.market, r.level, ins.get(r.a), r.a, ins.get(r.b), r.b, ...F.map((f) => r[f])].map(q).join(','));\n"
+     "      const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([[head.join(','), ...rows].join('\\n') + '\\n'], {type: 'text/csv'}));\n"
+     "      a.download = `network-crosswalk_${String(X.market).toLowerCase()}_${X.level}s_${new Date().toISOString().slice(0, 10)}.csv`; document.body.appendChild(a); a.click(); a.remove();\n"
+     "    });\n"
+     "    if ($('#nh-vs')) $('#nh-vs').addEventListener"),
+]
 CSS = ('<style>/* Nov 3: overlap grid menus */ #n-heat-card .nh-ctl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}'
        ' #n-heat-card .nh-ctl select{max-width:16em}</style>')
 
