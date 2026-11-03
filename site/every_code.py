@@ -411,8 +411,6 @@ def work(u):
         return res
     c = duckdb.connect()
     c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{u}'")
-    if FLAT is None:
-        FLAT = set(c.execute(f"select distinct npi, ins, net, v from read_parquet('{D}/flat/*.parquet')").fetchall())
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
     if sp is not None: src = f"(select * from {src} where hash(code) % {NB * SPLIT} = {k + NB * sp})"
     if PHASE:   # common codes first: keep this phase's codes; record the others (code -> rows) for the page and the fill
@@ -422,6 +420,13 @@ def work(u):
             pend = dict(c.execute(f"select code, count(*) from {src} where not {isp} group by code").fetchall())
             s3.put_object(Bucket=B, Key=f'{WK}pending/{u}.json', Body=json.dumps(pend, separators=(',', ':')).encode())
         src = f"(select * from {src} where {'not ' if PHASE == '2' else ''}{isp})"
+    # Nov 2, 2026: FLAT holds only this batch's flat-rate candidates (the rows the isflat checks look up: fee 0, t 0, no
+    # modifier), not the whole state's flat list. Washington's flat list (2.1 GB of parquet) loaded as one Python set was
+    # bigger than the machine: the kernel killed every worker while it loaded, and no batch ever finished (14 machines,
+    # 3 days, 0 of 256). Same answers: every lookup is a tuple from this batch's own rows.
+    FLAT = set(c.execute(f"""select distinct f.npi, f.ins, f.net, f.v from read_parquet('{D}/flat/*.parquet') f
+        join (select distinct npi, ins, net, v from {src} where fee = 0 and t = 0 and coalesce(modi, '') = '') s
+          on f.npi = s.npi and f.ins = s.ins and f.net = s.net and f.v = s.v""").fetchall())
     if SORTV in ('2', '3'):
         c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
         c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])

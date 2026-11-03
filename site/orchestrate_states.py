@@ -380,7 +380,7 @@ HOSP_SLOTS = 3
 # Oct 16, 2026: machines launched before a change to their settings (WBIG) keep the old settings until relaunched. A build
 # listed here gets its machines created before the cutoff stopped once; ensure() then relaunches them with the new
 # settings. Finished stage-B batches stay in R2; only the batch each machine was working on is redone.
-RELAUNCH_BEFORE = {'stnc-2026-10': '2026-10-16T16:39:00Z'}
+RELAUNCH_BEFORE = {'stnc-2026-10': '2026-10-16T16:39:00Z', 'stc3-2026-10': '2026-11-03T04:41:58Z'}   # Nov 2, 2026: Washington machines restart on the every_code.py FLAT fix
 def relaunch_old(left):
     cut = RELAUNCH_BEFORE.get(O.BID)
     if not cut: return
