@@ -52,6 +52,101 @@ def setting_of(note):
     return "overnight stay" if "inpatient" in n else "same day or overnight"
 
 
+RETIRED_DRGS = {"460": "AAPC lists MS-DRG 460 as deleted (CMS split spinal fusion into 402, 426-430, 447-451 in FY2024); "
+                       "insurer files may still use it"}
+
+
+def search_names():
+    """The site's own plain-English names for the 89 featured codes (site/procedure_pages.py SEARCH_NAMES)."""
+    import ast
+    tree = ast.parse(open(os.path.join(ROOT, "site", "procedure_pages.py"), encoding="utf-8").read())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and any(getattr(t, "id", "") == "SEARCH_NAMES" for t in node.targets):
+            return {k: v[0] for k, v in ast.literal_eval(node.value).items()}
+    return {}
+
+
+def bill(iid, who, setting, system, codes, cls, priced, when, conf, src, related=""):
+    return dict(item_id=iid, bill=who, setting=setting, code_system=system, codes=codes, related_codes=related,
+                billing_class=cls, priced_as=priced, when=when, confidence=conf, source=src)
+
+
+def featured(items, bills):
+    """The rest of the 89 featured codes (site/codes89.csv), by kind of code. Rules are the standard way each kind is
+    billed; anything procedure-specific (anesthesia pairings) is left as 'not paired yet' rather than guessed."""
+    names = search_names()
+    have = {v["main_cpt"] for v in items.values()} | {v["usual_drg"] for v in items.values()}
+    rule = "standard billing rule"
+    for c in [l.strip() for l in open(os.path.join(ROOT, "site", "codes89.csv")) if l.strip() and l.strip() != "code"]:
+        if c in have or c in ("00811", "00812"):   # already listed (colonoscopy's anesthesia codes are its own bill)
+            continue
+        name = names.get(c, c)
+        iid = slug(name)
+        n = int(c) if c.isdigit() else 0
+        item = dict(item_id=iid, plain_name=name, kind="", usual_setting="", shoppable="yes", main_cpt=c, usual_drg="",
+                    status="featured on the site (single-code page)", why_listed="one of the 89 featured procedures")
+        B = []
+        if len(c) == 3:   # an MS-DRG: the hospital stay itself
+            item.update(kind="hospital stay", usual_setting="overnight stay", main_cpt="", usual_drg=c)
+            B.append(bill(iid, "hospital or surgery center", "overnight stay", "MS-DRG", c, "institutional", "per stay",
+                          "the whole hospital stay; the surgeon and anesthesia bill separately",
+                          "check: retired code" if c in RETIRED_DRGS else "official code", RETIRED_DRGS.get(c, DRG_SRC)))
+        elif 99202 <= n <= 99499:
+            item.update(kind="office visit or checkup", usual_setting="office")
+            B.append(bill(iid, "doctor", "office", "CPT", c, "professional", "per visit", "always", rule,
+                          "office visits are billed by the clinician"))
+            B.append(bill(iid, "hospital (facility fee)", "hospital-owned clinic", "HCPCS / revenue code", "G0463 (Medicare)",
+                          "institutional", "per visit", "only at hospital-owned clinics", rule,
+                          "hospital outpatient clinics can add a facility fee; Medicare's code is G0463"))
+        elif 90785 <= n <= 90899:
+            item.update(kind="therapy session", usual_setting="office")
+            B.append(bill(iid, "therapist or doctor", "office", "CPT", c, "professional", "per session", "always", rule,
+                          "psychotherapy is billed by the clinician"))
+        elif 97010 <= n <= 97799:
+            item.update(kind="physical therapy", usual_setting="office")
+            B.append(bill(iid, "therapist", "office or clinic", "CPT", c, "professional", "per 15-minute unit",
+                          "always; a visit is usually several units", rule, "timed therapy codes are billed per 15 minutes"))
+        elif 80047 <= n <= 89398 and c != "88305":
+            item.update(kind="lab test", usual_setting="lab")
+            B.append(bill(iid, "lab", "lab or hospital", "CPT", c, "either", "per test",
+                          "a separate blood-draw fee (36415) is common", rule, "lab tests are billed by the lab"))
+        elif c == "88305":
+            item.update(kind="pathology (tissue check)", usual_setting="lab")
+            B.append(bill(iid, "pathology lab (technical part)", "lab", "CPT", c, "institutional", "per specimen",
+                          "preparing the tissue sample", rule, "billed as one global fee, or split: technical (TC) + reading (26)"))
+            B.append(bill(iid, "pathologist (professional part)", "any", "CPT", c, "professional", "per specimen",
+                          "the doctor who reads the sample", rule, "the professional part is billed with modifier 26"))
+        elif 70010 <= n <= 79999 or n in (93000, 95810):
+            item.update(kind="imaging or test", usual_setting="same day")
+            B.append(bill(iid, "imaging center, hospital or sleep lab (technical part)", "same day", "CPT", c,
+                          "institutional", "per test", "the equipment and staff", rule,
+                          "billed as one global fee, or split: technical (TC) + doctor's reading (26)"))
+            B.append(bill(iid, "radiologist or reading doctor (professional part)", "any", "CPT", c, "professional",
+                          "per test", "the doctor who reads it; sometimes included in one global fee", rule,
+                          "the professional part is billed with modifier 26"))
+        else:   # a procedure or surgery done by a doctor, usually same day
+            ob = c in ("59400", "59510", "59610")
+            item.update(kind="birth" if ob else "procedure", usual_setting="overnight stay" if ob else "same day")
+            B.append(bill(iid, "surgeon or doctor", "any", "CPT", c, "professional",
+                          "global fee: prenatal visits, delivery and postpartum care" if ob else "per service",
+                          "always", rule, "the doctor bills the procedure's CPT code"))
+            if ob:
+                drg = {"59400": "807", "59510": "788", "59610": "807"}[c]
+                B.append(bill(iid, "hospital", "overnight stay", "MS-DRG", drg, "institutional", "per stay",
+                              "the delivery stay; the baby's care bills separately", "hand-matched (needs a check)", DRG_SRC))
+                B.append(bill(iid, "anesthesia", "any", "anesthesia CPT", "01961" if c == "59510" else "01967",
+                              "professional", "base units + time", "if there's an epidural or anesthesia",
+                              "hand-matched (needs a check)", "our pairing; CMS anesthesia base-unit file"))
+            else:
+                B.append(bill(iid, "hospital or surgery center", "same day", "CPT", c, "institutional", "per service",
+                              "if done at a hospital or surgery center (not in an office)", rule,
+                              "outpatient facilities bill the procedure's CPT code"))
+                B.append(bill(iid, "anesthesia", "any", "", "", "", "", "may apply; code not paired yet",
+                              "missing: needs a pairing", ""))
+        items[iid] = item
+        bills += B
+
+
 def main():
     items, bills = {}, []
     for r in csv.DictReader(open(os.path.join(ROOT, "packages", "packages.csv"), encoding="utf-8")):
@@ -112,6 +207,7 @@ def main():
                               when=(r["anesthesia_status"] or "no pairing chosen yet"),
                               confidence="no separate bill" if an == "none" else "missing: needs a source", source=""))
 
+    featured(items, bills)
     w = csv.DictWriter(open(os.path.join(HERE, "care_items.csv"), "w", newline="", encoding="utf-8"), ITEM_FIELDS)
     w.writeheader()
     w.writerows(sorted(items.values(), key=lambda x: (x["kind"] != "same-day procedure", x["plain_name"])))

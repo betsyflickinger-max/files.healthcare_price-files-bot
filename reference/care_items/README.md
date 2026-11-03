@@ -27,14 +27,18 @@ Insurer and hospital files price each bill on its own and never say which bills 
   per-stay prices; anesthesia is shown as its rate per unit plus base units, never a total; emergencies are marked not
   shoppable.
 
-## First stab (Nov 2): 41 care items, 144 bills
-- 5 same-day procedures already on the site (`packages/packages.csv`) + 36 surgeries from the Oct crosswalk
-  (`source_crosswalk_oct.csv`; gallbladder is in both and merged).
-- Hospital-stay links: 16 of 37 Medicare-backed, 21 hand-matched. Anesthesia: hand-matched; 3 surgeries have two
-  possible codes, TAVR has none, coronary stents usually have no separate anesthesia bill.
+## What's in it (Nov 2)
+- **111 care items, 277 bills**: the 5 same-day packages, 36 surgeries from the Oct crosswalk, and the rest of the 89
+  featured procedures (labs, imaging, office visits, therapy, procedures, births, 2 hospital stays) by billing rule.
+- Hospital-stay links: 16 of 40 Medicare-backed. Anesthesia: hand-matched for the surgeries; 19 procedures still
+  "not paired yet".
+- **DRG 460** (a featured hospital stay) is listed as deleted by AAPC: CMS split spinal fusion into 402, 426-430 and
+  447-451 in FY2024. Marked "check: retired code"; insurer files may still use it.
+- Copyright: 210 of the 257 coded bills use CPT codes (170 CPT + 40 anesthesia CPT), owned by the AMA; 40 MS-DRG and 7
+  HCPCS Level II bills use free federal codes. This list uses our own plain-English names, never AMA descriptors
+  (`source_crosswalk_oct.csv` had CMS's CPT short descriptors; removed Nov 2).
 
 ## Next
-1. Add the rest of the 89 featured procedures (imaging, labs, office visits: mostly one or two bills each).
 2. Free federal groupings to sort items into families: AHRQ HCUP CCS Services and Procedures (CPT/HCPCS) and CCSR for
    ICD-10-PCS procedures.
 3. Betsy's calls: a coder's review of the hand-matched rows (or launch Medicare-backed rows first), and the surgery

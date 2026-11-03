@@ -4,39 +4,109 @@ cataract,Cataract surgery,same-day procedure,same day,yes,66984,,on the site (pr
 colonoscopy,Colonoscopy (diagnostic),same-day procedure,same day,yes,45378,,on the site (procedure packages),featured procedure
 gallbladder,Gallbladder removal (laparoscopic),same-day procedure,same day or overnight,yes,47562,419,on the site (procedure packages),featured procedure
 knee-scope,Knee arthroscopy (meniscus repair or trim),same-day procedure,same day,yes,29881,,on the site (procedure packages),featured procedure
+acl-reconstruction,ACL reconstruction,procedure,same day,yes,29888,,featured on the site (single-code page),one of the 89 featured procedures
 afib-ablation,AFib ablation,surgery,same day or overnight,yes,93656,274,draft: not on the site,"Medicare top 50 in 51 states (67,464 Medicare stays, 2024)"
+abdominal-ultrasound,Abdominal ultrasound,imaging or test,same day,yes,76700,,featured on the site (single-code page),one of the 89 featured procedures
+annual-physical-new-patient-ages-18-39,"Annual physical, new patient (ages 18–39)",office visit or checkup,office,yes,99385,,featured on the site (single-code page),one of the 89 featured procedures
+annual-physical-new-patient-ages-40-64,"Annual physical, new patient (ages 40–64)",office visit or checkup,office,yes,99386,,featured on the site (single-code page),one of the 89 featured procedures
 anti-reflux-surgery-nissen,Anti-reflux surgery (Nissen),surgery,same day or overnight,yes,43280,328,draft: not on the site,"Medicare top 50 in 51 states (22,366 Medicare stays, 2024); added: common for under-65 patients"
 aortic-valve-replacement-catheter-tavr,"Aortic valve replacement, catheter (TAVR)",surgery,overnight stay,yes,33361,267,draft: not on the site,"Medicare top 50 in 51 states (65,352 Medicare stays, 2024)"
 aortic-valve-replacement-open,"Aortic valve replacement, open",surgery,overnight stay,yes,33405,221,draft: not on the site,"Medicare top 50 in 50 states (26,139 Medicare stays, 2024)"
 appendectomy-laparoscopic,"Appendectomy, laparoscopic",surgery,same day or overnight,no (usually an emergency),44970,399,draft: not on the site,"Medicare top 50 in 26 states (8,216 Medicare stays, 2024); added: common for under-65 patients"
+basic-metabolic-panel,Basic metabolic panel,lab test,lab,yes,80048,,featured on the site (single-code page),one of the 89 featured procedures
+brain-mri,Brain MRI,imaging or test,same day,yes,70551,,featured on the site (single-code page),one of the 89 featured procedures
+brain-mri-with-contrast,Brain MRI with contrast,imaging or test,same day,yes,70553,,featured on the site (single-code page),one of the 89 featured procedures
+breast-lump-removal,Breast lump removal,procedure,same day,yes,19120,,featured on the site (single-code page),one of the 89 featured procedures
 c-section,C-section,surgery,overnight stay,yes,59510,788,draft: not on the site,added by hand: common for under-65 patients
+cbc-with-differential,CBC with differential,lab test,lab,yes,85025,,featured on the site (single-code page),one of the 89 featured procedures
+ct-scan-of-the-abdomen-and-pelvis,CT scan of the abdomen and pelvis,imaging or test,same day,yes,74177,,featured on the site (single-code page),one of the 89 featured procedures
 carotid-endarterectomy,Carotid endarterectomy,surgery,overnight stay,yes,35301,039,draft: not on the site,"Medicare top 50 in 50 states (21,719 Medicare stays, 2024)"
+cholesterol-test,Cholesterol test,lab test,lab,yes,80061,,featured on the site (single-code page),one of the 89 featured procedures
 colon-resection-laparoscopic,"Colon resection, laparoscopic",surgery,overnight stay,yes,44204,331,draft: not on the site,"Medicare top 50 in 51 states (88,092 Medicare stays, 2024)"
+colonoscopy-with-biopsy,Colonoscopy with biopsy,procedure,same day,yes,45380,,featured on the site (single-code page),one of the 89 featured procedures
+colonoscopy-with-polyp-removal,Colonoscopy with polyp removal,procedure,same day,yes,45385,,featured on the site (single-code page),one of the 89 featured procedures
+colonoscopy-with-ultrasound,Colonoscopy with ultrasound,procedure,same day,yes,45391,,featured on the site (single-code page),one of the 89 featured procedures
+complete-blood-count-cbc,Complete blood count (CBC),lab test,lab,yes,85027,,featured on the site (single-code page),one of the 89 featured procedures
+comprehensive-metabolic-panel,Comprehensive metabolic panel,lab test,lab,yes,80053,,featured on the site (single-code page),one of the 89 featured procedures
 coronary-stent-pci,Coronary stent (PCI),surgery,same day or overnight,yes,92928,322,draft: not on the site,"Medicare top 50 in 51 states (83,557 Medicare stays, 2024)"
 defibrillator-icd-implant,Defibrillator (ICD) implant,surgery,same day or overnight,yes,33249,277,draft: not on the site,"Medicare top 50 in 15 states (7,281 Medicare stays, 2024)"
+diagnostic-mammogram,Diagnostic mammogram,imaging or test,same day,yes,77066,,featured on the site (single-code page),one of the 89 featured procedures
+diagnostic-mammogram-one-breast,Diagnostic mammogram (one breast),imaging or test,same day,yes,77065,,featured on the site (single-code page),one of the 89 featured procedures
+ekg,EKG,imaging or test,same day,yes,93000,,featured on the site (single-code page),one of the 89 featured procedures
 ectopic-pregnancy-surgery-laparoscopic,"Ectopic pregnancy surgery, laparoscopic",surgery,same day or overnight,no (usually an emergency),59151,817-819,draft: not on the site,added: common for under-65 patients
+family-therapy,Family therapy,therapy session,office,yes,90847,,featured on the site (single-code page),one of the 89 featured procedures
+family-therapy-without-the-patient,Family therapy (without the patient),therapy session,office,yes,90846,,featured on the site (single-code page),one of the 89 featured procedures
 fibroid-removal-myomectomy,Fibroid removal (myomectomy),surgery,overnight stay,yes,58140,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024); added: common for under-65 patients"
+free-psa-test,Free PSA test,lab test,lab,yes,84154,,featured on the site (single-code page),one of the 89 featured procedures
 gastric-bypass,Gastric bypass,surgery,overnight stay,yes,43644,621,draft: not on the site,"Medicare top 50 in 10 states (6,068 Medicare stays, 2024)"
 gastric-sleeve,Gastric sleeve,surgery,overnight stay,yes,43775,621,draft: not on the site,"Medicare top 50 in 10 states (6,068 Medicare stays, 2024)"
+group-therapy,Group therapy,therapy session,office,yes,90853,,featured on the site (single-code page),one of the 89 featured procedures
+head-ct-scan,Head CT scan,imaging or test,same day,yes,70450,,featured on the site (single-code page),one of the 89 featured procedures
 heart-bypass-cabg,Heart bypass (CABG),surgery,overnight stay,yes,33533,236,draft: not on the site,"Medicare top 50 in 51 states (26,044 Medicare stays, 2024)"
+heart-calcium-score,Heart calcium score,imaging or test,same day,yes,75571,,featured on the site (single-code page),one of the 89 featured procedures
+heart-catheterization,Heart catheterization,procedure,same day,yes,93452,,featured on the site (single-code page),one of the 89 featured procedures
+heart-valve-surgery-hospital-stay,Heart valve surgery (hospital stay),hospital stay,overnight stay,yes,,216,featured on the site (single-code page),one of the 89 featured procedures
+hernia-repair,Hernia repair,procedure,same day,yes,49505,,featured on the site (single-code page),one of the 89 featured procedures
 hip-fracture-repair-nail,Hip fracture repair (nail),surgery,overnight stay,no (usually an emergency),27245,482,draft: not on the site,"Medicare top 50 in 51 states (109,488 Medicare stays, 2024)"
 hip-replacement,Hip replacement,surgery,same day or overnight,yes,27130,470,draft: not on the site,"Medicare top 50 in 51 states (69,934 Medicare stays, 2024)"
 hysterectomy-abdominal,"Hysterectomy, abdominal",surgery,overnight stay,yes,58150,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024)"
 hysterectomy-laparoscopic,"Hysterectomy, laparoscopic",surgery,same day or overnight,yes,58571,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024)"
 inguinal-hernia-repair-laparoscopic,"Inguinal hernia repair, laparoscopic",surgery,same day or overnight,yes,49650,352,draft: not on the site,"Medicare top 50 in 1 states (5,799 Medicare stays, 2024); added: common for under-65 patients"
+kidney-function-test,Kidney function test,lab test,lab,yes,80069,,featured on the site (single-code page),one of the 89 featured procedures
 kidney-removal-for-cancer-laparoscopic,"Kidney removal for cancer, laparoscopic",surgery,overnight stay,yes,50545,658,draft: not on the site,"Medicare top 50 in 51 states (12,348 Medicare stays, 2024)"
 kidney-stone-removal-ureteroscopy,Kidney stone removal (ureteroscopy),surgery,same day or overnight,yes,52356,694 (medical),draft: not on the site,added by hand
+knee-mri,Knee MRI,imaging or test,same day,yes,73721,,featured on the site (single-code page),one of the 89 featured procedures
 knee-replacement,Knee replacement,surgery,same day or overnight,yes,27447,470,draft: not on the site,"Medicare top 50 in 51 states (69,934 Medicare stays, 2024)"
 knee-replacement-revision,Knee replacement revision,surgery,overnight stay,yes,27487,449,draft: not on the site,"2024 Medicare data uses the old revision DRGs 466-468 (about 38,000 Medicare stays); v44 merged them into 449"
+liver-function-test,Liver function test,lab test,lab,yes,80076,,featured on the site (single-code page),one of the 89 featured procedures
 low-back-disc-surgery-laminotomy-discectomy,Low-back disc surgery (laminotomy/discectomy),surgery,same day or overnight,yes,63030,520,draft: not on the site,"Medicare top 50 in 47 states (13,567 Medicare stays, 2024)"
 low-back-fusion-one-level,"Low-back fusion, one level",surgery,overnight stay,yes,22633,402,draft: not on the site,"Medicare top 50 in 5 states (4,440 Medicare stays, 2024)"
+lower-back-mri,Lower back MRI,imaging or test,same day,yes,72148,,featured on the site (single-code page),one of the 89 featured procedures
+lower-back-x-ray,Lower back X-ray,imaging or test,same day,yes,72110,,featured on the site (single-code page),one of the 89 featured procedures
+lower-back-epidural-injection,Lower back epidural injection,procedure,same day,yes,62322,,featured on the site (single-code page),one of the 89 featured procedures
+lower-back-epidural-injection-with-imaging,Lower back epidural injection with imaging,procedure,same day,yes,62323,,featured on the site (single-code page),one of the 89 featured procedures
+lower-back-nerve-root-injection,Lower back nerve root injection,procedure,same day,yes,64483,,featured on the site (single-code page),one of the 89 featured procedures
 lung-lobectomy-vats,Lung lobectomy (VATS),surgery,overnight stay,yes,32663,165,draft: not on the site,"Medicare top 50 in 51 states (36,072 Medicare stays, 2024)"
+mammogram,Mammogram,imaging or test,same day,yes,77067,,featured on the site (single-code page),one of the 89 featured procedures
 mastectomy,Mastectomy,surgery,same day or overnight,yes,19303,583,draft: not on the site,added by hand: common shoppable surgery
 neck-fusion-acdf-one-level,"Neck fusion (ACDF), one level",surgery,same day or overnight,yes,22551,473,draft: not on the site,"Medicare top 50 in 50 states (24,856 Medicare stays, 2024)"
+new-patient-doctor-visit-30-minutes,New patient doctor visit (30 minutes),office visit or checkup,office,yes,99203,,featured on the site (single-code page),one of the 89 featured procedures
+new-patient-doctor-visit-45-minutes,New patient doctor visit (45 minutes),office visit or checkup,office,yes,99204,,featured on the site (single-code page),one of the 89 featured procedures
+new-patient-doctor-visit-60-minutes,New patient doctor visit (60 minutes),office visit or checkup,office,yes,99205,,featured on the site (single-code page),one of the 89 featured procedures
+psa-test,PSA test,lab test,lab,yes,84153,,featured on the site (single-code page),one of the 89 featured procedures
+pt-inr-blood-clotting-test,PT/INR blood clotting test,lab test,lab,yes,85610,,featured on the site (single-code page),one of the 89 featured procedures
+ptt-blood-clotting-test,PTT blood clotting test,lab test,lab,yes,85730,,featured on the site (single-code page),one of the 89 featured procedures
 pacemaker-implant,Pacemaker implant,surgery,same day or overnight,yes,33208,244,draft: not on the site,"Medicare top 50 in 51 states (43,622 Medicare stays, 2024)"
+pathology-tissue-exam,Pathology tissue exam,pathology (tissue check),lab,yes,88305,,featured on the site (single-code page),one of the 89 featured procedures
+pelvic-ct-scan,Pelvic CT scan,imaging or test,same day,yes,72193,,featured on the site (single-code page),one of the 89 featured procedures
+physical-therapy-15-minutes,Physical therapy (15 minutes),physical therapy,office,yes,97110,,featured on the site (single-code page),one of the 89 featured procedures
+pregnancy-ultrasound,Pregnancy ultrasound,imaging or test,same day,yes,76805,,featured on the site (single-code page),one of the 89 featured procedures
+prenatal-blood-panel,Prenatal blood panel,lab test,lab,yes,80055,,featured on the site (single-code page),one of the 89 featured procedures
+prostate-biopsy,Prostate biopsy,procedure,same day,yes,55700,,featured on the site (single-code page),one of the 89 featured procedures
 prostate-removal-robotic,"Prostate removal, robotic",surgery,overnight stay,yes,55866,708,draft: not on the site,"Medicare top 50 in 1 states (3,901 Medicare stays, 2024)"
 prostate-trimming-turp,Prostate trimming (TURP),surgery,same day or overnight,yes,52601,714,draft: not on the site,"Medicare top 50 in 1 states (4,775 Medicare stays, 2024)"
+rotator-cuff-repair,Rotator cuff repair,procedure,same day,yes,29827,,featured on the site (single-code page),one of the 89 featured procedures
+shoulder-decompression-surgery,Shoulder decompression surgery,procedure,same day,yes,29826,,featured on the site (single-code page),one of the 89 featured procedures
 shoulder-replacement,Shoulder replacement,surgery,same day or overnight,yes,23472,483,draft: not on the site,"Medicare top 50 in 45 states (14,370 Medicare stays, 2024)"
+sleep-study,Sleep study,imaging or test,same day,yes,95810,,featured on the site (single-code page),one of the 89 featured procedures
+specialist-consultation-40-minutes,Specialist consultation (40 minutes),office visit or checkup,office,yes,99243,,featured on the site (single-code page),one of the 89 featured procedures
+specialist-consultation-60-minutes,Specialist consultation (60 minutes),office visit or checkup,office,yes,99244,,featured on the site (single-code page),one of the 89 featured procedures
+spinal-fusion-hospital-stay,Spinal fusion (hospital stay),hospital stay,overnight stay,yes,,460,featured on the site (single-code page),one of the 89 featured procedures
+therapy-session-30-minutes,Therapy session (30 minutes),therapy session,office,yes,90832,,featured on the site (single-code page),one of the 89 featured procedures
+therapy-session-45-minutes,Therapy session (45 minutes),therapy session,office,yes,90834,,featured on the site (single-code page),one of the 89 featured procedures
+therapy-session-60-minutes,Therapy session (60 minutes),therapy session,office,yes,90837,,featured on the site (single-code page),one of the 89 featured procedures
+thyroid-tsh-test,Thyroid (TSH) test,lab test,lab,yes,84443,,featured on the site (single-code page),one of the 89 featured procedures
 thyroid-removal,Thyroid removal,surgery,same day or overnight,yes,60240,627,draft: not on the site,added: common for under-65 patients
+tonsillectomy-child-under-12,Tonsillectomy (child under 12),procedure,same day,yes,42820,,featured on the site (single-code page),one of the 89 featured procedures
+transvaginal-ultrasound,Transvaginal ultrasound,imaging or test,same day,yes,76830,,featured on the site (single-code page),one of the 89 featured procedures
+upper-endoscopy-egd,Upper endoscopy (EGD),procedure,same day,yes,43235,,featured on the site (single-code page),one of the 89 featured procedures
+upper-endoscopy-with-biopsy,Upper endoscopy with biopsy,procedure,same day,yes,43239,,featured on the site (single-code page),one of the 89 featured procedures
+urinalysis-automated,Urinalysis (automated),lab test,lab,yes,81003,,featured on the site (single-code page),one of the 89 featured procedures
+urinalysis-manual,Urinalysis (manual),lab test,lab,yes,81002,,featured on the site (single-code page),one of the 89 featured procedures
+urinalysis-manual-with-microscope,"Urinalysis (manual, with microscope)",lab test,lab,yes,81000,,featured on the site (single-code page),one of the 89 featured procedures
+urinalysis-with-microscope,Urinalysis with microscope,lab test,lab,yes,81001,,featured on the site (single-code page),one of the 89 featured procedures
+vbac,VBAC,birth,overnight stay,yes,59610,,featured on the site (single-code page),one of the 89 featured procedures
 vaginal-delivery,Vaginal delivery,surgery,overnight stay,yes,59400,807,draft: not on the site,added by hand: common for under-65 patients
+vasectomy,Vasectomy,procedure,same day,yes,55250,,featured on the site (single-code page),one of the 89 featured procedures
 ventral-belly-hernia-repair-with-mesh,Ventral (belly) hernia repair with mesh,surgery,same day or overnight,yes,49593,355,draft: not on the site,"Medicare top 50 in 47 states (11,837 Medicare stays, 2024); added: common for under-65 patients"
+yag-laser-after-cataract-surgery,YAG laser after cataract surgery,procedure,same day,yes,66821,,featured on the site (single-code page),one of the 89 featured procedures

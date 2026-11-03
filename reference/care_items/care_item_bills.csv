@@ -143,3 +143,136 @@ ectopic-pregnancy-surgery-laparoscopic,surgeon or doctor,any,CPT,59151,,professi
 ectopic-pregnancy-surgery-laparoscopic,hospital or surgery center,same day,CPT,59151,,institutional,per service,if done without an overnight stay,standard rule,outpatient facilities bill the procedure's CPT/HCPCS code
 ectopic-pregnancy-surgery-laparoscopic,hospital or surgery center,overnight stay,MS-DRG,817-819,Pregnancy DRGs; usually emergency,institutional,"per stay (some contracts pay per day instead: shown as 'per day', never compared with whole-stay prices)",if admitted; the usual DRG is for a case without complications,hand-matched (needs a coder's check),"CMS MS-DRG v44.0 Definitions Manual, Appendix E (FY2027): PCS code -> DRG"
 ectopic-pregnancy-surgery-laparoscopic,anesthesia,any,anesthesia CPT,00840,00840: 6,professional,base units + time,when an anesthesiologist or CRNA bills separately,hand-matched (needs a check),our pairing; codes and base units from CMS's anesthesia base-unit file
+breast-lump-removal,surgeon or doctor,any,CPT,19120,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+breast-lump-removal,hospital or surgery center,same day,CPT,19120,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+breast-lump-removal,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+heart-valve-surgery-hospital-stay,hospital or surgery center,overnight stay,MS-DRG,216,,institutional,per stay,the whole hospital stay; the surgeon and anesthesia bill separately,official code,"CMS MS-DRG v44.0 Definitions Manual, Appendix E (FY2027): PCS code -> DRG"
+shoulder-decompression-surgery,surgeon or doctor,any,CPT,29826,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+shoulder-decompression-surgery,hospital or surgery center,same day,CPT,29826,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+shoulder-decompression-surgery,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+rotator-cuff-repair,surgeon or doctor,any,CPT,29827,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+rotator-cuff-repair,hospital or surgery center,same day,CPT,29827,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+rotator-cuff-repair,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+acl-reconstruction,surgeon or doctor,any,CPT,29888,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+acl-reconstruction,hospital or surgery center,same day,CPT,29888,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+acl-reconstruction,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+tonsillectomy-child-under-12,surgeon or doctor,any,CPT,42820,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+tonsillectomy-child-under-12,hospital or surgery center,same day,CPT,42820,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+tonsillectomy-child-under-12,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+upper-endoscopy-egd,surgeon or doctor,any,CPT,43235,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+upper-endoscopy-egd,hospital or surgery center,same day,CPT,43235,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+upper-endoscopy-egd,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+upper-endoscopy-with-biopsy,surgeon or doctor,any,CPT,43239,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+upper-endoscopy-with-biopsy,hospital or surgery center,same day,CPT,43239,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+upper-endoscopy-with-biopsy,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+colonoscopy-with-biopsy,surgeon or doctor,any,CPT,45380,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+colonoscopy-with-biopsy,hospital or surgery center,same day,CPT,45380,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+colonoscopy-with-biopsy,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+colonoscopy-with-polyp-removal,surgeon or doctor,any,CPT,45385,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+colonoscopy-with-polyp-removal,hospital or surgery center,same day,CPT,45385,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+colonoscopy-with-polyp-removal,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+colonoscopy-with-ultrasound,surgeon or doctor,any,CPT,45391,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+colonoscopy-with-ultrasound,hospital or surgery center,same day,CPT,45391,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+colonoscopy-with-ultrasound,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+spinal-fusion-hospital-stay,hospital or surgery center,overnight stay,MS-DRG,460,,institutional,per stay,the whole hospital stay; the surgeon and anesthesia bill separately,check: retired code,"AAPC lists MS-DRG 460 as deleted (CMS split spinal fusion into 402, 426-430, 447-451 in FY2024); insurer files may still use it"
+hernia-repair,surgeon or doctor,any,CPT,49505,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+hernia-repair,hospital or surgery center,same day,CPT,49505,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+hernia-repair,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+vasectomy,surgeon or doctor,any,CPT,55250,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+vasectomy,hospital or surgery center,same day,CPT,55250,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+vasectomy,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+prostate-biopsy,surgeon or doctor,any,CPT,55700,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+prostate-biopsy,hospital or surgery center,same day,CPT,55700,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+prostate-biopsy,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+vbac,surgeon or doctor,any,CPT,59610,,professional,"global fee: prenatal visits, delivery and postpartum care",always,standard billing rule,the doctor bills the procedure's CPT code
+vbac,hospital,overnight stay,MS-DRG,807,,institutional,per stay,the delivery stay; the baby's care bills separately,hand-matched (needs a check),"CMS MS-DRG v44.0 Definitions Manual, Appendix E (FY2027): PCS code -> DRG"
+vbac,anesthesia,any,anesthesia CPT,01967,,professional,base units + time,if there's an epidural or anesthesia,hand-matched (needs a check),our pairing; CMS anesthesia base-unit file
+lower-back-epidural-injection,surgeon or doctor,any,CPT,62322,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+lower-back-epidural-injection,hospital or surgery center,same day,CPT,62322,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+lower-back-epidural-injection,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+lower-back-epidural-injection-with-imaging,surgeon or doctor,any,CPT,62323,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+lower-back-epidural-injection-with-imaging,hospital or surgery center,same day,CPT,62323,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+lower-back-epidural-injection-with-imaging,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+lower-back-nerve-root-injection,surgeon or doctor,any,CPT,64483,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+lower-back-nerve-root-injection,hospital or surgery center,same day,CPT,64483,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+lower-back-nerve-root-injection,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+yag-laser-after-cataract-surgery,surgeon or doctor,any,CPT,66821,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+yag-laser-after-cataract-surgery,hospital or surgery center,same day,CPT,66821,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+yag-laser-after-cataract-surgery,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+head-ct-scan,"imaging center, hospital or sleep lab (technical part)",same day,CPT,70450,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+head-ct-scan,radiologist or reading doctor (professional part),any,CPT,70450,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+brain-mri,"imaging center, hospital or sleep lab (technical part)",same day,CPT,70551,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+brain-mri,radiologist or reading doctor (professional part),any,CPT,70551,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+brain-mri-with-contrast,"imaging center, hospital or sleep lab (technical part)",same day,CPT,70553,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+brain-mri-with-contrast,radiologist or reading doctor (professional part),any,CPT,70553,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+lower-back-x-ray,"imaging center, hospital or sleep lab (technical part)",same day,CPT,72110,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+lower-back-x-ray,radiologist or reading doctor (professional part),any,CPT,72110,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+lower-back-mri,"imaging center, hospital or sleep lab (technical part)",same day,CPT,72148,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+lower-back-mri,radiologist or reading doctor (professional part),any,CPT,72148,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+pelvic-ct-scan,"imaging center, hospital or sleep lab (technical part)",same day,CPT,72193,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+pelvic-ct-scan,radiologist or reading doctor (professional part),any,CPT,72193,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+knee-mri,"imaging center, hospital or sleep lab (technical part)",same day,CPT,73721,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+knee-mri,radiologist or reading doctor (professional part),any,CPT,73721,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+ct-scan-of-the-abdomen-and-pelvis,"imaging center, hospital or sleep lab (technical part)",same day,CPT,74177,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+ct-scan-of-the-abdomen-and-pelvis,radiologist or reading doctor (professional part),any,CPT,74177,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+heart-calcium-score,"imaging center, hospital or sleep lab (technical part)",same day,CPT,75571,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+heart-calcium-score,radiologist or reading doctor (professional part),any,CPT,75571,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+abdominal-ultrasound,"imaging center, hospital or sleep lab (technical part)",same day,CPT,76700,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+abdominal-ultrasound,radiologist or reading doctor (professional part),any,CPT,76700,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+pregnancy-ultrasound,"imaging center, hospital or sleep lab (technical part)",same day,CPT,76805,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+pregnancy-ultrasound,radiologist or reading doctor (professional part),any,CPT,76805,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+transvaginal-ultrasound,"imaging center, hospital or sleep lab (technical part)",same day,CPT,76830,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+transvaginal-ultrasound,radiologist or reading doctor (professional part),any,CPT,76830,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+diagnostic-mammogram-one-breast,"imaging center, hospital or sleep lab (technical part)",same day,CPT,77065,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+diagnostic-mammogram-one-breast,radiologist or reading doctor (professional part),any,CPT,77065,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+diagnostic-mammogram,"imaging center, hospital or sleep lab (technical part)",same day,CPT,77066,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+diagnostic-mammogram,radiologist or reading doctor (professional part),any,CPT,77066,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+mammogram,"imaging center, hospital or sleep lab (technical part)",same day,CPT,77067,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+mammogram,radiologist or reading doctor (professional part),any,CPT,77067,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+basic-metabolic-panel,lab,lab or hospital,CPT,80048,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+comprehensive-metabolic-panel,lab,lab or hospital,CPT,80053,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+prenatal-blood-panel,lab,lab or hospital,CPT,80055,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+cholesterol-test,lab,lab or hospital,CPT,80061,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+kidney-function-test,lab,lab or hospital,CPT,80069,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+liver-function-test,lab,lab or hospital,CPT,80076,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+urinalysis-manual-with-microscope,lab,lab or hospital,CPT,81000,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+urinalysis-with-microscope,lab,lab or hospital,CPT,81001,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+urinalysis-manual,lab,lab or hospital,CPT,81002,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+urinalysis-automated,lab,lab or hospital,CPT,81003,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+psa-test,lab,lab or hospital,CPT,84153,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+free-psa-test,lab,lab or hospital,CPT,84154,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+thyroid-tsh-test,lab,lab or hospital,CPT,84443,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+cbc-with-differential,lab,lab or hospital,CPT,85025,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+complete-blood-count-cbc,lab,lab or hospital,CPT,85027,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+pt-inr-blood-clotting-test,lab,lab or hospital,CPT,85610,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+ptt-blood-clotting-test,lab,lab or hospital,CPT,85730,,either,per test,a separate blood-draw fee (36415) is common,standard billing rule,lab tests are billed by the lab
+pathology-tissue-exam,pathology lab (technical part),lab,CPT,88305,,institutional,per specimen,preparing the tissue sample,standard billing rule,"billed as one global fee, or split: technical (TC) + reading (26)"
+pathology-tissue-exam,pathologist (professional part),any,CPT,88305,,professional,per specimen,the doctor who reads the sample,standard billing rule,the professional part is billed with modifier 26
+therapy-session-30-minutes,therapist or doctor,office,CPT,90832,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+therapy-session-45-minutes,therapist or doctor,office,CPT,90834,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+therapy-session-60-minutes,therapist or doctor,office,CPT,90837,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+family-therapy-without-the-patient,therapist or doctor,office,CPT,90846,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+family-therapy,therapist or doctor,office,CPT,90847,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+group-therapy,therapist or doctor,office,CPT,90853,,professional,per session,always,standard billing rule,psychotherapy is billed by the clinician
+ekg,"imaging center, hospital or sleep lab (technical part)",same day,CPT,93000,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+ekg,radiologist or reading doctor (professional part),any,CPT,93000,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+heart-catheterization,surgeon or doctor,any,CPT,93452,,professional,per service,always,standard billing rule,the doctor bills the procedure's CPT code
+heart-catheterization,hospital or surgery center,same day,CPT,93452,,institutional,per service,if done at a hospital or surgery center (not in an office),standard billing rule,outpatient facilities bill the procedure's CPT code
+heart-catheterization,anesthesia,any,,,,,,may apply; code not paired yet,missing: needs a pairing,
+sleep-study,"imaging center, hospital or sleep lab (technical part)",same day,CPT,95810,,institutional,per test,the equipment and staff,standard billing rule,"billed as one global fee, or split: technical (TC) + doctor's reading (26)"
+sleep-study,radiologist or reading doctor (professional part),any,CPT,95810,,professional,per test,the doctor who reads it; sometimes included in one global fee,standard billing rule,the professional part is billed with modifier 26
+physical-therapy-15-minutes,therapist,office or clinic,CPT,97110,,professional,per 15-minute unit,always; a visit is usually several units,standard billing rule,timed therapy codes are billed per 15 minutes
+new-patient-doctor-visit-30-minutes,doctor,office,CPT,99203,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+new-patient-doctor-visit-30-minutes,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+new-patient-doctor-visit-45-minutes,doctor,office,CPT,99204,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+new-patient-doctor-visit-45-minutes,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+new-patient-doctor-visit-60-minutes,doctor,office,CPT,99205,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+new-patient-doctor-visit-60-minutes,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+specialist-consultation-40-minutes,doctor,office,CPT,99243,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+specialist-consultation-40-minutes,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+specialist-consultation-60-minutes,doctor,office,CPT,99244,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+specialist-consultation-60-minutes,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+annual-physical-new-patient-ages-18-39,doctor,office,CPT,99385,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+annual-physical-new-patient-ages-18-39,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
+annual-physical-new-patient-ages-40-64,doctor,office,CPT,99386,,professional,per visit,always,standard billing rule,office visits are billed by the clinician
+annual-physical-new-patient-ages-40-64,hospital (facility fee),hospital-owned clinic,HCPCS / revenue code,G0463 (Medicare),,institutional,per visit,only at hospital-owned clinics,standard billing rule,hospital outpatient clinics can add a facility fee; Medicare's code is G0463
