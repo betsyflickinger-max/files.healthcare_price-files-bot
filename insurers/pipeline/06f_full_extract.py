@@ -386,6 +386,8 @@ def run(source, ctx):
                 download(source, tmp)   # Oct 22, 2026: host swap, browser user agent, certificate chain (common.py)
                 break
             except Exception as e:
+                if "download too slow" in str(e):   # Nov 2, 2026: a trickling host won't be faster in 8 minutes
+                    raise
                 last = e
                 print(f"  retry {attempt + 1}: {e}", flush=True)
                 # Oct 29, 2026: some hosts (Geisinger's mrf.thehealthplan.com) block for a few minutes when many of our

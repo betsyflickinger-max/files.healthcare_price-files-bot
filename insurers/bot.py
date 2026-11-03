@@ -428,6 +428,9 @@ def check_all(man, today, only, force=False):
             # Oct 29, 2026: Geisinger's host turned us away because up to 20 machines asked at once (fleet.HOST_CAPS
             # now allows 2). Those blocked downloads weren't the file's fault, so the tries don't count.
             m["fails"] = "0"
+        if m.get("status") == "failed" and "download too slow" in (m.get("detail") or ""):
+            # Nov 2, 2026: the host trickled (fleet pauses it for a few hours); not the file's fault, so no try is used up
+            m["fails"] = "0"
         if m.get("status") == "failed" and int(m.get("fails") or 0) >= 3 and url == m["url"] and not (force and only):
             continue  # gave up on this file; it's in the issue already
         if m.get("status") == "failed" and url == m["url"]:

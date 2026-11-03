@@ -411,6 +411,8 @@ def queue_main():
                             and not (os.environ.get("GHA_WORKER") and (j.get("kind", "insurer") != "insurer" or j.get("nogha")))])
         hc = fleet.host_counts(js, cl)   # Oct 29, 2026: skip files whose host already has its most machines (HOST_CAPS)
         cand = [j for j in cand if fleet.host(j) not in fleet.HOST_CAPS or hc.get(fleet.host(j), 0) < fleet.HOST_CAPS[fleet.host(j)]]
+        paused = fleet.paused_hosts(s3, B)   # Nov 2, 2026: hosts that trickled a download wait out their pause
+        cand = [j for j in cand if fleet.host(j) not in paused]
         job = next((j for j in cand if fleet.claim(s3, B, j["id"], who)), None)
         if job is None:
             left = len([j for jid, j in js.items() if jid not in cl])
@@ -501,6 +503,9 @@ def queue_main():
             log(f"[{job['id']}] too big for this GitHub machine ({err[:120]}); back in line for a rented machine")
             shutil.rmtree(DATA / "rates", ignore_errors=True); (DATA / "rates").mkdir(parents=True, exist_ok=True)
             continue
+        if not res.get("ok") and "download too slow" in err and fleet.host(job):
+            fleet.pause_host(s3, B, fleet.host(job), err[-300:])
+            log(f"[{job['id']}] {fleet.host(job)} is trickling; no new files from it for {fleet.PAUSE_HOURS} h")
         res.update(finished_at=fleet.iso(), machine=who["name"])
         s3.put_object(Bucket=B, Key=job["done_key"], Body=json.dumps(res).encode())
         fleet.finish(s3, B, job["id"])

@@ -239,6 +239,33 @@ def host(j):
         return ""
 
 
+# Nov 2, 2026: a host that trickled a download ("download too slow", pipeline/common.py) is paused: no machine starts
+# another of its files for PAUSE_HOURS, so its slots go to files that move. Its files keep their place and their tries.
+HOST_PAUSE, PAUSE_HOURS = "bot/fleet/host_pause/", 6
+
+
+def pause_host(s3, b, h, why=""):
+    until = time.time() + PAUSE_HOURS * 3600
+    s3.put_object(Bucket=b, Key=HOST_PAUSE + h, Body=json.dumps({"until": until, "until_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(until)), "why": why[:300]}).encode())
+
+
+def paused_hosts(s3, b):
+    """{host: until (epoch seconds)} for hosts still paused."""
+    out = {}
+    try:
+        for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=HOST_PAUSE):
+            for o in page.get("Contents", []):
+                try:
+                    u = float(json.loads(s3.get_object(Bucket=b, Key=o["Key"])["Body"].read())["until"])
+                except Exception:
+                    continue
+                if u > time.time():
+                    out[o["Key"][len(HOST_PAUSE):]] = u
+    except Exception as e:
+        print("host pause check failed:", repr(e)[:150], flush=True)
+    return out
+
+
 def host_counts(all_jobs, all_claims):
     """{host: machines reading from it now}, capped hosts only."""
     n = {}
