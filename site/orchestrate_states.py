@@ -59,6 +59,7 @@ W = dict(WORKERS='4', WMEM='6GB', WTHREADS='2')
 # disk (spilling). Georgia machines launched from now on run 2 batches at a time with 13 GB each instead of 4 with 6 GB.
 # 10:05pm CT result: worse. The 2 x 13 GB machines were 5-9% busy with 42-67% iowait and landed no batch in 1.5 h, while 4 x 6 GB
 # machines were 34-49% busy and landed 7. Back to 4 x 6 GB everywhere (kept as a per-state hook).
+_BUNDLED = [False]   # Nov 3, 2026: code bundle refreshed at most once per orchestrator pass (see run())
 WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
         # Oct 16 11:40am CT (Betsy OK'd): North Carolina's batches are 165-210M rows (Georgia-size). Many took over 2 hours,
         # so the 120-min freeze check restarted 13 machines mid-batch and threw the work away. Split each unfinished batch
@@ -74,7 +75,9 @@ WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
         # Nov 3, 2026: still 0 batches after the FLAT fixes: every machine at 0 GB free and workers killed before their first
         # batch's medians (11 re-claims in 40 min). A 26 GB worker plus the parent and download buffers doesn't fit 32 GB.
         # Smaller pieces (each batch in 4, like Georgia and Ohio) and a 16 GB limit (DuckDB spills the rest to disk).
-        'washington': dict(SPLIT='4', WORKERS='1', WMEM='16GB', WTHREADS='4', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
+        # Nov 3, 2026 7 AM CT (Betsy OK'd option 1): test on 2 x 64 GB machines (build_defaults.json "size") with a
+        # once-a-minute memory log (every_code.py MEMLOG) to learn whether more memory is enough, and what fills it if not.
+        'washington': dict(SPLIT='4', WORKERS='1', WMEM='40GB', WTHREADS='6', STALL_MIN='240', MEMLOG='1')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
 # so each piece (~25-40M rows) fits in a worker's 6 GB like other states' batches. Finished whole batches are kept.
 # Oct 14: STALL_MIN 360 (default 60; 180 was still too short: georgia-c5 went 3h12m without its first batch): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.
@@ -650,7 +653,20 @@ def main():
                 bd = build_defaults(); ps = bd.get('per_state', {}).get(slug, {})   # per-state settings win
                 if practice_for(st, slug):
                     env.update(PRACTICE='1', SLICE_ROWS=str(ps.get('slice_rows', bd.get('slice_rows', 30000000))))
-                ensure(st, f'{slug}-c{i + 1}', SIZE, O.RUN_INS, env, False)
+                # Nov 3, 2026 (Betsy OK'd, Washington option 1): a state can ask for a different machine size
+                # (build_defaults.json per_state "size"). A running machine of the old size is stopped once, so
+                # the next step relaunches it at the new size; the planned swap never counts as a failure.
+                want = ps.get('size', SIZE); name = f'upfront-site-{O.BID}-{slug}-c{i + 1}'
+                for d in O.droplets():
+                    if d['name'] == name and d.get('size_slug') and d['size_slug'] != want:
+                        try: O.do('DELETE', f"/droplets/{d['id']}"); log('resized', name, d['size_slug'], '->', want, '(stopped; relaunching)')
+                        except Exception as e: log('resize stop failed', name, repr(e)[:150])
+                        st['launches'][f'{slug}-c{i + 1}'] = 0
+                # Nov 3, 2026: the machines' code bundle was only made when the build started, so code fixes pushed
+                # mid-build (Washington's two flat-rate fixes overnight) never reached relaunched machines. Like
+                # hosp_area.py: refresh it once per pass before (re)launching a machine, so it runs today's code.
+                if not _BUNDLED[0] and not O.alive(f'{slug}-c{i + 1}'): O.bundle(); _BUNDLED[0] = True
+                ensure(st, f'{slug}-c{i + 1}', want, O.RUN_INS, env, False)
                 if practice_for(st, slug) and i == 0 and build_defaults().get('big_machine', True):
                     # one big-memory machine per state: it builds only the batches the others mark as too big (one huge code)
                     big = {k_: v_ for k_, v_ in env.items() if k_ not in ('BCLAIM', 'BCLAIM_H', 'SPLIT')}

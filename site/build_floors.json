@@ -11,6 +11,6 @@
  "stc3-2026-10": {
   "machines": 1,
   "most": 2,
-  "why": "Nov 3, 2026, 2 AM CT: Washington still finished 0 batches after three memory fixes (FLAT per batch, FLAT in DuckDB, SPLIT 4 + 16 GB); workers keep running the 32 GB machines out of memory. Held at 2 machines (was 14) until Betsy picks the next step, so it stops billing 14 overnight."
+  "why": "Nov 3, 2026, 7 AM CT (Betsy OK'd option 1): Washington test on 2 x 64 GB machines with a once-a-minute memory log. Overnight, 0 batches on 32 GB after three memory fixes; the code fixes likely never reached the machines (bundle only refreshed at build start, fixed today). Raise 'most' once batches land."
  }
 }

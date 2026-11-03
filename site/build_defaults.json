@@ -30,7 +30,10 @@
   },
   "illinois": {
    "slice_rows": 20000000
+  },
+  "washington": {
+   "size": "m-8vcpu-64gb-intel"
   }
  },
- "per_state_why": "Oct 19, 2026 (Betsy: 'the smallest possible pieces' for the next five states): 20M-row slices instead of 30M (Colorado's batches ran 70-97M rows; New York, California and Florida have about 2-4x Colorado's providers), and for the three biggest a 64 GB big-memory machine ($0.59/h) for the one-huge-code batches"
+ "per_state_why": "Oct 19, 2026 (Betsy: 'the smallest possible pieces' for the next five states): 20M-row slices instead of 30M (Colorado's batches ran 70-97M rows; New York, California and Florida have about 2-4x Colorado's providers), and for the three biggest a 64 GB big-memory machine ($0.59/h) for the one-huge-code batches Nov 3, 2026 (Betsy OK'd option 1): Washington's two page-build machines on 64 GB (m-8vcpu-64gb-intel) with a memory log, after 0 of 256 batches on 32 GB."
 }

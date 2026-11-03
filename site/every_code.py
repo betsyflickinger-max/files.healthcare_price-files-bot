@@ -33,6 +33,31 @@ def log(*a):
     m = time.strftime('%H:%M:%S ') + ' '.join(str(x) for x in a); print(m, flush=True); LOG.append(m)
     # Oct 26, 2026 (R2 bill): was a write of the whole log every 3 lines on every machine; now at most once a minute
     if time.time() - _LOGT[0] > 60: _LOGT[0] = time.time(); s3.put_object(Bucket=B, Key=OUTP + 'log.txt', Body='\n'.join(LOG).encode())
+def _memlog():
+    """Nov 3, 2026 (Betsy OK'd, Washington test): with MEMLOG=1, log every minute what is holding the machine's memory
+    (free memory, the 5 biggest processes, spill disk), so an out-of-memory kill shows its cause in log.txt."""
+    import threading
+    def snap():
+        while True:
+            try:
+                mi = {l.split(':')[0]: int(l.split()[1]) // 1024 for l in open('/proc/meminfo') if l.split(':')[0] in ('MemTotal', 'MemAvailable', 'Cached', 'Dirty')}
+                big = []
+                for p in os.listdir('/proc'):
+                    if not p.isdigit(): continue
+                    try:
+                        st = dict(l.split(':', 1) for l in open(f'/proc/{p}/status') if l.startswith(('Name', 'VmRSS')))
+                        cmd = open(f'/proc/{p}/cmdline').read().replace('\0', ' ').strip()[-60:]
+                        big.append((int(st.get('VmRSS', '0 kB').split()[0]) // 1024, p, cmd or st['Name'].strip()))
+                    except Exception: pass
+                big.sort(reverse=True)
+                du = shutil.disk_usage(str(D)) if D.exists() else None
+                log(f"MEM avail {mi.get('MemAvailable')}/{mi.get('MemTotal')} MB, cache {mi.get('Cached')} MB, dirty {mi.get('Dirty')} MB"
+                    + (f", spill disk used {du.used // 2**30} GB" if du else '') + ' | top: '
+                    + '; '.join(f"{m} MB pid {p} {c}" for m, p, c in big[:5]))
+            except Exception as e: log('MEM log error', e)
+            time.sleep(60)
+    threading.Thread(target=snap, daemon=True).start()
+if E.get('MEMLOG') == '1': _memlog()
 def ls(pfx):
     out = []
     for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=pfx): out += [(o['Key'], o['Size']) for o in pg.get('Contents', [])]
