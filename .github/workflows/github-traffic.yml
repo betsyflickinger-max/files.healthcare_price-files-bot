@@ -38,4 +38,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -q boto3==1.35.36
+      - name: Which key is in use (never prints the key)
+        run: |
+          if [ -n "${{ secrets.TRAFFIC_TOKEN }}" ]; then echo "Using TRAFFIC_TOKEN"; else echo "TRAFFIC_TOKEN not found; using BOT_GITHUB_TOKEN"; fi | tee -a "$GITHUB_STEP_SUMMARY"
       - run: python board/github_traffic.py ${{ inputs.dry_run && '--dry-run' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"
