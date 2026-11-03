@@ -7,7 +7,7 @@ Run last by build_care_items.py. Takes the crosswalk build_crosswalk.py made (wh
                          "when" note sits in its own column next to its code.
   crosswalk_codes.csv    the same codes, one row per code: item, code, code system, role, when, base units. The easiest
                          form to filter, sort, or join to price data.
-  care_item_bills.csv    one row per bill with code_1 / code_2 (the second only when there are two possible codes);
+  care_item_bills.csv    one row per bill, one column per code type (CPT, Anesthesia CPT, MS-DRG, HCPCS Level II);
                          related codes now live only in the two crosswalk files.
 """
 import csv
@@ -49,6 +49,31 @@ def drg_atoms(cell, default_when=""):
 def plain_codes(cell):
     """'45380 | 45384 | 45385' or '00630|00670' or 'G0463 (hospital-owned clinic)' -> ['45380', ...]"""
     return [re.sub(r"\s*\(.*\)$", "", x).strip() for x in re.split(r"\s*\|\s*", cell or "") if x.strip()]
+
+
+BASE = {"item_id": "Procedure ID", "plain_name": "Procedure", "kind": "Kind", "usual_setting": "Usual setting",
+        "shoppable": "Shoppable", "split_billing_modifiers": "Split billing modifiers (TC / 26)",
+        "drg_confidence": "MS-DRG link: how sure", "anesthesia_confidence": "Anesthesia link: how sure", "notes": "Notes",
+        "doctor_cpt": "CPT: doctor (main)", "doctor_cpt_related": "CPT: doctor related",
+        "facility_or_lab_cpt": "CPT: facility or lab (same day)",
+        "facility_fee_hcpcs": "HCPCS Level II: hospital-clinic facility fee",
+        "drg_usual": "MS-DRG: usual (no complications)", "drg_with_cc": "MS-DRG: with complications (CC)",
+        "drg_with_mcc": "MS-DRG: with major complications (MCC)", "drg_other": "MS-DRG: other situation",
+        "icd10pcs": "ICD-10-PCS: inpatient procedure", "anesthesia_cpt": "Anesthesia CPT: main",
+        "anesthesia_cpt_alternate": "Anesthesia CPT: other possible", "anesthesia_cpt_related": "Anesthesia CPT: related",
+        "pathology_cpt": "CPT: pathology", "other_related_cpt": "CPT: blood draw"}
+
+
+def label(col):
+    """'drg_other_2_when' -> 'MS-DRG: other situation 2, when'; 'anesthesia_cpt_base_units' -> '... base units'."""
+    tail = ""
+    for suf, t in (("_when", " - when"), ("_base_units", " - base units")):
+        if col.endswith(suf):
+            col, tail = col[: -len(suf)], t
+    m = re.fullmatch(r"(.+)_(\d+)", col)
+    if m and m.group(1) in BASE:
+        return f"{BASE[m.group(1)]} {m.group(2)}{tail}"
+    return BASE.get(col, col) + tail
 
 
 def main():
@@ -133,24 +158,40 @@ def main():
         row.update(w["_tail"])
         out.append(row)
     with open(os.path.join(HERE, "crosswalk.csv"), "w", newline="", encoding="utf-8") as f:
-        wr = csv.DictWriter(f, fields)
-        wr.writeheader()
-        wr.writerows(out)
+        wr = csv.writer(f)
+        wr.writerow([label(c) for c in fields])   # Nov 3 (Betsy): every code column says its code type
+        wr.writerows([[r.get(c, "") for c in fields] for r in out])
     with open(os.path.join(HERE, "crosswalk_codes.csv"), "w", newline="", encoding="utf-8") as f:
         wr = csv.DictWriter(f, ["item_id", "plain_name", "role", "code_system", "code", "when", "anesthesia_base_units"])
         wr.writeheader()
         wr.writerows(long_rows)
 
-    # bills: one code per cell (code_1, code_2 when there are two possible codes); related codes live in the crosswalk
-    bf = ["item_id", "bill", "setting", "code_system", "code_1", "code_2", "billing_class", "priced_as", "when",
-          "confidence", "source"]
+    # bills: one column per code type (Nov 3, Betsy: say whether it's a CPT code, a DRG, ...); related codes live in
+    # the crosswalk files
+    TYPE_COLS = {"CPT": "CPT", "anesthesia CPT": "Anesthesia CPT", "MS-DRG": "MS-DRG",
+                 "HCPCS / revenue code": "HCPCS Level II"}
+    code_cols = []
+    for t in TYPE_COLS.values():
+        code_cols += [t, f"{t} (other possible)"]
+    bf = ["item_id", "bill", "setting", "code_system"] + code_cols + ["billing_class", "priced_as", "when",
+                                                                       "confidence", "source"]
     for b in bills:
         cs = plain_codes(b.get("codes", "").replace("|", " | "))
-        if b.get("code_system") == "MS-DRG":
-            cs = expand(cs[0]) if cs and "-" in cs[0] else cs
-        b["code_1"], b["code_2"] = (cs + ["", ""])[:2]
-        if len(cs) > 2:
-            b["when"] = f"{b['when']}; also {', '.join(cs[2:])}"
+        t = TYPE_COLS.get(b.get("code_system", ""))
+        if b.get("code_system") == "MS-DRG" and cs and "-" in cs[0]:
+            fam = expand(cs[0])
+            if len(fam) == 3:   # a DRG family given as a range: CMS numbers them MCC, CC, none
+                b["when"] = f"{b['when']}; {fam[1]} with complications, {fam[0]} with major complications"
+                cs = [fam[2]]
+            else:
+                cs = fam
+        if t and cs:
+            b[t] = cs[0]
+            if len(cs) > 1:
+                b[f"{t} (other possible)"] = cs[1]
+            if len(cs) > 2:
+                b["when"] = f"{b['when']}; also {', '.join(cs[2:])}"
+    bf = [c for c in bf if c not in code_cols or any(b.get(c) for b in bills)]   # drop code columns nothing uses
     with open(os.path.join(HERE, "care_item_bills.csv"), "w", newline="", encoding="utf-8") as f:
         wr = csv.DictWriter(f, bf, extrasaction="ignore")
         wr.writeheader()
