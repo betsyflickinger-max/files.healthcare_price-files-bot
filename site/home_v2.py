@@ -19,6 +19,7 @@ import control_money   # sibling module: the control center's money tab
 import control_cash_oon   # sibling module: the control center's cash prices and out-of-network tabs (Oct 30)
 import control_changes   # sibling module: the control center's Changes tab (Nov 2)
 import control_state_lists   # sibling module: Every-state table names + completion colors (Oct 31)
+import control_github   # sibling module: GitHub traffic card on the Visitors tab (Nov 3)
 import area_menu   # sibling module: states-first area dropdowns on the site and control center (Oct 31)
 import csv
 import hashlib
@@ -842,6 +843,7 @@ def _deploy_once():
     changed = control_cash_oon.patch(d) or changed   # Oct 30: "Cash prices" and "Out of network" tabs
     changed = control_changes.patch(d) or changed   # Nov 2: "Changes" tab (insurers/change_ledger.py)
     changed = control_state_lists.patch(d) or changed   # Oct 31: Every-state names behind each count, red/yellow/green
+    changed = control_github.patch(d) or changed   # Nov 3: GitHub traffic card (board/github_traffic.py)
     changed = area_menu.apply(d) > 0 or changed   # Oct 31: area dropdowns list states first, places beside each state
     control_money.upload(s3, B)
     changed = build(d) or changed
@@ -876,7 +878,7 @@ if __name__ == '__main__':
     if len(sys.argv) >= 2 and sys.argv[1] == 'deploy':
         deploy()
     elif len(sys.argv) >= 3 and sys.argv[1] == 'build':
-        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2]) | control_money.patch(sys.argv[2]) | control_cash_oon.patch(sys.argv[2]) | control_changes.patch(sys.argv[2]) | control_state_lists.patch(sys.argv[2])
+        c1 = patch_tracking(sys.argv[2]) | patch_control(sys.argv[2]) | control_money.patch(sys.argv[2]) | control_cash_oon.patch(sys.argv[2]) | control_changes.patch(sys.argv[2]) | control_state_lists.patch(sys.argv[2]) | control_github.patch(sys.argv[2])
         c2 = build(sys.argv[2])
         print('changed' if c1 or c2 else 'unchanged')
     else:

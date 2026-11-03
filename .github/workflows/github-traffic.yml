@@ -1,0 +1,41 @@
+name: GitHub traffic (daily, control center)
+# Nov 3, 2026 (Betsy): saves GitHub's view/copy counts, referring sites, pages read, and the people who starred, forked,
+# watch or follow, so the history outlasts GitHub's 14 days. GitHub never names viewers. Shown on the control center's
+# Visitors tab (site/control_github.py). See board/github_traffic.py.
+# Token: TRAFFIC_TOKEN if set, else BOT_GITHUB_TOKEN. Traffic numbers need "Administration: Read-only" on the repo
+# (fine-grained token) or the "repo" scope (classic); without it the run still saves stars, forks and followers.
+on:
+  schedule:
+    - cron: "41 10 * * *"   # daily, ~4:41am Central
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Fetch and print only; save nothing"
+        type: boolean
+        default: false
+concurrency:
+  group: github-traffic
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  traffic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TRAFFIC_TOKEN: ${{ secrets.TRAFFIC_TOKEN || secrets.BOT_GITHUB_TOKEN }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: board
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36
+      - run: python board/github_traffic.py ${{ inputs.dry_run && '--dry-run' || '' }} | tee -a "$GITHUB_STEP_SUMMARY"

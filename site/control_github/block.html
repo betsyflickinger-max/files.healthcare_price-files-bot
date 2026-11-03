@@ -1,0 +1,79 @@
+<!-- Control center: "GitHub" card on the Visitors tab (Nov 3, 2026). Added by site/control_github.py; data from board/github_traffic.py (daily) in R2 control/data/github_traffic.json. -->
+<style>
+#gh-card .gh-tiles{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 14px}
+#gh-card .gh-tile{flex:1 1 140px;border:1px solid var(--color-border,#ddd);border-radius:8px;padding:8px 10px}
+#gh-card .gh-tile .lab{font-size:12px;color:var(--color-fg-muted,#666)}
+#gh-card .gh-tile .big{font-size:22px;font-weight:600;line-height:1.3}
+#gh-card .gh-tile .sub{font-size:11px;color:var(--color-fg-muted,#666)}
+#gh-card h4{margin:14px 0 6px;font-size:14px}
+#gh-card td.n,#gh-card th.n{text-align:right;font-variant-numeric:tabular-nums}
+#gh-card .gh-note{font-size:12px;color:var(--color-fg-muted,#666);margin:4px 0}
+</style>
+<script>
+(() => {
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const n = (v) => v == null ? '—' : Number(v).toLocaleString('en-US');
+  const day = (d) => d ? new Date(d + 'T12:00:00Z').toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : '';
+  function table(cols, rows, cells) {
+    const wrap = el('div', 'tbl'); wrap.style.maxHeight = '18rem';
+    const t = el('table'), th = el('thead'), hr = el('tr'), tb = el('tbody');
+    cols.forEach(([label, num]) => { const c = el('th', num ? 'n' : '', label); hr.appendChild(c); });
+    th.appendChild(hr); t.appendChild(th);
+    if (!rows.length) { const tr = el('tr'), td = el('td', '', 'Nothing yet.'); td.colSpan = cols.length; tr.appendChild(td); tb.appendChild(tr); }
+    rows.forEach((r) => { const tr = el('tr'); cells(r).forEach((v, i) => {
+      const td = el('td', cols[i][1] ? 'n' : ''); if (v instanceof Node) td.appendChild(v); else td.textContent = v == null ? '' : String(v); tr.appendChild(td); }); tb.appendChild(tr); });
+    t.appendChild(tb); wrap.appendChild(t); return wrap;
+  }
+  function tile(box, lab, big, sub) { const t = el('div', 'gh-tile'); t.appendChild(el('div', 'lab', lab)); t.appendChild(el('div', 'big', big)); t.appendChild(el('div', 'sub', sub)); box.appendChild(t); }
+  const short = (p, repo) => { const r = (p || '').replace(/^\/[^/]+\//, ''); if (r === repo) return '/ (front page)';
+    return r.startsWith(repo + '/') ? r.slice(repo.length) : r + ' (old repo name)'; };
+  const who = (login) => { const a = el('a', '', login); a.href = 'https://github.com/' + encodeURIComponent(login); a.target = '_blank'; a.rel = 'noopener'; return a; };
+
+  function render(card, d) {
+    const body = card.querySelector('.gh-body'); body.textContent = '';
+    if (!d) { body.appendChild(el('p', 'muted', 'No GitHub numbers saved yet. The daily GitHub traffic job fills this in after its first run.')); return; }
+    const sum = (k) => d.repos.reduce((s, r) => s + (r[k] || 0), 0);
+    const tiles = el('div', 'gh-tiles'); body.appendChild(tiles);
+    tile(tiles, 'Views, last 14 days', n(sum('views_14d')), n(sum('view_uniques_14d')) + ' different visitors');
+    tile(tiles, 'Copies, last 14 days', n(sum('clones_14d')), 'mostly the bot’s own machines');
+    tile(tiles, 'Stars', n(sum('stars')), 'names below');
+    tile(tiles, 'Followers', n(d.followers), 'names below');
+    body.appendChild(el('h4', '', 'People who left a trace'));
+    body.appendChild(el('p', 'gh-note', 'The only names GitHub shares: people who starred, forked or watch a repo, or follow you. Viewers stay anonymous.'));
+    body.appendChild(table([['When'], ['Who'], ['What'], ['Repo']], d.people,
+      (p) => [p.when ? day(p.when) : 'first seen ' + day(p.first_seen), who(p.who), p.what, p.repo]));
+    body.appendChild(el('h4', '', 'Views and copies by day'));
+    body.appendChild(el('p', 'gh-note', 'Saved daily since ' + day(d.history_since) + ', so the history outlasts GitHub’s 14 days. Today’s numbers fill in tomorrow.'));
+    body.appendChild(table([['Day'], ['Repo'], ['Views', 1], ['Visitors', 1], ['Copies', 1], ['Copiers', 1]], d.daily.slice(0, 120),
+      (r) => [day(r.date), r.repo, n(r.views), n(r.view_uniques), n(r.clones), n(r.clone_uniques)]));
+    body.appendChild(el('h4', '', 'Where visitors came from (last 14 days)'));
+    body.appendChild(table([['Site'], ['Repo'], ['Views', 1], ['Visitors', 1]], d.referrers, (r) => [r.site, r.repo, n(r.views), n(r.uniques)]));
+    body.appendChild(el('h4', '', 'Pages they read (last 14 days)'));
+    body.appendChild(table([['Page'], ['Repo'], ['Views', 1], ['Visitors', 1]], d.paths, (r) => [short(r.page, r.repo), r.repo, n(r.views), n(r.uniques)]));
+    (d.notes || []).forEach((t) => body.appendChild(el('p', 'gh-note', t)));
+    body.appendChild(el('p', 'gh-note', 'Updated ' + new Date(d.updated).toLocaleString('en-US', {timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short'}) + ' Central.'));
+  }
+
+  function place() {
+    if (document.getElementById('gh-card')) return true;
+    const anchor = document.getElementById('v-events') || document.getElementById('v-signups');
+    const host = anchor && anchor.closest('.card');
+    if (!host || !host.parentElement) return false;
+    const card = el('div', 'card'); card.id = 'gh-card';
+    const head = el('div', 'head'), h = el('div');
+    h.appendChild(el('h3', '', 'GitHub: who’s looking at your code'));
+    h.appendChild(el('p', 'muted', 'From GitHub’s traffic numbers for your public repos, saved once a day.'));
+    head.appendChild(h); card.appendChild(head); card.appendChild(el('div', 'gh-body'));
+    host.parentElement.appendChild(card);
+    fetch('/control/api/data/github_traffic', {cache: 'no-store', credentials: 'same-origin'})
+      .then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => render(card, d));
+    return true;
+  }
+  if (!place()) {
+    const mo = new MutationObserver(() => { if (place()) mo.disconnect(); });
+    mo.observe(document.documentElement, {childList: true, subtree: true});
+    setTimeout(() => mo.disconnect(), 120000);
+  }
+})();
+</script>
+<!-- /github card -->
