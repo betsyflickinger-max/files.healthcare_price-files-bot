@@ -87,9 +87,10 @@ class _Speed:
     """Nov 2, 2026: Geisinger's server (mrf.thehealthplan.com) trickled files at ~0.1 Mbps: a machine sat 12 hours on one
     file at 0% CPU, billing and holding one of the host's 2 slots. A dead connection already fails (300 s read timeout);
     a trickle never did. Now a download that has received less than MIN_MB in the last WINDOW_MIN minutes stops with
-    SlowDownload ("download too slow"). Normal hosts send hundreds of MB a minute; 64 MB per 30 min is ~0.3 Mbps."""
-    MIN_MB = float(os.environ.get("DL_MIN_MB", "64"))
-    WINDOW_MIN = float(os.environ.get("DL_WINDOW_MIN", "30"))
+    SlowDownload ("download too slow"). Normal hosts send hundreds of MB a minute; 20 MB per 10 min is ~0.27 Mbps.
+    Nov 2, 2026 (Betsy: "do it"): 10 min instead of 30, so a failed try costs a third as much and the host can be tried more often."""
+    MIN_MB = float(os.environ.get("DL_MIN_MB", "20"))
+    WINDOW_MIN = float(os.environ.get("DL_WINDOW_MIN", "10"))
 
     def __init__(self, url):
         self.url, self.t0, self.marks, self.n = url, time.time(), [(time.time(), 0)], 0

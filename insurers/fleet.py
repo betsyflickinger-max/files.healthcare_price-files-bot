@@ -241,7 +241,7 @@ def host(j):
 
 # Nov 2, 2026: a host that trickled a download ("download too slow", pipeline/common.py) is paused: no machine starts
 # another of its files for PAUSE_HOURS, so its slots go to files that move. Its files keep their place and their tries.
-HOST_PAUSE, PAUSE_HOURS = "bot/fleet/host_pause/", 6
+HOST_PAUSE, PAUSE_HOURS = "bot/fleet/host_pause/", 2   # Nov 2, 2026 (Betsy): 6 -> 2 h, with the 10-min speed check
 
 
 def pause_host(s3, b, h, why=""):
