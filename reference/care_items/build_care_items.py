@@ -221,6 +221,8 @@ def main():
     print(f"{len(items)} care items, {len(bills)} bills; hospital-stay links Medicare-backed: {n_backed} of {n_drg}")
     import build_crosswalk   # Nov 2: every related code in its own column (crosswalk.csv), bills split the same way
     build_crosswalk.main()
+    import atomize   # Nov 3: one code per cell (numbered columns), plus crosswalk_codes.csv (one row per code)
+    atomize.main()
 
 
 if __name__ == "__main__":

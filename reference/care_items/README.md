@@ -38,7 +38,10 @@ Insurer and hospital files price each bill on its own and never say which bills 
   HCPCS Level II bills use free federal codes. This list uses our own plain-English names, never AMA descriptors
   (`source_crosswalk_oct.csv` had CMS's CPT short descriptors; removed Nov 2).
 
-## crosswalk.csv: every code in its own column (added Nov 2)
+## crosswalk.csv and crosswalk_codes.csv: one code per cell (Nov 2; split fully Nov 3)
+Every cell holds one code. Lists are numbered columns (`doctor_cpt_related_1`, `_2`, ...; `drg_other_1` + `drg_other_1_when`, ...), ranges are expanded (461-462 -> 461, 462), notes sit in their own `_when` column, and each anesthesia code has its own `_base_units` column. `crosswalk_codes.csv` has the same 441 codes one row per code (item, role, code system, code, when, base units). `care_item_bills.csv` has `code_1` / `code_2` per bill.
+
+Earlier column list (before numbering):
 One row per care item. Columns, by kind of code:
 - `doctor_cpt`, `doctor_cpt_related` (other CPT codes for the same procedure, e.g. colonoscopy with biopsy)
 - `facility_or_lab_cpt` (what the hospital, surgery center, imaging center or lab bills for same-day care)
