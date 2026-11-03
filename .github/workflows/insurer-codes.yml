@@ -1,0 +1,31 @@
+name: Insurer-made codes (tie back to standard codes)
+# Nov 3, 2026 (Betsy): every insurer-made code (CSTM-ALL, LOCAL, misspelled types) in every table read, tied back to
+# standard codes / care items. Writes and commits reference/care_items/insurer_codes.csv + insurer_codes_summary.md.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  codes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt pyarrow
+      - run: python insurers/insurer_codes.py
+      - name: Save the list
+        run: |
+          git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
+          git add reference/care_items/insurer_codes.csv reference/care_items/insurer_codes_summary.md
+          git diff --cached --quiet || { git commit -qm "Insurer-made codes $(date -u +%F)"; git pull --rebase -q origin main; git push origin HEAD:main; }
