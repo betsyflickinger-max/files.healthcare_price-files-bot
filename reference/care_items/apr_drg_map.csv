@@ -1,0 +1,41 @@
+item_id,apr_drg_usual,apr_drg_other,confidence
+knee-replacement,326,325 (non-elective or complex),matched by name
+hip-replacement,324,323 (non-elective or complex) | 308 (if done to repair a fracture),matched by name
+knee-replacement-revision,325,,matched by name (needs a grouper check: revision as 'complex')
+neck-fusion-acdf-one-level,321,310 (if grouped as a disc procedure),needs a grouper check
+low-back-fusion-one-level,300,299 (more than one level) | 304 (fusion of one column only) | 303 (for curvature),matched by name
+spinal-fusion-hospital-stay,304,300 (front + back fusion) | 299 (more than one level) | 303 (for curvature),matched by name
+low-back-disc-surgery-laminotomy-discectomy,310,,matched by name
+vaginal-delivery,560,541 (with sterilization and/or D&C) | 542 (with another O.R. procedure),matched by name
+vbac,560,541 (with sterilization and/or D&C) | 542 (with another O.R. procedure),matched by name
+c-section,540,539 (with sterilization),matched by name
+gastric-sleeve,403,,matched by name
+gastric-bypass,403,,matched by name
+hysterectomy-laparoscopic,513,519 (for fibroids) | 512 (for non-ovarian cancer) | 511 (for ovarian cancer),matched by name
+hysterectomy-abdominal,513,519 (for fibroids) | 512 (for non-ovarian cancer) | 511 (for ovarian cancer),matched by name
+fibroid-removal-myomectomy,519,,matched by name
+aortic-valve-replacement-open,163,162 (with heart attack or complex diagnosis),matched by name
+heart-valve-surgery-hospital-stay,163,162 (with heart attack or complex diagnosis),matched by name
+aortic-valve-replacement-catheter-tavr,183,,needs a grouper check
+shoulder-replacement,322,,matched by name
+gallbladder,263,,matched by name
+mastectomy,362,,matched by name
+prostate-removal-robotic,480,,matched by name
+prostate-trimming-turp,482,,matched by name
+coronary-stent-pci,175,174 (with heart attack),matched by name
+pacemaker-implant,171,"170 (with heart attack, heart failure or shock)",matched by name
+defibrillator-icd-implant,179,,matched by name
+heart-bypass-cabg,166,165 (with heart attack or complex diagnosis),matched by name
+carotid-endarterectomy,024,,matched by name
+lung-lobectomy-vats,120,,matched by name
+colon-resection-laparoscopic,231,,matched by name
+kidney-removal-for-cancer-laparoscopic,442,,matched by name
+hip-fracture-repair-nail,308,,matched by name
+appendectomy-laparoscopic,234,233 (complex diagnosis),matched by name
+ventral-belly-hernia-repair-with-mesh,227,,matched by name
+inguinal-hernia-repair-laparoscopic,228,,matched by name
+anti-reflux-surgery-nissen,232,,matched by name
+thyroid-removal,404,,matched by name
+ectopic-pregnancy-surgery-laparoscopic,547,,needs a grouper check
+afib-ablation,,,not matched: no APR-DRG name fits clearly; needs a grouper
+kidney-stone-removal-ureteroscopy,,,not matched: needs a grouper

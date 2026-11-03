@@ -53,7 +53,9 @@ def plain_codes(cell):
 
 BASE = {"item_id": "Procedure ID", "plain_name": "Procedure", "kind": "Kind", "usual_setting": "Usual setting",
         "shoppable": "Shoppable", "split_billing_modifiers": "Split billing modifiers (TC / 26)",
-        "drg_confidence": "MS-DRG link: how sure", "anesthesia_confidence": "Anesthesia link: how sure", "notes": "Notes",
+        "drg_confidence": "MS-DRG link: how sure", "apr_drg_confidence": "APR-DRG link: how sure",
+        "apr_drg_usual": "APR-DRG: usual", "apr_drg_other": "APR-DRG: other situation",
+        "apr_drg_severity": "APR-DRG: severity levels (added to the code)", "anesthesia_confidence": "Anesthesia link: how sure", "notes": "Notes",
         "doctor_cpt": "CPT: doctor (main)", "doctor_cpt_related": "CPT: doctor related",
         "facility_or_lab_cpt": "CPT: facility or lab (same day)",
         "facility_fee_hcpcs": "HCPCS Level II: hospital-clinic facility fee",
@@ -70,6 +72,8 @@ def label(col):
     for suf, t in (("_when", " - when"), ("_base_units", " - base units")):
         if col.endswith(suf):
             col, tail = col[: -len(suf)], t
+    if col == "apr_drg_usual" and tail:
+        tail = " - name"
     m = re.fullmatch(r"(.+)_(\d+)", col)
     if m and m.group(1) in BASE:
         return f"{BASE[m.group(1)]} {m.group(2)}{tail}"
@@ -80,6 +84,10 @@ def main():
     xw = list(csv.DictReader(open(os.path.join(HERE, "crosswalk.csv"), encoding="utf-8")))
     bills = list(csv.DictReader(open(os.path.join(HERE, "care_item_bills.csv"), encoding="utf-8")))
     long_rows, wide = [], []
+    # Nov 3 (Betsy): APR-DRG, the 3M/Solventum hospital-stay system some insurers price with (census: ~12 million
+    # rows in 54 insurer tables vs ~528 million MS-DRG rows). Matched by name to the APR-DRG list; see apr_drg_map.csv.
+    apr_names = {r["apr_drg"]: r for r in csv.DictReader(open(os.path.join(HERE, "apr_drg_names.csv"), encoding="utf-8"))}
+    apr_map = {r["item_id"]: r for r in csv.DictReader(open(os.path.join(HERE, "apr_drg_map.csv"), encoding="utf-8"))}
 
     def add(item, role, system, code, when="", units=""):
         long_rows.append(dict(item_id=item["item_id"], plain_name=item["plain_name"], role=role, code_system=system,
@@ -111,6 +119,14 @@ def main():
         put("drg_with_mcc", [c for c, _ in mcc], "hospital stay: with major complications (MCC)", "MS-DRG", [w for _, w in mcc])
         oth = drg_atoms(x["drg_other"])
         put("drg_other", [c for c, _ in oth], "hospital stay: other situation", "MS-DRG", [w for _, w in oth])
+        am = apr_map.get(x["item_id"], {})
+        au = [c for c in [am.get("apr_drg_usual", "")] if c]
+        put("apr_drg_usual", au, "hospital stay (APR-DRG): usual", "APR-DRG",
+            [apr_names.get(c, {}).get("name", "").capitalize() for c in au])
+        ao = drg_atoms(am.get("apr_drg_other", ""))
+        put("apr_drg_other", [c for c, _ in ao], "hospital stay (APR-DRG): other situation", "APR-DRG", [w for _, w in ao])
+        x["apr_drg_confidence"] = am.get("confidence", "")
+        x["apr_drg_severity"] = "1 minor, 2 moderate, 3 major, 4 extreme" if au else ""
         pcs = [p.strip() for p in (x["icd10pcs_example"] or "").split("+") if p.strip()]
         put("icd10pcs", pcs, "hospital: procedure code (inpatient)" + (", coded together" if len(pcs) > 1 else ""),
             "ICD-10-PCS")
@@ -122,13 +138,14 @@ def main():
         put("other_related_cpt", plain_codes(x["other_related_cpt"]), "add-on: blood draw", "CPT")
         r["_lists"] = lists
         r["_units"] = units
-        r["_tail"] = {k: x[k] for k in ("split_billing_modifiers", "drg_confidence", "anesthesia_confidence", "notes")}
+        r["_tail"] = {k: x[k] for k in ("apr_drg_severity", "apr_drg_confidence", "split_billing_modifiers",
+                                        "drg_confidence", "anesthesia_confidence", "notes")}
         wide.append(r)
 
     # wide: as many numbered columns as the busiest item needs
     order = list(wide[0]["_lists"].keys()) if wide else []
     width = {c: max(len(w["_lists"][c][0]) for w in wide) for c in order}
-    with_when = {"drg_usual", "drg_with_mcc", "drg_other"}
+    with_when = {"drg_usual", "drg_with_mcc", "drg_other", "apr_drg_usual", "apr_drg_other"}
     fields = ["item_id", "plain_name", "kind", "usual_setting", "shoppable"]
     for c in order:
         n = width[c]
@@ -141,7 +158,8 @@ def main():
                 fields.append(f"{col}_when")
             if c.startswith("anesthesia_cpt"):
                 fields.append(f"{col}_base_units")
-    fields += ["split_billing_modifiers", "drg_confidence", "anesthesia_confidence", "notes"]
+    fields += ["apr_drg_severity", "apr_drg_confidence", "split_billing_modifiers", "drg_confidence",
+               "anesthesia_confidence", "notes"]
     out = []
     for w in wide:
         row = {k: w[k] for k in ("item_id", "plain_name", "kind", "usual_setting", "shoppable")}
@@ -168,7 +186,7 @@ def main():
 
     # bills: one column per code type (Nov 3, Betsy: say whether it's a CPT code, a DRG, ...); related codes live in
     # the crosswalk files
-    TYPE_COLS = {"CPT": "CPT", "anesthesia CPT": "Anesthesia CPT", "MS-DRG": "MS-DRG",
+    TYPE_COLS = {"CPT": "CPT", "anesthesia CPT": "Anesthesia CPT", "MS-DRG": "MS-DRG", "APR-DRG": "APR-DRG",
                  "HCPCS / revenue code": "HCPCS Level II"}
     code_cols = []
     for t in TYPE_COLS.values():
@@ -185,6 +203,8 @@ def main():
                 cs = [fam[2]]
             else:
                 cs = fam
+        if b.get("code_system") == "MS-DRG" and apr_map.get(b["item_id"], {}).get("apr_drg_usual"):
+            b["APR-DRG"] = apr_map[b["item_id"]]["apr_drg_usual"]   # the same stay, if the insurer uses APR-DRG
         if t and cs:
             b[t] = cs[0]
             if len(cs) > 1:

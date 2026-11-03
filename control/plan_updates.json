@@ -1,5 +1,2 @@
-[{"id": "nov2-code-standard", "updated": "2026-11-02",
-  "next": "Draft done for all 89 featured procedures (111 items, 277 bills; bot repo reference/care_items/). Left: group into families (AHRQ CCS), pair anesthesia for 19 procedures, check DRG 460 (retired code on the site); your calls: coder review vs Medicare-backed rows first, and the surgery page layout."},
- {"id": "nov2-cpt-license", "title": "Lawyer question: our use of CPT codes", "lane": "you", "owner": "You", "area": "Website & launch", "updated": "2026-11-02",
-  "next": "Add to the lawyer review: can the site show CPT code numbers (AMA-owned) next to our own plain-English names without an AMA license? 84 of the 89 featured codes are CPT.",
-  "detail": "MS-DRG, ICD-10 and HCPCS Level II are free federal codes. Nov 2: CMS's CPT short descriptors removed from the public crosswalk file; they remain in older git history. Background: project doc claude/cpt-licensing-oct30.md."}]
+[{"id": "nov2-cpt-license", "updated": "2026-11-03",
+  "next": "Add to the lawyer review: can the site show CPT code numbers (AMA) and APR-DRG numbers and names (3M/Solventum) next to our own plain-English names without a license? 84 of the 89 featured codes are CPT."}]

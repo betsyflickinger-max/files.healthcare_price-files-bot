@@ -55,6 +55,21 @@ One row per care item. Columns, by kind of code:
 `care_item_bills.csv` splits its related codes the same way (`related_cpt`, `drg_with_cc`, `drg_with_mcc`,
 `drg_other`, `anesthesia_base_units`). Both are rebuilt by `build_care_items.py` (which runs `build_crosswalk.py`).
 
+## APR-DRG (added Nov 3)
+Some insurers price hospital stays with **APR-DRG** (All Patient Refined DRGs, owned by 3M/Solventum) instead of
+Medicare's MS-DRG. In our insurer files (Oct-Nov census): about 12.3 million APR-DRG rows in 54 tables, mostly the
+NY/CA/VA/DC/FL/WI, upper-Midwest and western areas, 138,703 in Texas; MS-DRG has about 528 million. Also seen, much
+smaller: EAPG (2.2M rows, outpatient), APC (4.0M), AP-DRG (0.3M).
+- `apr_drg_map.csv`: each hospital-stay item's usual APR-DRG and other situations, **matched by name** (38 of 40;
+  AFib ablation and kidney-stone ureteroscopy not matched; neck fusion, TAVR, knee revision and ectopic pregnancy need
+  a grouper check). Only a licensed APR-DRG grouper gives certainty.
+- `apr_drg_names.csv`: the names used, from Pennsylvania DHS's APR-DRG v42 weights table (base DRGs up to 385) and
+  Ohio Medicaid's APR-DRG v41 descriptions (400 and up).
+- APR-DRG adds a severity level 1-4 (minor, moderate, major, extreme) to each base code; insurer files may write
+  it as part of the code.
+- In crosswalk.csv: `APR-DRG: usual` (+ name), `APR-DRG: other situation N` (+ when), severity, how sure. In
+  care_item_bills.csv: an `APR-DRG` column on each hospital-stay row, beside its MS-DRG.
+
 ## Next
 2. Free federal groupings to sort items into families: AHRQ HCUP CCS Services and Procedures (CPT/HCPCS) and CCSR for
    ICD-10-PCS procedures.
