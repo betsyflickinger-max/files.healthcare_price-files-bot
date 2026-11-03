@@ -30,7 +30,8 @@ OWNER = os.environ.get("GITHUB_TRAFFIC_OWNER", "betsyflickinger-max")
 OUT = "out/board"
 KEY = "control/data/github_traffic.json"
 TOKEN = "".join(os.environ.get("GH_TRAFFIC_TOKEN", "").split())
-BASIC = "".join(os.environ.get("GH_BASIC_TOKEN", "").split())   # the workflow's own key: reads public lists (stars, watchers)
+BASIC = "".join(os.environ.get("GH_BASIC_TOKEN", "").split())   # the workflow's own key
+BOTKEY = "".join(os.environ.get("GH_BOT_TOKEN", "").split())     # the machines' key (Actions on this repo)
 NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
 
@@ -89,13 +90,20 @@ def repos():
 
 
 def gh_public(path, accept="application/vnd.github+json"):
-    """A public list (stars, watchers, followers): with the key, and without it if the key is refused (Nov 3: the
-    traffic-only fine-grained key gets HTTP 403 on stargazers and subscribers, and GitHub answers 401 with no key;
-    the workflow's own key, GH_BASIC_TOKEN, reads them)."""
-    st, data = gh(path, accept)
-    if st != 200 and BASIC:
-        st, data = gh(path, accept, key=BASIC)
-    return (st, data) if st == 200 else gh(path, accept, auth=False)
+    """A public list (stars, watchers, followers, repos): tries the traffic key, the machines' key, the workflow's own
+    key, then no key, and logs what each got (Nov 3: GitHub answered 403 to the traffic key and 401 with no key on
+    stargazers and subscribers)."""
+    tried = []
+    for label, key, auth in (("traffic key", TOKEN, True), ("bot key", BOTKEY, True), ("workflow key", BASIC, True), ("no key", None, False)):
+        if auth and not key:
+            continue
+        st, data = gh(path, accept, auth=auth, key=key)
+        tried.append(f"{label} {st}")
+        if st == 200:
+            break
+    if st != 200:
+        print("  could not read", path.split("?")[0], "->", ", ".join(tried))
+    return st, data
 
 
 def main():
