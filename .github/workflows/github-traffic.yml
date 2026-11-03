@@ -17,7 +17,7 @@ concurrency:
   group: github-traffic
   cancel-in-progress: false
 permissions:
-  contents: read
+  contents: write   # GitHub only lists stargazers/watchers to a key with contents: write (Nov 3, 2026); the job writes nothing to the repo
 jobs:
   traffic:
     runs-on: ubuntu-latest
