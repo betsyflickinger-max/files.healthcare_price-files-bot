@@ -38,6 +38,20 @@ Insurer and hospital files price each bill on its own and never say which bills 
   HCPCS Level II bills use free federal codes. This list uses our own plain-English names, never AMA descriptors
   (`source_crosswalk_oct.csv` had CMS's CPT short descriptors; removed Nov 2).
 
+## crosswalk.csv: every code in its own column (added Nov 2)
+One row per care item. Columns, by kind of code:
+- `doctor_cpt`, `doctor_cpt_related` (other CPT codes for the same procedure, e.g. colonoscopy with biopsy)
+- `facility_or_lab_cpt` (what the hospital, surgery center, imaging center or lab bills for same-day care)
+- `facility_fee_hcpcs` (G0463: the facility fee hospital-owned clinics add to office visits)
+- `drg_usual` (no complications), `drg_with_cc` (with complications), `drg_with_mcc` (with major complications),
+  `drg_other` (other DRGs in a named situation, "code (when)")
+- `icd10pcs_example` (how the hospital codes the procedure itself for an inpatient stay)
+- `anesthesia_cpt`, `anesthesia_cpt_alternate`, `anesthesia_base_units`, `anesthesia_cpt_related`
+- `pathology_cpt`, `other_related_cpt` (e.g. 36415 blood draw), `split_billing_modifiers` (TC / 26)
+- `drg_confidence`, `anesthesia_confidence`, `notes`
+`care_item_bills.csv` splits its related codes the same way (`related_cpt`, `drg_with_cc`, `drg_with_mcc`,
+`drg_other`, `anesthesia_base_units`). Both are rebuilt by `build_care_items.py` (which runs `build_crosswalk.py`).
+
 ## Next
 2. Free federal groupings to sort items into families: AHRQ HCUP CCS Services and Procedures (CPT/HCPCS) and CCSR for
    ICD-10-PCS procedures.

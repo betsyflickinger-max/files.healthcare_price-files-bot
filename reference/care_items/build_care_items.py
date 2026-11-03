@@ -208,15 +208,19 @@ def main():
                               confidence="no separate bill" if an == "none" else "missing: needs a source", source=""))
 
     featured(items, bills)
-    w = csv.DictWriter(open(os.path.join(HERE, "care_items.csv"), "w", newline="", encoding="utf-8"), ITEM_FIELDS)
-    w.writeheader()
-    w.writerows(sorted(items.values(), key=lambda x: (x["kind"] != "same-day procedure", x["plain_name"])))
-    w = csv.DictWriter(open(os.path.join(HERE, "care_item_bills.csv"), "w", newline="", encoding="utf-8"), BILL_FIELDS)
-    w.writeheader()
-    w.writerows(bills)
+    with open(os.path.join(HERE, "care_items.csv"), "w", newline="", encoding="utf-8") as f:   # closed before the crosswalk reads it
+        w = csv.DictWriter(f, ITEM_FIELDS)
+        w.writeheader()
+        w.writerows(sorted(items.values(), key=lambda x: (x["kind"] != "same-day procedure", x["plain_name"])))
+    with open(os.path.join(HERE, "care_item_bills.csv"), "w", newline="", encoding="utf-8") as f:   # closed before the crosswalk reads it
+        w = csv.DictWriter(f, BILL_FIELDS)
+        w.writeheader()
+        w.writerows(bills)
     n_backed = sum(1 for b in bills if b["code_system"] == "MS-DRG" and b["confidence"] == "Medicare-backed")
     n_drg = sum(1 for b in bills if b["code_system"] == "MS-DRG")
     print(f"{len(items)} care items, {len(bills)} bills; hospital-stay links Medicare-backed: {n_backed} of {n_drg}")
+    import build_crosswalk   # Nov 2: every related code in its own column (crosswalk.csv), bills split the same way
+    build_crosswalk.main()
 
 
 if __name__ == "__main__":
