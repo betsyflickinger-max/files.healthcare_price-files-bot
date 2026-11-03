@@ -1,0 +1,42 @@
+item_id,plain_name,kind,usual_setting,shoppable,main_cpt,usual_drg,status,why_listed
+carpal-tunnel,Carpal tunnel release,same-day procedure,same day,yes,64721,,on the site (procedure packages),featured procedure
+cataract,Cataract surgery,same-day procedure,same day,yes,66984,,on the site (procedure packages),featured procedure
+colonoscopy,Colonoscopy (diagnostic),same-day procedure,same day,yes,45378,,on the site (procedure packages),featured procedure
+gallbladder,Gallbladder removal (laparoscopic),same-day procedure,same day or overnight,yes,47562,419,on the site (procedure packages),featured procedure
+knee-scope,Knee arthroscopy (meniscus repair or trim),same-day procedure,same day,yes,29881,,on the site (procedure packages),featured procedure
+afib-ablation,AFib ablation,surgery,same day or overnight,yes,93656,274,draft: not on the site,"Medicare top 50 in 51 states (67,464 Medicare stays, 2024)"
+anti-reflux-surgery-nissen,Anti-reflux surgery (Nissen),surgery,same day or overnight,yes,43280,328,draft: not on the site,"Medicare top 50 in 51 states (22,366 Medicare stays, 2024); added: common for under-65 patients"
+aortic-valve-replacement-catheter-tavr,"Aortic valve replacement, catheter (TAVR)",surgery,overnight stay,yes,33361,267,draft: not on the site,"Medicare top 50 in 51 states (65,352 Medicare stays, 2024)"
+aortic-valve-replacement-open,"Aortic valve replacement, open",surgery,overnight stay,yes,33405,221,draft: not on the site,"Medicare top 50 in 50 states (26,139 Medicare stays, 2024)"
+appendectomy-laparoscopic,"Appendectomy, laparoscopic",surgery,same day or overnight,no (usually an emergency),44970,399,draft: not on the site,"Medicare top 50 in 26 states (8,216 Medicare stays, 2024); added: common for under-65 patients"
+c-section,C-section,surgery,overnight stay,yes,59510,788,draft: not on the site,added by hand: common for under-65 patients
+carotid-endarterectomy,Carotid endarterectomy,surgery,overnight stay,yes,35301,039,draft: not on the site,"Medicare top 50 in 50 states (21,719 Medicare stays, 2024)"
+colon-resection-laparoscopic,"Colon resection, laparoscopic",surgery,overnight stay,yes,44204,331,draft: not on the site,"Medicare top 50 in 51 states (88,092 Medicare stays, 2024)"
+coronary-stent-pci,Coronary stent (PCI),surgery,same day or overnight,yes,92928,322,draft: not on the site,"Medicare top 50 in 51 states (83,557 Medicare stays, 2024)"
+defibrillator-icd-implant,Defibrillator (ICD) implant,surgery,same day or overnight,yes,33249,277,draft: not on the site,"Medicare top 50 in 15 states (7,281 Medicare stays, 2024)"
+ectopic-pregnancy-surgery-laparoscopic,"Ectopic pregnancy surgery, laparoscopic",surgery,same day or overnight,no (usually an emergency),59151,817-819,draft: not on the site,added: common for under-65 patients
+fibroid-removal-myomectomy,Fibroid removal (myomectomy),surgery,overnight stay,yes,58140,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024); added: common for under-65 patients"
+gastric-bypass,Gastric bypass,surgery,overnight stay,yes,43644,621,draft: not on the site,"Medicare top 50 in 10 states (6,068 Medicare stays, 2024)"
+gastric-sleeve,Gastric sleeve,surgery,overnight stay,yes,43775,621,draft: not on the site,"Medicare top 50 in 10 states (6,068 Medicare stays, 2024)"
+heart-bypass-cabg,Heart bypass (CABG),surgery,overnight stay,yes,33533,236,draft: not on the site,"Medicare top 50 in 51 states (26,044 Medicare stays, 2024)"
+hip-fracture-repair-nail,Hip fracture repair (nail),surgery,overnight stay,no (usually an emergency),27245,482,draft: not on the site,"Medicare top 50 in 51 states (109,488 Medicare stays, 2024)"
+hip-replacement,Hip replacement,surgery,same day or overnight,yes,27130,470,draft: not on the site,"Medicare top 50 in 51 states (69,934 Medicare stays, 2024)"
+hysterectomy-abdominal,"Hysterectomy, abdominal",surgery,overnight stay,yes,58150,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024)"
+hysterectomy-laparoscopic,"Hysterectomy, laparoscopic",surgery,same day or overnight,yes,58571,743,draft: not on the site,"Medicare top 50 in 2 states (5,103 Medicare stays, 2024)"
+inguinal-hernia-repair-laparoscopic,"Inguinal hernia repair, laparoscopic",surgery,same day or overnight,yes,49650,352,draft: not on the site,"Medicare top 50 in 1 states (5,799 Medicare stays, 2024); added: common for under-65 patients"
+kidney-removal-for-cancer-laparoscopic,"Kidney removal for cancer, laparoscopic",surgery,overnight stay,yes,50545,658,draft: not on the site,"Medicare top 50 in 51 states (12,348 Medicare stays, 2024)"
+kidney-stone-removal-ureteroscopy,Kidney stone removal (ureteroscopy),surgery,same day or overnight,yes,52356,694 (medical),draft: not on the site,added by hand
+knee-replacement,Knee replacement,surgery,same day or overnight,yes,27447,470,draft: not on the site,"Medicare top 50 in 51 states (69,934 Medicare stays, 2024)"
+knee-replacement-revision,Knee replacement revision,surgery,overnight stay,yes,27487,449,draft: not on the site,"2024 Medicare data uses the old revision DRGs 466-468 (about 38,000 Medicare stays); v44 merged them into 449"
+low-back-disc-surgery-laminotomy-discectomy,Low-back disc surgery (laminotomy/discectomy),surgery,same day or overnight,yes,63030,520,draft: not on the site,"Medicare top 50 in 47 states (13,567 Medicare stays, 2024)"
+low-back-fusion-one-level,"Low-back fusion, one level",surgery,overnight stay,yes,22633,402,draft: not on the site,"Medicare top 50 in 5 states (4,440 Medicare stays, 2024)"
+lung-lobectomy-vats,Lung lobectomy (VATS),surgery,overnight stay,yes,32663,165,draft: not on the site,"Medicare top 50 in 51 states (36,072 Medicare stays, 2024)"
+mastectomy,Mastectomy,surgery,same day or overnight,yes,19303,583,draft: not on the site,added by hand: common shoppable surgery
+neck-fusion-acdf-one-level,"Neck fusion (ACDF), one level",surgery,same day or overnight,yes,22551,473,draft: not on the site,"Medicare top 50 in 50 states (24,856 Medicare stays, 2024)"
+pacemaker-implant,Pacemaker implant,surgery,same day or overnight,yes,33208,244,draft: not on the site,"Medicare top 50 in 51 states (43,622 Medicare stays, 2024)"
+prostate-removal-robotic,"Prostate removal, robotic",surgery,overnight stay,yes,55866,708,draft: not on the site,"Medicare top 50 in 1 states (3,901 Medicare stays, 2024)"
+prostate-trimming-turp,Prostate trimming (TURP),surgery,same day or overnight,yes,52601,714,draft: not on the site,"Medicare top 50 in 1 states (4,775 Medicare stays, 2024)"
+shoulder-replacement,Shoulder replacement,surgery,same day or overnight,yes,23472,483,draft: not on the site,"Medicare top 50 in 45 states (14,370 Medicare stays, 2024)"
+thyroid-removal,Thyroid removal,surgery,same day or overnight,yes,60240,627,draft: not on the site,added: common for under-65 patients
+vaginal-delivery,Vaginal delivery,surgery,overnight stay,yes,59400,807,draft: not on the site,added by hand: common for under-65 patients
+ventral-belly-hernia-repair-with-mesh,Ventral (belly) hernia repair with mesh,surgery,same day or overnight,yes,49593,355,draft: not on the site,"Medicare top 50 in 47 states (11,837 Medicare stays, 2024); added: common for under-65 patients"
