@@ -71,7 +71,10 @@ WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
         'ohio': dict(SPLIT='4', STALL_MIN='240'),
         # Nov 1, 2026: every Washington helper died with "Out of Memory" (5.5 GB) loading the state's flat-rate list at the
         # start of its first batch (every_code.py FLAT), so 0 of 256 batches landed in 39 hours. One 26 GB worker per machine.
-        'washington': dict(WORKERS='1', WMEM='26GB', WTHREADS='8', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
+        # Nov 3, 2026: still 0 batches after the FLAT fixes: every machine at 0 GB free and workers killed before their first
+        # batch's medians (11 re-claims in 40 min). A 26 GB worker plus the parent and download buffers doesn't fit 32 GB.
+        # Smaller pieces (each batch in 4, like Georgia and Ohio) and a 16 GB limit (DuckDB spills the rest to disk).
+        'washington': dict(SPLIT='4', WORKERS='1', WMEM='16GB', WTHREADS='4', STALL_MIN='240')}   # Oct 15 7:20am CT: last 5 pieces (one huge code each?) died twice with 4 x 6 GB workers   # 10:40pm CT: Georgia's unfinished batches split into 4 pieces each (every_code.py SPLIT),
 # so each piece (~25-40M rows) fits in a worker's 6 GB like other states' batches. Finished whole batches are kept.
 # Oct 14: STALL_MIN 360 (default 60; 180 was still too short: georgia-c5 went 3h12m without its first batch): a Georgia batch takes 60-90 min, so the 60-min freeze check restarted nearly every
 # new Georgia machine just before its first batch finished, over and over.
@@ -380,7 +383,7 @@ HOSP_SLOTS = 3
 # Oct 16, 2026: machines launched before a change to their settings (WBIG) keep the old settings until relaunched. A build
 # listed here gets its machines created before the cutoff stopped once; ensure() then relaunches them with the new
 # settings. Finished stage-B batches stay in R2; only the batch each machine was working on is redone.
-RELAUNCH_BEFORE = {'stnc-2026-10': '2026-10-16T16:39:00Z', 'stc3-2026-10': '2026-11-03T05:50:26Z'}   # Nov 2-3, 2026: Washington machines restart on the every_code.py FLAT fixes
+RELAUNCH_BEFORE = {'stnc-2026-10': '2026-10-16T16:39:00Z', 'stc3-2026-10': '2026-11-03T06:52:53Z'}   # Nov 2-3, 2026: Washington machines restart on the every_code.py FLAT fixes
 def relaunch_old(left):
     cut = RELAUNCH_BEFORE.get(O.BID)
     if not cut: return
