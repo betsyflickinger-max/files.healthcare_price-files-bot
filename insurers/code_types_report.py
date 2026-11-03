@@ -45,15 +45,21 @@ want = [k for k in keys if k.split("/")[3] in months[-2:]]
 print(f"{len(want)} census files")
 with ThreadPoolExecutor(16) as ex:
     got = list(ex.map(get, want))
-for _m in [0]:
-    for k, d in got:
-        ins = d.get("insurer") or d.get("reporting_entity_name") or k.split("/")[4]
-        for v in d.get("values", {}).get("billing_code_type", {}).get("top", []):
-            total[v["value"]] += v["rows"]
-            if "DRG" in str(v["value"]).upper() or str(v["value"]).upper() in ("APR", "APC", "EAPG"):
-                by_ins[v["value"]][ins] += v["rows"]
-                tables[(v["value"], ins)] += 1
-lines = ["## Billing code types in insurer files (last two census months)", "", "| Code type | Rows |", "|---|---|"]
+# Keep one census per file per area: a file re-read in both months would otherwise be counted twice (latest wins).
+latest = {}
+for k, d in sorted(got, key=lambda kd: kd[0].split("/")[3]):
+    latest[(k.split("/")[4], d.get("source_file") or k)] = (k, d)
+print(f"{len(got) - len(latest)} older duplicate census files dropped")
+for k, d in latest.values():
+    # Insurer name as written in the file header (same as census_report.py); the R2 folder name only as a last resort
+    ins = (d.get("header", {}).get("reporting_entity_name") or d.get("insurer") or d.get("reporting_entity_name")
+           or d.get("network") or k.split("/")[4])
+    for v in d.get("values", {}).get("billing_code_type", {}).get("top", []):
+        total[v["value"]] += v["rows"]
+        if "DRG" in str(v["value"]).upper() or str(v["value"]).upper() in ("APR", "APC", "EAPG"):
+            by_ins[v["value"]][ins] += v["rows"]
+            tables[(v["value"], ins)] += 1
+lines = ["## Billing code types in insurer files (last two census months, one census per file)", "", "| Code type | Rows |", "|---|---|"]
 lines += [f"| {t} | {n:,} |" for t, n in total.most_common()]
 for t, c in by_ins.items():
     lines += ["", f"### {t}: by insurer", "", "| Insurer | Rows | Tables |", "|---|---|---|"]
