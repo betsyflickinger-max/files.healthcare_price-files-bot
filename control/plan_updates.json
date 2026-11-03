@@ -1,0 +1,114 @@
+[
+ {
+  "id": "sl-name",
+  "lane": "done",
+  "next": "Done: The Healthcare Files (Betsy OK'd).",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "w-mktapi",
+  "lane": "done",
+  "next": "Done: Marketplace API key requested.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-outreach",
+  "next": "Not sent yet. The Price File Watch unlocks 10 business days after the day you send them. Claude can put the 5 email ones in your Gmail as drafts first.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-email",
+  "next": "Not done yet (10 min): Cloudflare \u2192 Email \u2192 Email Routing \u2192 forward to your Gmail \u2192 click the verification email. Needed before the notices go out.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-legal",
+  "next": "Not done yet (~30 min): answer operator name, mailing address, county, analytics yes/no, how long data is kept; decide lawyer before or after launch.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "w-look",
+  "next": "Not confirmed yet: open files.healthcare and say yes to the current look, or name what still feels off.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-launch",
+  "next": "Oct 28 date passed; the site is still password-protected. New date after your launch steps (email, Terms & Privacy answers, phone rehearsal).",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-pfw",
+  "next": "Waits on the right-of-reply notices: unlock 10 business days after they're sent.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "sl-rehearsal",
+  "next": "Not done yet: Claude opens a logged-out copy; you click through it on your phone and say go or fix.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "n-state-queue",
+  "next": "Last group building: WA, OR, ID, UT, AK, NV, HI, WY (93% on Nov 2). When it publishes, all 50 states + DC have a Price Finder and the paused November rebuilds restart on their own.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-uhc-oscar",
+  "title": "Fix UnitedHealthcare Choice Plus and Oscar read errors (DFW)",
+  "lane": "next",
+  "owner": "Claude",
+  "area": "Insurer prices",
+  "order": 1,
+  "next": "Look at why UnitedHealthcare Choice Plus failed 3 times in our reader and Oscar's two Texas plans hit a machine-setup error; UHC's monthly catalog also failed Nov 2 (its file listing came back empty).",
+  "detail": "The site keeps October rates for these until fixed. Also Nov 2: Community Health Choice files cut off partway (insurer's problem) and 3 Moda files 'not found': Price File Watch candidates.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-code-standard",
+  "title": "One master code list: procedure \u2192 bills \u2192 codes",
+  "lane": "now",
+  "owner": "Claude",
+  "area": "Website & launch",
+  "order": 1,
+  "next": "Claude drafts the standard and fills it for a starter set (the 37 matched surgeries + the main procedures on the site).",
+  "detail": "Betsy, Nov 2: 'is there a way to standardize all this?' One plain-English entry per procedure; each lists every bill (hospital, surgeon, anesthesia, lab, imaging), which code prices each bill in each setting (overnight stay vs same day), how sure we are and the source. Builds on claude/cpt-drg-anesthesia-crosswalk.md. Your later decisions: coder review of the 21 rows without Medicare backing (or launch the 16 backed ones first), and the surgery page layout.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-machine-limit",
+  "title": "Decide: raise the DigitalOcean machine limit?",
+  "lane": "someday",
+  "owner": "You",
+  "area": "Insurer prices",
+  "next": "After the western states finish, watch how fast the reading line moves with all ~21 machines on it. If too slow, ask DigitalOcean (support form) for a higher limit.",
+  "detail": "Nov 2: 3,601 files waiting, 7 being read, 0 free slots (14 machines on the last website build). More machines = faster, about the same total cost, higher hourly spend. November so far: $256, credit used up.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-ledger",
+  "title": "Change ledger + Changes tab (insurer files that disappear, shrink or change)",
+  "lane": "done",
+  "owner": "Claude",
+  "area": "Insurer prices",
+  "next": "Done Nov 2: runs every 6 hours; control center \u2192 Changes. Monthly comparison of every other insurer's index starts after the deep check on the 3rd; 'check first' rows open a GitHub issue.",
+  "detail": "First run: 17 changes, 6 networks missing since September (Anthem CO/GA/NV, two BCBS Rhode Island, Quartz MN). Cigna's Nov 1 zip format was our reader's bug, fixed.",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-file-limit",
+  "title": "Site back under Cloudflare's 20,000-file limit",
+  "lane": "done",
+  "owner": "Claude",
+  "area": "Website & launch",
+  "next": "Done Nov 2: procedure pages (13,988 files) are served from storage; the site went from 20,000+ to 6,915 files. New states' procedure pages and the Changes tab are live (checked: DFW and Pennsylvania colonoscopy pages load).",
+  "updated": "2026-11-02"
+ },
+ {
+  "id": "nov2-timing",
+  "title": "Full insurer check: timed every run",
+  "lane": "auto",
+  "owner": "Bots",
+  "area": "Insurer prices",
+  "next": "Nothing to do. Each full check records how long it took (Nov 2: about 3 hours, almost all checking the states outside DFW; capped at 4).",
+  "updated": "2026-11-02"
+ }
+]

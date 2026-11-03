@@ -17,7 +17,7 @@ from datetime import datetime, timezone
 
 import boto3
 
-LANES = ["Your move", "Being worked on now", "Up next", "Stuck", "On autopilot", "Someday", "Done"]
+LANES = ["you", "now", "next", "stuck", "auto", "someday", "done"]   # Your move, Being worked on now, Up next, Stuck, On autopilot, Someday, Done
 
 
 def r2():
