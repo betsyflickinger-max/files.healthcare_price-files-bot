@@ -34,6 +34,7 @@ BASIC = "".join(os.environ.get("GH_BASIC_TOKEN", "").split())   # the workflow's
 BOTKEY = "".join(os.environ.get("GH_BOT_TOKEN", "").split())     # the machines' key (Actions on this repo)
 NOW = datetime.now(timezone.utc)
 TODAY = NOW.strftime("%Y-%m-%d")
+LAST_ERR = ""
 
 
 def gh(path, accept="application/vnd.github+json", auth=True, key=None):
@@ -48,6 +49,11 @@ def gh(path, accept="application/vnd.github+json", auth=True, key=None):
             with urllib.request.urlopen(req, timeout=30) as r:
                 data, link = json.loads(r.read() or b"null"), r.headers.get("Link", "")
         except urllib.error.HTTPError as e:
+            global LAST_ERR
+            try:
+                LAST_ERR = (json.loads(e.read() or b'{}').get('message') or '')[:200] + ' | needs: ' + (e.headers.get('X-Accepted-GitHub-Permissions') or '?')
+            except Exception:   # noqa: BLE001
+                LAST_ERR = ''
             return e.code, None
         except Exception as e:   # noqa: BLE001
             print("network error:", path, e)
@@ -98,7 +104,7 @@ def gh_public(path, accept="application/vnd.github+json"):
         if auth and not key:
             continue
         st, data = gh(path, accept, auth=auth, key=key)
-        tried.append(f"{label} {st}")
+        tried.append(f"{label} {st}" + (f" ({LAST_ERR})" if st != 200 else ""))
         if st == 200:
             break
     if st != 200:
