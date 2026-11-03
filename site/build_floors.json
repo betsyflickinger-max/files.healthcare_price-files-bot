@@ -9,8 +9,8 @@
   "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Pennsylvania, New Jersey, Massachusetts, South Carolina); noon: only Pennsylvania left, 14"
  },
  "stc3-2026-10": {
-  "machines": 1,
-  "most": 2,
-  "why": "Nov 3, 2026, 7 AM CT (Betsy OK'd option 1): Washington test on 2 x 64 GB machines with a once-a-minute memory log. Overnight, 0 batches on 32 GB after three memory fixes; the code fixes likely never reached the machines (bundle only refreshed at build start, fixed today). Raise 'most' once batches land."
+  "machines": 6,
+  "most": 6,
+  "why": "Nov 3, 2026, 8:30 AM CT (Betsy OK'd): Washington's 64 GB test works (pieces land about every 2 min per machine; each piece peaks ~28 GB, which is why 32 GB machines never finished). Raised from 2 to 6 machines to finish the 1,024 pieces in ~5 h instead of ~14 h at about the same total cost."
  }
 }
