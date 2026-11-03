@@ -212,3 +212,15 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("wo
     print(f"=== work {slug} v{ym}: {len(whole)} whole batches, {len(sl)} slices ({len(open_b)} batches with slices but not whole)")
     print("  slices per unfinished batch (first 20):", dict(list(sorted(open_b.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 0))[:20]))
     print("  results landed per hour (last 24):", dict(sorted(by_day.items())[-24:]))
+
+# Nov 2, 2026: "tail:<R2 prefix>" prints the last 40 lines of every live log.txt under that prefix (a page build machine
+# flushes its log there every minute, e.g. tail:site/builds/stc3-2026-10/washington-c), newest first. Read-only.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("tail:")]:
+    pre = x.split(":", 1)[1]
+    objs = [o for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=pre)
+            for o in page.get("Contents", []) if o["Key"].endswith("log.txt")]
+    print(f"=== tail {pre}: {len(objs)} live logs")
+    for o in sorted(objs, key=lambda o: o["LastModified"], reverse=True)[:16]:
+        lines = s3.get_object(Bucket=b, Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
+        print(f"--- {o['Key']} ({o['LastModified']:%m-%d %H:%M} UTC, {len(lines)} lines)")
+        print("    " + "\n    ".join(l[:300] for l in lines[-40:]))
