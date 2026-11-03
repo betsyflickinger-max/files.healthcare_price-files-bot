@@ -27,7 +27,7 @@ Insurer and hospital files price each bill on its own and never say which bills 
   per-stay prices; anesthesia is shown as its rate per unit plus base units, never a total; emergencies are marked not
   shoppable.
 
-## First stab (Nov 2): 41 care items, 145 bills
+## First stab (Nov 2): 41 care items, 144 bills
 - 5 same-day procedures already on the site (`packages/packages.csv`) + 36 surgeries from the Oct crosswalk
   (`source_crosswalk_oct.csv`; gallbladder is in both and merged).
 - Hospital-stay links: 16 of 37 Medicare-backed, 21 hand-matched. Anesthesia: hand-matched; 3 surgeries have two
