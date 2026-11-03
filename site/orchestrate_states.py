@@ -538,8 +538,16 @@ def main():
         held = pause_for_hold()
         if held:
             log('build paused (site/month_hold.json pause_scopes) until these finish publishing:', ', '.join(held))
+            st['paused_for_hold'] = True
             open('/tmp/st_waiting', 'w').write('hold')
             return putj(SP + 'state.json', st)
+        if st.pop('paused_for_hold', None) or st.get('cost_check', {}).get('resume_reset') is None and '2026-11-03 23:40' <= st.get('cost_check', {}).get('hold_at', '') < '2026-11-04 01:00':
+            # Nov 3, 2026: a build paused by the November hold (machines stopped, hours or days) is measured again from
+            # the moment it resumes. The price check had counted the paused time as slow progress and as money spent:
+            # the seven-state rebuild was held at "$3,571 / 2,041 h" and North Carolina at "$150 over 54.6 h", minutes
+            # after the hold lifted. A hold already given for that reason is cleared too (once, resume_reset).
+            st['cost_check'] = {'resume_reset': time.strftime('%Y-%m-%d %H:%M')}
+            log('price check: measuring again from now (the build was paused by the November hold)')
     if st['stage'] == 'wait':
         busy = s7_busy()
         if busy and not E.get('FORCE'):
