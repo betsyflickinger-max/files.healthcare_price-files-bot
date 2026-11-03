@@ -1,4 +1,4 @@
-<!-- Control center: "GitHub" card on the Visitors tab (Nov 3, 2026). Added by site/control_github.py; data from board/github_traffic.py (daily) in R2 control/data/github_traffic.json. -->
+<!-- Control center: "GitHub" tab (Nov 3, 2026). Added by site/control_github.py; data from board/github_traffic.py (daily) in R2 control/data/github_traffic.json. -->
 <style>
 #gh-card .gh-tiles{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 14px}
 #gh-card .gh-tile{flex:1 1 140px;border:1px solid var(--color-border,#ddd);border-radius:8px;padding:8px 10px}
@@ -7,6 +7,7 @@
 #gh-card .gh-tile .sub{font-size:11px;color:var(--color-fg-muted,#666)}
 #gh-card h4{margin:14px 0 6px;font-size:14px}
 #gh-card td.n,#gh-card th.n{text-align:right;font-variant-numeric:tabular-nums}
+#gh-card a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 #gh-card .gh-note{font-size:12px;color:var(--color-fg-muted,#666);margin:4px 0}
 </style>
 <script>
@@ -54,25 +55,27 @@
     body.appendChild(el('p', 'gh-note', 'Updated ' + new Date(d.updated).toLocaleString('en-US', {timeZone: 'America/Chicago', dateStyle: 'medium', timeStyle: 'short'}) + ' Central.'));
   }
 
-  function place() {
-    if (document.getElementById('gh-card')) return true;
-    const anchor = document.getElementById('v-events') || document.getElementById('v-signups');
-    const host = anchor && anchor.closest('.card');
-    if (!host || !host.parentElement) return false;
+  let built = false;
+  function build() {
+    const pg = document.getElementById('pg-github'); if (!pg) return;
+    const sec = el('section'); sec.id = 'github';
     const card = el('div', 'card'); card.id = 'gh-card';
     const head = el('div', 'head'), h = el('div');
     h.appendChild(el('h3', '', 'GitHub: who’s looking at your code'));
     h.appendChild(el('p', 'muted', 'From GitHub’s traffic numbers for your public repos, saved once a day.'));
     head.appendChild(h); card.appendChild(head); card.appendChild(el('div', 'gh-body'));
-    host.parentElement.appendChild(card);
+    sec.appendChild(card); pg.appendChild(sec); built = true;
+  }
+  function load() {
+    const card = document.getElementById('gh-card'); if (!card) return;
+    card.querySelector('.gh-body').textContent = 'Loading…';
     fetch('/control/api/data/github_traffic', {cache: 'no-store', credentials: 'same-origin'})
       .then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => render(card, d));
-    return true;
   }
-  if (!place()) {
-    const mo = new MutationObserver(() => { if (place()) mo.disconnect(); });
-    mo.observe(document.documentElement, {childList: true, subtree: true});
-    setTimeout(() => mo.disconnect(), 120000);
+  window.GHTAB = {show() { if (!built) build(); load(); }};
+  if (location.hash === '#github') {   // opened from a link: switch to the tab once the page is ready
+    const go = () => { const b = document.querySelector('[role="tab"][data-tab="github"]'); if (b) b.click(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(go, 300)); else setTimeout(go, 300);
   }
 })();
 </script>

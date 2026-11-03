@@ -112,15 +112,16 @@ def main():
         referrers += [{"repo": name, "site": r["referrer"], "views": r["count"], "uniques": r["uniques"]} for r in (refs or [])] if st_r == 200 else []
         paths += [{"repo": name, "page": p["path"], "title": p.get("title", ""), "views": p["count"], "uniques": p["uniques"]} for p in (pops or [])] if st_p == 200 else []
         # people who left a trace (public: works with any token)
-        _, stars = gh(f"{full}/stargazers?per_page=100", accept="application/vnd.github.star+json")
+        st_s, stars = gh(f"{full}/stargazers?per_page=100", accept="application/vnd.github.star+json")
         for s in stars or []:
             people.setdefault((s["user"]["login"], "starred", name), {"who": s["user"]["login"], "what": "starred", "repo": name, "when": s["starred_at"][:10], "first_seen": TODAY})
-        _, forks = gh(f"{full}/forks?per_page=100")
+        st_k, forks = gh(f"{full}/forks?per_page=100")
         for f in forks or []:
             people.setdefault((f["owner"]["login"], "forked", name), {"who": f["owner"]["login"], "what": "forked", "repo": name, "when": f["created_at"][:10], "first_seen": TODAY})
-        _, subs = gh(f"{full}/subscribers?per_page=100")
+        st_w, subs = gh(f"{full}/subscribers?per_page=100")
         for s in subs or []:
             people.setdefault((s["login"], "watching", name), {"who": s["login"], "what": "watching", "repo": name, "when": "", "first_seen": TODAY})
+        print(f"{name}: traffic HTTP {st_v}; stargazers HTTP {st_s} ({len(stars or [])}), forks HTTP {st_k} ({len(forks or [])}), watchers HTTP {st_w} ({len(subs or [])})")
         summary.append({"repo": name, "access": access,
                         "views_14d": (views or {}).get("count"), "view_uniques_14d": (views or {}).get("uniques"),
                         "clones_14d": (clones or {}).get("count"), "clone_uniques_14d": (clones or {}).get("uniques"),

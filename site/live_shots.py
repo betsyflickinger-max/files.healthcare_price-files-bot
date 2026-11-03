@@ -70,9 +70,9 @@ with sync_playwright() as pw:
         tabs = c.eval_on_selector_all('[role="tab"]', 'els => els.map(e => (e.dataset.tab || "") + "=" + e.textContent.trim())')
         print('tabs:', tabs)
         try:
-            c.locator('[role="tab"]', has_text='Visitors').first.click(); c.wait_for_timeout(5000)
+            c.locator('[data-tab="github"]').first.click(); c.wait_for_timeout(5000)
         except Exception as e:
-            log.append(f'visitors tab: {e}')
+            log.append(f'github tab: {e}')
         card = c.locator('#gh-card')
         print('GitHub card on page:', card.count(), '| visible:', card.count() and card.first.is_visible())
         if card.count():
@@ -81,7 +81,7 @@ with sync_playwright() as pw:
             print(card.first.inner_text()[:700])
             hosts = c.eval_on_selector('#gh-card', 'e => { let p = e.parentElement; const out = []; while (p && out.length < 4) { out.push(p.tagName + "#" + (p.id || "") + "." + (p.className || "") + (p.hidden ? " [hidden]" : "")); p = p.parentElement; } return out; }')
             print('card sits inside:', hosts)
-        c.screenshot(path=f'{OUT}/visitors-tab.png', full_page=True)
+        c.screenshot(path=f'{OUT}/github-tab.png', full_page=True)
         br.close()
         print('page errors:', log or 'none')
         sys.exit(0)
