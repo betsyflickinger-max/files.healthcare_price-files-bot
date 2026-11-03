@@ -9,7 +9,8 @@
   "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Pennsylvania, New Jersey, Massachusetts, South Carolina); noon: only Pennsylvania left, 14"
  },
  "stc3-2026-10": {
-  "machines": 6,
-  "why": "Nov 2, 2026 (Betsy: 'as fast as possible'): last states not live yet; the insurer reader had taken the slots the paused seven-state rebuild freed (Washington); most 5 so the other five states get machines too; noon: most removed, floor 6 (the other states are done)"
+  "machines": 1,
+  "most": 2,
+  "why": "Nov 3, 2026, 2 AM CT: Washington still finished 0 batches after three memory fixes (FLAT per batch, FLAT in DuckDB, SPLIT 4 + 16 GB); workers keep running the 32 GB machines out of memory. Held at 2 machines (was 14) until Betsy picks the next step, so it stops billing 14 overnight."
  }
 }
