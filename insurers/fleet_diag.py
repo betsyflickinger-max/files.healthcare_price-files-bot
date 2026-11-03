@@ -65,6 +65,9 @@ for bid in [x for x in os.environ.get("BUILDS", "").split(",") if x and not x.st
         print(f"=== build {bid}: stage {st.get('stage')}, machines {st.get('machines')}")
         print("  price check:", json.dumps(st.get("cost_check")))
         print("  last log:", *(st.get("log") or [])[-12:], sep="\n    ")
+        # Nov 3, 2026: launch counts and problems were hidden as "..." (too long); show the parts that say why a machine isn't starting
+        print("  launches:", {k: v for k, v in (st.get("launches") or {}).items() if v})
+        print("  problems (last 8):", *(st.get("problems") or [])[-8:], sep="\n    ")
         print("  full state keys:", {k: (v if len(json.dumps(v)) < 300 else "...") for k, v in st.items() if k != "log"})
         # Oct 24: each build machine uploads its own log to site/builds/<bid>/logs/<role>.log when it ends
         for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=f"site/builds/{bid}/logs/"):
