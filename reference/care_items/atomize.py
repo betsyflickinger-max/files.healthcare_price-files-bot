@@ -14,6 +14,14 @@ import csv
 import os
 import re
 
+import extra_codes
+
+EXTRA = {"apc": ("facility: Medicare outpatient group", "APC"), "opps_si": ("facility: OPPS status indicator", "OPPS SI"),
+         "asc_pi": ("facility: ASC payment indicator", "ASC PI"),
+         "hcpcs_medicare": ("Medicare's own code for this", "HCPCS Level II"),
+         "pos": ("place of service", "POS"), "modifier": ("modifier", "CPT/HCPCS modifier"),
+         "revenue": ("facility claim line", "revenue code")}
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 SEP = " | "
 
@@ -53,6 +61,9 @@ def plain_codes(cell):
 
 BASE = {"item_id": "Procedure ID", "plain_name": "Procedure", "kind": "Kind", "usual_setting": "Usual setting",
         "shoppable": "Shoppable", "split_billing_modifiers": "Split billing modifiers (TC / 26)",
+        "apc": "APC: Medicare outpatient facility group", "opps_si": "OPPS status indicator",
+        "asc_pi": "ASC payment indicator", "hcpcs_medicare": "HCPCS Level II: Medicare's version",
+        "pos": "Place of service (POS)", "modifier": "Modifier", "revenue": "Revenue code (facility claim)",
         "drg_confidence": "MS-DRG link: how sure", "apr_drg_confidence": "APR-DRG link: how sure",
         "apr_drg_usual": "APR-DRG: usual", "apr_drg_other": "APR-DRG: other situation",
         "apr_drg_severity": "APR-DRG: severity levels (added to the code)", "anesthesia_confidence": "Anesthesia link: how sure", "notes": "Notes",
@@ -136,16 +147,22 @@ def main():
         put("anesthesia_cpt_related", plain_codes(x["anesthesia_cpt_related"]), "anesthesia: related code", "anesthesia CPT")
         put("pathology_cpt", plain_codes(x["pathology_cpt"]), "pathology: if tissue is sent", "CPT")
         put("other_related_cpt", plain_codes(x["other_related_cpt"]), "add-on: blood draw", "CPT")
+        for col, pairs in extra_codes.for_item(x):   # Nov 3: APC, POS, modifiers, revenue codes, Medicare versions
+            role, system = EXTRA[col]
+            put(col, [c for c, _ in pairs], role, system, [w for _, w in pairs])
         r["_lists"] = lists
         r["_units"] = units
-        r["_tail"] = {k: x[k] for k in ("apr_drg_severity", "apr_drg_confidence", "split_billing_modifiers",
+        r["_tail"] = {k: x[k] for k in ("apr_drg_severity", "apr_drg_confidence",
                                         "drg_confidence", "anesthesia_confidence", "notes")}
         wide.append(r)
 
     # wide: as many numbered columns as the busiest item needs
-    order = list(wide[0]["_lists"].keys()) if wide else []
-    width = {c: max(len(w["_lists"][c][0]) for w in wide) for c in order}
-    with_when = {"drg_usual", "drg_with_mcc", "drg_other", "apr_drg_usual", "apr_drg_other"}
+    order = []
+    for w in wide:   # every list column any item has, in the order first seen
+        order += [c for c in w["_lists"] if c not in order]
+    width = {c: max(len(w["_lists"].get(c, ([], None))[0]) for w in wide) for c in order}
+    with_when = {"drg_usual", "drg_with_mcc", "drg_other", "apr_drg_usual", "apr_drg_other", "hcpcs_medicare", "pos",
+                 "modifier", "revenue"}
     fields = ["item_id", "plain_name", "kind", "usual_setting", "shoppable"]
     for c in order:
         n = width[c]
@@ -158,13 +175,13 @@ def main():
                 fields.append(f"{col}_when")
             if c.startswith("anesthesia_cpt"):
                 fields.append(f"{col}_base_units")
-    fields += ["apr_drg_severity", "apr_drg_confidence", "split_billing_modifiers", "drg_confidence",
+    fields += ["apr_drg_severity", "apr_drg_confidence", "drg_confidence",
                "anesthesia_confidence", "notes"]
     out = []
     for w in wide:
         row = {k: w[k] for k in ("item_id", "plain_name", "kind", "usual_setting", "shoppable")}
         for c in order:
-            codes, whens = w["_lists"][c]
+            codes, whens = w["_lists"].get(c, ([], None))
             n = width[c]
             for i, code in enumerate(codes, 1):
                 col = c if n == 1 else f"{c}_{i}"

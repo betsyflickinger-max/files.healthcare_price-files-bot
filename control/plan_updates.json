@@ -1,2 +1,4 @@
 [{"id": "nov2-cpt-license", "updated": "2026-11-03",
-  "next": "Add to the lawyer review: can the site show CPT code numbers (AMA) and APR-DRG numbers and names (3M/Solventum) next to our own plain-English names without a license? 84 of the 89 featured codes are CPT."}]
+  "next": "Add to the lawyer review: can the site show CPT code numbers (AMA), APR-DRG numbers and names (3M/Solventum) and revenue codes (NUBC/AHA) next to our own plain-English names without a license? 84 of the 89 featured codes are CPT."},
+ {"id": "nov2-code-standard", "updated": "2026-11-03",
+  "next": "Crosswalk has every code type now (CPT, HCPCS II, MS-DRG, APR-DRG, ICD-10-PCS, anesthesia, APC, POS, revenue codes, modifiers): bot repo reference/care_items/. Left: anesthesia for 19 procedures, grouper check for 6 APR-DRGs, DRG 460 on the site; your calls: coder review, surgery page layout."}]

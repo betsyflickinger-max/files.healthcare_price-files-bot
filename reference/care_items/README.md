@@ -70,6 +70,32 @@ smaller: EAPG (2.2M rows, outpatient), APC (4.0M), AP-DRG (0.3M).
 - In crosswalk.csv: `APR-DRG: usual` (+ name), `APR-DRG: other situation N` (+ when), severity, how sure. In
   care_item_bills.csv: an `APR-DRG` column on each hospital-stay row, beside its MS-DRG.
 
+## Codes added Nov 3 (Betsy: "are there any medical codes missing?")
+`extra_codes.py`, run inside the crosswalk build:
+- **APC + OPPS status indicator + ASC payment indicator** (Medicare's outpatient facility groups; CMS OPPS Addendum B
+  and ASC Addendum AA, July 2026, via the site's Medicare file; `medicare_codes.csv`, rebuilt by the "Care items -
+  Medicare codes" workflow). 64 items have an APC.
+- **Place of service (POS)**, CMS's two-digit setting codes (11 office, 19/22 hospital outpatient, 24 surgery center,
+  21 inpatient, 81 independent lab, 10/02 telehealth). Insurer files carry these as `service_code`.
+- **Revenue codes**, the hospital's department line on a UB-04 claim (0360 operating room, 0490 surgery center, 0710
+  recovery, 0750 GI suite, 0481 cath lab, 0278 implants, 061x MRI, 035x CT, 0402 ultrasound, 040x mammography,
+  030x lab, 0310 pathology, 0510 clinic, 0420 PT, 091x psychotherapy, 0720 delivery, 0120 room and board, 0170
+  nursery). "Typical": hospitals vary. NUBC (AHA) owns the code set: on the lawyer question with CPT and APR-DRG.
+- **Modifiers**: RT / LT / 50 (side), TC / 26 (split billing), 33 and PT (screening colonoscopy), 25 (separate visit).
+- **Medicare's own HCPCS Level II versions**: G0121 / G0105 (screening colonoscopy), G0438 / G0439 (annual wellness
+  visit, Medicare's stand-in for a routine physical).
+
+## Still left out, on purpose
+- **ICD-10-CM diagnosis codes**: they describe the patient, not the service, and change which DRG a stay falls in; a
+  "typical diagnosis" per item needs a coder's review.
+- **Drug (NDC), dental (CDT), post-acute (HIPPS, CMG) codes**: outside these procedures. In insurer files: CDT ~10.9B
+  rows, NDC ~6.4B, HIPPS ~2.0B, CMG ~5.3M.
+- **EAPG** (3M's outpatient groups, ~2.2M rows) and **AP-DRG** (an older DRG system, ~0.3M rows): proprietary and
+  rare; can be added like APR-DRG if wanted.
+- **Insurer-made codes** (CSTM-ALL ~37M rows, LOCAL ~1.8B): each insurer's own; no crosswalk exists.
+- **Type of bill, condition and occurrence codes, implant C-codes**: claim-level or device-specific, not tied to one
+  procedure.
+
 ## Next
 2. Free federal groupings to sort items into families: AHRQ HCUP CCS Services and Procedures (CPT/HCPCS) and CCSR for
    ICD-10-PCS procedures.
