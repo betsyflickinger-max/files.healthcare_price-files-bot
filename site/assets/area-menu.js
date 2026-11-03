@@ -49,7 +49,9 @@
     order.sort(function (a, b) { return a.localeCompare(b); });
     // places A to Z on every page (the Price Finder's list came in build order); "Small towns of Texas" and the like go last
     var last = function (o) { return /^(small towns|rest of|other)/i.test(bare(o.textContent)) ? 1 : 0; };
-    order.forEach(function (st) { groups[st].sort(function (a, b) { return last(a) - last(b) || bare(a.textContent).localeCompare(bare(b.textContent)); }); });
+    // Nov 3, 2026: an "All of <state>" choice (data-all: the control center's whole-state roll-ups) comes first in its state
+    var allFirst = function (o) { return o.hasAttribute('data-all') ? 0 : 1; };
+    order.forEach(function (st) { groups[st].sort(function (a, b) { return allFirst(a) - allFirst(b) || last(a) - last(b) || bare(a.textContent).localeCompare(bare(b.textContent)); }); });
     return {groups: groups, states: order, head: head, tail: tail};
   }
 

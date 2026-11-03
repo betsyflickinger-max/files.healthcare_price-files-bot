@@ -68,6 +68,62 @@ STEPS += [
      "    });\n"
      "    if ($('#nh-vs')) $('#nh-vs').addEventListener"),
 ]
+# Nov 3 (later, Betsy): the Market menu goes from the whole country down to one area. dashboard/build_network.py adds
+# roll-ups ("US" = United States, insurers combined; "TX" = Texas whole state, insurers and networks), lists each area's
+# parent in net_parts, and writes net_access in parts (net_access.json, _2 ... _6). The tab keeps its own area (nmk) so
+# picking National here does not change the Prices tab. Prices stay inside one area; roll-ups show counts only.
+ACC_JOIN = ("  const rowsOf = (id) => { const d = dash.data(id); return d.status === 'ok' ? d.data : null; };\n"
+            "  const P = () => dash.params();\n")
+MK_FILL = ("      const names = new Map((markets || []).map((m) => [m.market, m.name]));\n"
+           "      const keys = [...new Set(access.map((r) => r.market))].sort((x, y) => (x === 'DFW' ? -1 : y === 'DFW' ? 1 : (names.get(x) || x).localeCompare(names.get(y) || y)));\n"
+           "      const s = $('#nmarket'); s.replaceChildren(...keys.map((k) => new Option(names.get(k) || k, k))); s.value = p.market;\n")
+MK_WIRE = "    $('#nmarket').addEventListener('change', (e) => dash.setParams({market: e.target.value, nnet: null}));"
+SEGS = "seg('data-nlevel', LEVEL()); seg('data-nkind', KINDP()); seg('data-nfee', FEE());"
+HEAT0 = "const el = $('#n-heat'); el.classList.remove('dash-skeleton'); el.replaceChildren();"
+ROLL_MSG = "'Prices are compared inside one area. Pick an area under this one in the Market menu to see them.'"
+STEPS += [
+    ("NETACC_IDS", ACC_JOIN,
+     "  // Nov 3 (site/control_overlap.py): net_access arrives in parts; the tab's own area is the nmk setting (falls back to market)\n"
+     "  const NETACC_IDS = ['net_access', 'net_access_2', 'net_access_3', 'net_access_4', 'net_access_5', 'net_access_6']; let NETACC_C = null;\n"
+     "  const rowsOf = (id) => {\n"
+     "    if (id === 'net_access') { const ds = NETACC_IDS.map((x) => dash.data(x));\n"
+     "      if (ds[0].status !== 'ok' || ds.some((d) => d.status === 'loading')) return null;   // a part not there yet (404) counts as empty\n"
+     "      if (NETACC_C && NETACC_C.src.every((x, i) => x === ds[i].data)) return NETACC_C.rows;\n"
+     "      NETACC_C = {src: ds.map((d) => d.data), rows: [].concat(...ds.map((d) => d.status === 'ok' && Array.isArray(d.data) ? d.data : []))}; return NETACC_C.rows; }\n"
+     "    const d = dash.data(id); return d.status === 'ok' ? d.data : null; };\n"
+     "  const P = () => { const p = dash.params(); return p.nmk ? Object.assign({}, p, {market: p.nmk}) : p; };\n"),
+    ("data-all", MK_FILL,
+     "      const names = new Map((markets || []).map((m) => [m.market, m.name]));   // Nov 3: National, then each state with 'All of <state>' first\n"
+     "      const meta = new Map((rowsOf('net_parts') || []).map((r) => [r.market, r])); meta.forEach((r, k) => { if (r.name && !names.has(k)) names.set(k, r.name); });\n"
+     "      const parents = new Set([...meta.values()].map((r) => r.parent).filter(Boolean));\n"
+     "      const keys = [...new Set(access.map((r) => r.market))].sort((x, y) => (x === 'US' ? -1 : y === 'US' ? 1 : x === 'DFW' ? -1 : y === 'DFW' ? 1 : (names.get(x) || x).localeCompare(names.get(y) || y)));\n"
+     "      const opt = (k) => { const o = new Option(names.get(k) || k, k), r = meta.get(k) || {};\n"
+     "        if (k === 'US') o.textContent = 'All of the United States';\n"
+     "        else if (r.rollup || parents.has(k)) { const st = r.state || names.get(k) || k; o.textContent = 'All of ' + st; o.setAttribute('data-st', st); o.setAttribute('data-all', '1'); }\n"
+     "        return o; };\n"
+     "      const s = $('#nmarket'); s.replaceChildren(...keys.map(opt)); s.value = p.market;\n"),
+    ("|| ((rowsOf('net_parts') || []).find((r) => r.market === p.market) || {}).name",
+     "const mkName = markets ? (markets.find((m) => m.market === p.market) || {}).name : '';",
+     "const mkName = (markets ? (markets.find((m) => m.market === p.market) || {}).name : '') || ((rowsOf('net_parts') || []).find((r) => r.market === p.market) || {}).name;"),
+    ("nmk: e.target.value", MK_WIRE,
+     "    $('#nmarket').addEventListener('change', (e) => dash.setParams(Object.assign({nmk: e.target.value, nnet: null, nb: null}, e.target.value === 'US' ? {nlevel: 'insurer'} : {})));"),
+    ("window.NET_ROLLUP = ", SEGS,
+     SEGS + " window.NET_ROLLUP = !!((rowsOf('net_parts') || []).find((r) => r.market === p.market) || {}).rollup;"),
+    ("const hmsg = ", HEAT0,
+     HEAT0 + "\n"
+     "    const hmsg = (t) => { const q = document.createElement('p'); q.className = 'muted'; q.textContent = t; el.appendChild(q); const k0 = $('#n-heat-key'); if (k0) k0.innerHTML = ''; };   // Nov 3\n"
+     "    if (LEVEL() === 'network' && (!overlap.length || !rowsAcc.length)) return hmsg(P().market === 'US' ? 'Nationally the grid is by insurer: pick Insurers combined, or pick a state or area in the Market menu to see each network.'\n"
+     "      : rowsAcc.length ? `${rowsAcc.length} networks here are too many for a network-by-network grid. Pick Insurers combined, or an area under this one.` : 'No networks to compare here.');\n"
+     "    if (rowsAcc.length * colsAcc.length > 250000) return hmsg('Too many networks for one grid here. Pick one insurer in Rows or Columns, or Insurers combined.');"),
+    ("NET_ROLLUP ? 'Prices are compared inside one area. Pick an area under this one in the Market menu to see them.' : 'No network has enough priced procedures",
+     "'No network has enough priced procedures here yet.'", "(window.NET_ROLLUP ? " + ROLL_MSG + " : 'No network has enough priced procedures here yet.')"),
+    ("NET_ROLLUP ? 'Prices are compared inside one area. Pick an area under this one in the Market menu to see them.' : 'No network has enough priced rates",
+     "'No network has enough priced rates here yet.'", "(window.NET_ROLLUP ? " + ROLL_MSG + " : 'No network has enough priced rates here yet.')"),
+    ("NET_ROLLUP ? 'Prices are compared inside one area. Pick an area under this one in the Market menu to see them.' : 'No network has 5 or more",
+     "'No network has 5 or more priced providers for this procedure and fee type.'", "(window.NET_ROLLUP ? " + ROLL_MSG + " : 'No network has 5 or more priced providers for this procedure and fee type.')"),
+    ("NET_ROLLUP ? 'Prices are compared inside one area. Pick an area under this one in the Market menu to see them.' : 'Not enough shared",
+     "'Not enough shared priced providers to compare.'", "(window.NET_ROLLUP ? " + ROLL_MSG + " : 'Not enough shared priced providers to compare.')"),
+]
 CSS = ('<style>/* Nov 3: overlap grid menus */ #n-heat-card .nh-ctl{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}'
        ' #n-heat-card .nh-ctl select{max-width:16em}</style>')
 

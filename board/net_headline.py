@@ -19,7 +19,10 @@ def rows(folder, name):
 
 
 def main(folder):
-    acc, parts, mk = rows(folder, "net_access"), rows(folder, "net_parts") or [], rows(folder, "markets") or []
+    acc = rows(folder, "net_access")   # Nov 3, 2026: net_access comes in parts (net_access.json, _2 ... _6)
+    for j in range(2, 7):
+        acc = (acc or []) + (rows(folder, f"net_access_{j}") or []) if acc is not None else acc
+    parts, mk = rows(folder, "net_parts") or [], rows(folder, "markets") or []
     if not acc:
         print("net_headline: no net_access.json; nothing written")
         return
@@ -28,11 +31,13 @@ def main(folder):
     out = []
     for m in dict.fromkeys(r["market"] for r in acc):
         n = [r for r in acc if r["market"] == m and r["level"] == "network"]
-        broad = sorted(n, key=lambda r: -(r.get("providers") or 0))[0] if n else None
+        g = n or [r for r in acc if r["market"] == m and r["level"] == "insurer"]   # Nov 3: National has insurer rows only
+        broad = sorted(g, key=lambda r: -(r.get("providers") or 0))[0] if g else None
         priced = sorted([r for r in n if r.get("typical_vs_market") is not None], key=lambda r: r["typical_vs_market"])
         k, np = M.get(m), P.get(m)
+        if not k and np and np.get("rollup"): k = np   # Nov 3: roll-ups (Texas, National) carry their own hospital counts
         out.append({
-            "market": m, "networks": len(n), "providers": n[0].get("market_providers") if n else None,
+            "market": m, "networks": len(n) or (np or {}).get("networks") or 0, "providers": g[0].get("market_providers") if g else None,
             "hospitals": k.get("hospitals") if k else None, "surgery_centers": k.get("surgery_centers") if k else None,
             "facilities": (k.get("hospitals") or 0) + (k.get("surgery_centers") or 0) if k else None,
             "broadest": broad["label"] if broad else None, "broadest_share": broad.get("share_of_market") if broad else None,
