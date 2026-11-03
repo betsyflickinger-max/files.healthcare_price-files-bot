@@ -506,6 +506,12 @@ def queue_main():
         if not res.get("ok") and "download too slow" in err and fleet.host(job):
             fleet.pause_host(s3, B, fleet.host(job), err[-300:])
             log(f"[{job['id']}] {fleet.host(job)} is trickling; no new files from it for {fleet.PAUSE_HOURS} h")
+        elif (not res.get("ok") and "download failed after" in err and fleet.host(job)
+              and any(c in err for c in ("HTTP 403", "HTTP 429", "HTTP 401"))):
+            # Nov 3, 2026: a host refusing every try (Geisinger 403s) burned ~7.5 min per file on two
+            # machines for hours, and the stall watch saw only idle CPU. Same pause as a trickling host.
+            fleet.pause_host(s3, B, fleet.host(job), err[-300:])
+            log(f"[{job['id']}] {fleet.host(job)} is refusing downloads; no new files from it for {fleet.PAUSE_HOURS} h")
         res.update(finished_at=fleet.iso(), machine=who["name"])
         s3.put_object(Bucket=B, Key=job["done_key"], Body=json.dumps(res).encode())
         fleet.finish(s3, B, job["id"])
