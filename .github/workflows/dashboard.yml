@@ -24,7 +24,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150   # Nov 3, 2026: was 60; with ~100 areas the price side passed an hour and every run since Nov 1 was cancelled (nothing published)
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
@@ -70,7 +70,7 @@ jobs:
 
   network:   # Oct 15, 2026: the "Network access" tab for every live area (was run by hand for DFW + 5 Texas markets)
     runs-on: ubuntu-latest
-    timeout-minutes: 240
+    timeout-minutes: 340   # Nov 3, 2026: was 240; ~100 areas plus the US / Texas roll-ups (GitHub's limit is 360)
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
       STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
