@@ -61,6 +61,30 @@ with sync_playwright() as pw:
         p = br.new_page(viewport={'width': w, 'height': h}, is_mobile=mobile, has_touch=mobile)
         p.on('pageerror', lambda e: log.append(f'{p.url}: {e}'))
         return p
+    if os.environ.get('SHOTS_ONLY') == 'github':   # Nov 3: the control center's GitHub card (site/control_github.py)
+        html = open(os.path.join(SITE, 'control', 'index.html'), encoding='utf-8').read()
+        print('GitHub card block in the live control center:', 'id = \'gh-card\'' in html or "card.id = 'gh-card'" in html)
+        tabs = []
+        c = page(1360, 900)
+        c.goto(BASE + '/control/'); c.wait_for_timeout(6000)
+        tabs = c.eval_on_selector_all('[role="tab"]', 'els => els.map(e => (e.dataset.tab || "") + "=" + e.textContent.trim())')
+        print('tabs:', tabs)
+        try:
+            c.locator('[role="tab"]', has_text='Visitors').first.click(); c.wait_for_timeout(5000)
+        except Exception as e:
+            log.append(f'visitors tab: {e}')
+        card = c.locator('#gh-card')
+        print('GitHub card on page:', card.count(), '| visible:', card.count() and card.first.is_visible())
+        if card.count():
+            card.first.scroll_into_view_if_needed(); c.wait_for_timeout(1500)
+            card.first.screenshot(path=f'{OUT}/github-card.png')
+            print(card.first.inner_text()[:700])
+            hosts = c.eval_on_selector('#gh-card', 'e => { let p = e.parentElement; const out = []; while (p && out.length < 4) { out.push(p.tagName + "#" + (p.id || "") + "." + (p.className || "") + (p.hidden ? " [hidden]" : "")); p = p.parentElement; } return out; }')
+            print('card sits inside:', hosts)
+        c.screenshot(path=f'{OUT}/visitors-tab.png', full_page=True)
+        br.close()
+        print('page errors:', log or 'none')
+        sys.exit(0)
     p = page(1280, 860)
     p.goto(BASE + '/'); p.wait_for_timeout(1500)
     open_menu(p, '#natArea', 'Texas', '1-home')
