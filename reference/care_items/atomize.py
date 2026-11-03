@@ -64,6 +64,7 @@ BASE = {"item_id": "Procedure ID", "plain_name": "Procedure", "kind": "Kind", "u
         "apc": "APC: Medicare outpatient facility group", "opps_si": "OPPS status indicator",
         "asc_pi": "ASC payment indicator", "hcpcs_medicare": "HCPCS Level II: Medicare's version",
         "pos": "Place of service (POS)", "modifier": "Modifier", "revenue": "Revenue code (facility claim)",
+        "insurer_codes_tied": "Insurer-made codes tied to this (see insurer_codes.csv)",
         "drg_confidence": "MS-DRG link: how sure", "apr_drg_confidence": "APR-DRG link: how sure",
         "apr_drg_usual": "APR-DRG: usual", "apr_drg_other": "APR-DRG: other situation",
         "apr_drg_severity": "APR-DRG: severity levels (added to the code)", "anesthesia_confidence": "Anesthesia link: how sure", "notes": "Notes",
@@ -156,6 +157,22 @@ def main():
                                         "drg_confidence", "anesthesia_confidence", "notes")}
         wide.append(r)
 
+    # Nov 3 (Betsy): insurer-made codes that tie back to an item (insurers/insurer_codes.py -> insurer_codes.csv)
+    ic = os.path.join(HERE, "insurer_codes.csv")
+    tied_count = {}
+    if os.path.exists(ic):
+        names = {w["item_id"]: w["plain_name"] for w in wide}
+        for r in csv.DictReader(open(ic, encoding="utf-8")):
+            for item in filter(None, (r.get("tied_care_items") or "").split("; ")):
+                if item in names:
+                    tied_count[item] = tied_count.get(item, 0) + 1
+                    long_rows.append(dict(item_id=item, plain_name=names[item],
+                                          role=f"insurer-made code ({r['insurer']}, {r['code_type_as_written']})",
+                                          code_system=f"insurer-made: {r['insurer']}", code=r["code"],
+                                          when=r["insurer_description"][:200], anesthesia_base_units=""))
+    for w in wide:
+        w["_tail"]["insurer_codes_tied"] = str(tied_count.get(w["item_id"], "")) if tied_count.get(w["item_id"]) else ""
+
     # wide: as many numbered columns as the busiest item needs
     order = []
     for w in wide:   # every list column any item has, in the order first seen
@@ -175,7 +192,7 @@ def main():
                 fields.append(f"{col}_when")
             if c.startswith("anesthesia_cpt"):
                 fields.append(f"{col}_base_units")
-    fields += ["apr_drg_severity", "apr_drg_confidence", "drg_confidence",
+    fields += ["insurer_codes_tied", "apr_drg_severity", "apr_drg_confidence", "drg_confidence",
                "anesthesia_confidence", "notes"]
     out = []
     for w in wide:

@@ -96,6 +96,18 @@ smaller: EAPG (2.2M rows, outpatient), APC (4.0M), AP-DRG (0.3M).
 - **Type of bill, condition and occurrence codes, implant C-codes**: claim-level or device-specific, not tied to one
   procedure.
 
+## Insurer-made codes (added Nov 3; Betsy: "they have to tie back to at least something")
+`insurers/insurer_codes.py` (workflow "Insurer-made codes") lists every code an insurer made up or labeled with a
+non-standard type (LOCAL, CSTM-ALL, REV, Local, blank, ...) in every insurer table read: **69,099** codes.
+`insurer_codes.csv` ties each back, one code per cell (`tied_code_1_type` / `tied_code_1` ... up to 4):
+standard codes inside the insurer's code (Aetna "131/REV & 10E0XZZ/ICD10PX", BCBS MA "0360-28300"), the code
+itself is a CPT/HCPCS code (with or without an insurer suffix), Medicare payment groups (SNF PDPM, home health
+HIPPS), a DRG number, a service category with its usual revenue code, or a care item by name. **5,461 (8%) tie to
+nothing**: mostly internal order catalogs from provider-owned plans (Group Health Cooperative of South Central
+Wisconsin, Valley Health Plan, Health First, Hometown Health). Codes that tie to a care item also appear in
+`crosswalk_codes.csv` (role "insurer-made code") and are counted in crosswalk.csv. Re-tie without reading storage:
+`python insurers/insurer_codes.py --retie`.
+
 ## Next
 2. Free federal groupings to sort items into families: AHRQ HCUP CCS Services and Procedures (CPT/HCPCS) and CCSR for
    ICD-10-PCS procedures.

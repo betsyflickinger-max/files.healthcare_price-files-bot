@@ -18,98 +18,102 @@
 | 003 | 1 |
 | 004 | 1 |
 | 005 | 1 |
-| 006 | 1 |
-| 007 | 1 |
-| 008 | 1 |
-| 010 | 1 |
-| 011 | 1 |
-| 012 | 1 |
-| 013 | 1 |
-| 014 | 1 |
-| 016 | 1 |
-| 017 | 1 |
-| 018 | 1 |
-| 019 | 1 |
-| 020 | 1 |
-| 021 | 1 |
-| 022 | 1 |
-| 023 | 1 |
-| 024 | 1 |
-| 025 | 1 |
-| 026 | 1 |
-| 027 | 1 |
-| 028 | 1 |
-| 029 | 1 |
-| 030 | 1 |
-| 031 | 1 |
-| 032 | 1 |
-| 033 | 1 |
-| 034 | 1 |
-| 035 | 1 |
 
 ## How they tie back
 
 | Ties to | Codes |
 |---|---|
-| no tie found | 63,984 |
-| revenue code | 2,991 |
-| same as a CPT/HCPCS code | 866 |
-| DRG number | 781 |
-| codes in description | 279 |
-| care item by name | 198 |
+| nursing-home payment group (HIPPS / SNF PDPM) | 28,549 |
+| standard codes inside the insurer's code | 21,302 |
+| same as a standard code | 6,068 |
+| no tie found | 5,461 |
+| home health payment group (HIPPS / PDGM) | 2,476 |
+| service category: partial hospitalization | 1,206 |
+| DRG number (assumed) | 779 |
+| service category: surgery | 702 |
+| service category: consult | 325 |
+| insurer service category (no standard code) | 277 |
+| service category: lab test | 253 |
+| service category: clinic visit or referral | 221 |
+| service category: MRI | 205 |
+| service category: lab test (point of care) | 167 |
+| care item by name | 129 |
+| service category: vaccine | 114 |
+| service category: CT scan | 108 |
+| service category: dialysis | 85 |
+| service category: behavioral health | 82 |
+| service category: respiratory therapy | 81 |
+| service category: medical equipment | 69 |
+| not a service (a plan or billing rule) | 68 |
+| service category: organ acquisition / transplant | 57 |
+| service category: ultrasound | 49 |
+| service category: occupational therapy | 47 |
+| service category: physical therapy | 40 |
+| service category: emergency room | 29 |
+| service category: IV therapy / infusion | 29 |
+| service category: EKG | 24 |
+| service category: x-ray | 21 |
+| service category: hospice | 15 |
+| service category: ambulance | 14 |
+| service category: observation | 13 |
+| service category: speech therapy | 12 |
+| service category: chemotherapy | 9 |
+| service category: labor and delivery | 7 |
+| service category: radiation therapy | 4 |
+| service category: mammogram | 2 |
 
 ## By insurer
 
 | Insurer | Codes | With no tie |
 |---|---|---|
-| Health First Health Plans | 33,216 | 32,783 |
-| Aetna | 19,151 | 18,882 |
-| Group Health Cooperative of South Central Wisconsin | 5,462 | 5,092 |
-| Blue Cross Blue Shield of Massachusetts | 4,831 | 4,764 |
+| Health First Health Plans | 33,216 | 1,170 |
+| Aetna | 19,151 | 61 |
+| Group Health Cooperative of South Central Wisconsin | 5,462 | 3,038 |
+| Blue Cross Blue Shield of Massachusetts | 4,831 | 12 |
 | Molina Healthcare | 2,505 | 0 |
-| Valley Health Plan (County of Santa Clara) | 1,354 | 1,334 |
+| Valley Health Plan (County of Santa Clara) | 1,354 | 837 |
 | CareSource | 778 | 0 |
 | Molina | 485 | 0 |
-| Hometown Health | 428 | 334 |
-| Florida Blue | 365 | 341 |
-| UnitedHealthcare | 198 | 195 |
-| (unknown table) | 130 | 127 |
-| Wellmark Blue Cross and Blue Shield | 60 | 60 |
+| Hometown Health | 428 | 168 |
+| Florida Blue | 365 | 154 |
+| UnitedHealthcare | 198 | 0 |
+| (unknown table) | 130 | 0 |
+| Wellmark Blue Cross and Blue Shield | 60 | 17 |
 | Providence Health Plan | 34 | 0 |
 | Presbyterian Health Plan | 29 | 0 |
-| Oxford (UnitedHealthcare) | 16 | 16 |
-| CareFirst BCBS | 4 | 4 |
-| Anthem | 3 | 3 |
-| Blue Cross Blue Shield of Michigan | 3 | 3 |
-| HCSC | 3 | 3 |
-| Anthem Blue Cross California | 2 | 2 |
-| Anthem Connecticut | 2 | 2 |
-| Anthem Georgia | 2 | 2 |
-| Anthem Indiana | 2 | 2 |
-| Anthem Kentucky | 2 | 2 |
-| Anthem Maine | 2 | 2 |
-| Anthem Missouri | 2 | 2 |
-| Anthem New Hampshire | 2 | 2 |
-| Anthem Ohio | 2 | 2 |
-| Anthem Wisconsin | 2 | 2 |
-| BCBS of Illinois | 2 | 2 |
-| BlueCross BlueShield of South Carolina | 2 | 2 |
-| Kaiser Permanente | 2 | 2 |
-| Alliant | 1 | 1 |
+| Oxford (UnitedHealthcare) | 16 | 0 |
+| CareFirst BCBS | 4 | 0 |
+| Anthem | 3 | 0 |
+| Blue Cross Blue Shield of Michigan | 3 | 1 |
+| HCSC | 3 | 0 |
+| Anthem Blue Cross California | 2 | 0 |
+| Anthem Connecticut | 2 | 0 |
+| Anthem Georgia | 2 | 0 |
+| Anthem Indiana | 2 | 0 |
+| Anthem Kentucky | 2 | 0 |
+| Anthem Maine | 2 | 0 |
+| Anthem Missouri | 2 | 0 |
+| Anthem New Hampshire | 2 | 0 |
+| Anthem Ohio | 2 | 0 |
+| Anthem Wisconsin | 2 | 0 |
+| BCBS of Illinois | 2 | 0 |
+| BlueCross BlueShield of South Carolina | 2 | 0 |
+| Kaiser Permanente | 2 | 0 |
+| Alliant | 1 | 0 |
 | AmeriHealth Caritas Next | 1 | 1 |
-| Anthem Colorado | 1 | 1 |
-| Anthem New York (Empire BCBS) | 1 | 1 |
-| AultCare | 1 | 1 |
-| Blue Cross and Blue Shield of Louisiana | 1 | 1 |
-| Blue Cross and Blue Shield of Nebraska | 1 | 1 |
-| Blue Cross of Idaho | 1 | 1 |
-| Blue KC | 1 | 1 |
-| BlueChoice HealthPlan of South Carolina | 1 | 1 |
-| Cigna | 1 | 1 |
-| Curative | 1 | 1 |
+| Anthem Colorado | 1 | 0 |
+| Anthem New York (Empire BCBS) | 1 | 0 |
+| AultCare | 1 | 0 |
+| Blue Cross and Blue Shield of Louisiana | 1 | 0 |
+| Blue Cross and Blue Shield of Nebraska | 1 | 0 |
+| Blue Cross of Idaho | 1 | 0 |
+| Blue KC | 1 | 0 |
+| BlueChoice HealthPlan of South Carolina | 1 | 0 |
+| Cigna | 1 | 0 |
+| Curative | 1 | 0 |
 | Excellus BCBS | 1 | 1 |
-| HMO Louisiana (BCBSLA) | 1 | 1 |
-| Health Alliance Plan | 1 | 1 |
-| Healthfirst | 1 | 1 |
+| HMO Louisiana (BCBSLA) | 1 | 0 |
+| Health Alliance Plan | 1 | 0 |
+| Healthfirst | 1 | 0 |
 | Medica | 1 | 0 |
 | SelectHealth | 1 | 1 |
