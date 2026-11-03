@@ -179,8 +179,8 @@
   const fileMap = (files) => new Map((files || []).map((f) => [f.market + '|' + f.f, f]));
   const fileOf = (M, r) => M.get(r.market + '|' + r.f) || {};
   // the bot writes short rows that point to their hospital file (cash_files); these calcs spell them out for the page
-  dash.calc('cash_hosp_all', {title: 'Hospital cash prices, all areas', description: 'Joins the 6 cash files (split to stay under the 8 MB file limit) with their hospital files.',
-    inputs: ['cash_files', 'cash_proc', 'cash_hosp', 'cash_hosp_2', 'cash_hosp_3', 'cash_hosp_4', 'cash_hosp_5', 'cash_hosp_6'],
+  dash.calc('cash_hosp_all', {title: 'Hospital cash prices, all areas', description: 'Joins the 10 cash files (split to stay under the 8 MB file limit) with their hospital files.',
+    inputs: ['cash_files', 'cash_proc', 'cash_hosp', 'cash_hosp_2', 'cash_hosp_3', 'cash_hosp_4', 'cash_hosp_5', 'cash_hosp_6', 'cash_hosp_7', 'cash_hosp_8', 'cash_hosp_9', 'cash_hosp_10'],
     fn: (files, procs, ...parts) => { const M = fileMap(files), N = new Map((procs || []).map((p) => [p.code, p.procedure]));
       return join(...parts).map((r) => { const f = fileOf(M, r); return {market: r.market, code: r.code, procedure: N.get(r.code) || r.code, hospital: f.hospital || '', city: f.city || '',
         fee: r.fee === 1 ? 'Doctor fee' : 'Facility fee', setting: SET[r.st] ?? r.st, cash: r.cash, list_price: r.list, row: r.row,

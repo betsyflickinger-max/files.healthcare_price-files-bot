@@ -206,7 +206,7 @@ def pack(name, rows, n, group):
 with ThreadPoolExecutor(8) as ex:
     built = list(ex.map(lambda kv: build_market(*kv), MARKETS.items()))
 cash_rows = [r for b in built for r in b[0]]; oon_rows = [r for b in built for r in b[1]]; proc_rows = [r for b in built for r in b[2]]
-pack("cash_hosp", cash_rows, 6, "market")
+pack("cash_hosp", cash_rows, 10, "market")   # Nov 3, 2026: 6 files no longer fit (raise here and in site/control_cash_oon/tab.html together)
 save("cash_files", [r for b in built for r in b[3]])
 save("cash_proc", proc_rows)
 pack("oon_hosp", oon_rows, 2, "market")
