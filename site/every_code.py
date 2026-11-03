@@ -424,9 +424,13 @@ def work(u):
     # modifier), not the whole state's flat list. Washington's flat list (2.1 GB of parquet) loaded as one Python set was
     # bigger than the machine: the kernel killed every worker while it loaded, and no batch ever finished (14 machines,
     # 3 days, 0 of 256). Same answers: every lookup is a tuple from this batch's own rows.
-    FLAT = set(c.execute(f"""select distinct f.npi, f.ins, f.net, f.v from read_parquet('{D}/flat/*.parquet') f
-        join (select distinct npi, ins, net, v from {src} where fee = 0 and t = 0 and coalesce(modi, '') = '') s
-          on f.npi = s.npi and f.ins = s.ins and f.net = s.net and f.v = s.v""").fetchall())
+    # Nov 3, 2026: ...and not at all in the practice view (PRACTICE=1): flat-rate tuples aren't tied to a code, so a
+    # batch's share was still nearly the whole list and Washington's workers still ran the machines out of memory
+    # (free memory 0 on all 14, no batch in 45 min). The practice view checks it inside DuckDB (fl2, FLATO in _workP).
+    if not PRACTICE:
+        FLAT = set(c.execute(f"""select distinct f.npi, f.ins, f.net, f.v from read_parquet('{D}/flat/*.parquet') f
+            join (select distinct npi, ins, net, v from {src} where fee = 0 and t = 0 and coalesce(modi, '') = '') s
+              on f.npi = s.npi and f.ins = s.ins and f.net = s.net and f.v = s.v""").fetchall())
     if SORTV in ('2', '3'):
         c.execute("create temp table pn as select unnest(?::varchar[]) npi, unnest(range(?::bigint))::int pi", [npis, len(npis)])
         c.execute("create temp table dn as select unnest(?::varchar[]) dt, unnest(range(?::bigint))::int di", [dates, len(dates)])
@@ -553,6 +557,10 @@ def _workP(u, c, src, MD, part=''):
     t0_ = time.time(); log(f'P {u}: {nx:,} rows', 'doctors', c.execute("select count(*) from x where doc").fetchone()[0])
     c.execute(f"""create or replace temp table fl2 as select distinct pn.pi, nn.ni, f.v from read_parquet('{D}/flat/*.parquet') f
                   join pn on pn.npi = f.npi join nn on nn.ins = f.ins and nn.net = f.net""")
+    # Nov 3, 2026: organizations' flat-rate check from fl2, limited to this batch's organization rows (a small share)
+    FLATO = set(c.execute("""select distinct fl2.pi, fl2.ni, fl2.v from fl2 join
+        (select distinct pi, ni, v from x where not doc and fee = 0 and t = 0 and modi = '') s
+          on fl2.pi = s.pi and fl2.ni = s.ni and fl2.v = s.v""").fetchall())
     summ, scp = {}, {}
     pool = ThreadPoolExecutor(8); futs = []
     D0 = didx.get('', 0); U0 = uidx.get('', 0)
@@ -571,7 +579,7 @@ def _workP(u, c, src, MD, part=''):
             zeros = sum(1 for r in rows if r[0] == 0); pos = [r for r in rows if r[0] > 0]
             if pos:
                 h = next((r for r in pos if not r[2]), pos[0]); v, tin, modi, st, nt, dt, url = h
-                isflat = fee == 0 and t == 0 and not modi and (npis[pi], ins, net, v) in FLAT
+                isflat = fee == 0 and t == 0 and not modi and (pi, ni, v) in FLATO
                 rest = [r for r in pos[:9] if r is not h]
                 others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
                 row = [n, fee, t, float(v), flags(code, fee, t, v, isflat), D0 if dt is None else dt, U0 if url is None else url, len(pos) - 1, others[:4], zeros, lab(modi, st, nt, tin, tin)]
