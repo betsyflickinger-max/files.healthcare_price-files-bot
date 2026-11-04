@@ -11,6 +11,12 @@ hold also sat on a build that could never finish. This job looks at every state 
                    minutes (DigitalOcean monitoring), the issue names memory as the likely cause. Low memory alone, with
                    results still landing, is only logged (a busy healthy build can run near full).
   3. Waiting long  a current build has sat at 'wait' or 'split' with no machines for 12+ hours. -> one issue saying so.
+  5. Clean-up     (Nov 4, 2026, code review B2, Betsy OK'd) website-build machines (DigitalOcean tag 'site-build') were never
+                   deleted by anything but themselves; the 48-hour cleaner only looks at the insurer reader's 'upfront-bot'
+                   machines. A build machine is now deleted when its build is finished (stage live / done / held / hosp,
+                   for 2+ hours) or when it has run MAX_AGE_H hours (a hung machine). A deleted machine whose build
+                   still needs it is started again by the build's own loop and picks up from the saved work. Each
+                   clean-up is listed on the "Build machines cleaned up" issue.
   4. Daily summary once a day (~7 AM CT) a comment on the "Daily build summary" issue: every build with machines, its
                    stage, results saved and saved in the last 24 h, and the price check's hours / dollars left.
 
@@ -38,6 +44,9 @@ API = f"https://api.github.com/repos/{REPO}"
 DO = "https://api.digitalocean.com/v2"
 DRY = bool(os.environ.get("DRY"))
 STUCK_H, WAIT_H, MEM_FREE_GB, CAP = 3, 12, 1.0, 2
+MAX_AGE_H, DONE_GRACE_H = 96, 2
+DONE_STAGES = ("live", "done", "held", "hosp")
+REAP_TITLE = "Build machines cleaned up"
 W = "bot/watchdog/"
 DIGEST_HOUR_UTC = 13          # ~7 AM CT (8 AM during daylight time)
 DIGEST_TITLE = "Daily build summary"
@@ -219,7 +228,52 @@ def builds():
     return out
 
 
+def reap():
+    """Delete website-build machines whose build is finished, or that have run MAX_AGE_H hours. Returns lines for the issue."""
+    states = {}
+    for o in ls("site/builds/"):
+        k = o["Key"]
+        if k.endswith("/state.json") and k.count("/") == 3:
+            states[k.split("/")[2]] = o["LastModified"].timestamp()
+    out = []
+    for d in droplets():
+        if "site-build" not in (d.get("tags") or []) or not d["name"].startswith("upfront-site-"):
+            continue
+        rest = d["name"][len("upfront-site-"):]
+        bid = max((b for b in states if rest.startswith(b + "-")), key=len, default=None)
+        age = (NOW - ts(d["created_at"])) / 3600
+        why = None
+        if bid and age > DONE_GRACE_H and NOW - states[bid] > DONE_GRACE_H * 3600:
+            stage = (getj(f"site/builds/{bid}/state.json", {}) or {}).get("stage")
+            if stage in DONE_STAGES:
+                why = f"its build {bid} is finished (stage '{stage}')"
+        if not why and age > MAX_AGE_H:
+            why = f"it had run {age:.0f} hours (limit {MAX_AGE_H}); its build starts a fresh one from the saved work if it still needs it"
+        if not why:
+            continue
+        price = float((d.get("size") or {}).get("price_hourly") or 0)
+        log("clean-up:", d["name"], why)
+        if not DRY:
+            r = requests.delete(f"{DO}/droplets/{d['id']}", headers=do_h(), timeout=60)
+            if r.status_code not in (204, 404):
+                log("delete failed", d["name"], r.status_code, r.text[:150]); continue
+        out.append(f"- `{d['name']}` ({d.get('size_slug')}, ${price:.2f}/h, up {age:.0f} h): {why}")
+    if out:
+        body = f"{ct(NOW)}: deleted {len(out)} website-build machine(s).\n\n" + "\n".join(out)
+        i = find_issue(REAP_TITLE)
+        if i:
+            gh("POST", f"/issues/{i['number']}/comments", json={"body": body})
+        else:
+            gh("POST", "/issues", json={"title": REAP_TITLE, "body": "Website-build machines the hourly watchdog deleted "
+                                        "(board/build_watchdog.py, clean-up). Nothing in storage is touched.\n\n" + body})
+    return out
+
+
 def main():
+    try:
+        reap()
+    except Exception as e:   # the clean-up must never stop the stuck-build checks
+        log("clean-up failed", repr(e)[:200])
     mine = machines_by_build()
     allb = builds()
     seen = getj(W + "seen.json", {})          # {bid: first time seen waiting}

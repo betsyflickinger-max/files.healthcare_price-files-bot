@@ -463,6 +463,28 @@ def units_total(slug): return NB * int(WBIG.get(slug, {}).get('SPLIT', '1'))
 def usd_hour(size):
     try: return float(next(z['price_hourly'] for z in O.do('GET', '/sizes?per_page=200')['sizes'] if z['slug'] == size))
     except Exception: return 0.25
+_SIZES = {}
+def usd_size(slug):
+    if not _SIZES:
+        try: _SIZES.update({z['slug']: float(z['price_hourly']) for z in O.do('GET', '/sizes?per_page=200')['sizes']})
+        except Exception: pass
+    return _SIZES.get(slug, 0.25)
+def fleet_rate(st, left):
+    """Nov 4, 2026 (code review B3, Betsy OK'd): (machines, dollars per hour) of the build's machines as they really are.
+    The check priced every machine at SIZE's rate (32 GB, ~$0.24/h), but Washington's and the big-memory machines are
+    64 GB (~$0.59/h), so real spend ran ~2.4-3x what it thought. Live machines are priced by their own size; with none
+    running, the plan (st['machines'] per state at that state's size, plus one big-memory machine each) is priced."""
+    try:
+        ds = [d for d in O.droplets() if d['name'].startswith(f'upfront-site-{O.BID}-')]
+        if ds: return len(ds), sum(float((d.get('size') or {}).get('price_hourly') or usd_size(d.get('size_slug'))) for d in ds)
+    except Exception: pass
+    bd = build_defaults(); n_, usd_ = 0, 0.0
+    for s_ in left:
+        ps = bd.get('per_state', {}).get(s_, {}); k_ = st['machines'][s_]
+        n_ += k_; usd_ += k_ * usd_size(ps.get('size', SIZE))
+        if practice_for(st, s_) and bd.get('big_machine', True):
+            n_ += 1; usd_ += usd_size(ps.get('big_size', SIZE))
+    return n_, usd_
 def cost_hold(st, left):
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     import cost_check as C
@@ -489,13 +511,12 @@ def cost_hold(st, left):
     machines = sum(st['machines'][s] for s in left)
     # Oct 24, 2026: money already spent counts the machines that really exist (the plan in st['machines'] can be far
     # more than machine shares let the build run: stn5 planned 14 and had 1)
-    try: live = sum(1 for d in O.droplets() if d['name'].startswith(f'upfront-site-{O.BID}-'))
-    except Exception: live = machines
+    live, rate_ = fleet_rate(st, left)   # Nov 4: dollars per hour of the real machines (sizes differ)
     since = ck.get('spend_t0', ck['t0'])
     v = None
     if not h and not ck.get('b0'):
         if done_now > ck['done0']: ck.update(t0=time.time(), done0=done_now, b0=True); log('price check: first batches in, measuring from now'); return False
-        v = C.spent_hold(O.BID, (time.time() - since) / 3600, live, usd_hour(SIZE))
+        v = C.spent_hold(O.BID, (time.time() - since) / 3600, 1, rate_)
         if not v: return False
     if h:   # approved: start again with fresh launch counts and a fresh measurement
         log('price check: approved for $', C.approved_usd(O.BID), '- resuming')
@@ -504,10 +525,10 @@ def cost_hold(st, left):
         return False
     proj = None
     if not v:
-        proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), machines, usd_hour(SIZE))
+        proj = C.projection(ck['t0'], ck['done0'], done_now, sum(lefts.values()), 1, rate_)
         v = C.verdict(O.BID, proj)
         if proj is None and v == 'ok' and ck.get('b0'):   # no new batch since the first: hold only on money already spent
-            v = C.spent_hold(O.BID, (time.time() - since) / 3600, live, usd_hour(SIZE)) or 'ok'
+            v = C.spent_hold(O.BID, (time.time() - since) / 3600, 1, rate_) or 'ok'
     if proj: ck['last'] = dict(at=time.strftime('%Y-%m-%d %H:%M'), hours_left=round(proj[0], 1) if proj[0] != float('inf') else None,
                                usd_left=round(proj[1]) if proj[1] != float('inf') else None, units_per_hour=round(proj[2], 2))
     if v == 'ok': return False
