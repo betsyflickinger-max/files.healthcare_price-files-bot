@@ -80,5 +80,11 @@ def build_cap(bid, limit, reserve, names, s3, bucket, log=print):
     cap = max(cap, 1, floor(bid))   # a build always keeps at least one machine (or its floor), so it still moves
     mx = most(bid)
     if mx and cap > mx: cap, why = mx, why + f"; its most {mx} (build_floors.json)"
+    try:   # Nov 3, 2026: a build the stuck-build watchdog flagged (board/build_watchdog.py) holds at most its cap
+        import json as _j
+        wc = int(_j.loads(s3.get_object(Bucket=bucket, Key=f"bot/watchdog/cap/{bid}.json")["Body"].read()).get("most", 0))
+        if wc and cap > wc: cap, why = wc, why + f"; watchdog cap {wc} (stuck, see the GitHub issue)"
+    except Exception:
+        pass
     log(f"machine shares: {bid} may hold {cap} of {limit} ({why}; {others} on other builds)")
     return cap
