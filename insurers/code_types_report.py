@@ -50,10 +50,19 @@ latest = {}
 for k, d in sorted(got, key=lambda kd: kd[0].split("/")[3]):
     latest[(k.split("/")[4], d.get("source_file") or k)] = (k, d)
 print(f"{len(got) - len(latest)} older duplicate census files dropped")
+zero = {"tables": 0, "tables_with_zero": 0, "zero_rows": 0, "dollar_rows": 0, "insurers": set(), "insurers_with_zero": set()}
 for k, d in latest.values():
     # Insurer name as written in the file header (same as census_report.py); the R2 folder name only as a last resort
     ins = (d.get("header", {}).get("reporting_entity_name") or d.get("insurer") or d.get("reporting_entity_name")
            or d.get("network") or k.split("/")[4])
+    if "zero_dollar_rows" in d:  # census v2+ (Oct 13, 2026): $0.00 dollar-type prices, a placeholder that tells a patient nothing
+        zero["tables"] += 1
+        zero["insurers"].add(ins)
+        zero["zero_rows"] += d["zero_dollar_rows"]
+        zero["dollar_rows"] += d["zero_dollar_rows"] + d.get("dollar_rows", 0)
+        if d["zero_dollar_rows"]:
+            zero["tables_with_zero"] += 1
+            zero["insurers_with_zero"].add(ins)
     for v in d.get("values", {}).get("billing_code_type", {}).get("top", []):
         total[v["value"]] += v["rows"]
         if "DRG" in str(v["value"]).upper() or str(v["value"]).upper() in ("APR", "APC", "EAPG"):
@@ -64,6 +73,12 @@ lines += [f"| {t} | {n:,} |" for t, n in total.most_common()]
 for t, c in by_ins.items():
     lines += ["", f"### {t}: by insurer", "", "| Insurer | Rows | Tables |", "|---|---|---|"]
     lines += [f"| {i} | {n:,} | {tables[(t, i)]} |" for i, n in c.most_common(40)]
+z = zero
+lines += ["", "## $0.00 prices (census v2+ tables)", "",
+          f"- Tables measured: {z['tables']:,} from {len(z['insurers']):,} insurers",
+          f"- Tables with at least one $0.00 price: {z['tables_with_zero']:,} from {len(z['insurers_with_zero']):,} insurers",
+          f"- $0.00 prices: {z['zero_rows']:,} of {z['dollar_rows']:,} dollar-type prices"
+          + (f" ({100 * z['zero_rows'] / z['dollar_rows']:.1f}%)" if z['dollar_rows'] else "")]
 lines += ["", f"({len(skipped)} census files could not be read)"]
 text = "\n".join(lines)
 print(text)
