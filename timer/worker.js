@@ -50,6 +50,7 @@ const JOBS = [
   ['40 9 12 * *', 'more-pages.yml'],
   ['33 14 12 * *', 'packages.yml'],
   ['23 14 1 2,3,8,9 *', 'nsa-idr.yml'],
+  ['50 * * * *', 'build-watchdog.yml'],                                      // Nov 3: stuck-build watchdog (board/build_watchdog.py)
 ];
 
 function part(spec, v, min, max) {
