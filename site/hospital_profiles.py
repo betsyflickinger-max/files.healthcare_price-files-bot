@@ -321,10 +321,10 @@ def prices(h, L):
         row = dict(code=c, name=D["codes"].get(c, {}).get("name", c), slug=slugs.get(c))
         # its own price file (45 CFR 180): discounted cash price and dollar negotiated rates
         Hc = L["H"][c]
-        cash = [x[2] for x in Hc.get("c", []) if x[0] in srcs and x[2]]
+        cash = [x[2] for x in Hc.get("c", []) if x[0] in srcs and x[2] and not x[5]]   # Nov 4 (review A5): facility lines only, not doctor-fee lines
         # rows: [file, insurer, product (0 employer/individual, 1 marketplace, 2 MA, 3 Medicaid, 4 not stated), plan, fee,
         #        1 = % of charges, value, line, setting, 1 = flat case rate]; commercial dollar rates, no flat case rates
-        neg = [x[6] for x in Hc.get("r", []) if x[0] in srcs and x[2] in (0, 1) and not x[5] and not x[9] and x[6]]
+        neg = [x[6] for x in Hc.get("r", []) if x[0] in srcs and x[2] in (0, 1) and not x[4] and not x[5] and not x[9] and x[6]]   # Nov 4 (A5): facility fee only
         row["cash"] = min(cash) if cash else None
         row["neg"] = (min(neg), max(neg), len(neg)) if neg else None
         # insurer files (Transparency in Coverage): this hospital's providers, dollar rates, not flagged low/zero

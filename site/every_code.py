@@ -24,6 +24,7 @@ def looks_placeholder(v, median):
     nines = '9999' in t or bool(re.fullmatch(r'\d*999(\.99?)?', t))
     return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 E = os.environ
+FR = E.get('FIELDRULES') == '1'   # Nov 4, 2026: price-field rules (see stage A r0 and hpick)
 _g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks
 s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"), aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
                   aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
@@ -240,14 +241,40 @@ for ii, (key, size) in enumerate(files):
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
+        # Nov 4, 2026 (code review A2/A3/A4/A6, Betsy OK'd): fields that change what a number means.
+        # - a rate past its expiration_date isn't today's price (an expired $1,000 beat the current $1,400 for the headline)
+        # - capitation (a monthly amount per member) and bundle (one amount for a group of codes) aren't one code's price
+        # - additional_information "per 15 minutes" / "per diem" / "base ... additional $2,600 per day": the amount isn't a
+        #   total, so it's marked in the type (nt) and only becomes a headline when nothing else is listed
+        # - a doctor's rate whose place-of-service codes are all hospital/facility places (no office) is the facility-setting
+        #   rate; an office-setting rate is preferred for the headline (st = 'facility setting')
+        # Tables already read keep their saved stage-A work (ACACHE) until the insurer posts a new file; the headline and
+        # label rules in stage B (hpick, label_str) apply to every table at the next build.
+        # FIELDRULES=1 is set by the orchestrators for builds that START after this change (build_defaults.json
+        # "fieldrules"), so a build already under way keeps one set of rules on all its machines and lookup lists.
+        cols_ = {x_[0] for x_ in con.execute(f"describe select * from read_parquet('{loc}')").fetchall()}
+        cq = lambda n_: f"coalesce(cast(r.{n_} as varchar), '')" if n_ in cols_ else "''"
+        today_ = time.strftime('%Y-%m-%d')
+        KEEP_ = (f" and not coalesce(try_cast(left({cq('expiration_date')}, 10) as date) < date '{today_}', false)"
+                 f" and lower({cq('negotiation_arrangement')}) in ('', 'ffs')")
+        AI_ = f"lower({cq('additional_information')})"
+        SC_ = f"string_split(replace({cq('service_code')}, ' ', ''), ',')"
+        NT_ = (f"case when regexp_matches({AI_}, '(additional|add''l|each add|thereafter|after [0-9]+ day)') and regexp_matches({AI_}, '(day|diem)') then 'base plus per day'"
+               f" when regexp_matches({AI_}, 'per[ -]?(diem|day)|/ ?day|daily rate') then 'per day'"
+               f" when regexp_matches({AI_}, 'per ?(each )?(15|30|60)? ?(min|unit|hour|hr|session|mile|dose|visit day)|/ ?(unit|min|hour)') then 'per unit'"
+               f" else lower(negotiated_type) end")
+        ST_ = (f"case when billing_class not ilike 'inst%' and {cq('service_code')} <> ''"
+               f" and list_bool_and(list_transform({SC_}, x -> x in ('19','21','22','23','24','26','31','34','41','42','51','52','53','56','61')))"
+               f" then 'facility setting' else coalesce(setting,'') end")
+        if not FR: KEEP_, NT_, ST_ = '', 'lower(negotiated_type)', "coalesce(setting,'')"
         con.execute(f"""create or replace temp view r0 as
-          select r.*, coalesce(m.network_name, r.file_label) network_name from (select * from read_parquet('{loc}') where {pf}) r left join {mem} m using (npi, tin)
+          select r.*, {NT_} nt_, {ST_} st_, coalesce(m.network_name, r.file_label) network_name from (select * from read_parquet('{loc}') where {pf}) r left join {mem} m using (npi, tin)
           where (billing_code_type ilike 'cpt%' or billing_code_type ilike 'hcpcs%' or billing_code_type ilike 'ms-drg%' or billing_code_type ilike 'drg%')
-            and lower(negotiated_type) in ('negotiated','fee schedule','derived','percentage') and try_cast(negotiated_rate as double) >= 0""")
+            and lower(negotiated_type) in ('negotiated','fee schedule','derived','percentage') and try_cast(negotiated_rate as double) >= 0{KEEP_}""")
         con.execute(f"""create or replace temp view r1 as select {SHORT} ins, {NET} net, {KEY} code, {TYPE} ctype, name, npi, tin,
           case when billing_class ilike 'inst%' then 0 else 1 end fee, case when negotiated_type ilike 'percent%' then 1 else 0 end t,
-          round(try_cast(negotiated_rate as double), 2) v, coalesce(billing_code_modifier,'') modi, coalesce(setting,'') st,
-          lower(negotiated_type) nt, last_updated_on dt, source_url url from r0""")
+          round(try_cast(negotiated_rate as double), 2) v, coalesce(billing_code_modifier,'') modi, st_ st,
+          nt_ nt, last_updated_on dt, source_url url from r0""")
         con.execute(f"""create or replace temp view r2 as select * from r1
           where (ctype <> 'MS-DRG' and regexp_matches(code, '^[0-9A-Z][0-9]{{3}}[0-9A-Z]$')) or (ctype = 'MS-DRG' and regexp_matches(code, '^[0-9]{{1,3}}$'))""")
         sd = D / f'stage/src={tag}'
@@ -315,10 +342,28 @@ MOD = {'26': 'professional part only', 'TC': 'technical part only', '52': 'reduc
        '50': 'both sides', '51': 'multiple procedures', '59': 'separate procedure', '80': 'assistant surgeon', '82': 'assistant surgeon',
        'AS': 'assistant at surgery', 'LT': 'left side', 'RT': 'right side', 'QK': 'anesthesia, supervised', 'QX': 'nurse anesthetist, supervised',
        'QY': 'nurse anesthetist, supervised', 'QZ': 'nurse anesthetist alone', 'AA': 'anesthesiologist personally', 'GT': 'telehealth', '95': 'telehealth', 'GP': 'physical therapy plan'}
+# Nov 4, 2026 (code review A4/A6): which listed rate is the headline. Lowest rate within the best group:
+# 0 full service, office setting / 1 full service, facility setting (doctor) / 2 with a modifier (part of a service) /
+# 3 "derived" (an insurer's bookkeeping figure) / 4 not a total (per unit, per day, base plus per day). Was: lowest rate
+# with no modifier, so a derived $14.65 or a "$30 per 15 minutes" could be the headline.
+NOT_TOTAL = {'per unit': 'per unit, not a total', 'per day': 'per day, not a total', 'base plus per day': 'base rate, more per day after'}
+HR_SQL = ("case when nt in ('per unit', 'per day', 'base plus per day') then 4 when nt = 'derived' then 3 "
+          "when modi <> '' then 2 when st = 'facility setting' then 1 else 0 end")
+def _hr(r):
+    modi, st, nt = r[2], r[3], r[4]
+    return 4 if nt in NOT_TOTAL else 3 if nt == 'derived' else 2 if modi else 1 if st == 'facility setting' else 0
+MDX = " and coalesce(nt, '') not in ('derived', 'per unit', 'per day', 'base plus per day')" if FR else ''   # medians: full-service totals only
+if not FR:   # builds started before Nov 4: the old rule (lowest rate with no modifier, else lowest)
+    HR_SQL = "case when modi <> '' then 1 else 0 end"
+    _hr = lambda r: 1 if r[2] else 0
+def hpick(pos):   # pos is in rate order, so min() keeps the lowest rate within the best group
+    return min(pos, key=_hr)
 def label_str(modi, st, nt, other):
     p = [MOD.get(m, 'modifier ' + m) for m in modi.split('|') if m] if modi else []
     if st in ('inpatient', 'outpatient'): p.append(st)
+    if st == 'facility setting': p.append('in a hospital or facility setting')
     if nt in ('fee schedule', 'derived'): p.append(nt)
+    if nt in NOT_TOTAL: p.append(NOT_TOTAL[nt])
     if other: p.append('billed under another tax ID')
     return ', '.join(p)
 def provider(npi):
@@ -462,7 +507,7 @@ def work(u):
         c.execute("create temp table un as select unnest(?::varchar[]) url, unnest(range(?::bigint))::int ui", [urls, len(urls)])
         c.execute("create temp table nn as select unnest(?::varchar[]) ins, unnest(?::varchar[]) net, unnest(range(?::bigint))::int ni",
                   [[a_ for a_, _ in NETS2], [b_ for _, b_ in NETS2], len(NETS2)])
-    MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi='' group by all").fetchall()}
+    MD = {(cd, fe): (m, n) for cd, fe, m, n in c.execute(f"select code, fee, approx_quantile(v, 0.5), count(*) from {src} where t=0 and v>0 and modi=''{MDX} group by all").fetchall()}
     # Oct 18, 2026: keep each code's median (the basis of the 'unusually low' / 'filler-looking' flags) so merge_build.py
     # can judge networks added later against the same typical rate
     try:
@@ -513,7 +558,7 @@ def work(u):
         nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
         zeros = sum(1 for r in rows if r[0] == 0); pos = [r for r in rows if r[0] > 0]
         if pos:
-            h = next((r for r in pos if not r[2]), pos[0])
+            h = hpick(pos)
             v, tin, modi, st, nt, dt, url = h
             isflat = fee == 0 and t == 0 and not modi and (npi, ins, net, v) in FLAT
             m = MD.get((code, fee)); islow = bool(m and m[1] >= 5 and t == 0 and v < 0.2 * m[0])
@@ -603,7 +648,7 @@ def _workP(u, c, src, MD, part=''):
             ins, net = NETS2[ni]; nk = f'{ins}|{net}'; n = nidx[nk]; scp.setdefault(nk, set()).add(code)
             zeros = sum(1 for r in rows if r[0] == 0); pos = [r for r in rows if r[0] > 0]
             if pos:
-                h = next((r for r in pos if not r[2]), pos[0]); v, tin, modi, st, nt, dt, url = h
+                h = hpick(pos); v, tin, modi, st, nt, dt, url = h
                 isflat = fee == 0 and t == 0 and not modi and (pi, ni, v) in FLATO
                 rest = [r for r in pos[:9] if r is not h]
                 others = [[float(r[0]), lab(r[2], r[3], r[4], r[1], tin)] for r in rest[:8]]
@@ -627,10 +672,10 @@ def _workP(u, c, src, MD, part=''):
         if curcode: yield curcode, f
     FACS = dict(fac()); log(f'P {u}: organizations done', round(time.time() - t0_), 's', sum(len(r) for f_ in FACS.values() for r in f_.values()), 'rows')   # organizations are a small share of rows, so they are held in memory while doctors stream
     # doctors: one result per doctor per practice (same headline rule), then doctors with identical results are grouped
-    cur = c.execute("""
+    cur = c.execute(f"""
       with d as (select code, tin, ni, fee, t, pi, count(*) filter (where v = 0) zeros, count(*) filter (where v > 0) npos,
                    arg_min(struct_pack(v := v, modi := modi, st := st, nt := nt, di := di, ui := ui),
-                           struct_pack(c := case when v > 0 and modi = '' then 0 when v > 0 then 1 else 2 end, v := v, modi := modi, st := st, nt := nt, di := di, ui := ui)) h
+                           struct_pack(c := case when v > 0 then {HR_SQL} else 9 end, v := v, modi := modi, st := st, nt := nt, di := di, ui := ui)) h
                  from x where doc group by code, tin, ni, fee, t, pi),
            p as (select d.*, fl2.pi is not null and d.fee = 0 and d.t = 0 and d.h.modi = '' and d.npos > 0 isflat
                  from d left join fl2 on fl2.pi = d.pi and fl2.ni = d.ni and fl2.v = d.h.v)
@@ -717,7 +762,7 @@ def work3(u, c, src, MD):
             from d join pk using (pi))
       select code, pi, ni, fee, t, count(*) filter (where v = 0) zeros, count(*) filter (where v > 0) npos,
              arg_min(struct_pack(v := v, tin := tin, modi := modi, st := st, nt := nt, di := di, ui := ui, rp := rp),
-                     case when v > 0 and modi = '' then rp when v > 0 then 1e8 + rp else 2e8 + rp end) h,
+                     case when v > 0 then ({HR_SQL}) * 1e8 + rp else 9e8 + rp end) h,
              list(struct_pack(v := v, tin := tin, modi := modi, st := st, nt := nt, rp := rp) order by rp) filter (where keep and v > 0 and rp <= 9) ot
       from r group by all order by code, pi, ni, fee, t""")
     summ, scp = {}, {}
@@ -915,7 +960,7 @@ if COMING: embed['coming'] = COMING
 # Oct 18, 2026: what a later run needs to add codes to this build (site/request_codes.py; the background fill): the exact
 # insurer tables and settings, so its files fit this embed.json's lookup lists. Written before embed.json.
 KEEP = ('RATES', 'NPIS', 'ACACHE', 'NB', 'NOXPART', 'LABEL_TABLES_KEY', 'NETS_FROM_LABEL', 'SORTV', 'PRIORITY_KEY', 'PHASE', 'ALSO_WK',
-        'PRACTICE', 'SLICE_ROWS')   # Oct 22: requested codes are built the same way (practice view)
+        'PRACTICE', 'SLICE_ROWS', 'FIELDRULES')   # Oct 22: requested codes are built the same way (practice view); Nov 4: same price-field rules
 s3.put_object(Bucket=B, Key=TOUT + 'build_env.json', Body=json.dumps(dict(
     made=time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), wk=WK, fp=FP, files=[list(f_) for f_ in files],
     label_keys=sorted(LABEL_KEYS), env={k_: E[k_] for k_ in KEEP if E.get(k_)}), indent=1).encode())

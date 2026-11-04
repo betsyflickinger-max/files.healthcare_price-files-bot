@@ -564,6 +564,9 @@ def main():
         # Oct 19, 2026 (Betsy OK'd): the standard way to build a state, fixed when the build starts so a build in flight keeps
         # its mode (site/build_defaults.json): practice view, big batches sized up front, one big-memory machine per state
         st['practice'] = bool(build_defaults().get('practice')) and not UPDATE
+        # Nov 4, 2026: price-field rules (every_code.py FIELDRULES), fixed at the start like the practice view. An update
+        # build merges into a finished build's lookup lists, so it keeps that build's rules (off until a full build).
+        st['fieldrules'] = bool(build_defaults().get('fieldrules')) and not UPDATE
     if st['stage'] == 'split':
         sz = sizes(f'data/{SCOPE}/rates/')
         done = {k.rsplit('/', 1)[1][:-5] for k in ls(f'data/{SCOPE}/state/_done/')}
@@ -648,6 +651,7 @@ def main():
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
                 env['LABEL_TABLES_KEY'] = label_tables(st)
+                if st.get('fieldrules'): env['FIELDRULES'] = '1'
                 if common_first() and not UPDATE:   # Oct 18: common codes first (priority list + DRGs, the rest listed as coming)
                     env.update(PHASE='1', PRIORITY_KEY=f'site/priority/{CODE_OF[slug]}.json')
                 if not UPDATE:   # Nov 1: pages_skip.json networks left out (the list is written once per state)

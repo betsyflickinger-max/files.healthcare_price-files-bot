@@ -138,16 +138,28 @@ def one_file(path):
       CASE lower(trim(coalesce(r.setting,''))) WHEN 'outpatient' THEN 'o' WHEN 'inpatient' THEN 'i' WHEN 'both' THEN 'b' ELSE '' END st,
       coalesce(try_cast(r.source_row AS BIGINT),0) rw, r.* EXCLUDE (code)
       FROM raw r JOIN srcmap m ON left(r.sha256,16)=m.sha16 JOIN okc ON okc.code=upper(trim(r.code))"""
+    # Nov 4, 2026 (code review A1/A5, Betsy OK'd): a line with a modifier (26 = doctor part only, TC = equipment part only,
+    # ...) is part of a price, not the price, so it no longer shows as the hospital's cash price or insurer rate. Per-day
+    # rates, formula estimates, DRG weights typed as dollars and percent-method rows no longer show as dollar prices
+    # (the same rules as site/match_pilot.py). The rows stay in storage; only the page files leave them out.
+    cols = {x[0] for x in c.execute("DESCRIBE raw").fetchall()}
+    col = lambda n_: f"r.{n_}" if n_ in cols else "''"
+    MODI = f"trim(coalesce({col('modifiers')},''))"
+    METH = f"lower(trim(coalesce({col('methodology')},'')))"
+    ALG = f"trim(coalesce({col('negotiated_algorithm')},''))"
     c.execute(f"""CREATE TABLE cash AS SELECT s, code, st, cash, coalesce(gross,0) gross, min(rw) rw, fee, arg_min(dsc, rw) dsc FROM (
-      SELECT s, code, fee, st, rw, {NUM('discounted_cash')} cash, {NUM('gross_charge')} gross, left(trim(coalesce(description,'')),90) dsc FROM ({base}))
+      SELECT s, code, fee, st, rw, {NUM('discounted_cash')} cash, {NUM('gross_charge')} gross, left(trim(coalesce(description,'')),90) dsc FROM ({base}) r
+      WHERE {MODI} = '')
       WHERE cash>0 GROUP BY s, code, fee, st, cash, gross""")
     c.execute(f"""CREATE TABLE rates AS SELECT s, code, ins, prod, plabel, fee, pct, val, min(rw) rw, st FROM (
       SELECT b.s, b.code, cl.ins, cl.prod, cl.plabel, b.fee, b.st, b.rw,
         CASE WHEN dol>0 THEN 0 ELSE 1 END pct, round(CASE WHEN dol>0 THEN dol ELSE pc END, 2) val
-      FROM (SELECT s, code, fee, st, rw, payer_name, plan_name, {NUM('negotiated_dollar')} dol, {NUM('negotiated_percentage')} pc FROM ({base})
-            WHERE trim(coalesce(payer_name,''))<>'') b
+      FROM (SELECT s, code, fee, st, rw, payer_name, plan_name, {NUM('negotiated_dollar')} dol, {NUM('negotiated_percentage')} pc,
+                   {METH} meth, {ALG} alg, regexp_full_match(code, '[0-9]{{1,3}}') isdrg FROM ({base}) r
+            WHERE trim(coalesce(payer_name,''))<>'' AND {MODI} = '') b
       JOIN cls cl ON cl.payer=coalesce(b.payer_name,'') AND cl.plan=coalesce(b.plan_name,'')
-      WHERE dol>0 OR pc>0)
+      WHERE (dol>0 AND NOT (meth LIKE '%per diem%' OR meth LIKE '%percent%' OR (meth = 'other' AND alg <> '') OR (isdrg AND dol < 100)))
+         OR (coalesce(dol,0)<=0 AND pc>0))
       GROUP BY s, code, ins, prod, plabel, fee, st, pct, val""")
     # flat case rate: identical dollar amount, same file + insurer + plan + fee type, on 5+ codes
     c.execute("""CREATE TABLE flat AS SELECT s, ins, plabel, fee, val FROM rates WHERE pct=0

@@ -447,6 +447,8 @@ def kind_of(x):
 
 HOSP_NAME = re.compile(r'\bhospital\b', re.I)
 PARPLAN = re.compile(r'par\s*plan', re.I)
+NOT_WHOLE = re.compile(r'not a total|more per day after|\bderived\b')   # Nov 4 (review A4/A6)
+PART_FAC = re.compile(r'part only|reduced service|discontinued')   # a facility line for only part of the service (TC/26/52/53)
 # Hospital price files filed under the wrong area by name alone (Oct 18 audit: "Dallas County Hospital" in Perry, Iowa sat in
 # Dallas-Fort Worth). Left out of every page's figures here; the real fix is a state/address check where files are assigned to areas.
 WRONG_AREA = re.compile(r'dallascohospital\.org', re.I)
@@ -585,6 +587,13 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
             if r[4] & 8 or (m_ and looks_placeholder(r[3], m_)):
                 high[k].add((fi, r[0]))
                 high_e[k].append(entry(fi, r))
+                continue
+            # Nov 4, 2026 (code review A4/A6): a rate the file marks as not a whole price (per unit, per day, base plus per
+            # day, an insurer's "derived" bookkeeping figure, or only part of the service by modifier) stays in the Price
+            # Finder with its label but isn't one of the page's prices. every_code.py only makes one a headline when the
+            # provider lists nothing else.
+            lb_ = D['labs'][r[10]] if len(r) > 10 and r[10] is not None and 0 <= r[10] < len(D.get('labs') or []) else ''
+            if NOT_WHOLE.search(lb_) or (k == 'fac' and PART_FAC.search(lb_)):
                 continue
             key = (fi, r[0])
             if key not in per[k] or r[3] < per[k][key]['v']:
@@ -1094,9 +1103,12 @@ def allin_html(S):
     if not best:
         return ''
     t, n = best
-    return (f"<p class='allin'><b>All in, place plus doctor: from {money(t)}</b> in {esc(netname(n['ins'], n['plan']))} "
-            f"({money(n['lo']['v'])} at {esc(n['lo']['name'])} + {money(n['doc_mid'])}, the typical doctor's fee in that network). "
-            f"Anesthesia and any lab work bill separately. <a href='#by-network'>Your network's total</a></p>")
+    # Nov 4, 2026 (code review wording fix): this adds two figures, and the doctor's is the middle of many listed fees, so
+    # it's labeled as a sum with a typical fee, not "from" (a floor). The methodology page lists it as a calculated figure.
+    return (f"<p class='allin'><b>Place plus doctor, added up: {money(t)}</b> in {esc(netname(n['ins'], n['plan']))} "
+            f"({money(n['lo']['v'])} at {esc(n['lo']['name'])}, the lowest place fee listed, + {money(n['doc_mid'])}, the middle doctor's fee "
+            f"that network lists; yours depends on who does it). Anesthesia and any lab work bill separately. "
+            f"<a href='#by-network'>Your network's figures</a></p>")
 
 
 def jump_html(S, cash_sec, hosp_sec, med_sec):
@@ -1286,7 +1298,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
 
     notes = []
     if S['n_flag']:
-        notes.append(f"{S['n_flag']:,} {'rate is' if S['n_flag'] == 1 else 'rates are'} flagged in the insurer files as unusually low and left out of these figures.")
+        notes.append(f"{S['n_flag']:,} {'rate is' if S['n_flag'] == 1 else 'rates are'} unusually low (under a fifth of the typical listed rate for this code, our own check, not the insurer's) and left out of these figures. They still show, labeled, in the Price Finder.")
     if S.get('n_high'):
         notes.append(f"{S['n_high']:,} {'rate looks' if S['n_high'] == 1 else 'rates look'} like filler numbers in the insurer files "
                      "(such as 59,999.99, far above every real rate for this code) and {'is' if S['n_high'] == 1 else 'are'} left out of these figures. They're labeled \"unusually high\" in the Price Finder.")
@@ -1315,8 +1327,8 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{whoh(n['lo'])} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + whoh(n['hi']) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td>"
-        + ((f"<td class='num' data-l='+ Doctor (typical)'>{money(n['doc_mid'])}</td><td class='num tot' data-l='= Both bills, from'>{money(n['lo']['v'] + n['doc_mid'])}</td>"
-            if n.get('doc_mid') else "<td class='num' data-l='+ Doctor (typical)'>—</td><td class='num' data-l='= Both bills, from'>—</td>") if both_cols else '')
+        + ((f"<td class='num' data-l='+ Doctor (typical)'>{money(n['doc_mid'])}</td><td class='num tot' data-l='= Both bills, typical doctor'>{money(n['lo']['v'] + n['doc_mid'])}</td>"
+            if n.get('doc_mid') else "<td class='num' data-l='+ Doctor (typical)'>—</td><td class='num' data-l='= Both bills, typical doctor'>—</td>") if both_cols else '')
         + "</tr>"
         for n in S['networks'])
     net_sec = (f"<section class='sec' id='by-network'><p class='kicker'>What it costs, by insurer network</p><h2>Who pays what</h2>"
@@ -1324,7 +1336,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
                f"Your plan's network decides which line applies to you. <a href='{esc(finder)}'>See every place and every insurer side by side, "
                f"with Medicare beside each place →</a></p>"
                f"<div class='tbl'><table class='rates stack'><thead><tr><th>Network</th><th class='num'>Providers</th><th class='num'>Lowest</th><th class='num'>Highest</th>"
-               f"{'<th class=num>+ Doctor (typical)</th><th class=num>= Both bills, from</th>' if both_cols else ''}</tr></thead>"
+               f"{'<th class=num>+ Doctor (typical)</th><th class=num>= Both bills, typical doctor</th>' if both_cols else ''}</tr></thead>"
                f"<tbody>{net_rows}</tbody></table></div>{''.join(f'<p class=cap>{esc(x)}</p>' for x in notes)}</section>") if S['networks'] else ''
 
     def proof_bit(e):

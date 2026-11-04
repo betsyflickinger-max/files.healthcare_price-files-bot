@@ -16,7 +16,7 @@ Before November, "force_tx" starts build tx-YYYY-MM-metros: only the 18 metro ar
 by hand). Once started, it carries on by itself on the 6-hourly runs.
 Dead machines are relaunched up to 3 times per role; machines delete themselves when done.
 Env: as orchestrate.py, plus [FORCE_TX=1] (skip the 8th / DFW / insurer-bot waits) and [TX_BUILD=YYYY-MM]."""
-import csv, io, os, subprocess, sys, time
+import csv, io, json, os, subprocess, sys, time
 
 MONTH = os.environ.get('TX_BUILD') or time.strftime('%Y-%m')
 FIRST = '2026-11'
@@ -127,6 +127,8 @@ def main():
         if free_slots() < 2: log('not enough free machines; waiting'); return
         O.bundle()
         st.update(stage='split', started=time.strftime('%Y-%m-%d %H:%M'))
+        try: st['fieldrules'] = bool(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'build_defaults.json'))).get('fieldrules'))   # Nov 4 (every_code.py FIELDRULES)
+        except Exception: st['fieldrules'] = False
     if st['stage'] == 'split':
         sz = sizes('data/tx/rates/')
         done = {k.rsplit('/', 1)[1][:-5] for k in ls('data/tx/metro/_done/')}
@@ -168,6 +170,7 @@ def main():
                 env = dict(RATES=f'data/tx/metro/{m}/rates/', NPIS=f'data/tx/metro/{m}/npis.parquet', TOUT=tout(m), OUTP=f'{SP}{m}-c{i + 1}/',
                            WK=f"work/every-tx/{m}/v{MONTH.replace('-', '')}/", ACACHE=f'work/every-tx/{m}/Acache/', NOXPART='1', ACLAIM='1',
                            PIECE_GB='0.4', MAXPIECES='3', THREADS='6', MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * 256 // n), **w)
+                if st.get('fieldrules'): env['FIELDRULES'] = '1'
                 ensure(st, f'{m}-c{i + 1}', SIZE, O.RUN_INS, env, False)
         log('metros still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'publish'
