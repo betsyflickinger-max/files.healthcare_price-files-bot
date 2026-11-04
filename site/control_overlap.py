@@ -128,6 +128,40 @@ CSS = ('<style>/* Nov 3: overlap grid menus */ #n-heat-card .nh-ctl{display:flex
        ' #n-heat-card .nh-ctl select{max-width:16em}</style>')
 
 
+# Nov 4, 2026 (Betsy lifted the freeze): at "All of the United States" the same button downloads the NATIONAL network-by-
+# network crosswalk (dashboard/build_xwalk_us.py, daily dashboard run): every two networks that share a provider, counted
+# once by NPI across areas, with both shares. The grid there stays by insurer; the file is read in parts from the control data.
+XW_ANCHOR = "      const X = window.NH_CSV; if (!X || !X.ov || !X.ov.length) return;\n"
+XW_JS = (
+    "      const pm_ = dash.params(); if ((pm_.nmk || pm_.market) === 'US') return window.NAT_XWALK($('#nh-csv'));   // Nov 4: national file\n")
+NAT_FN = (
+    "    window.NAT_XWALK = async (btn) => {   // Nov 4 (site/control_overlap.py): national network crosswalk, read in parts\n"
+    "      const get = (id) => fetch('/control/api/data/' + id, {credentials: 'same-origin', cache: 'no-store'}).then((r) => {\n"
+    "        if (!r.ok) throw new Error(r.status === 404 ? 'The national crosswalk is not built yet. It comes with the next daily data run.' : 'Could not load ' + id + ' (' + r.status + ')');\n"
+    "        return r.json(); });\n"
+    "      const t0 = btn.textContent; btn.disabled = true; btn.textContent = 'Loading national file…';\n"
+    "      try {\n"
+    "        const h = await get('net_xwalk_us'), parts = [h];\n"
+    "        for (let j = 2; j <= (h.parts || 1); j++) { btn.textContent = `Loading part ${j} of ${h.parts}…`; parts.push(await get('net_xwalk_us_' + j)); }\n"
+    "        const N = h.networks, r4 = (x) => Math.round(x * 1e4) / 1e4, q = (v) => v == null ? '' : /[\",\\n]/.test(String(v)) ? '\"' + String(v).replace(/\"/g, '\"\"') + '\"' : String(v);\n"
+    "        const out = [['area', 'row_insurer', 'row_network', 'column_insurer', 'column_network', 'shared', 'row_providers', 'column_providers',\n"
+    "          'share_of_row_in_column', 'share_of_column_in_row', 'jaccard', 'shared_hospitals', 'row_hospitals', 'column_hospitals'].join(',')];\n"
+    "        for (const p of parts) for (const [a, b, s, sh] of p.rows) { const A = N[a], Bn = N[b];\n"
+    "          out.push(['United States', A[0], A[1], Bn[0], Bn[1], s, A[2], Bn[2], r4(s / Math.max(1, A[2])), r4(s / Math.max(1, Bn[2])),\n"
+    "            r4(s / Math.max(1, A[2] + Bn[2] - s)), sh, A[3], Bn[3]].map(q).join(',')); }\n"
+    "        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out.join('\\n') + '\\n'], {type: 'text/csv'}));\n"
+    "        a.download = `network-crosswalk_us_networks${h.min_shared > 1 ? '_sharing-' + h.min_shared + '-plus' : ''}_${(h.made || '').slice(0, 10)}.csv`;\n"
+    "        document.body.appendChild(a); a.click(); a.remove();\n"
+    "        if (h.min_shared > 1) alert(`The national file lists network pairs that share at least ${h.min_shared} providers (all pairs would not fit).`);\n"
+    "      } catch (e) { alert(e.message); } finally { btn.disabled = false; btn.textContent = t0; }\n"
+    "    };\n")
+CSV_WIRE = "    if ($('#nh-csv')) $('#nh-csv').addEventListener('click', () => {"
+STEPS += [
+    ("window.NAT_XWALK = async", CSV_WIRE, NAT_FN + CSV_WIRE),
+    ("return window.NAT_XWALK(", XW_ANCHOR, XW_ANCHOR.replace("      const X", XW_JS + "      const X")),
+]
+
+
 def patch(d):
     p = os.path.join(d, 'site', 'control', 'index.html')
     if not os.path.isfile(p):

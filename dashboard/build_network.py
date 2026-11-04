@@ -33,7 +33,7 @@ import boto3, numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "site"))
 import city_page as CP   # the live area list (same as build_prices.py)
 
-ap = argparse.ArgumentParser(); ap.add_argument("--out", default="out/network"); ap.add_argument("--only", default=""); ap.add_argument("--rollups", action="store_true", help="make the roll-ups even with --only (testing)")
+ap = argparse.ArgumentParser(); ap.add_argument("--out", default="out/network"); ap.add_argument("--only", default=""); ap.add_argument("--rollups", action="store_true", help="make the roll-ups even with --only (testing)"); ap.add_argument("--kept-out", default="", help="folder to save every area's provider-network membership for dashboard/build_xwalk_us.py")
 ARGS = ap.parse_args()
 E = {k: "".join(os.environ[k].split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
 BUCKET = E["R2_BUCKET"]
@@ -345,6 +345,14 @@ for st in sorted({META[k]["parent"] for k in META if META[k]["parent"] not in ("
     sl = next(s for s, a in CP.STATE_OF.items() if a == st and s not in CP._regions.PARENT)
     ROLL.append((st, CP.CITIES[sl][0], [k for k in META if META[k]["parent"] == st], True))
 ROLL.append(("US", "United States", list(O), False))
+if KEPT and ARGS.kept_out:
+    # Nov 4, 2026 (Betsy: national network crosswalk): every area's membership, as packed here, for the separate
+    # "national crosswalk" job (dashboard/build_xwalk_us.py), so this job doesn't run longer.
+    Path(ARGS.kept_out).mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(Path(ARGS.kept_out) / "kept.npz", **{f"{i}_{f}": KEPT[k][f] for i, k in enumerate(KEPT) for f in ("npi", "kind", "bits")})
+    (Path(ARGS.kept_out) / "kept.json").write_text(json.dumps({"areas": list(KEPT), "nets": [[list(n) for n in KEPT[k]["nets"]] for k in KEPT],
+                                                               "names": {k: MARKETS[k]["name"] for k in KEPT if k in MARKETS}}))
+    print("membership saved for the national crosswalk:", len(KEPT), "areas")
 if KEPT:
     for rk, rname, keys, nets_too in ROLL:
         t0 = time.time(); a, o, info = rollup(rk, rname, keys, nets_too)

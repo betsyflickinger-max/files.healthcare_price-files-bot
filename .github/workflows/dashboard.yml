@@ -88,7 +88,7 @@ jobs:
       - name: Network access (every live Price Finder area)
         run: |
           set -o pipefail
-          python dashboard/build_network.py --out out/network | grep -vE '_[0-9]+\.json 0 rows' | tee -a "$GITHUB_STEP_SUMMARY"
+          python dashboard/build_network.py --out out/network --kept-out out/kept | grep -vE '_[0-9]+\.json 0 rows' | tee -a "$GITHUB_STEP_SUMMARY"
           python3 - <<'PY'
           import json, glob, os
           a = json.load(open("out/network/net_access.json")); assert any(x["market"] == "DFW" for x in a), "no DFW"
@@ -99,6 +99,38 @@ jobs:
         with:
           name: network
           path: out/network
+          retention-days: 2
+      - uses: actions/upload-artifact@v4   # Nov 4, 2026: every area's membership, for the national crosswalk job
+        with:
+          name: kept
+          path: out/kept
+          retention-days: 1
+          if-no-files-found: ignore
+
+  xwalk:   # Nov 4, 2026 (Betsy): national network-by-network crosswalk (dashboard/build_xwalk_us.py), its own job so the network job doesn't run longer
+    needs: [network]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: dashboard
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy==2.1.2 scipy==1.14.1
+      - uses: actions/download-artifact@v4
+        with:
+          name: kept
+          path: out/kept
+      - name: National network crosswalk
+        run: |
+          set -o pipefail
+          python dashboard/build_xwalk_us.py out/kept out/xwalk | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: xwalk
+          path: out/xwalk
           retention-days: 2
 
   cash_oon:   # Oct 30, 2026: the control center's "Cash prices" and "Out of network" tabs (dashboard/build_cash_oon.py)
@@ -135,7 +167,7 @@ jobs:
           retention-days: 2
 
   publish:   # runs once both are done; if the network job failed, the day's data goes out without its files (yesterday's stay)
-    needs: [build, network, cash_oon]
+    needs: [build, network, cash_oon, xwalk]
     if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     env:
@@ -159,6 +191,11 @@ jobs:
         if: needs.cash_oon.result == 'success'
         with:
           name: cash_oon
+          path: out/dashboard
+      - uses: actions/download-artifact@v4
+        if: needs.xwalk.result == 'success'
+        with:
+          name: xwalk
           path: out/dashboard
       - uses: actions/checkout@v4
         with:
