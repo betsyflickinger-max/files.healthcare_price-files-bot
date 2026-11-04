@@ -64,11 +64,11 @@
  "st-2026-11": {
   "usd": 150,
   "ok_at": "2026-11-04 00:05",
-  "why": "Betsy OK'd \\$150 (Nov 3, 2026, 6:03 PM CT) for the seven-state November update (CO, GA, MO, TN, OK, AL, MS), same as the new-state builds"
+  "why": "Betsy OK'd $150 (Nov 3, 2026, 6:03 PM CT) for the seven-state November update (CO, GA, MO, TN, OK, AL, MS), same as the new-state builds"
  },
  "stnc-2026-11": {
   "usd": 150,
   "ok_at": "2026-11-04 00:05",
-  "why": "Betsy OK'd \\$150 (Nov 3, 2026, 6:03 PM CT) for the North Carolina November update, same as the new-state builds"
+  "why": "Betsy OK'd $150 (Nov 3, 2026, 6:03 PM CT) for the North Carolina November update, same as the new-state builds"
  }
 }
