@@ -32,12 +32,28 @@ def insurer_waiting(s3, bucket):
     import os, sys
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "insurers"))
     import fleet
-    n = 0
+    # Nov 3, 2026: files from a host the reader may only use a few machines on (fleet.HOST_CAPS, e.g. Geisinger: 2) count
+    # as at most that many, and files from a host that is paused for trickling (fleet.paused_hosts) count as none.
+    # Geisinger's ~3,270 waiting files were holding 10 slots for the insurer reader that it could never use, while
+    # North Carolina's and Georgia's November builds got 2-3 machines.
+    try:
+        paused = fleet.paused_hosts(s3, bucket)
+    except Exception:
+        paused = {}
+    n, per_host = 0, {}
     for j in fleet.jobs(s3, bucket).values():
         small = (fleet.GHA_LANE and j.get("kind", "insurer") == "insurer" and j.get("mem", 8) <= fleet.GHA_MAX_MEM
                  and not j.get("nogha"))
-        n += 0 if small else 1
-    return n
+        if small:
+            continue
+        h = fleet.host(j)
+        if h in paused:
+            continue
+        if h in fleet.HOST_CAPS:
+            per_host[h] = per_host.get(h, 0) + 1
+            continue
+        n += 1
+    return n + sum(min(c, fleet.HOST_CAPS[h]) for h, c in per_host.items())
 
 
 def floor(bid):
