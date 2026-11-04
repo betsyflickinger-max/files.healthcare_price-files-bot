@@ -144,7 +144,7 @@ def one_file(path):
     # (the same rules as site/match_pilot.py). The rows stay in storage; only the page files leave them out.
     cols = {x[0] for x in c.execute("DESCRIBE raw").fetchall()}
     col = lambda n_: f"r.{n_}" if n_ in cols else "''"
-    MODI = f"trim(coalesce({col('modifiers')},''))"
+    MODI = f"(CASE WHEN lower(trim(coalesce({col('modifiers')},''))) IN ('', 'n/a', 'na', 'none', 'null', '-', '0') THEN '' ELSE trim({col('modifiers')}) END)"   # placeholders aren't modifiers
     METH = f"lower(trim(coalesce({col('methodology')},'')))"
     ALG = f"trim(coalesce({col('negotiated_algorithm')},''))"
     c.execute(f"""CREATE TABLE cash AS SELECT s, code, st, cash, coalesce(gross,0) gross, min(rw) rw, fee, arg_min(dsc, rw) dsc FROM (

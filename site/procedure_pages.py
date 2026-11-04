@@ -574,6 +574,13 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
             if r[4] & 4:                 # $0 listed: paid inside another charge
                 continue
             k = 'doc' if r[1] else 'fac'
+            # Nov 4, 2026 (code review A4/A6): a rate the file marks as not a whole price (per unit, per day, base plus per
+            # day, an insurer's "derived" bookkeeping figure, or only part of the service by modifier) stays in the Price
+            # Finder with its label but isn't one of the page's prices. every_code.py only makes one a headline when the
+            # provider lists nothing else. Checked before the low/high flags so these never count as "unusually low".
+            lb_ = D['labs'][r[10]] if len(r) > 10 and r[10] is not None and 0 <= r[10] < len(D.get('labs') or []) else ''
+            if NOT_WHOLE.search(lb_) or (k == 'fac' and PART_FAC.search(lb_)):
+                continue
             if r[2]:                     # percent of billed charges
                 pct[k].add((fi, r[0]))
                 continue
@@ -587,13 +594,6 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
             if r[4] & 8 or (m_ and looks_placeholder(r[3], m_)):
                 high[k].add((fi, r[0]))
                 high_e[k].append(entry(fi, r))
-                continue
-            # Nov 4, 2026 (code review A4/A6): a rate the file marks as not a whole price (per unit, per day, base plus per
-            # day, an insurer's "derived" bookkeeping figure, or only part of the service by modifier) stays in the Price
-            # Finder with its label but isn't one of the page's prices. every_code.py only makes one a headline when the
-            # provider lists nothing else.
-            lb_ = D['labs'][r[10]] if len(r) > 10 and r[10] is not None and 0 <= r[10] < len(D.get('labs') or []) else ''
-            if NOT_WHOLE.search(lb_) or (k == 'fac' and PART_FAC.search(lb_)):
                 continue
             key = (fi, r[0])
             if key not in per[k] or r[3] < per[k][key]['v']:

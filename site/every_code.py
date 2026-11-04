@@ -24,7 +24,10 @@ def looks_placeholder(v, median):
     nines = '9999' in t or bool(re.fullmatch(r'\d*999(\.99?)?', t))
     return nines or (v >= 100000 and v % 10000 == 0 and v > 20 * median) or v > 100 * median
 E = os.environ
-FR = E.get('FIELDRULES') == '1'   # Nov 4, 2026: price-field rules (see stage A r0 and hpick)
+FR = E.get('FIELDRULES', '') not in ('', '0')   # Nov 4, 2026: price-field rules (see stage A r0 and hpick)
+# the build's own date for "expired": set once by the orchestrator when the build starts (FIELDRULES=YYYY-MM-DD), so every
+# machine uses the same cutoff and a table read this month and reused next month still drops rates that ended in between
+CUT = E['FIELDRULES'] if re.fullmatch(r'\d{4}-\d{2}-\d{2}', E.get('FIELDRULES', '')) else time.strftime('%Y-%m-%d')
 _g = lambda k: ''.join(E[k].split())   # GitHub secrets can carry stray spaces/line breaks
 s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{_g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"), aws_access_key_id=_g('R2_ACCESS_KEY_ID'),
                   aws_secret_access_key=_g('R2_SECRET_ACCESS_KEY'), region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
@@ -254,15 +257,18 @@ for ii, (key, size) in enumerate(files):
         # "fieldrules"), so a build already under way keeps one set of rules on all its machines and lookup lists.
         cols_ = {x_[0] for x_ in con.execute(f"describe select * from read_parquet('{loc}')").fetchall()}
         cq = lambda n_: f"coalesce(cast(r.{n_} as varchar), '')" if n_ in cols_ else "''"
-        today_ = time.strftime('%Y-%m-%d')
-        KEEP_ = (f" and not coalesce(try_cast(left({cq('expiration_date')}, 10) as date) < date '{today_}', false)"
+        KEEP_ = (f" and not coalesce(try_cast(left({cq('expiration_date')}, 10) as date) < date '{CUT}', false)"
                  f" and lower({cq('negotiation_arrangement')}) in ('', 'ffs')")
         AI_ = f"lower({cq('additional_information')})"
         SC_ = f"string_split(replace({cq('service_code')}, ' ', ''), ',')"
-        NT_ = (f"case when regexp_matches({AI_}, '(additional|add''l|each add|thereafter|after [0-9]+ day)') and regexp_matches({AI_}, '(day|diem)') then 'base plus per day'"
-               f" when regexp_matches({AI_}, 'per[ -]?(diem|day)|/ ?day|daily rate') then 'per day'"
-               f" when regexp_matches({AI_}, 'per ?(each )?(15|30|60)? ?(min|unit|hour|hr|session|mile|dose|visit day)|/ ?(unit|min|hour)') then 'per unit'"
-               f" else lower(negotiated_type) end")
+        NT0_ = (f"case when regexp_matches({AI_}, '(additional|add''l|each add|thereafter|after [0-9]+ days?)') and regexp_matches({AI_}, '\\b(per|a|each|/) ?(day|diem)\\b|per diem|/ ?day\\b') then 'base plus per day'"
+                f" when regexp_matches({AI_}, '\\bper[ -]?(diem|day)\\b|/ ?day\\b|\\bdaily rate') then 'per day'"
+                f" when regexp_matches({AI_}, '\\bper ?(each )?(15|30|60)? ?(min|minutes?|units?|hours?|hr|sessions?|miles?|doses?)\\b|/ ?(unit|min|hour)\\b') then 'per unit'"
+                f" else lower(negotiated_type) end")
+        # Nov 4 (review): a future end date rides along in the type ('negotiated|exp:2026-12-31'), because stage-A work is
+        # reused next month; stage B drops it once the build's date (CUT) is past it and strips the suffix before anything else
+        EX_ = f"try_cast(left({cq('expiration_date')}, 10) as date)"
+        NT_ = f"{NT0_} || case when {EX_} < date '2900-01-01' then '|exp:' || strftime({EX_}, '%Y-%m-%d') else '' end"
         ST_ = (f"case when billing_class not ilike 'inst%' and {cq('service_code')} <> ''"
                f" and list_bool_and(list_transform({SC_}, x -> x in ('19','21','22','23','24','26','31','34','41','42','51','52','53','56','61')))"
                f" then 'facility setting' else coalesce(setting,'') end")
@@ -359,6 +365,7 @@ if not FR:   # builds started before Nov 4: the old rule (lowest rate with no mo
 def hpick(pos):   # pos is in rate order, so min() keeps the lowest rate within the best group
     return min(pos, key=_hr)
 def label_str(modi, st, nt, other):
+    nt = nt.split('|exp:')[0]
     p = [MOD.get(m, 'modifier ' + m) for m in modi.split('|') if m] if modi else []
     if st in ('inpatient', 'outpatient'): p.append(st)
     if st == 'facility setting': p.append('in a hospital or facility setting')
@@ -483,6 +490,9 @@ def work(u):
     c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{u}'")
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
     if sp is not None: src = f"(select * from {src} where hash(code) % {NB * SPLIT} = {k + NB * sp})"
+    if FR:   # Nov 4 (review): rates whose end date is before this build's date are left out; the type loses its '|exp:' suffix
+        src = (f"(select * replace (split_part(nt, '|exp:', 1) as nt) from {src} "
+               f"where coalesce(nullif(split_part(nt, '|exp:', 2), ''), '9999-12-31') >= '{CUT}')")
     if PHASE:   # common codes first: keep this phase's codes; record the others (code -> rows) for the page and the fill
         c.execute("create temp table pri as select unnest(?::varchar[]) code", [PRI])
         isp = "(code in (select code from pri)" + (" or regexp_full_match(code, '[0-9]{1,3}'))" if PRI_DRGS else ")")

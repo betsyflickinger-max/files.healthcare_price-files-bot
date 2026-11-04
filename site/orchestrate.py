@@ -238,13 +238,13 @@ def main():
         s3.copy_object(Bucket=B, Key=SP + 'page_before.html', CopySource={'Bucket': B, 'Key': 'site/deploy/price-finder.html'})
         bundle()
         st.update(stage='build1', started=time.strftime('%Y-%m-%d %H:%M'), hosp_changed=len(todo), hosp_total=len(jobs))
-        try: st['fieldrules'] = bool(json.load(open(os.path.join(HERE, 'build_defaults.json'))).get('fieldrules')) and not REBUILD   # Nov 4 (every_code.py FIELDRULES)
+        try: st['fieldrules'] = time.strftime('%Y-%m-%d') if json.load(open(os.path.join(HERE, 'build_defaults.json'))).get('fieldrules') and not REBUILD else False   # Nov 4 (every_code.py FIELDRULES; the date is the expiry cutoff)
         except Exception: st['fieldrules'] = False
         log(len(todo), 'of', len(jobs), 'hospital files changed')
     if st['stage'] == 'build1':
         common = dict(TOUT=TOUT, OUTP=SP, WK=f'work/every/{BID}/', ACACHE='work/every/Acache/', NOXPART='1', PIECE_GB='0.4',
                       MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='3', WTHREADS='1', WMEM='2500MB', WORK='/d')
-        if st.get('fieldrules'): common['FIELDRULES'] = '1'
+        if st.get('fieldrules'): common['FIELDRULES'] = st['fieldrules'] if isinstance(st['fieldrules'], str) else '1'
         ins_done = exists(TOUT + 'embed.json')
         ensure(st, 'ins1', SIZE_INS, RUN_INS, common, ins_done)
         ensure(st, 'ins2', SIZE_INS, RUN_INS, dict(common, AORDER='desc', BORDER='desc'), ins_done)

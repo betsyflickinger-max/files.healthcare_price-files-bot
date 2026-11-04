@@ -130,6 +130,21 @@ def tout(slug): return f'site/every-st/{slug}/{MONTH}/'
 # rebuilt every network of the state (the paused Oct 16 Anthem rebuild).
 UPDATE = REBUILD.get('mode') == 'update'
 def tadd(slug): return f'site/every-st-add/{slug}/{MONTH}/'
+def base_rules(st, slug):
+    """Nov 4, 2026: an update build uses the FIELDRULES of the build it merges into ("from", else the state's newest
+    finished build), read from that build's build_env.json; '' when it had none. Kept in state.json per state."""
+    br = st.setdefault('base_rules', {})
+    if slug not in br:
+        try:
+            pre = f'site/every-st/{slug}/'
+            ms = sorted(c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=pre, Delimiter='/') for c in pg.get('CommonPrefixes', []))
+            ms = [m for m in ms if m != tout(slug)]
+            fr = REBUILD.get('from')
+            base = (pre + fr.strip('/') + '/') if fr else next((m for m in reversed(ms) if exists(m + 'embed.json')), None)
+            br[slug] = (getj(base + 'build_env.json', {}) or {}).get('env', {}).get('FIELDRULES', '') if base else ''
+        except Exception as e:
+            log('base build rules not read for', slug, repr(e)[:120]); return ''
+    return br[slug]
 def tbuild(slug): return tadd(slug) if UPDATE else tout(slug)
 def update_tables():
     if not UPDATE: return None
@@ -585,9 +600,10 @@ def main():
         # Oct 19, 2026 (Betsy OK'd): the standard way to build a state, fixed when the build starts so a build in flight keeps
         # its mode (site/build_defaults.json): practice view, big batches sized up front, one big-memory machine per state
         st['practice'] = bool(build_defaults().get('practice')) and not UPDATE
-        # Nov 4, 2026: price-field rules (every_code.py FIELDRULES), fixed at the start like the practice view. An update
-        # build merges into a finished build's lookup lists, so it keeps that build's rules (off until a full build).
-        st['fieldrules'] = bool(build_defaults().get('fieldrules')) and not UPDATE
+        # Nov 4, 2026: price-field rules (every_code.py FIELDRULES), fixed at the start like the practice view; the value is
+        # the build's date, the cutoff for expired rates on every machine. An update build takes its base build's setting
+        # per state (base_rules), so the networks it adds follow the same rules as the build they merge into.
+        st['fieldrules'] = time.strftime('%Y-%m-%d') if build_defaults().get('fieldrules') and not UPDATE else False
     if st['stage'] == 'split':
         sz = sizes(f'data/{SCOPE}/rates/')
         done = {k.rsplit('/', 1)[1][:-5] for k in ls(f'data/{SCOPE}/state/_done/')}
@@ -672,7 +688,8 @@ def main():
 )
                 env.update({**W, **WBIG.get(slug, {})})   # per-state settings win (STALL_MIN, SPLIT, workers)
                 env['LABEL_TABLES_KEY'] = label_tables(st)
-                if st.get('fieldrules'): env['FIELDRULES'] = '1'
+                fr_ = base_rules(st, slug) if UPDATE else st.get('fieldrules')
+                if fr_: env['FIELDRULES'] = fr_ if isinstance(fr_, str) else '1'
                 if common_first() and not UPDATE:   # Oct 18: common codes first (priority list + DRGs, the rest listed as coming)
                     env.update(PHASE='1', PRIORITY_KEY=f'site/priority/{CODE_OF[slug]}.json')
                 if not UPDATE:   # Nov 1: pages_skip.json networks left out (the list is written once per state)

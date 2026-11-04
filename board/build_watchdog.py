@@ -14,7 +14,8 @@ hold also sat on a build that could never finish. This job looks at every state 
   5. Clean-up     (Nov 4, 2026, code review B2, Betsy OK'd) website-build machines (DigitalOcean tag 'site-build') were never
                    deleted by anything but themselves; the 48-hour cleaner only looks at the insurer reader's 'upfront-bot'
                    machines. A build machine is now deleted when its build is finished (stage live / done / held / hosp,
-                   for 2+ hours) or when it has run MAX_AGE_H hours (a hung machine). A deleted machine whose build
+                   for 2+ hours; not hospital builds, which start machines after 'done') or when it has run MAX_AGE_H
+                   hours (a hung machine). A deleted machine whose build
                    still needs it is started again by the build's own loop and picks up from the saved work. Each
                    clean-up is listed on the "Build machines cleaned up" issue.
   4. Daily summary once a day (~7 AM CT) a comment on the "Daily build summary" issue: every build with machines, its
@@ -243,7 +244,9 @@ def reap():
         bid = max((b for b in states if rest.startswith(b + "-")), key=len, default=None)
         age = (NOW - ts(d["created_at"])) / 3600
         why = None
-        if bid and age > DONE_GRACE_H and NOW - states[bid] > DONE_GRACE_H * 3600:
+        # Nov 4 (review): a hospital build (hosp-...) starts machines after it reaches 'done' (a big state split into
+        # regional pages), so its machines are only ever stopped by the age limit, never for a finished stage
+        if bid and not bid.startswith("hosp-") and age > DONE_GRACE_H and NOW - states[bid] > DONE_GRACE_H * 3600:
             stage = (getj(f"site/builds/{bid}/state.json", {}) or {}).get("stage")
             if stage in DONE_STAGES:
                 why = f"its build {bid} is finished (stage '{stage}')"

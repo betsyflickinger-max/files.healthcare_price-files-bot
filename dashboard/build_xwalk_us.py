@@ -46,11 +46,12 @@ def main(kdir, out):
     S = sp.csr_matrix((np.ones(sum(len(x) for x in rows), dtype=np.float32), (np.concatenate(rows), np.concatenate(cols))), shape=(U, N))
     S.sum_duplicates(); S.data[:] = 1          # a provider listed by one network in two areas counts once
     del rows, cols
-    G = (S.T @ S).toarray().astype(np.int64)   # shared providers, every pair (diagonal = network size)
-    Sh = S[hosp]; GH = (Sh.T @ Sh).toarray().astype(np.int64)
+    # Nov 4 (review): int32 and no triangle copy, so ~10,000 networks stay well under a runner's 7 GB
+    G = (S.T @ S).astype(np.int32).toarray()   # shared providers, every pair (diagonal = network size)
+    Sh = S[hosp]; GH = (Sh.T @ Sh).astype(np.int32).toarray(); del Sh
     size, hsize = np.diag(G).copy(), np.diag(GH).copy()
-    a, b = np.nonzero(np.triu(G, 1))
-    sh, shh = G[a, b], GH[a, b]
+    a, b = np.nonzero(G); up = a < b; a, b = a[up], b[up]; del up
+    sh, shh = G[a, b], GH[a, b]; del G, GH
     print(f"{U:,} providers, {N:,} networks, {len(a):,} pairs sharing a provider ({round(time.time() - t0)} s)", flush=True)
     order = np.lexsort((-sh,))
     min_shared = 1
