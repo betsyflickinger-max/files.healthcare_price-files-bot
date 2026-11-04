@@ -244,9 +244,12 @@ for ii, (key, size) in enumerate(files):
             got = True
         pf = f"hash(npi) % {K} = {p}" if K > 1 else "true"
         mem = f"(select npi, tin, any_value(network_name) network_name from read_parquet('{locm}') where {pf} group by all)" if mj else "(select null::varchar npi, null::varchar tin, null::varchar network_name where false)"
-        # Nov 4, 2026 (code review A2/A3/A4/A6, Betsy OK'd): fields that change what a number means.
-        # - a rate past its expiration_date isn't today's price (an expired $1,000 beat the current $1,400 for the headline)
-        # - capitation (a monthly amount per member) and bundle (one amount for a group of codes) aren't one code's price
+        # Nov 4, 2026 (code review A2/A3/A4/A6, Betsy OK'd): fields that change what a number means. Betsy, Nov 4 (later):
+        # "label, don't leave out" -- every row stays on the pages with a label; these rules only decide the headline.
+        # - a rate past its expiration_date: contracts often renew with the old end date left in the file, so it stays,
+        #   labeled "end date passed <date>; the insurer still lists it", and is the headline only when nothing else is listed
+        # - capitation (a monthly amount per member) and bundle (one amount for a group of codes) aren't one code's price:
+        #   kept, labeled, headline only when nothing else is listed
         # - additional_information "per 15 minutes" / "per diem" / "base ... additional $2,600 per day": the amount isn't a
         #   total, so it's marked in the type (nt) and only becomes a headline when nothing else is listed
         # - a doctor's rate whose place-of-service codes are all hospital/facility places (no office) is the facility-setting
@@ -257,16 +260,17 @@ for ii, (key, size) in enumerate(files):
         # "fieldrules"), so a build already under way keeps one set of rules on all its machines and lookup lists.
         cols_ = {x_[0] for x_ in con.execute(f"describe select * from read_parquet('{loc}')").fetchall()}
         cq = lambda n_: f"coalesce(cast(r.{n_} as varchar), '')" if n_ in cols_ else "''"
-        KEEP_ = (f" and not coalesce(try_cast(left({cq('expiration_date')}, 10) as date) < date '{CUT}', false)"
-                 f" and lower({cq('negotiation_arrangement')}) in ('', 'ffs')")
+        KEEP_ = ''   # Nov 4 (later): nothing left out any more (was: expired, capitation and bundle rows)
+        AR_ = f"lower({cq('negotiation_arrangement')})"
         AI_ = f"lower({cq('additional_information')})"
         SC_ = f"string_split(replace({cq('service_code')}, ' ', ''), ',')"
-        NT0_ = (f"case when regexp_matches({AI_}, '(additional|add''l|each add|thereafter|after [0-9]+ days?)') and regexp_matches({AI_}, '\\b(per|a|each|/) ?(day|diem)\\b|per diem|/ ?day\\b') then 'base plus per day'"
+        NT0_ = (f"case when {AR_} = 'capitation' then 'capitation' when {AR_} = 'bundle' then 'bundle'"
+                f" when regexp_matches({AI_}, '(additional|add''l|each add|thereafter|after [0-9]+ days?)') and regexp_matches({AI_}, '\\b(per|a|each|/) ?(day|diem)\\b|per diem|/ ?day\\b') then 'base plus per day'"
                 f" when regexp_matches({AI_}, '\\bper[ -]?(diem|day)\\b|/ ?day\\b|\\bdaily rate') then 'per day'"
                 f" when regexp_matches({AI_}, '\\bper ?(each )?(15|30|60)? ?(min|minutes?|units?|hours?|hr|sessions?|miles?|doses?)\\b|/ ?(unit|min|hour)\\b') then 'per unit'"
                 f" else lower(negotiated_type) end")
-        # Nov 4 (review): a future end date rides along in the type ('negotiated|exp:2026-12-31'), because stage-A work is
-        # reused next month; stage B drops it once the build's date (CUT) is past it and strips the suffix before anything else
+        # Nov 4 (review): the end date rides along in the type ('negotiated|exp:2026-06-30'), because stage-A work is reused
+        # next month; whether it has passed is judged in stage B against the build's own date (CUT), the same on every machine
         EX_ = f"try_cast(left({cq('expiration_date')}, 10) as date)"
         NT_ = f"{NT0_} || case when {EX_} < date '2900-01-01' then '|exp:' || strftime({EX_}, '%Y-%m-%d') else '' end"
         ST_ = (f"case when billing_class not ilike 'inst%' and {cq('service_code')} <> ''"
@@ -350,27 +354,42 @@ MOD = {'26': 'professional part only', 'TC': 'technical part only', '52': 'reduc
        'QY': 'nurse anesthetist, supervised', 'QZ': 'nurse anesthetist alone', 'AA': 'anesthesiologist personally', 'GT': 'telehealth', '95': 'telehealth', 'GP': 'physical therapy plan'}
 # Nov 4, 2026 (code review A4/A6): which listed rate is the headline. Lowest rate within the best group:
 # 0 full service, office setting / 1 full service, facility setting (doctor) / 2 with a modifier (part of a service) /
-# 3 "derived" (an insurer's bookkeeping figure) / 4 not a total (per unit, per day, base plus per day). Was: lowest rate
-# with no modifier, so a derived $14.65 or a "$30 per 15 minutes" could be the headline.
+# 3 "derived" (an insurer's bookkeeping figure) / 4 not a total (per unit, per day, base plus per day) /
+# 5 past its end date (often still paid: contracts renew with the old date left in) / 6 capitation or bundle (not a price
+# for this one service) (Betsy, Nov 4: kept and labeled, ranked last). Was: lowest rate with no
+# modifier, so a derived $14.65 or a "$30 per 15 minutes" could be the headline. Every rate stays listed with its label.
 NOT_TOTAL = {'per unit': 'per unit, not a total', 'per day': 'per day, not a total', 'base plus per day': 'base rate, more per day after'}
-HR_SQL = ("case when nt in ('per unit', 'per day', 'base plus per day') then 4 when nt = 'derived' then 3 "
+NOT_ONE = {'capitation': 'monthly amount per member, not a price for this service', 'bundle': 'one amount for a group of services'}
+def _ntx(nt):
+    """(type, end date or '') from a stored type such as 'negotiated|exp:2026-06-30'"""
+    b_, _, e_ = (nt or '').partition('|exp:'); return b_, e_
+def ended(e_): return bool(e_) and e_ < CUT
+NT_B = "split_part(nt, '|exp:', 1)"
+HR_SQL = (f"case when {NT_B} in ('capitation', 'bundle') then 6 when split_part(nt, '|exp:', 2) <> '' and split_part(nt, '|exp:', 2) < '{CUT}' then 5 "
+          f"when {NT_B} in ('per unit', 'per day', 'base plus per day') then 4 when {NT_B} = 'derived' then 3 "
           "when modi <> '' then 2 when st = 'facility setting' then 1 else 0 end")
 def _hr(r):
-    modi, st, nt = r[2], r[3], r[4]
-    return 4 if nt in NOT_TOTAL else 3 if nt == 'derived' else 2 if modi else 1 if st == 'facility setting' else 0
-MDX = " and coalesce(nt, '') not in ('derived', 'per unit', 'per day', 'base plus per day')" if FR else ''   # medians: full-service totals only
+    modi, st = r[2], r[3]; nt, e_ = _ntx(r[4])
+    return (6 if nt in NOT_ONE else 5 if ended(e_) else 4 if nt in NOT_TOTAL else 3 if nt == 'derived' else 2 if modi
+            else 1 if st == 'facility setting' else 0)
+# medians (unusually-low / filler flags): current full-service totals only
+MDX = (f" and {NT_B} not in ('derived', 'per unit', 'per day', 'base plus per day', 'capitation', 'bundle')"
+       f" and coalesce(nullif(split_part(nt, '|exp:', 2), ''), '9999-12-31') >= '{CUT}'") if FR else ''
 if not FR:   # builds started before Nov 4: the old rule (lowest rate with no modifier, else lowest)
     HR_SQL = "case when modi <> '' then 1 else 0 end"
     _hr = lambda r: 1 if r[2] else 0
 def hpick(pos):   # pos is in rate order, so min() keeps the lowest rate within the best group
     return min(pos, key=_hr)
 def label_str(modi, st, nt, other):
-    nt = nt.split('|exp:')[0]
+    nt, e_ = _ntx(nt)
     p = [MOD.get(m, 'modifier ' + m) for m in modi.split('|') if m] if modi else []
     if st in ('inpatient', 'outpatient'): p.append(st)
     if st == 'facility setting': p.append('in a hospital or facility setting')
     if nt in ('fee schedule', 'derived'): p.append(nt)
     if nt in NOT_TOTAL: p.append(NOT_TOTAL[nt])
+    if nt in NOT_ONE: p.append(NOT_ONE[nt])
+    if ended(e_):
+        y_, m_, d_ = e_.split('-'); p.append(f"end date passed {['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][int(m_) - 1]} {int(d_)}, {y_}; the insurer still lists it")
     if other: p.append('billed under another tax ID')
     return ', '.join(p)
 def provider(npi):
@@ -490,9 +509,6 @@ def work(u):
     c.execute(f"set enable_progress_bar=false; set memory_limit='{E.get('WMEM','3GB')}'; set threads={E.get('WTHREADS','2')}; set preserve_insertion_order=false; set temp_directory='{D}/tmp/w{u}'")
     src = f"read_parquet('{D}/xpart/bucket={k}/*.parquet')"
     if sp is not None: src = f"(select * from {src} where hash(code) % {NB * SPLIT} = {k + NB * sp})"
-    if FR:   # Nov 4 (review): rates whose end date is before this build's date are left out; the type loses its '|exp:' suffix
-        src = (f"(select * replace (split_part(nt, '|exp:', 1) as nt) from {src} "
-               f"where coalesce(nullif(split_part(nt, '|exp:', 2), ''), '9999-12-31') >= '{CUT}')")
     if PHASE:   # common codes first: keep this phase's codes; record the others (code -> rows) for the page and the fill
         c.execute("create temp table pri as select unnest(?::varchar[]) code", [PRI])
         isp = "(code in (select code from pri)" + (" or regexp_full_match(code, '[0-9]{1,3}'))" if PRI_DRGS else ")")

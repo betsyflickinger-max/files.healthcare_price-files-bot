@@ -447,7 +447,7 @@ def kind_of(x):
 
 HOSP_NAME = re.compile(r'\bhospital\b', re.I)
 PARPLAN = re.compile(r'par\s*plan', re.I)
-NOT_WHOLE = re.compile(r'not a total|more per day after|\bderived\b')   # Nov 4 (review A4/A6)
+NOT_WHOLE = re.compile(r'not a total|more per day after|\bderived\b|per member|group of services|end date passed')   # Nov 4 (review A4/A6; capitation, bundles, expired: Betsy, Nov 4)
 PART_FAC = re.compile(r'part only|reduced service|discontinued')   # a facility line for only part of the service (TC/26/52/53)
 # Hospital price files filed under the wrong area by name alone (Oct 18 audit: "Dallas County Hospital" in Perry, Iowa sat in
 # Dallas-Fort Worth). Left out of every page's figures here; the real fix is a state/address check where files are assigned to areas.
