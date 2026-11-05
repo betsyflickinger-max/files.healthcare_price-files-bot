@@ -1,0 +1,28 @@
+name: Launch check (read-only)
+
+# Nov 4, 2026: reads the deployed bundle and reports on the seven "do now" items in Betsy's TODO.md. Changes nothing.
+on:
+  push:
+    branches: [launch-fixes]
+    paths: [site/launch_check.py, .github/workflows/launch-check.yml]
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 pillow==10.4.0 pyarrow==26.0.0
+      - run: python site/launch_check.py | tee -a "$GITHUB_STEP_SUMMARY"
