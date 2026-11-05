@@ -68,12 +68,16 @@ out.append('')
 
 # 3. My Plan
 out.append('## 3. My Plan')
-mp = [n for n in names if 'my-plan' in n or 'myplan' in n][:10]
-out.append(f'- files: {mp}')
-for k in mp:
-    s = get(k) or ''
-    d = sorted(set(re.findall(r'20\d\d-\d\d-\d\d', s)))
-    out.append(f'  - {k}: dates in file: {d[-6:]}')
+import base64, gzip, json
+mt3 = get('site/plan-calculator/own/meta.txt')
+cur = store.s3.get_object(Bucket=store.B, Key='site/every/CURRENT')['Body'].read().decode().strip()
+if mt3:
+    M = json.loads(gzip.decompress(base64.b64decode(mt3)))
+    out.append(f"- My Plan pinned build: {M.get('build')}; live Price Finder build (CURRENT): {cur}")
+else:
+    out.append(f'- meta.txt not found; CURRENT: {cur}')
+blds = sorted({k.split('/')[2] for k in [o['Key'] for o in store.s3.list_objects_v2(Bucket=store.B, Prefix='site/every/', Delimiter='/').get('CommonPrefixes', []) and [{'Key': p['Prefix']} for p in store.s3.list_objects_v2(Bucket=store.B, Prefix='site/every/', Delimiter='/')['CommonPrefixes']]] if k.count('/') >= 2})
+out.append(f'- builds kept in storage: {blds}')
 out.append('')
 
 # 4. Methodology
@@ -90,7 +94,9 @@ out.append('')
 
 # 7. packages + coming list
 out.append('## 7. Procedure packages and "pulling these prices now"')
-pk = [n for n in names if 'package' in n.lower()][:10]
+pk = [n for n in names if 'package' in n.lower() or 'all-in' in n.lower()][:10]
+ai = [n for n in names if n.endswith('.html') and re.search(r'All in|all-in price|facility and doctor', get(n) or '')]
+out.append(f'- pages with "All in"/facility-and-doctor wording: {len(ai)}, e.g. {ai[:4]}')
 out.append(f'- package files: {pk}')
 for kw in ('package', 'Package'):
     hits = [n for n in names if n.endswith('.html') and re.search(r'(facility \+ doctor|Procedure package|package price)', get(n) or '', re.I)]

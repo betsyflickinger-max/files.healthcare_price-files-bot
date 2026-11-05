@@ -336,6 +336,12 @@ def publish(st):
     s3.put_object(Bucket=B, Key='site/every/CURRENT', Body=BID.encode())
     env = dict(os.environ, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), '/tmp/pub/deploy'], check=True)   # name, Units look, share image (Oct 18)
+    # Nov 4, 2026 (Betsy's launch list): My Plan reads one pinned build (plan-calculator/own/meta.txt) and cleanup() below deletes
+    # builds older than the one before, so re-pin it to this build every refresh. Never blocks the refresh.
+    mp = subprocess.run([sys.executable, f'{HERE}/myplan_meta.py', '/tmp/pub/deploy/site'], capture_output=True, text=True)
+    print(mp.stdout[-800:], mp.stderr[-800:])
+    if mp.returncode != 0: issue(f'Website refresh {BID}: My Plan not re-pinned', 'My Plan keeps its previous build until this is fixed; '
+                                 'that build is deleted at the refresh after this one.\n\n```\n' + (mp.stdout + mp.stderr)[-3000:] + '\n```')
     with pages_spill.offload('/tmp/pub/deploy'):   # Nov 2, 2026: keeps the deploy under Cloudflare's 20,000-file limit
         r = subprocess.run(['npx', '--yes', 'wrangler@3.114.0', 'pages', 'deploy', 'site', '--project-name', 'upfront-dfw-preview', '--branch', 'main', '--commit-dirty=true'],
                            cwd='/tmp/pub/deploy', env=env, capture_output=True, text=True)
