@@ -420,7 +420,11 @@
     try {
       var qb = document.querySelector('.ux-hits'), q0 = window.__uxQ || new URLSearchParams(location.search).get('q');
       if (qb && q0) document.getElementById('title').textContent = 'Results for “' + q0 + '”';
-      var u = new URL(location.href); u.searchParams.set('code', S.code);
+      var u = new URL(location.href);
+      // Nov 7, 2026 (Betsy's myomectomy test): while a search list is open, no prices show and the address keeps
+      // ?q= only; a leftover ?code= (e.g. 45378 colonoscopy) under "Results for ..." read as that code's prices
+      document.body.classList.toggle('pf-searching', !!(qb && q0));
+      if (qb && q0) { u.searchParams.delete('code'); u.searchParams.set('q', q0); } else u.searchParams.set('code', S.code);
       if (/^\d+$/.test(S.pay) && !payEl.classList.contains('ux-ask')) u.searchParams.set('net', D.nets[S.pay]); else u.searchParams.delete('net');
       if (!qb) u.searchParams.delete('q');
       if (u.href !== location.href) history.replaceState(history.state, '', u.href);
@@ -480,24 +484,122 @@
     if (e.target.closest('[data-ptpick]')) { payEl.scrollIntoView({block: 'center', behavior: 'smooth'}); payEl.focus(); try { payEl.showPicker(); } catch (er) {} }
   });
 
-  // ---------- search: any word order, everyday words (the homepage says "knee MRI"; the files say "MRI ... knee") ----------
-  var SYN = {mri: 'magnetic resonance', ct: 'computed tomography', cat: 'computed tomography', 'x-ray': 'xray', xray: 'x-ray', ultrasound: 'sonogram', echo: 'echocardiogram',
-    egd: 'upper endoscopy', mammogram: 'mammography', mammo: 'mammography', 'c-section': 'cesarean', csection: 'cesarean', physical: 'preventive', checkup: 'preventive',
+  // ---------- search (Nov 7, 2026; Betsy: "transabdominal myomectomy" found nothing, and typing a code could land on
+  // the wrong one). Rarer words count more, care items' everyday words point at their codes (site/search_aliases.py),
+  // only a whole code opens a code, and quality-reporting codes nobody pays for stay out of the list. ----------
+  var ALIAS = /*ALIASES:START*/[["Abdominal ultrasound","abdominal ultrasound",["76700"]],["ACL reconstruction","acl reconstruction",["29888"]],["AFib ablation","ablation afib atrial fibrillation rhythm",["93656","274","273","317"]],["Annual physical, new patient (ages 18\u201339)","18 39 ages annual new patient physical",["99385"]],["Annual physical, new patient (ages 40\u201364)","40 64 ages annual new patient physical",["99386"]],["Anti-reflux surgery (Nissen)","anti fundoplication gerd heartburn hiatal nissen reflux surgery",["43280","328","327","326"]],["Aortic valve replacement, catheter (TAVR)","aortic catheter replacement tavi tavr transcatheter valve",["33361","267","266"]],["Aortic valve replacement, open","aortic avr open replacement valve",["33405","221","220","219","216","217","218","212"]],["Appendectomy, laparoscopic","appendectomy appendicitis appendix laparoscopic",["44970","399","398","397"]],["Basic metabolic panel","basic metabolic panel",["80048"]],["Brain MRI","brain mri",["70551"]],["Brain MRI with contrast","brain contrast mri with",["70553"]],["Breast lump removal","breast lump removal",["19120"]],["C-section","baby birth c caesarean cesarean section",["59510","788","787","786","783","784","785"]],["Carotid endarterectomy","artery carotid endarterectomy neck stroke",["35301","39","38","37"]],["Carpal tunnel release","carpal hand numbness release tingling tunnel wrist",["64721","26055","25000"]],["Cataract surgery","cataract cloudy eye lens surgery vision",["66984","66982"]],["CBC with differential","cbc differential with",["85025"]],["Cholesterol test","cholesterol test",["80061"]],["Colon resection, laparoscopic","bowel colectomy colon laparoscopic resection",["44204","331","330","329"]],["Colonoscopy (diagnostic)","colon colonoscopy diagnostic polyp screening",["45378","45380","45384","45385"]],["Colonoscopy with biopsy","biopsy colonoscopy with",["45380"]],["Colonoscopy with polyp removal","colonoscopy polyp removal with",["45385"]],["Colonoscopy with ultrasound","colonoscopy ultrasound with",["45391"]],["Complete blood count (CBC)","blood cbc complete count",["85027"]],["Comprehensive metabolic panel","comprehensive metabolic panel",["80053"]],["Coronary stent (PCI)","angioplasty artery blocked coronary pci stent",["92928","322","321","323","324"]],["CT scan of the abdomen and pelvis","abdomen and ct of pelvis scan the",["74177"]],["Defibrillator (ICD) implant","aicd defibrillator icd implant",["33249","277","276","275"]],["Diagnostic mammogram","diagnostic mammogram",["77066"]],["Diagnostic mammogram (one breast)","breast diagnostic mammogram one",["77065"]],["Ectopic pregnancy surgery, laparoscopic","ectopic laparoscopic pregnancy salpingectomy surgery tubal",["59151","819","818","817"]],["EKG","ekg",["93000"]],["Family therapy","family therapy",["90847"]],["Family therapy (without the patient)","family patient the therapy without",["90846"]],["Fibroid removal (myomectomy)","fibroid fibroids laparotomy leiomyoma myomectomy removal uterine",["58140","58146","58545","58546","743","742","731","732","733"]],["Free PSA test","free psa test",["84154"]],["Gallbladder removal (laparoscopic)","cholecystectomy gallbladder gallstones laparoscopic removal",["47562","47563","419","418","417"]],["Gastric bypass","bariatric bypass gastric roux",["43644","621","620","619"]],["Gastric sleeve","bariatric gastrectomy gastric sleeve",["43775","621","620","619"]],["Group therapy","group therapy",["90853"]],["Head CT scan","ct head scan",["70450"]],["Heart bypass (CABG)","bypass cabg coronary heart",["33533","236","235","233","234"]],["Heart calcium score","calcium heart score",["75571"]],["Heart catheterization","catheterization heart",["93452"]],["Heart valve surgery (hospital stay)","heart hospital stay surgery valve",["216"]],["Hernia repair","hernia repair",["49505"]],["Hip fracture repair (nail)","broken femur fracture hip nail repair",["27245","482","481","480"]],["Hip replacement","arthroplasty hip replacement tha",["27130","470","469","521","522","461","462"]],["Hysterectomy, abdominal","abdominal hysterectomy removal uterus",["58150","743","742","731","732","733"]],["Hysterectomy, laparoscopic","hysterectomy laparoscopic removal uterus",["58571","743","742","731","732","733"]],["Inguinal hernia repair, laparoscopic","groin hernia inguinal laparoscopic repair",["49650","352","351","350"]],["Kidney function test","function kidney test",["80069"]],["Kidney removal for cancer, laparoscopic","cancer for kidney laparoscopic nephrectomy removal",["50545","658","657","656","659","660","661"]],["Kidney stone removal (ureteroscopy)","kidney lithotripsy removal stone ureteroscopy",["52356","694","693"]],["Knee MRI","knee mri",["73721"]],["Knee replacement","arthroplasty knee replacement tka",["27447","470","469","461","462"]],["Knee replacement revision","knee replacement revision",["27487","449","403","404"]],["Knee arthroscopy (meniscus repair or trim)","arthroscopy knee meniscectomy meniscus or repair scope torn trim",["29881","29880","29877"]],["Liver function test","function liver test",["80076"]],["Low-back disc surgery (laminotomy/discectomy)","back disc discectomy herniated laminotomy low sciatica slipped surgery",["63030","520","519","518"]],["Low-back fusion, one level","back fusion level low lumbar one spinal tlif",["22633","402","450","451","426","427","428","447","448","456","457","458"]],["Lower back epidural injection","back epidural injection lower",["62322"]],["Lower back epidural injection with imaging","back epidural imaging injection lower with",["62323"]],["Lower back MRI","back lower mri",["72148"]],["Lower back nerve root injection","back injection lower nerve root",["64483"]],["Lower back X-ray","back lower ray x",["72110"]],["Lung lobectomy (VATS)","lobectomy lung vats",["32663","165","164","163"]],["Mammogram","mammogram",["77067"]],["Mastectomy","breast mastectomy removal",["19303","583","582","584","585"]],["Neck fusion (ACDF), one level","acdf cervical fusion level neck one",["22551","473","472","471","429","430"]],["New patient doctor visit (30 minutes)","30 doctor minutes new patient visit",["99203"]],["New patient doctor visit (45 minutes)","45 doctor minutes new patient visit",["99204"]],["New patient doctor visit (60 minutes)","60 doctor minutes new patient visit",["99205"]],["Pacemaker implant","implant pacemaker",["33208","244","243","242","210","211"]],["Pathology tissue exam","exam pathology tissue",["88305"]],["Pelvic CT scan","ct pelvic scan",["72193"]],["Physical therapy (15 minutes)","15 minutes physical therapy",["97110"]],["Pregnancy ultrasound","pregnancy ultrasound",["76805"]],["Prenatal blood panel","blood panel prenatal",["80055"]],["Prostate biopsy","biopsy prostate",["55700"]],["Prostate removal, robotic","prostate prostatectomy removal robotic",["55866","708","707","665","666","667"]],["Prostate trimming (TURP)","bph enlarged prostate trimming turp",["52601","714","713"]],["PSA test","psa test",["84153"]],["PT/INR blood clotting test","blood clotting inr pt test",["85610"]],["PTT blood clotting test","blood clotting ptt test",["85730"]],["Rotator cuff repair","cuff repair rotator",["29827"]],["Shoulder decompression surgery","decompression shoulder surgery",["29826"]],["Shoulder replacement","arthroplasty replacement shoulder",["23472","483"]],["Sleep study","sleep study",["95810"]],["Specialist consultation (40 minutes)","40 consultation minutes specialist",["99243"]],["Specialist consultation (60 minutes)","60 consultation minutes specialist",["99244"]],["Spinal fusion (hospital stay)","fusion hospital spinal stay",["460"]],["Therapy session (30 minutes)","30 minutes session therapy",["90832"]],["Therapy session (45 minutes)","45 minutes session therapy",["90834"]],["Therapy session (60 minutes)","60 minutes session therapy",["90837"]],["Thyroid removal","removal thyroid thyroidectomy",["60240","627","626","625"]],["Thyroid (TSH) test","test thyroid tsh",["84443"]],["Tonsillectomy (child under 12)","12 child tonsillectomy under",["42820"]],["Transvaginal ultrasound","transvaginal ultrasound",["76830"]],["Upper endoscopy (EGD)","egd endoscopy upper",["43235"]],["Upper endoscopy with biopsy","biopsy endoscopy upper with",["43239"]],["Urinalysis (automated)","automated urinalysis",["81003"]],["Urinalysis (manual)","manual urinalysis",["81002"]],["Urinalysis (manual, with microscope)","manual microscope urinalysis with",["81000"]],["Urinalysis with microscope","microscope urinalysis with",["81001"]],["Vaginal delivery","baby birth childbirth delivery labor vaginal",["59400","807","806","805","796","797","798","768"]],["Vasectomy","vasectomy",["55250"]],["VBAC","vbac",["59610","807"]],["Ventral (belly) hernia repair with mesh","abdominal belly hernia incisional mesh repair ventral with",["49593","355","354","353"]],["YAG laser after cataract surgery","after cataract laser surgery yag",["66821"]]]/*ALIASES:END*/;
+  var SYN = {mri: 'magnetic', ct: 'computed', cat: 'computed', 'x-ray': 'xray', xray: 'x-ray', ultrasound: 'sonogram', echo: 'echocardiogram',
+    egd: 'endoscopy', mammogram: 'mammography', mammo: 'mammography', 'c-section': 'cesarean', csection: 'cesarean', physical: 'preventive', checkup: 'preventive',
     bloodwork: 'blood', scope: 'endoscopy', replacement: 'arthroplasty', shot: 'injection', stitches: 'repair'};
-  var toks = function (t) { return String(t).toLowerCase().replace(/[^a-z0-9 -]+/g, ' ').split(/ +/).filter(Boolean); };
-  var hasW = function (n, w) { var w2 = w.replace(/s$/, ''); return n.indexOf(w) >= 0 || n.indexOf(w2) >= 0 || (SYN[w] && n.indexOf(SYN[w]) >= 0); };
-  var qBox = document.querySelector('.ux-hits'), qq = window.__uxQ || new URLSearchParams(location.search).get('q');
-  if (qBox && qq) {
-    var tw = toks(qq), codes = Object.keys(D.codes);
-    var exact = codes.filter(function (c) { return c.toLowerCase() === qq.trim().toLowerCase(); });
-    var all = codes.filter(function (c) { var n = (D.codes[c].name || '').toLowerCase(); return tw.length && tw.every(function (w) { return hasW(n, w); }); });
-    var near = all.length ? [] : codes.map(function (c) { var n = (D.codes[c].name || '').toLowerCase(); return [c, tw.filter(function (w) { return w.length > 2 && hasW(n, w); }).length]; })
-      .filter(function (x) { return x[1]; }).sort(function (a, b) { return b[1] - a[1]; }).map(function (x) { return x[0]; });
-    var shown = exact.concat(all.filter(function (c) { return exact.indexOf(c) < 0; }), near).slice(0, 60);
-    qBox.innerHTML = '<p><b>' + (all.length + exact.length ? (shown.length >= 60 ? '60+' : shown.length) + ' billing code' + (shown.length === 1 ? ' matches' : 's match') + ' “' + E(qq) + '”.</b> Pick one:'
-      : (shown.length ? 'No exact match for “' + E(qq) + '”. Close matches:' : 'Nothing matches “' + E(qq) + '”. Try one word, like “knee” or “MRI”, or a billing code.')) + '</p>' +
-      (shown.length ? '<ul>' + shown.map(function (c) { return '<li><button type="button" data-c="' + E(c) + '">' + E(D.codes[c].name) + ' <span>' + E(D.codes[c].type || 'CPT') + ' ' + E(c) + '</span></button></li>'; }).join('') + '</ul>' : '');
+  var STOP = {and: 1, or: 1, of: 1, the: 1, with: 1, without: 1, for: 1, a: 1, an: 1, in: 1, on: 1, to: 1, my: 1, cpt: 1, code: 1, codes: 1, drg: 1, ms: 1, hcpcs: 1, price: 1, prices: 1, cost: 1, costs: 1};
+  var nrm = function (t) { return String(t || '').toLowerCase().replace(/[^a-z0-9 -]+/g, ' '); };
+  var nameToks = function (t) { var out = []; nrm(t).split(/ +/).forEach(function (w) { var p = w.split('-').filter(Boolean); out.push.apply(out, p); if (p.length > 1) out.push(p.join('')); }); return out; };
+  var stem = function (w) { return w.length > 4 ? w.replace(/(es|s)$/, '') : w; };
+  var hit1 = function (t, w) { return t === w || stem(t) === stem(w) || (w.length >= 6 && t.indexOf(w) === 0) || (SYN[w] && t === SYN[w]); };
+  var noPrice = function (c, o) { return (o.type === 'HCPCS' && /^G[89]\d{3}$/.test(c)) || /not performed|reason not given|documented|were not|was not/i.test(o.name || ''); };
+  var IDX = null, DF = {}, NC = 1, AV = {};
+  function index() {
+    if (IDX) return; IDX = [];
+    Object.keys(D.codes).forEach(function (c) { var o = D.codes[c]; if (noPrice(c, o)) return; var ts = {}; nameToks(o.name).forEach(function (t) { ts[t] = 1; }); IDX.push([c, Object.keys(ts)]); Object.keys(ts).forEach(function (t) { DF[t] = (DF[t] || 0) + 1; }); });
+    NC = IDX.length; ALIAS.forEach(function (a) { a[1].split(' ').forEach(function (w) { AV[w] = 1; }); });
   }
+  function qToks(q) {   // "trans abdominal" -> "transabdominal" (plus "abdominal", weaker), when the joined word is known
+    var w = nrm(q).replace(/-/g, ' ').split(/ +/).filter(function (x) { return x && !STOP[x]; }), out = [];
+    for (var i = 0; i < w.length; i++) {
+      var j = w[i] + (w[i + 1] || '');
+      if (w[i + 1] && w[i].length <= 6 && (DF[j] || AV[j])) { out.push([j, 1]); out.push([w[i + 1], 0.5]); i++; } else out.push([w[i], 1]);
+    }
+    return out;
+  }
+  var wt = function (t) {   // rarer words count more; a word found nowhere (not in any name or everyday word) counts for nothing
+    var n = 0; for (var k in DF) if (k === t || hit1(k, t)) n += DF[k];
+    if (!n && !Object.keys(AV).some(function (k) { return hit1(k, t); })) return 0;
+    return Math.log((NC + 1) / (1 + Math.min(n, NC))); };
+  function codeOf(raw) {   // a whole billing code only: "58140", "DRG 743", "MS-DRG 005", "J1885"; a lone "5" is not a code
+    var t = String(raw || '').trim().toUpperCase().replace(/^(CPT|HCPCS|CODE)[\s#:]*/, ''), drg = /^(MS-?)?DRG[\s#:]*/.test(t);
+    t = t.replace(/^(MS-?)?DRG[\s#:]*/, '').replace(/\s+/g, '');
+    if (!t) return null;
+    if (/^\d{1,3}$/.test(t) && (drg || t.length === 3)) { var k = String(+t); return D.codes[k] && /DRG/.test(D.codes[k].type || '') ? k : null; }
+    if (/^[0-9A-Z]{4,5}$/.test(t) && /\d/.test(t) && D.codes[t]) return t;
+    return null;
+  }
+  function find(q) {
+    index();
+    var qt = qToks(q).map(function (x) { return [x[0], x[1] * wt(x[0])]; }).filter(function (x) { return x[1] > 0; });
+    if (!qt.length) return {likely: [], other: []};
+    var top = qt.reduce(function (m, x) { return x[1] > m[1] ? x : m; }, qt[0]);
+    // care items whose everyday words carry the query's most specific word
+    // (the best-matching ones only: "knee replacement" is the knee item, not every replacement)
+    var cand = ALIAS.map(function (a) { var ws = a[1].split(' '), s = 0, hasTop = false;
+      qt.forEach(function (w) { if (ws.some(function (t) { return hit1(t, w[0]); })) { s += w[1]; if (w === top) hasTop = true; } });
+      return [a, hasTop ? s : 0]; }).filter(function (x) { return x[1] > 0; });
+    var bestA = cand.reduce(function (m, x) { return Math.max(m, x[1]); }, 0);
+    var likely = cand.filter(function (x) { return x[1] >= bestA * 0.95; }).map(function (x) { return x[0]; });
+    var seen = {}; likely.forEach(function (a) { a[2].forEach(function (c) { seen[c] = 1; }); });
+    var sc = IDX.map(function (x) { var s = 0; qt.forEach(function (w) { if (x[1].some(function (t) { return hit1(t, w[0]); })) s += w[1]; }); return [x[0], s]; })
+      .filter(function (x) { return x[1] > 0; }).sort(function (a, b) { return b[1] - a[1] || D.codes[b[0]].n - D.codes[a[0]].n; });
+    // when a care item already answers the most specific word, list only other codes that also have that word
+    if (likely.length) sc = sc.filter(function (x) { var ts = IDX.find(function (y) { return y[0] === x[0]; })[1]; return ts.some(function (t) { return hit1(t, top[0]); }); });
+    var full = sc.filter(function (x) { var ts = IDX.find(function (y) { return y[0] === x[0]; })[1];   // every word typed, when some code has them all
+      return qt.every(function (w) { return ts.some(function (t) { return hit1(t, w[0]); }); }); });
+    if (full.length) sc = full;
+    sc = sc.filter(function (x) { return !seen[x[0]]; });
+    var best = sc.length ? sc[0][1] : 0;
+    var other = sc.filter(function (x) { return x[1] >= best * 0.6; }).map(function (x) { return x[0]; });
+    return {likely: likely, other: other};
+  }
+  var li = function (c) { return '<li><button type="button" data-c="' + E(c) + '">' + E(D.codes[c].name) + ' <span>' + E(D.codes[c].type || 'CPT') + ' ' + E(c) + '</span></button></li>'; };
+  function showHits(q) {
+    var box = document.querySelector('.ux-hits');
+    if (!box) {
+      box = document.createElement('div'); box.className = 'ux-hits';
+      var sq = document.querySelector('section.q'); (sq || document.body).insertAdjacentElement(sq ? 'afterend' : 'afterbegin', box);
+      box.addEventListener('click', function (e) { var b = e.target.closest('button[data-c]'); if (!b) return; pick(b.dataset.c); });
+    }
+    window.__uxQ = q;
+    if (/^\d+$/.test(q.trim())) {
+      box.innerHTML = '<p><b>There is no billing code “' + E(q.trim()) + '” here.</b> Procedure codes have 5 characters, like 58140. Hospital-stay codes (DRGs) have 3 digits, like 743. Or type the procedure\'s name.</p>';
+      return;
+    }
+    var r = find(q), n = 0, h = '';
+    r.likely.forEach(function (a) { var cs = a[2].filter(function (c) { return D.codes[c]; }); if (!cs.length) return; n += cs.length;
+      h += '<p class="pf-likely"><b>' + E(a[0]) + '</b>: the codes it is usually billed under. Pick one to see its prices.</p><ul>' + cs.map(li).join('') + '</ul>'; });
+    var other = r.other.slice(0, Math.max(0, 60 - n)); n += other.length;
+    if (other.length) h += (r.likely.length ? '<p class="pf-other"><b>Other codes with these words</b></p>' : '') + '<ul>' + other.map(li).join('') + '</ul>';
+    box.innerHTML = '<p><b>' + (n ? (n >= 60 ? '60+' : n) + ' billing code' + (n === 1 ? ' matches' : 's match') + ' “' + E(q) + '”.</b> Pick one:' :
+      'Nothing matches “' + E(q) + '”.</b> Try one word, like “knee” or “MRI”, or a billing code.') + '</p>' + h;
+  }
+  function pick(c) {
+    var box = document.querySelector('.ux-hits'); if (box) box.remove();
+    window.__uxQ = null; S.code = c; S.showAll = {};
+    var pr = document.getElementById('proc'); if (pr) pr.value = '';
+    render(); window.scrollTo(0, 0);
+  }
+  // the search box: a whole code opens that code; anything else lists matches (it used to jump to the first name that
+  // happened to contain the text, or to a code that was only part of what was typed)
+  document.addEventListener('change', function (e) {
+    var pr = e.target; if (!pr || pr.id !== 'proc') return;
+    var raw = pr.value.trim(); if (!raw) return;
+    e.stopPropagation();
+    var sp = document.getElementById('spanel'), sb = document.querySelector('.q .sbtn');
+    if (sp) sp.hidden = true; if (sb) sb.setAttribute('aria-expanded', 'false');
+    var c = codeOf((raw.split('·').pop() || '').trim()) || codeOf(raw);
+    if (c) { pick(c); return; }
+    showHits(raw); render(); window.scrollTo(0, 0);
+  }, true);
+  (function () {   // arriving from a search (?q=): a whole code opens it, anything else gets the list
+    var qq = window.__uxQ || new URLSearchParams(location.search).get('q'); if (!qq) return;
+    var c = codeOf(qq);
+    if (c) { var bx = document.querySelector('.ux-hits'); if (bx) bx.remove(); window.__uxQ = null; S.code = c; S.showAll = {}; return; }
+    showHits(qq);
+  })();
+  (function () {   // nothing priced shows while a search list is open
+    var st = document.createElement('style'); st.id = 'pfSearchCss';
+    st.textContent = '.pf-searching .ux-words,.pf-searching nav.vtabs,.pf-searching #planNote,.pf-searching #screenNote,.pf-searching #patient,'
+      + '.pf-searching #board,.pf-searching .ux-bills,.pf-searching #mapv,.pf-searching .q .meta2,.pf-searching #haveSlot,.pf-searching .ux-pay{display:none!important}'
+      + '.ux-hits .pf-likely,.ux-hits .pf-other{margin:14px 0 0}';
+    document.head.appendChild(st);
+  })();
 
   // ---------- one Medicare block: each kind of place once, national rate and the local range together ----------
   if (typeof medBlock === 'function' && typeof mlHTML === 'function') {

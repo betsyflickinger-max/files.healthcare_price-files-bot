@@ -24,6 +24,9 @@ import re
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 
+# Nov 7, 2026 (Betsy, myomectomy search): other CPT codes the same surgery is billed under, so a search or lookup
+# by the main code also finds them. 58146 = 5+ fibroids or over 250 g (abdominal); 58545/58546 = laparoscopic versions.
+RELATED_CPT = {"58140": "58146|58545|58546"}
 ITEM_FIELDS = ["item_id", "plain_name", "kind", "usual_setting", "shoppable", "main_cpt", "usual_drg", "status", "why_listed"]
 BILL_FIELDS = ["item_id", "bill", "setting", "code_system", "codes", "related_codes", "billing_class", "priced_as",
                "when", "confidence", "source"]
@@ -176,7 +179,7 @@ def main():
                               usual_drg=r["usual_drg"], status="draft: not on the site",
                               why_listed=r["why_on_list"])
             bills.append(dict(item_id=iid, bill="surgeon or doctor", setting="any", code_system="CPT", codes=cpt,
-                              related_codes="", billing_class="professional", priced_as="per service",
+                              related_codes=RELATED_CPT.get(cpt, ""), billing_class="professional", priced_as="per service",
                               when="always", confidence="standard rule", source="the surgeon bills the procedure's CPT code"))
             if setting != "overnight stay":
                 bills.append(dict(item_id=iid, bill="hospital or surgery center", setting="same day", code_system="CPT",
