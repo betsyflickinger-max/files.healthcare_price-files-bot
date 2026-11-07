@@ -1,0 +1,33 @@
+name: Plan to network crosswalk
+
+# Nov 7, 2026: insurers/plan_network_xwalk.py. Turns each monthly insurer catalog (bot/catalog/) into one table per
+# insurer per table-of-contents date: plan -> networks (R2 bot/xwalk/plan_network/). Prep for the 2027 change to one
+# file per network. Reads the catalog's employer files from R2; rents no machine; deploys nothing. docs/plan-network-crosswalk.md
+on:
+  workflow_dispatch:
+    inputs:
+      month:
+        description: "Catalog month (YYYY-MM); blank = every month not yet done"
+        default: ""
+      insurers:
+        description: "Insurers"
+        default: "anthem,cigna,uhc,aetna,hcsc"
+
+jobs:
+  xwalk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 pyarrow==26.0.0 duckdb==1.5.6
+      - run: python insurers/plan_network_xwalk.py build ${{ inputs.month && format('--month {0}', inputs.month) || '' }} --insurers "${{ inputs.insurers }}" | tee -a "$GITHUB_STEP_SUMMARY"
