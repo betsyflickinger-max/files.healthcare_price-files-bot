@@ -37,10 +37,10 @@ import os
 
 LOW, HIGH = 0.5, 8.0
 MANY_CODES, MANY_FAMILIES = 10, 3
-# Count the labels in every new insurer-file census (06f, on the rented machines)? Off until Betsy switches it on:
+# Count the labels in every new insurer-file census (06f, on the rented machines)? On since Nov 7, 2026 (Betsy):
 # on the biggest files (UHC Choice Plus, 18 billion rows) the extra counting adds machine time. The census runs in its
 # own process, so a problem here can never cost the price tables. Switch on: set True here, or RATE_LABELS=1.
-IN_CENSUS = False or os.environ.get("RATE_LABELS") == "1"
+IN_CENSUS = True  # switched on by Betsy, Nov 7, 2026
 LABELS = {
     "far_from_medicare": "Below half or above 8 times Medicare's rate for the same code (may never be used; unverified)",
     "repeated_amount": "Same amount listed more than once for the same service at the same provider (copies counted once)",
