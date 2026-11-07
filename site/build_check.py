@@ -10,6 +10,38 @@ s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"ht
                   aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 B = E['R2_BUCKET']
 bid, slug = sys.argv[1], sys.argv[2]
+if bid == 'all':
+    # Nov 7, 2026: one-page status of every area's builds (DFW, Texas metros, every state scope). Changes nothing.
+    month = slug if slug[:2] == '20' else time.strftime('%Y-%m')
+    def dirs(p): return [c['Prefix'] for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p, Delimiter='/') for c in pg.get('CommonPrefixes', [])]
+    def has(k):
+        try: s3.head_object(Bucket=B, Key=k); return True
+        except Exception: return False
+    def jget(k):
+        try: return json.loads(s3.get_object(Bucket=B, Key=k)['Body'].read())
+        except Exception: return {}
+    def live(root):
+        ms = sorted(d.rstrip('/').rsplit('/', 1)[1] for d in dirs(root) if has(d + 'embed.json'))
+        return ms[-1] if ms else '-'
+    def nobj(p): return sum(pg.get('KeyCount', 0) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p))
+    def show(b):
+        st = jget(f'site/builds/{b}/state.json')
+        if not st: return 'no build'
+        lg = (st.get('log') or [''])[-1]
+        return f"stage {st.get('stage')}, started {st.get('started', '?')}; last: {lg[:110]}"
+    try: cur = s3.get_object(Bucket=B, Key='site/every/CURRENT')['Body'].read().decode().strip()
+    except Exception: cur = '?'
+    print(f'DFW: live build {cur}; {month}: {show(month)}; 2026-10b update: {show("2026-10b")}')
+    for d in dirs('site/every-tx/'):
+        print(f"Texas {d.split('/')[2]}: newest live {live(d)}")
+    scopes = {'s7': ['tennessee', 'colorado', 'oklahoma', 'alabama', 'mississippi', 'missouri', 'georgia'], 'nc': ['north-carolina'], 'ct': ['connecticut']}
+    scopes.update({k: list(v.values()) for k, v in json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'state_scopes.json'))).items() if not k.startswith('_')})
+    for sc, sts in scopes.items():
+        b = f"st{'' if sc == 's7' else sc}-{month}"
+        print(f'\n[{sc}] {b}: {show(b)}')
+        for s_ in sts:
+            print(f"  {s_}: newest live {live(f'site/every-st/{s_}/')}; {month} batch results {nobj('work/every-st/' + s_ + '/v' + month.replace('-', '') + '/')}")
+    sys.exit(0)
 n = int(sys.argv[3]) if len(sys.argv) > 3 else 15
 scope = bid.split('-', 1)[0][2:] or 's7'
 month = bid.split('-', 1)[1]
