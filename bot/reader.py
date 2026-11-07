@@ -7,6 +7,13 @@ Fixes kept from Oct 9: skips a leading byte-order mark in JSON; handles line bre
 
 parse_csv / parse_json yield one row per (code, payer/plan) for the target codes only. The bot keeps the
 whole original file in R2 and archive.org, so any other code can be extracted later from the originals.
+
+Nov 7, 2026: the 2026 hospital rule (CY2026 OPPS final rule, effective Jan 1, 2026; CMS template v3.0) replaced the
+"estimated allowed amount" with the median, 10th and 90th percentile allowed amounts and a count of the allowed amounts
+(remittances) behind them. Rows now also carry p10_amount, p90_amount and allowed_count (median_amount was already kept).
+allowed_count is copied as written: CMS allows "0", "1 through 10", or a whole number of 11 or more. Older files leave
+these three blank. Column names: CSV tall "10th_percentile", "90th_percentile", "count"; CSV wide the same followed by
+"|<payer>|<plan>"; JSON payers_information "10th_percentile", "90th_percentile", "count".
 """
 import csv, gzip, io, json, os, re, sys, time, zipfile
 from pathlib import Path
@@ -28,7 +35,10 @@ FIELDS = ["raw_key", "source_url", "sha256", "source_row", "hospital_name", "loc
           "type_2_npi", "hospital_address", "description", "code", "code_type", "all_codes", "modifiers", "setting",
           "billing_class", "gross_charge", "discounted_cash", "min_charge", "max_charge", "payer_name", "plan_name",
           "negotiated_dollar", "negotiated_percentage", "negotiated_algorithm", "methodology", "median_amount",
-          "notes", "payer_notes"]
+          "notes", "payer_notes",
+          # Nov 7, 2026 (v3.0 template): appended at the end so older readers of these CSVs keep working
+          "p10_amount", "p90_amount", "allowed_count"]
+ALLOWED_FIELDS = ("median_amount", "p10_amount", "p90_amount", "allowed_count")
 
 
 def match(codes):
@@ -126,7 +136,8 @@ def parse_csv(path):
             raw = header[i].split("|")
             if len(p) == 4 and p[0] == "standard_charge":
                 payer_cols.setdefault((raw[1].strip(), raw[2].strip()), {})[p[3]] = i
-            elif len(p) == 3 and p[0] in ("median_amount", "estimated_amount", "additional_payer_notes"):
+            elif len(p) == 3 and p[0] in ("median_amount", "estimated_amount", "additional_payer_notes",
+                                             "10th_percentile", "90th_percentile", "count"):
                 payer_cols.setdefault((raw[1].strip(), raw[2].strip()), {})[p[0]] = i
 
     def col(row, *names):
@@ -155,19 +166,39 @@ def parse_csv(path):
                        negotiated_percentage=col(row, "standard_charge|negotiated_percentage"),
                        negotiated_algorithm=col(row, "standard_charge|negotiated_algorithm"),
                        methodology=col(row, "standard_charge|methodology"), median_amount=col(row, "median_amount"),
-                       payer_notes=col(row, "additional_payer_notes"))
+                       payer_notes=col(row, "additional_payer_notes"), p10_amount=col(row, "10th_percentile"),
+                       p90_amount=col(row, "90th_percentile"), allowed_count=col(row, "count"))
         else:
             emitted = False
             for (payer, plan), c in payer_cols.items():
                 g = lambda k: row[c[k]].strip() if k in c and c[k] < len(row) else ""
                 vals = dict(negotiated_dollar=g("negotiated_dollar"), negotiated_percentage=g("negotiated_percentage"),
                             negotiated_algorithm=g("negotiated_algorithm"), methodology=g("methodology"),
-                            median_amount=g("median_amount"), payer_notes=g("additional_payer_notes"))
+                            median_amount=g("median_amount"), payer_notes=g("additional_payer_notes"),
+                            p10_amount=g("10th_percentile"), p90_amount=g("90th_percentile"), allowed_count=g("count"))
                 if any(vals[k] for k in ("negotiated_dollar", "negotiated_percentage", "negotiated_algorithm")):
                     emitted = True
                     yield dict(common, payer_name=payer.replace("_", " "), plan_name=plan.replace("_", " "), **vals)
             if not emitted:
                 yield common
+
+
+def _count(v):
+    """Count of allowed amounts as written. JSON numbers come back as 12 or 12.0; keep them whole ("12")."""
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v).strip() if v not in (None, "") else ""
+
+
+def allowed_count_number(v):
+    """Count of allowed amounts -> (lowest possible count, exact?). "1 through 10" -> (1, False); "25" -> (25, True);
+    blank or anything else -> (None, False). For counting only; the original text is always what's stored and shown."""
+    s = str(v or "").strip().lower()
+    if s.isdigit():
+        return int(s), True
+    if s.replace(" ", "") in ("1through10", "1-10"):
+        return 1, False
+    return None, False
 
 
 def parse_json(path):
@@ -208,7 +239,8 @@ def parse_json(path):
                                negotiated_percentage=p.get("standard_charge_percentage", ""),
                                negotiated_algorithm=p.get("standard_charge_algorithm", ""),
                                methodology=p.get("methodology", ""), median_amount=p.get("median_amount", ""),
-                               payer_notes=p.get("additional_payer_notes", ""))
+                               payer_notes=p.get("additional_payer_notes", ""), p10_amount=p.get("10th_percentile", ""),
+                               p90_amount=p.get("90th_percentile", ""), allowed_count=_count(p.get("count", "")))
 
 
 def _csv_records(path):
