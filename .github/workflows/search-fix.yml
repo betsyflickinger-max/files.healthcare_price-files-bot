@@ -1,7 +1,7 @@
 name: Search fix (Price Finder search, Nov 7 2026)
 
 # Nov 7, 2026 (Betsy's "transabdominal myomectomy" test): deploys the new site/assets/pf-table.js to the live site.
-# The site push (site/sitewide.py -> site/pf_table.py) copies pf-table.js into every Price Finder page. Re-running is safe.
+# The site push (site/sitewide.py -> site/pf_table.py) copies pf-table.js into every Price Finder page. Re-running is safe. Rerun 1 (Nov 7): words typed as two ("lower back", "anti reflux").
 on:
   push:
     branches: [main]

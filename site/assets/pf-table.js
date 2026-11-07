@@ -507,10 +507,12 @@
     var w = nrm(q).replace(/-/g, ' ').split(/ +/).filter(function (x) { return x && !STOP[x]; }), out = [];
     for (var i = 0; i < w.length; i++) {
       var j = w[i] + (w[i + 1] || '');
-      if (w[i + 1] && w[i].length <= 6 && (DF[j] || AV[j])) { out.push([j, 1]); out.push([w[i + 1], 0.5]); i++; } else out.push([w[i], 1]);
+      if (w[i + 1] && w[i].length <= 6 && (DF[j] || AV[j])) { out.push([j, 1, [w[i], w[i + 1]]]); i++; } else out.push([w[i], 1]);
     }
     return out;
   }
+  // a word typed as two ("lower back", "anti reflux") matches a name with the joined word or with both halves
+  var mt = function (ts, w) { return ts.some(function (t) { return hit1(t, w[0]); }) || (!!w[2] && w[2].every(function (p) { return ts.some(function (t) { return hit1(t, p); }); })); };
   var wt = function (t) {   // rarer words count more; a word found nowhere (not in any name or everyday word) counts for nothing
     var n = 0; for (var k in DF) if (k === t || hit1(k, t)) n += DF[k];
     if (!n && !Object.keys(AV).some(function (k) { return hit1(k, t); })) return 0;
@@ -525,23 +527,23 @@
   }
   function find(q) {
     index();
-    var qt = qToks(q).map(function (x) { return [x[0], x[1] * wt(x[0])]; }).filter(function (x) { return x[1] > 0; });
+    var qt = qToks(q).map(function (x) { return [x[0], x[1] * wt(x[0]), x[2]]; }).filter(function (x) { return x[1] > 0; });
     if (!qt.length) return {likely: [], other: []};
     var top = qt.reduce(function (m, x) { return x[1] > m[1] ? x : m; }, qt[0]);
     // care items whose everyday words carry the query's most specific word
     // (the best-matching ones only: "knee replacement" is the knee item, not every replacement)
     var cand = ALIAS.map(function (a) { var ws = a[1].split(' '), s = 0, hasTop = false;
-      qt.forEach(function (w) { if (ws.some(function (t) { return hit1(t, w[0]); })) { s += w[1]; if (w === top) hasTop = true; } });
+      qt.forEach(function (w) { if (mt(ws, w)) { s += w[1]; if (w === top) hasTop = true; } });
       return [a, hasTop ? s : 0]; }).filter(function (x) { return x[1] > 0; });
     var bestA = cand.reduce(function (m, x) { return Math.max(m, x[1]); }, 0);
     var likely = cand.filter(function (x) { return x[1] >= bestA * 0.95; }).map(function (x) { return x[0]; });
     var seen = {}; likely.forEach(function (a) { a[2].forEach(function (c) { seen[c] = 1; }); });
-    var sc = IDX.map(function (x) { var s = 0; qt.forEach(function (w) { if (x[1].some(function (t) { return hit1(t, w[0]); })) s += w[1]; }); return [x[0], s]; })
+    var sc = IDX.map(function (x) { var s = 0; qt.forEach(function (w) { if (mt(x[1], w)) s += w[1]; }); return [x[0], s]; })
       .filter(function (x) { return x[1] > 0; }).sort(function (a, b) { return b[1] - a[1] || D.codes[b[0]].n - D.codes[a[0]].n; });
     // when a care item already answers the most specific word, list only other codes that also have that word
-    if (likely.length) sc = sc.filter(function (x) { var ts = IDX.find(function (y) { return y[0] === x[0]; })[1]; return ts.some(function (t) { return hit1(t, top[0]); }); });
+    if (likely.length) sc = sc.filter(function (x) { var ts = IDX.find(function (y) { return y[0] === x[0]; })[1]; return mt(ts, top); });
     var full = sc.filter(function (x) { var ts = IDX.find(function (y) { return y[0] === x[0]; })[1];   // every word typed, when some code has them all
-      return qt.every(function (w) { return ts.some(function (t) { return hit1(t, w[0]); }); }); });
+      return qt.every(function (w) { return mt(ts, w); }); });
     if (full.length) sc = full;
     sc = sc.filter(function (x) { return !seen[x[0]]; });
     var best = sc.length ? sc[0][1] : 0;
