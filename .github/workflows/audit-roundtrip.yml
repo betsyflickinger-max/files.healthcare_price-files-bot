@@ -50,7 +50,7 @@ jobs:
       - name: Report
         if: always()
         run: |
-          D=reports/audit/$(TZ=America/Chicago date +%F); mkdir -p $D; tail -c 200000 /tmp/rt.log > $D/roundtrip.log || true
+          D=reports/audit/$(TZ=America/Chicago date +%F); mkdir -p $D; tail -c 200000 /tmp/rt.log > $D/roundtrip-${{ github.run_id }}.log || true
           [ -f $D/roundtrip.md ] && cat $D/roundtrip.md >> "$GITHUB_STEP_SUMMARY"
           git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
-          git add reports/audit && git commit -m "Data accuracy audit round trip $(TZ=America/Chicago date +%F)" && git pull --rebase -q origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} || echo "nothing to commit"
+          git add reports/audit && git commit -m "Data accuracy audit round trip $(TZ=America/Chicago date +%F)" && for i in 1 2 3 4 5; do git pull --rebase -X theirs -q origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} && break; sleep $((i*20)); done || echo "nothing to commit"
