@@ -40,6 +40,36 @@ def pct(n, d):
     return f"{100 * n / d:.1f}%" if d else ""
 
 
+def rate_label_section(files):
+    """Nov 7, 2026: counts of the "may never be used" labels (insurers/pipeline/rate_labels.py). Labels only: every rate
+    stays in the tables and on the site, in price order."""
+    have = [f for f in files if isinstance(f.get("rate_labels"), dict) and "rows" in f["rate_labels"]]
+    L = ["", "## Rates that may never be used (labels only)", "",
+         "Insurer files list rates for many provider-and-service pairs that are unlikely ever to be billed. These labels mark "
+         "the usual signs. Nothing is removed, re-ranked or hidden; the counts are research, not findings about an insurer."]
+    if not have:
+        return L + ["", "Not counted yet: the label counts are switched off in the census until Betsy turns them on "
+                    "(`insurers/pipeline/rate_labels.py`, IN_CENSUS)."]
+    tot = Counter()
+    for f in have:
+        for k, v in f["rate_labels"].items():
+            if isinstance(v, (int, float)) and not isinstance(v, bool):
+                tot[k] += v
+    th = have[0]["rate_labels"].get("thresholds", {})
+    d = tot["dollar_rows"]
+    L += ["", f"{len(have)} of {len(files)} files counted. {d:,} dollar rates in them.", "",
+          "| Label | Rates | Share of dollar rates |", "|---|---|---|",
+          f"| Below {th.get('low', 0.5):.0%} or above {th.get('high', 8):g}× Medicare's rate for the same code "
+          f"(of {tot['with_medicare_figure']:,} rates with a Medicare figure) | {tot['far_from_medicare']:,} "
+          f"({tot['below_half_medicare']:,} below, {tot['above_8x_medicare']:,} above) | {pct(tot['far_from_medicare'], d)} |",
+          f"| Same amount listed more than once for the same service at the same provider | {tot['repeated_amount_rows']:,} "
+          f"({tot['repeated_amount_extra_copies']:,} extra copies) | {pct(tot['repeated_amount_rows'], d)} |",
+          f"| One identical amount for {th.get('many_codes', 10)}+ codes in {th.get('many_families', 3)}+ code families "
+          f"at the same provider | {tot['one_amount_many_codes']:,} | {pct(tot['one_amount_many_codes'], d)} |",
+          f"| Any of the three | {tot['any_label']:,} | {pct(tot['any_label'], d)} |"]
+    return L
+
+
 def main():
     files = load()
     if not files:
@@ -113,6 +143,7 @@ def main():
         for ins, c in sorted(per_ins.items()):
             t = sum(v for k, v in c.items() if k != "within a year")
             L.append(f"| {ins} | {pct(c['dated'], t)} | {pct(c['within a year'], t)} | {pct(c['no set end'], t)} |")
+    L += rate_label_section(files)
     L += ["", f"Per-file detail: `reports/census/{MONTH}.csv`."]
     (OUT / f"{MONTH}.md").write_text("\n".join(L) + "\n")
     print(f"{len(files)} inventories -> reports/census/{MONTH}.md and .csv")
