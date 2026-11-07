@@ -113,7 +113,7 @@ def tout(m): return f'site/every-tx/{m}/{MONTH}/'
 
 
 def main():
-    force = E.get('FORCE_TX')
+    force = E.get('FORCE_TX') or MONTH == '2026-11'   # Nov 7, 2026 (Betsy: "get everything up to date"): Texas builds now, alongside DFW
     if EARLY and not force and not exists(SP + 'state.json'):
         log('Texas', MONTH, 'was built by hand; automatic builds start', FIRST, '("force_tx" builds the metro-area pages now)'); return
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': [], 'log': []})
