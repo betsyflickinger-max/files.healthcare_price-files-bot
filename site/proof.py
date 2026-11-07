@@ -58,7 +58,9 @@ DELIVERY_TAX = ('207V', '207Q', '208D', '176B', '367A')   # OB/GYN (incl. matern
 # podiatry, counseling and psychology, labs, pharmacies and equipment suppliers.
 GROUP_NOT_DELIVERY = ('207N', '207W', '207Y', '207X', '2085', '207Z', '2084', '207K', '2088', '2080', '2086', '207T', '207U',
                       '231H', '2355', '152W', '122', '1223', '111N', '2251', '225X', '213E', '101Y', '103T', '1041', '291U', '3336',
-                      '332', '207L', '3674', '3675')
+                      '332', '207L', '3674', '3675',
+                      # Nov 7, 2026 (testers): prosthetics/orthotics suppliers, radiology techs; ambulatory centers are below
+                      '335', '2471')
 
 
 def is_non_delivery(t):
@@ -140,7 +142,9 @@ class Proof:
             t_ = self.tax.get(str(npi or ''))
             # a clinician with another specialty; a practice only when its listing names one other physician specialty
             # (Illinois: a dermatology group was the "lowest vaginal delivery"); multi-specialty groups and clinics are kept
-            if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and str((t_[0] if isinstance(t_, tuple) else t_) or '').startswith(GROUP_NOT_DELIVERY)):
+            gt = str((t_[0] if isinstance(t_, tuple) else t_) or '')
+            # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
+            if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):

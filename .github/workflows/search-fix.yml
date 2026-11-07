@@ -1,7 +1,9 @@
 name: Search fix (Price Finder search, Nov 7 2026)
 
 # Nov 7, 2026 (Betsy's "transabdominal myomectomy" test): deploys the new site/assets/pf-table.js to the live site.
-# The site push (site/sitewide.py -> site/pf_table.py) copies pf-table.js into every Price Finder page. Re-running is safe. Rerun 1 (Nov 7): words typed as two ("lower back", "anti reflux"). Rerun 2: search events for the Visitors tab.
+# The site push (site/sitewide.py -> site/pf_table.py) copies pf-table.js into every Price Finder page. Re-running is safe. Rerun 1 (Nov 7): words typed as two ("lower back", "anti reflux"). Rerun 2: search events for the Visitors tab. Rerun 3 (Nov 7 testers): birth bills on Price Finder pages
+# (ux_polish PF block, also saved to the R2 page copies future builds start from), DRG pages lose the doctor's-fee row,
+# and sitewide adds missing hospital-price routes (San Angelo).
 on:
   push:
     branches: [main]
@@ -36,5 +38,15 @@ jobs:
       - run: pip install boto3==1.35.36 requests==2.32.3 pillow==10.4.0 pyarrow==26.0.0 duckdb==1.1.3
       - run: |
           python site/site_files.py pull w
+          python - <<'PY'
+          import glob, sys
+          sys.path.insert(0, 'site'); import ux_polish as u
+          n = 0
+          for p in glob.glob('w/site/**/price-finder/index.html', recursive=True):
+              s = open(p, encoding='utf-8').read(); t = u.patch_pf(s)
+              if t != s: open(p, 'w', encoding='utf-8').write(t); n += 1
+          print(n, 'Price Finder pages given the new bills section')
+          PY
+          python site/ux_polish.py --r2
           python site/site_files.py push w
           grep -c "ALIASES:START" w/site/pf-table.js | sed 's/^/pf-table.js with the new search: /' | tee -a "$GITHUB_STEP_SUMMARY"

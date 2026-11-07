@@ -10,6 +10,7 @@ Three pieces, all built from figures already on the page (nothing estimated):
 Styled with the shared tokens in costs.css, so the site look (Units) carries over.
 """
 import html
+import re
 import math
 
 esc = lambda s: html.escape(str(s), quote=True)
@@ -142,6 +143,13 @@ def bill_slips(S, sg, pf_path):
     elif S.get('drg'):
         slips = [('The hospital stay', 'this page', this), ('The doctors', 'who see you in the hospital bill separately', ask),
                  ('Surgery and anesthesia', 'if you have an operation, they bill separately', ask)]
+    elif re.match(r'^59(?:4\d\d|5[01]\d|6[0-2]\d)$', code):   # Nov 7, 2026 (testers): a birth's biggest bill is the hospital's
+        stay = '788' if re.match(r'^59(?:51\d|6[12]\d)$', code) else '807'   # C-section / VBAC by C-section -> DRG 788, vaginal -> 807
+        hs = lambda c, t: f'<a href="{esc(pf_path)}?code={c}">{esc(t)} →</a>'
+        slips = [('The delivering clinician', 'this page', this),
+                 ('The hospital stay', ('cesarean' if stay == '788' else 'vaginal') + f' delivery, hospital-stay code {stay}', ask + (hs(stay, 'See hospital prices'),)),
+                 ("The baby's stay", 'newborn care, hospital-stay code 795', ask + (hs('795', 'See newborn prices'),)),
+                 ('Anesthesia, maybe', 'an epidural bills separately', ask)]
     elif S.get('kind') == 'doc':
         slips = [('The clinician', 'this page', this), ('A facility fee, maybe', 'only at clinics a hospital owns', ask)]
     elif cat == 'Imaging':

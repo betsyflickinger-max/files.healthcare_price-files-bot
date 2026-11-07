@@ -136,6 +136,11 @@ def apply(d):
                     t = bake(t)
                 if t != s:
                     open(p, 'w', encoding='utf-8').write(t); changed += 1
+    try:   # Nov 7, 2026: an area whose page has hospital files but no pf/h route (San Angelo) gets one (site/hosp_routes.py)
+        import hosp_routes
+        hosp_routes.repair(d)
+    except Exception as e:
+        print('hospital-route check skipped:', type(e).__name__, e, flush=True)
     mw = os.path.join(d, 'functions', '_middleware.js')
     if os.path.isfile(mw):
         t0 = open(mw, encoding='utf-8').read()

@@ -110,7 +110,10 @@
     var isDoctor = function (i) { var nm = D.fac[i][0], k = kindOf(i); return k === 'P' ? MDDO.test(nm) : k === 'G' && !LABRX.test(nm) && !IMG.test(nm) && !NOT_HERE.test(nm); };
     if (!useDoc) Object.keys(docs).forEach(function (k) { var n = k.split('|')[1]; if (isDoctor(+k.split('|')[0])) (byNet[n] = byNet[n] || []).push(docs[k][0]); });
     var doc = {};
-    Object.keys(byNet).forEach(function (n) { var v = byNet[n].sort(function (a, b) { return a - b; }); doc[n] = {lo: v[0], mid: v[v.length >> 1], hi: v[v.length - 1], n: v.length}; });
+    // Nov 7, 2026 (testers): doctors don't bill hospital-stay (DRG) codes; rates filed under a doctor or group for a DRG are the
+    // hospital's case rate listed against that NPI, so the "doctor's fee" row read the same $27,440.50 at every hospital.
+    // DRG pages show no doctor's fee row; the surgeon bills under the procedure's own code (see the bills section).
+    if (!/DRG/.test(String((D.codes[code] || {}).type || ''))) Object.keys(byNet).forEach(function (n) { var v = byNet[n].sort(function (a, b) { return a - b; }); doc[n] = {lo: v[0], mid: v[v.length >> 1], hi: v[v.length - 1], n: v.length}; });
     // Medicare for each place
     var fresh = ML && ML.nf === D.fac.length;    // ml.json written for this page's provider list (a rebuild can reorder it)
     var m = D.med && D.med.codes[code], pfs = pfsOf(code), wi = (fresh && ML.f) || {};

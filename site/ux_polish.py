@@ -127,6 +127,10 @@ details.ux-ctx>summary{cursor:pointer;font:700 15px var(--body);min-height:44px;
     const here = ['Shown above', 'pick your network'], ask = ['Ask for this one', ''];
     let L;
     if (code.startsWith('00')) L = [['The anesthesia team', 'this page', here], ['The place', 'facility fee, a separate bill', ask], ['The doctor', 'who does the procedure', ask]];
+    else if (/^59(?:4\d\d|5[01]\d|6[0-2]\d)$/.test(code)) { const st = /^59(?:51\d|6[12]\d)$/.test(code) ? '788' : '807';   // Nov 7, 2026: a birth's hospital bills
+      const go = (c, t) => `<a href="?code=${c}">${h(t)} →</a>`;
+      L = [['The delivering clinician', 'this page', here], ['The hospital stay', (st === '788' ? 'cesarean' : 'vaginal') + ' delivery, hospital-stay code ' + st, ask.concat(go(st, 'See hospital prices'))],
+        ["The baby's stay", 'newborn care, hospital-stay code 795', ask.concat(go('795', 'See newborn prices'))], ['Anesthesia, maybe', 'an epidural bills separately', ask]]; }
     else if (drg) L = [['The hospital stay', 'this page', here], ['The doctors', 'who see you in the hospital', ask], ['Surgery and anesthesia', 'if you have an operation', ask]];
     else if (cat === 'Imaging') L = [['The place', 'the scan itself', here], ['The radiologist', 'who reads the scan', ask]];
     else if (/Lab/.test(cat)) L = [['The lab', 'this page', here], ['Drawing the blood, maybe', 'sometimes a small separate charge', ask]];

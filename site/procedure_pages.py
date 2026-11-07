@@ -188,14 +188,28 @@ class Store:
             return {}
 
     def proof(self, area, n_fac):
-        """(Proof, npis) for Texas areas (card #2, Oct 31, 2026; site/proof.py), or (None, None): the page then builds exactly as
-        before. The proof table is Texas only for now."""
-        if self.offline or not self.s3 or area_state(area) != 'TX':
+        """(Proof, npis) for an area whose state has a proof table (card #2, Oct 31, 2026; every state since Nov 7; site/proof.py),
+        or (None, None): the page then builds exactly as before."""
+        # Nov 7, 2026 (testers: Georgia and Ohio birth pages led with a gastroenterology center, a dermatopathology lab and a
+        # speech therapist): every state with its own proof table (data/utilization/<year>/by_state/, build_evidence.py) gets
+        # the same checks as Texas; a state without one builds exactly as before.
+        st = area_state(area)
+        if self.offline or not self.s3 or not st:
             return None, None
         try:
-            if not hasattr(self, '_proof'):
-                from proof import Proof, load_taxonomy
-                self._proof = Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B))
+            if not hasattr(self, '_proofs'):
+                self._proofs = {}
+            if st not in self._proofs:
+                from proof import Proof, load_taxonomy, load_taxonomy_state
+                try:
+                    self._proofs[st] = (Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B)) if st == 'TX' else
+                                        Proof(self.s3, self.B, state=st, tax=load_taxonomy_state(self.s3, self.B, st)))
+                except Exception as e:
+                    print(f"  {st}: no proof table ({type(e).__name__}: {e}); pages build as before", flush=True)
+                    self._proofs[st] = None
+            self._proof = self._proofs[st]
+            if self._proof is None:
+                return None, None
             pre = self.prefix(area, 't')
             if not pre or not pre.endswith('t/'):
                 return None, None
@@ -447,6 +461,38 @@ def kind_of(x):
 
 HOSP_NAME = re.compile(r'\bhospital\b', re.I)
 PARPLAN = re.compile(r'par\s*plan', re.I)
+
+# Nov 7, 2026 (testers: "BCBSTX – CO EPO…" and "Ambetter – Texas exchange plans" on Georgia pages, "Molina – Marketplace
+# (Texas)" and Anthem Indiana networks on Ohio's): a plan sold in another state can pay a hospital here (its members travel,
+# or the contract is national), so it stays in the networks table, labeled with the state it's sold in, but it stays out of
+# the page's lowest/highest and top-10 figures, like ParPlan. The state comes from the network's own name only.
+_ST_ABBR = {'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA',
+            'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX',
+            'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'}
+_ST_FULL = {'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR', 'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT',
+            'delaware': 'DE', 'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID', 'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA',
+            'kansas': 'KS', 'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD', 'massachusetts': 'MA', 'michigan': 'MI',
+            'minnesota': 'MN', 'mississippi': 'MS', 'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV', 'new hampshire': 'NH',
+            'new jersey': 'NJ', 'new mexico': 'NM', 'new york': 'NY', 'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
+            'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC', 'south dakota': 'SD', 'tennessee': 'TN',
+            'texas': 'TX', 'utah': 'UT', 'vermont': 'VT', 'virginia': 'VA', 'west virginia': 'WV', 'wisconsin': 'WI', 'wyoming': 'WY'}
+_ST_NAME_RX = re.compile(r'\b(' + '|'.join(sorted(_ST_FULL, key=len, reverse=True)) + r')\b', re.I)
+_BLUE_RX = re.compile(r'\bBCBS(TX|IL|OK|NM|MT|AZ|KS|MN|NC|SC|TN|AL|MA|MI|NE|VT|LA|RI|WY)\b', re.I)
+
+
+def plan_state(ins, plan):
+    """Two-letter state a network's own name says it's sold in (BCBSTX, "Texas exchange plans", Anthem's IN_… codes), or None."""
+    txt = f'{ins or ""} {plan or ""}'
+    m = _BLUE_RX.search(txt)
+    if m:
+        return m.group(1).upper()
+    m = re.match(r'^([A-Z]{2})_[A-Z0-9]', plan or '')
+    if m and m.group(1) in _ST_ABBR:
+        return m.group(1)
+    m = _ST_NAME_RX.search(re.sub(r'(?i)west virginia', 'westvirginia', txt))
+    if m:
+        return _ST_FULL[m.group(1).lower()]
+    return 'WV' if re.search(r'(?i)west virginia', txt) else None
 NOT_WHOLE = re.compile(r'not a total|more per day after|\bderived\b|per member|group of services|end date passed')   # Nov 4 (review A4/A6; capitation, bundles, expired: Betsy, Nov 4)
 PART_FAC = re.compile(r'part only|reduced service|discontinued')   # a facility line for only part of the service (TC/26/52/53)
 # Hospital price files filed under the wrong area by name alone (Oct 18 audit: "Dallas County Hospital" in Perry, Iowa sat in
@@ -615,19 +661,25 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
         by_net.setdefault(e['net'], []).append(e)
     # each provider counted once per network (a provider can have several NPIs), so a network never shows more than the page total
     docs_by_net = {}
-    if kind == 'fac':
+    if kind == 'fac' and not drg:   # Nov 7, 2026: no "doctor's fee" for hospital-stay codes (doctors don't bill DRGs; see pf-table.js)
         for (fi_, n_), e in per['doc'].items():
             nm_ = D['fac'][int(fi_)][0]
             ok_ = (e['kind'] == 'P' and DOC_MDDO.search(nm_)) or (e['kind'] == 'G' and not LAB.search(nm_.lower()) and not IMAGING.search(nm_.lower()) and not NOT_HERE.search(nm_.lower()))
             if ok_ and 'derived' not in (e.get('lab') or ''):
                 docs_by_net.setdefault(n_, []).append(e['v'])
     doc_mid = {n_: sorted(v)[len(v) // 2] for n_, v in docs_by_net.items() if len(v) >= 5}
+    away_net = {}   # network -> state it's sold in, when that's not this page's state (plan_state, Nov 7)
+    if st:
+        for n_ in by_net:
+            ps = plan_state(*nets[n_][:2]) if len(nets[n_]) > 1 else None
+            if ps and ps != st:
+                away_net[n_] = next((k.title() for k, v in _ST_FULL.items() if v == ps), ps)
     networks = [{'ins': nets[n][0], 'plan': nets[n][1], 'doc_mid': doc_mid.get(n), 'n': len({(e['name'], e['city']) for e in es}), 'lo': es[0], 'hi': es[-1],
-                 'flat': bool(mostly_one(es)), 'one': mostly_one(es), 'par': bool(PARPLAN.search(nets[n][1] or ''))} for n, es in by_net.items()]
+                 'flat': bool(mostly_one(es)), 'one': mostly_one(es), 'par': bool(PARPLAN.search(nets[n][1] or '')), 'away': away_net.get(n)} for n, es in by_net.items()]
     # BCBSTX ParPlan: listed in the networks table, labeled, but kept out of the headline figures (Oct 18: what it represents is
     # under review; the same amount repeats across hospitals)
-    lines = [e for e in allines if not PARPLAN.search(e['plan'] or '')]
-    by_net = {n: es for n, es in by_net.items() if not PARPLAN.search(nets[n][1] or '')}
+    lines = [e for e in allines if not PARPLAN.search(e['plan'] or '') and e['net'] not in away_net]
+    by_net = {n: es for n, es in by_net.items() if not PARPLAN.search(nets[n][1] or '') and n not in away_net}
     networks.sort(key=lambda x: (x['lo']['v'], x['ins'], x['plan']))
     flat = {n for n, es in by_net.items() if mostly_one(es)}
     # Networks that pay most places one amount stay in the networks table, labeled, but out of the headline low/high and the
@@ -1111,7 +1163,7 @@ def allin_html(S):
     """One all-in line under the tiles (Oct 19, first-visitor test): the cheapest place fee plus the typical doctor's fee in the same network."""
     best = None
     for n in S.get('networks') or []:
-        if n.get('doc_mid') and not n.get('flat') and not n.get('par'):
+        if n.get('doc_mid') and not n.get('flat') and not n.get('par') and not n.get('away'):
             t = n['lo']['v'] + n['doc_mid']
             if best is None or t < best[0]:
                 best = (t, n)
@@ -1338,7 +1390,7 @@ def procedure_page(area, S, others, related, med_area, pf_path, au, ps):
         notes.insert(0, "Both bills = the lowest place fee in that network plus the middle fee that network lists for doctors (MD or DO) and "
                         "practices for this code. Anesthesia and any lab work bill separately, and your share depends on your plan.")
     net_rows = ''.join(
-        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{(' · <span class=flag>same rate everywhere</span>' if n['one'][1] == n['one'][0] else f" · <span class=flag>same {money(n['one'][2])} at {n['one'][1]} of {n['one'][0]} places</span>") if n.get('one') else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
+        f"<tr><td><b>{esc(n['ins'])}</b><div class='m'>{esc(n['plan'])}{(' · <span class=flag>same rate everywhere</span>' if n['one'][1] == n['one'][0] else f" · <span class=flag>same {money(n['one'][2])} at {n['one'][1]} of {n['one'][0]} places</span>") if n.get('one') else ''}{' · <span class=flag>not in this page&#39;s low and high figures</span>' if n.get('par') else ''}{f" · <span class=flag>a plan sold in {esc(n['away'])}; not in this page&#39;s low and high figures</span>" if n.get('away') and not n.get('par') else ''}</div></td><td class='num' data-l='Providers'>{n['n']:,}</td>"
         f"<td class='num' data-l='Lowest'>{money(n['lo']['v'])}<div class='m'>{whoh(n['lo'])} · {src_link(n['lo'], n['lo']['date'])}</div></td>"
         f"<td class='num' data-l='Highest'>{money(n['hi']['v']) if n['n'] > 1 else '—'}"
         f"{'<div class=m>' + whoh(n['hi']) + ' · ' + src_link(n['hi'], n['hi']['date']) + '</div>' if n['n'] > 1 else ''}</td>"
