@@ -136,6 +136,11 @@ def apply(d):
                     t = bake(t)
                 if t != s:
                     open(p, 'w', encoding='utf-8').write(t); changed += 1
+    try:   # Nov 7, 2026: say so on pages that cover one area only (site/scope_notes.py)
+        import scope_notes
+        scope_notes.apply(site)
+    except Exception as e:
+        print('scope notes skipped:', type(e).__name__, e, flush=True)
     try:   # Nov 7, 2026: an area whose page has hospital files but no pf/h route (San Angelo) gets one (site/hosp_routes.py)
         import hosp_routes
         hosp_routes.repair(d)

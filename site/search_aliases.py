@@ -57,8 +57,21 @@ def build():
     return out
 
 
+def anes():
+    """procedure code -> the care item's main anesthesia code, for the Price Finder's anesthesia link (Nov 7, 2026)."""
+    rows = list(csv.DictReader(open(SRC, encoding='utf-8')))
+    main_anes = {r['item_id']: r['code'] for r in rows if r['role'] == 'anesthesia: main code' and r['code']}
+    out = {}
+    for r in rows:
+        if r['item_id'] in main_anes and r['code_system'] in ('CPT', 'MS-DRG') and KEEP_ROLE.match(r['role']) and r['code']:
+            out.setdefault(r['code'].lstrip('0') if r['code_system'] == 'MS-DRG' else r['code'], main_anes[r['item_id']])
+    return out
+
+
 def main():
     s = open(JS, encoding='utf-8').read()
+    a, b = s.index('/*ANES:START*/'), s.index('/*ANES:END*/')
+    s = s[:a] + '/*ANES:START*/' + json.dumps(anes(), separators=(',', ':')) + s[b:]
     a, b = s.index('/*ALIASES:START*/'), s.index('/*ALIASES:END*/')
     data = json.dumps(build(), separators=(',', ':'))
     s = s[:a] + '/*ALIASES:START*/' + data + s[b:]
