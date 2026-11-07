@@ -65,6 +65,13 @@ class H(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urllib.parse.urlparse(self.path).path.lstrip('/')
         d, name = os.path.dirname(path), os.path.basename(path)
+        m = re.match(r'plan-calculator/own/t/([\w-]+)/([0-9A-Z]{1,5}\.txt)$', path)   # [build]/[code] route
+        if m:
+            body = r2(f'site/every/{m.group(1)}/t/{m.group(2)}')
+            if body is None:
+                self.send_error(404); return
+            self.send_response(200); self.send_header('Content-Type', 'text/plain; charset=utf-8')
+            self.send_header('Content-Length', str(len(body))); self.end_headers(); self.wfile.write(body); return
         if d in ROUTES and not os.path.isfile(os.path.join(W, 'site', path)):
             body = r2(ROUTES[d](name))
             if body is None:
