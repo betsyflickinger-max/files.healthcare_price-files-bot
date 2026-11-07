@@ -29,6 +29,7 @@ def exists(path):
     return os.path.isfile(p) or os.path.isfile(os.path.join(p, 'index.html')) or os.path.isfile(p + '.html') or os.path.isfile(p + '/index.html')
 
 
+COSTS_FN = os.path.isfile(os.path.join(os.path.dirname(site), 'functions', 'costs', '[[path]].js'))
 problems = defaultdict(list)          # kind -> [(page, detail)]
 pages = 0
 link_ok = {}
@@ -53,6 +54,8 @@ for root, _, fs in os.walk(site):
             problems['no main heading (h1)'].append((page, ''))
         for href in set(HREF.findall(h)):
             if href.startswith(('/cdn-cgi/', '/api/', '/__', '/control')) or re.search(r'\.(js|css|json|png|svg|ico|csv|pdf|xml|txt|webmanifest|woff2?)$', href):
+                continue
+            if href.startswith('/costs/') and COSTS_FN:   # more procedure pages and /all/ lists are served from R2 by a function
                 continue
             if href not in link_ok:
                 link_ok[href] = exists(href)
