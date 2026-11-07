@@ -1,7 +1,7 @@
 {
  "_card_cap": {
-  "usd": 500,
-  "why": "Betsy OK'd (Oct 29, 2026): once the DigitalOcean credit is used up, rent machines on her card up to $500 a month, then stop renting until she raises this (files being read finish; nothing is deleted)"
+  "usd": 650,
+  "why": "Betsy OK'd (Oct 29, 2026): once the DigitalOcean credit is used up, rent machines on her card up to this much a month, then stop renting until she raises it (files being read finish; nothing is deleted). Nov 7, 2026 (Betsy): raised from $500 to $650 for November so the DFW November build (with the networks added since Oct 23) and the five DFW network fixes can run; the other November refreshes wait behind DFW (site/month_hold.json). Set back to 500 for December unless Betsy says otherwise."
  },
  "stb4-2026-10": {
   "usd": 30,

@@ -1,18 +1,27 @@
 {
-  "_about": "Nov 1, 2026 (Betsy OK'd): hold the November rebuild of states already live so every machine and the card budget go to the states not live yet. Builds already under way when this went in carry on; any state build still at 'wait' stays there until every build below has finished its hospital step (published). It releases itself; set hold to false to release early. orchestrate_states.py month_hold().",
-  "hold": false,
+  "_about": "Nov 1, 2026 (Betsy OK'd): hold the November rebuild of states already live so every machine and the card budget go to the states not live yet. Builds already under way when this went in carry on; any state build still at 'wait' stays there until every build below has finished its hospital step (published). It releases itself; set hold to false to release early. orchestrate_states.py month_hold(). Nov 7, 2026: an until_done entry 'dfw:<build id>' waits for that DFW Price Finder build to go live; 'release_by' (UTC) releases the hold on its own even if a listed build never finishes.",
+  "hold": true,
   "until_done": [
-    "stc1-2026-10",
-    "stc2-2026-10",
-    "stc2-2026-11",
-    "stc3-2026-10"
+    "dfw:2026-11"
   ],
-  "why": "Not live yet: Minnesota (c1), Pennsylvania, New Jersey, Massachusetts, New Hampshire, Maine, South Carolina (c2), Washington (c3).",
+  "release_by": "2026-11-21T00:00",
+  "why": "Nov 7, 2026 (Betsy: raise November to $650 for the DFW update, then queue everything else after it): the DFW November build goes first with the extra $150; the seven-state (s7), NY/CA/VA/DC/FL/WI (n5) and North Carolina November refreshes, and any other November state build not started, wait until DFW is live, then run in turn (December's budget if November's runs out).",
   "pause_scopes": [
     "s7",
     "n5",
     "nc"
   ],
-  "_pause": "Nov 2, 2026 (Betsy OK'd): the seven-state November rebuild (s7: CO, GA, MO, TN, OK, AL, MS, all live with October pages) is paused mid-build while the hold is on, so its machines go to the states not live yet. It resumes by itself when the hold lifts. stc2-2026-11 added: Massachusetts, New Jersey, Pennsylvania and South Carolina are building in it. Later Nov 2: n5 (NY, CA, VA, DC, FL, WI) and nc (North Carolina) November rebuilds paused too; every one of those states is live.",
-  "_released": "Nov 3, 2026, 5:50 PM CT (Betsy: 'make sure what's next in line starts'): released by hand. Every state is live (Washington 5:06 PM CT), but the hold could never release itself: stc2-2026-10 never ran (the Northeast was built as stc2-2026-11 after the month changed, its hospital step done 11-03 23:37 UTC), so it waited on a build that will never finish."
+  "_history": [
+    {
+      "until_done": [
+        "stc1-2026-10",
+        "stc2-2026-10",
+        "stc2-2026-11",
+        "stc3-2026-10"
+      ],
+      "why": "Not live yet: Minnesota (c1), Pennsylvania, New Jersey, Massachusetts, New Hampshire, Maine, South Carolina (c2), Washington (c3).",
+      "_pause": "Nov 2, 2026 (Betsy OK'd): the seven-state November rebuild (s7: CO, GA, MO, TN, OK, AL, MS, all live with October pages) is paused mid-build while the hold is on, so its machines go to the states not live yet. It resumes by itself when the hold lifts. stc2-2026-11 added: Massachusetts, New Jersey, Pennsylvania and South Carolina are building in it. Later Nov 2: n5 (NY, CA, VA, DC, FL, WI) and nc (North Carolina) November rebuilds paused too; every one of those states is live.",
+      "_released": "Nov 3, 2026, 5:50 PM CT (Betsy: 'make sure what's next in line starts'): released by hand. Every state is live (Washington 5:06 PM CT), but the hold could never release itself: stc2-2026-10 never ran (the Northeast was built as stc2-2026-11 after the month changed, its hospital step done 11-03 23:37 UTC), so it waited on a build that will never finish."
+    }
+  ]
 }

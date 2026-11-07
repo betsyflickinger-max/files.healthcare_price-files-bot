@@ -211,9 +211,14 @@ def month_hold():
     try: h = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'month_hold.json')))
     except Exception: return []
     if not h.get('hold') or O.BID in h.get('until_done', []): return []
+    # Nov 7, 2026: "release_by" (UTC) lets the hold go on its own, so a listed build that never finishes can't hold forever
+    if h.get('release_by') and time.strftime('%Y-%m-%dT%H:%M', time.gmtime()) >= h['release_by']: return []
     left = []
     for bid in h.get('until_done', []):
-        try: done = getj(f'site/builds/hosp-{bid}/state.json', {}).get('stage') == 'done'
+        try:
+            if bid.startswith('dfw:'):   # Nov 7, 2026: the DFW Price Finder build (site/orchestrate.py) counts once it is live
+                done = getj(f'site/builds/{bid[4:]}/state.json', {}).get('stage') == 'live'
+            else: done = getj(f'site/builds/hosp-{bid}/state.json', {}).get('stage') == 'done'
         except Exception: done = False
         if not done: left.append(bid)
     return left
