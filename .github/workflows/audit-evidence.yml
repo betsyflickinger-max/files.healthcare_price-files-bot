@@ -2,7 +2,7 @@ name: Data accuracy audit (evidence packets)
 
 # Nov 6, 2026 (Betsy OK'd): Layer 3 of the data accuracy audit. audit/evidence.py builds 350 evidence packets (300 random price
 # lines + 50 risky ones) for a fresh Claude to audit with packets/AUDITOR.md. Committed to reports/audit/<date>/packets/.
-# Quarterly (Jan/Apr/Jul/Oct 22nd) and by hand.
+# Quarterly (Jan/Apr/Jul/Oct 22nd) and by hand. First run Nov 6, 2026.
 
 on:
   push:
