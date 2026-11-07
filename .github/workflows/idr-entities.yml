@@ -1,0 +1,39 @@
+name: Arbitration lines by IDR entity (Texas)
+
+# Nov 7, 2026: recounts Texas dispute lines by arbitration firm (certified IDR entity, in CMS's files from 2025 Q3 on)
+# from the national tables already saved in R2 (data/idr/disputes/<quarter>.parquet, a few hundred MB per quarter).
+# No CMS download, no rented machine, and unlike "No Surprises arbitration files" it does NOT rebuild or publish the site.
+on:
+  workflow_dispatch:
+    inputs:
+      only:
+        description: "Only this quarter, e.g. 2025-q4 (blank = 2025 Q3 on)"
+        default: ""
+
+permissions:
+  contents: write
+
+jobs:
+  entities:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 requests==2.32.3 pyarrow==26.0.0
+      - run: python nsa/idr_files.py --entities-only ${{ inputs.only && format('--only {0}', inputs.only) || '' }}
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/idr 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Arbitration lines by IDR entity $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }

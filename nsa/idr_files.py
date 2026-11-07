@@ -4,10 +4,13 @@ When an out-of-network provider and a health plan can't agree on a surprise-bill
 (IDR entity) picks one side's offer. CMS publishes every dispute line, twice a year (2023 Q1 onward):
 https://www.cms.gov/nosurprises/policies-and-resources/Reports
 
-Three tables per quarter, national, every row kept:
-  disputes       emergency and non-emergency disputes: provider name + NPI, plan/issuer name, state of service,
-                 specialty, service code, who won, offers and prevailing offer as a share of the QPA
-  air_ambulance  the same for air ambulance disputes
+Three tables per quarter, national, every row kept. Every row is one dispute LINE (one billed service). One dispute
+can cover many lines, so counts of rows are "dispute lines", never "disputes" (Nov 7, 2026 relabel); a count of
+disputes uses distinct dispute numbers.
+  disputes       emergency and non-emergency dispute lines: provider name + NPI, plan/issuer name, state of service,
+                 specialty, service code, who won, offers and prevailing offer as a share of the QPA. From 2025 Q3 on
+                 CMS adds the certified IDR entity (the arbitration firm) on each line; it is kept like every column.
+  air_ambulance  the same for air ambulance dispute lines
   qpa_offers     the dollar amounts: QPA, both offers, prevailing offer, by service code and metro area (MSA);
                  CMS doesn't link these rows to the dispute tables. Blanked ("^") where a code had fewer than 10
                  lines in a region.
@@ -19,9 +22,11 @@ Output (R2):
   raw/idr/<sha12>_<file name>            every CMS file as downloaded (PUFs, data dictionary, supplemental tables)
   data/idr/<table>/<yyyy-qN>.parquet     the national tables (all text columns + _num columns + period, source)
   bot/idr/manifest.csv                   what was saved and when
+  bot/idr/entity_tx.csv                  Texas dispute lines by arbitration firm (IDR entity), per quarter (2025 Q3 on)
   reports/idr/latest.md                  row counts per quarter (committed to the repo)
 
 Run: python nsa/idr_files.py [--force] [--only 2025-q4] [--local]
+     python nsa/idr_files.py --entities-only    (recount Texas lines by IDR entity from the saved tables; no CMS download)
 """
 import argparse
 import csv
@@ -231,7 +236,35 @@ def build_tables(path, f, store, batch=250_000):
 
 # ---------------------------------------------------------------- report
 
-def report(man, counts_by_period, store):
+ENTITY_KEY = "bot/idr/entity_tx.csv"
+
+
+def load_entities(store):
+    b = store.get(ENTITY_KEY)
+    return {(r["period"], r["idr_entity"]): int(r["texas_dispute_lines"]) for r in csv.DictReader(io.StringIO(b.decode()))} if b else {}
+
+
+def save_entities(store, ent):
+    store.put(ENTITY_KEY, "\n".join(["period,idr_entity,texas_dispute_lines"] + [
+        f'{p},"{e.replace(chr(34), chr(34) * 2)}",{n}' for (p, e), n in sorted(ent.items())]).encode())
+
+
+def entity_section(ent):
+    """Texas dispute lines by arbitration firm (IDR entity), newest quarter first. Counts of lines, not disputes."""
+    if not ent:
+        return ["", "## Texas dispute lines by arbitration firm (IDR entity)", "",
+                "Not counted yet. CMS names the IDR entity from 2025 Q3 on; run `python nsa/idr_files.py --entities-only`."]
+    periods = sorted({p for p, _ in ent}, reverse=True)
+    L = ["", "## Texas dispute lines by arbitration firm (IDR entity)", "",
+         "CMS names the certified IDR entity (the arbitration firm CMS assigned) on each line from 2025 Q3 on. Counts are dispute "
+         "lines in Texas, as listed; one dispute can cover many lines. No ranking or judgment of any firm is implied.", "",
+         "| IDR entity | " + " | ".join(periods) + " |", "|---|" + "---|" * len(periods)]
+    for e in sorted({e for _, e in ent}):
+        L.append(f"| {e} | " + " | ".join(f"{ent.get((p, e), 0):,}" for p in periods) + " |")
+    return L
+
+
+def report(man, counts_by_period, store, ent=None):
     """Counts only, from the tables just built plus the previous report's counts for periods not rebuilt."""
     L = ["# No Surprises Act arbitration files (CMS Federal IDR PUFs)", "",
          f"Checked {TODAY}. Source: {PAGE}. Originals saved untouched in R2 raw/idr/; national tables in "
@@ -242,6 +275,7 @@ def report(man, counts_by_period, store):
         c = counts_by_period[p]
         L.append(f"| {p} | {c.get('disputes', 0):,} | {c.get('air_ambulance', 0):,} | {c.get('qpa_offers', 0):,} | "
                  f"{c.get('tx', 0):,} | {c.get('dfw', 0):,} | {c.get('provider_won', 0):,} |")
+    L += entity_section(ent if ent is not None else load_entities(store))
     L += ["", "## Files saved", ""] + [f"- {m['name']} ({int(m['size'] or 0) / 1e6:,.1f} MB), first saved {m['first_saved']}: `{m['r2_key']}`"
                                         for m in sorted(man.values(), key=lambda m: m["name"])]
     out = ROOT / "reports" / "idr" / "latest.md"
@@ -254,19 +288,36 @@ def report(man, counts_by_period, store):
     print(f"  report -> {out}")
 
 
-def extra_counts(store, period):
-    """Texas lines, DFW lines and provider wins for one quarter, read back from the saved tables."""
+def entity_col(names):
+    """The column naming the certified IDR entity (arbitration firm), if this quarter's file has one. CMS added it in
+    2025 Q3; the exact header can differ by release, so match on the words, never the fee column (idre_compensation)."""
+    for n in names:
+        if ("idr_entity" in n or n.startswith("idre") or "certified_idr" in n) and not any(w in n for w in ("compensation", "fee", "num")):
+            return n
+    return None
+
+
+def extra_counts(store, period, entities=None):
+    """Texas lines, DFW lines and provider wins for one quarter, read back from the saved tables.
+    entities: a dict to fill with {(period, IDR entity): Texas dispute lines} when the quarter names the IDR entity."""
     import pyarrow.parquet as pq
     c = {}
     for table, fn in (("disputes", "tx"), ("qpa_offers", "dfw")):
         b = store.get(f"data/idr/{table}/{period}.parquet")
         if not b:
             continue
+        names = pq.read_schema(io.BytesIO(b)).names
         cols = ["location_of_service", "payment_determination_outcome"] if table == "disputes" else ["geographical_region"]
-        t = pq.read_table(io.BytesIO(b), columns=[x for x in cols if x in pq.read_schema(io.BytesIO(b)).names]).to_pydict()
+        ecol = entity_col(names) if table == "disputes" else None
+        t = pq.read_table(io.BytesIO(b), columns=[x for x in cols + ([ecol] if ecol else []) if x in names]).to_pydict()
         if table == "disputes":
             c["tx"] = sum(1 for s in t.get("location_of_service", []) if s.upper() == "TX")
             c["provider_won"] = sum(1 for s in t.get("payment_determination_outcome", []) if "provider" in s.lower())
+            if ecol and entities is not None:
+                for st_, e in zip(t.get("location_of_service", []), t.get(ecol, [])):
+                    if st_.upper() == "TX":
+                        k = (period, e.strip() or "(blank)")
+                        entities[k] = entities.get(k, 0) + 1
         else:
             c["dfw"] = sum(1 for s in t.get("geographical_region", []) if s.lower().startswith("dallas"))
     return c
@@ -277,13 +328,26 @@ def main():
     ap.add_argument("--force", action="store_true", help="rebuild tables even if CMS's files are unchanged")
     ap.add_argument("--only", default="", help="only this quarter, e.g. 2025-q4")
     ap.add_argument("--local", action="store_true", help="write to ./local/ instead of R2")
+    ap.add_argument("--entities-only", action="store_true", help="recount Texas lines by IDR entity from the saved tables")
     a = ap.parse_args()
     store = Store(a.local)
+    ent = load_entities(store)
     prev = store.get(MAN_KEY)
     man = {r["url"]: r for r in csv.DictReader(io.StringIO(prev.decode()))} if prev else {}
     prev_counts = store.get("bot/idr/counts.csv")
     counts = {r["period"]: {k: int(v) for k, v in r.items() if k != "period"}
               for r in csv.DictReader(io.StringIO(prev_counts.decode()))} if prev_counts else {}
+    if a.entities_only:
+        for period in sorted(counts):
+            if period < "2025-q3" or (a.only and period != a.only):
+                continue
+            for k in [k for k in ent if k[0] == period]:   # recount the quarter from scratch
+                del ent[k]
+            counts[period].update(extra_counts(store, period, ent))
+            print(f"  {period}: {sum(n for (p, _), n in ent.items() if p == period):,} Texas lines with an IDR entity", flush=True)
+        save_entities(store, ent)
+        report(man, counts, store, ent)
+        return
     files = list_files()
     print(f"{len(files)} files on CMS's page", flush=True)
     work = ROOT / "work"
@@ -311,7 +375,10 @@ def main():
         if f["kind"] == "puf":
             try:
                 c = build_tables(path, f, store)
-                counts[f["period"]] = dict(c, **extra_counts(store, f["period"]))
+                for k in [k for k in ent if k[0] == f["period"]]:
+                    del ent[k]
+                counts[f["period"]] = dict(c, **extra_counts(store, f["period"], ent))
+                save_entities(store, ent)
                 m["tables_built"] = sha
             except Exception as e:
                 print(f"  ! tables failed for {f['name']}: {type(e).__name__}: {str(e)[:200]}", flush=True)
@@ -319,7 +386,7 @@ def main():
         man[f["url"]] = m
         store.put(MAN_KEY, "\n".join([",".join(MAN_FIELDS)] + [
             ",".join('"' + str(r.get(k, "")).replace('"', '""') + '"' for k in MAN_FIELDS) for r in man.values()]).encode())
-    report(man, counts, store)
+    report(man, counts, store, ent)
 
 
 if __name__ == "__main__":
