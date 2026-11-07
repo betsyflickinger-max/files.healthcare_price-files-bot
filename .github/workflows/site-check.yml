@@ -1,0 +1,48 @@
+name: Robot testers (daily, whole site)
+
+# Nov 7, 2026 (Betsy: "help us figure out anything and everything that's not working or not pulling in correctly").
+# 1) site/site_check/static_check.py reads all ~9,500 pages: links to missing pages, draft/placeholder text, code text
+#    (NaN, undefined) on the page, pages with no title or heading.
+# 2) site/site_check/run_browser.py opens every Price Finder page in a browser, with the site's real rate files served
+#    from R2 (serve.py, no password), and opens 12 common procedures plus 4 random codes on each: do the rates load,
+#    does the heading match, any NaN/undefined/$0.00, which common procedures the page has no code for.
+# Results: the run summary, and R2 control/data/site_check_static.json + site_check_pages.json for the control center.
+# Search is checked separately by search-audit.yml.
+on:
+  schedule:
+    - cron: "11 11 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/site-check.yml, site/site_check/**]
+
+concurrency:
+  group: site-check
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -q boto3==1.35.36
+      - run: npm install --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - run: python site/site_files.py pull w
+      - run: python site/site_check/static_check.py w/site
+      - run: python site/site_check/run_browser.py w 6
+      - run: python board/to_r2_control.py out/board 'site_check_*.json'
