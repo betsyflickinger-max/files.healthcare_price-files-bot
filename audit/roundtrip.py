@@ -15,7 +15,7 @@ sources its own way, so a bug in the bot's shared code can't make both sides agr
 Output: reports/audit/<date>/roundtrip.md and roundtrip.csv (every sampled line with its verdict).
 Usage: python audit/roundtrip.py [--insurer 1000] [--hospital 400] [--seed 20261106] [--areas dfw,georgia]
 """
-import argparse, base64, collections, csv, datetime as dt, gzip, io, json, os, random, re, sys, tarfile, zipfile
+import argparse, base64, collections, csv, datetime as dt, gzip, io, json, os, random, re, tarfile, tempfile, zipfile
 from concurrent.futures import ThreadPoolExecutor
 from zoneinfo import ZoneInfo
 
@@ -184,7 +184,7 @@ def check_insurer(ins, max_gb):
     host = ENDPOINT.replace('https://', '').rstrip('/')
     con.execute(f"""INSTALL httpfs; LOAD httpfs; CREATE SECRET s (TYPE S3, KEY_ID '{E['R2_ACCESS_KEY_ID']}', SECRET '{E['R2_SECRET_ACCESS_KEY']}',
                     ENDPOINT '{host}', URL_STYLE 'path', REGION '{os.environ.get('STORAGE_REGION') or 'auto'}')""")
-    con.execute("SET threads=8")
+    con.execute("SET threads=8; SET enable_progress_bar=false")
     idx = table_index()
     by_table = collections.defaultdict(list)
     for x in ins:
@@ -294,6 +294,19 @@ def raw_index():
 
 def stream_lines(key):
     import zstandard
+    if '.zip' in key.lower():   # a zipped original: unpack the zip to a temp file, read its first data file
+        tmp = tempfile.NamedTemporaryFile(suffix='.zip', delete=False)
+        body = s3.get_object(Bucket=B, Key=key)['Body']
+        src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body) if key.endswith('.zst') else body
+        while True:
+            b = src.read(1 << 22)
+            if not b:
+                break
+            tmp.write(b)
+        tmp.close()
+        z = zipfile.ZipFile(tmp.name)
+        name = next(n for n in z.namelist() if not n.endswith('/') and not n.startswith('__MACOSX'))
+        return io.TextIOWrapper(z.open(name), encoding='utf-8-sig', errors='replace', newline='')
     body = s3.get_object(Bucket=B, Key=key)['Body']
     rd = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body) if key.endswith('.zst') else body
     return io.TextIOWrapper(io.BufferedReader(rd, 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
@@ -356,8 +369,6 @@ def check_hospital(hosp, max_gb):
             x.update(verdict='source file not found', detail=f"no archived original with fingerprint {x['sha16']}")
         elif k[1] / 1e9 > max_gb:
             x.update(verdict='not checked (file too big for this run)', detail=f'{k[1] / 1e9:.1f} GB compressed')
-        elif '.zip' in k[0].lower():
-            x.update(verdict='not checked (zipped original)', detail=k[0])
         else:
             by[k[0]].append(x)
     with ThreadPoolExecutor(6) as ex:
