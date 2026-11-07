@@ -45,22 +45,24 @@ import procedure_pages as pp   # noqa: E402  Layer 1 may share the bot's readers
 
 from zoneinfo import ZoneInfo
 TODAY = dt.datetime.now(ZoneInfo('America/Chicago')).date().isoformat()   # Betsy works in Central time
-LEVEL = {'A1': 'Critical', 'A3': 'Critical', 'A3b': 'Major', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
-         'C4': 'Major', 'D1': 'Critical', 'D2': 'Major', 'D3': 'Critical', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
+LEVEL = {'A1': 'Major', 'A3': 'Critical', 'A3r': 'Review', 'A3b': 'Major', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
+         'C4': 'Info', 'D1': 'Info', 'D2': 'Major', 'D3': 'Critical', 'D3i': 'Info', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
          'E2': 'Critical', 'E4': 'Major', 'F1': 'Review', 'F2': 'Review', 'F3': 'Review'}
 WHAT = {
-    'A1': "provider's practice ZIP is in another state than the page",
-    'A3': "hospital price file belongs to another hospital or another state",
+    'A1': "provider's practice ZIP is in another state than the page (procedure pages leave them out; Price Finder lists them)",
+    'A3': "hospital price file's own address is in another state than the page",
+    'A3r': "hospital price file was filed under another hospital (same state; check the name shown)",
     'A3b': "page names a hospital differently than the hospital whose file it is",
     'A4': "quarantined hospital file still has rows in the page data",
     'A9': "page's state guessed (slug not in the state list)",
     'B1': "insurer's rows link to another insurer's file host",
     'B2': "network shows a code its own file doesn't list",
     'C1': "NPI fails the check digit",
-    'C4': "facility fee filed under an individual clinician",
-    'D1': "$0, negative or filler-looking amount not flagged",
+    'C4': "facility fee filed under an individual clinician (in the data; the pages' own filters keep it off the price lists)",
+    'D1': "$0, negative or filler-looking amount not flagged in the data (the pages' own filters keep these out of prices)",
     'D2': "same amount on 5+ procedures for one place and network, not labeled flat",
-    'D3': "hospital stay rate under $100 (looks like a weight)",
+    'D3': "hospital-file stay rate under $100 (a weight, not a price; reaches the pages)",
+    'D3i': "insurer-file stay rate under $100 (the pages' low-rate filter drops these)",
     'D6': "percent of charges above 100%",
     'E1': "file date missing or unreadable",
     'E1s': "file date older than 183 days (page flags it)",
@@ -221,8 +223,10 @@ def audit_area(args):
         r = ident.get(url.strip())
         if r:
             fs = file_state(r)
-            if r['verdict'] == 'wrong' or (fs and fs != st):
+            if fs and fs != st:
                 o.add('A3', provider=x[0], url=url, detail=f"{r['verdict']}: {r['reason'][:240]}")
+            elif r['verdict'] == 'wrong':
+                o.add('A3r', provider=x[0], url=url, detail=f"{r['reason'][:240]}")
         d = x[3] if len(x) > 3 else ''
         if not pp.parse_date(d):
             o.add('E1', provider=x[0], url=url, file_date=d, detail='hospital file date')
@@ -288,7 +292,7 @@ def audit_area(args):
                     elif v > 0 and med.get(fee) and pp.looks_placeholder(v, med[fee]) and not fl & 8:
                         o.add('D1', **base, detail=f'filler-looking, median {med[fee]}')
                     if drg and fee == 0 and 0 < v < 100:
-                        o.add('D3', **base, detail='hospital stay under $100')
+                        o.add('D3i', **base, detail='hospital stay under $100 (insurer file; pages drop rates under 20% of the median)')
                     if fee == 0 and v > 0 and not fl & 1 and not pp.PART_FAC.search(lab) and not pp.NOT_WHOLE.search(lab):
                         flat_seen[(i, ni, v)].add(c)
                 for col, val in (('code', c), ('npi', npi), ('provider', x[0]), ('city', x[1] if len(x) > 1 else ''), ('kind', kd),
@@ -371,7 +375,7 @@ def audit_area(args):
     return o.__dict__
 
 
-FAMILY = [re.compile(p, re.I) for p in (r'bcbs|blue', r'anthem|wellpoint|elevance', r'united|uhc|optum|umr', r'centene|ambetter|superior|wellcare',
+FAMILY = [re.compile(p, re.I) for p in (r'bcbs|blue|anthem|wellpoint|elevance|empire|highmark|regence|premera|carefirst|horizon', r'united|uhc|optum|umr', r'centene|ambetter|superior|wellcare',
                                         r'aetna|cvs', r'cigna|evernorth', r'humana', r'molina')]
 
 
@@ -385,8 +389,10 @@ def check_links(urls, workers=24):
     def one(u):
         try:
             r = requests.head(u, timeout=25, allow_redirects=True, headers={'User-Agent': 'files.healthcare link check'})
-            if r.status_code in (405, 400, 501):
-                r = requests.get(u, timeout=25, stream=True, headers={'Range': 'bytes=0-0', 'User-Agent': 'files.healthcare link check'})
+            if r.status_code >= 400:   # many file servers answer HEAD with 404/405 but serve the file (Craneware, Box, Sitecore)
+                r = requests.get(u, timeout=30, stream=True, allow_redirects=True,
+                                 headers={'Range': 'bytes=0-0', 'User-Agent': 'Mozilla/5.0 (files.healthcare link check)'})
+                r.close()
             s = r.status_code
             return u, s, 'ok' if s < 400 else 'blocked' if s in (401, 403, 429) else 'dead' if s in (404, 410) else 'error'
         except requests.exceptions.ConnectionError as e:
