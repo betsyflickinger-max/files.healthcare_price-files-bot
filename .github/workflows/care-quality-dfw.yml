@@ -1,0 +1,29 @@
+name: CMS quality measures - DFW (report only, no deploy)
+
+# Nov 7, 2026: site/care_quality_dfw.py. Every CMS quality measure behind the ratings for DFW hospitals (overall star,
+# its five measure groups, HCAHPS) and surgery centers (ASCQR), with national figures, data periods and links.
+# Downloads public CMS Provider Data Catalog files only (about 110 MB); no storage keys; nothing deployed.
+# Writes reports/care-compare/dfw-measures.md and .csv. Separate from care-compare.yml so it never rebuilds R2 files.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  measures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests==2.33.0
+      - run: python site/care_quality_dfw.py --work /tmp/cq | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/care-compare/dfw-measures.* 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "CMS quality measures DFW $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }
