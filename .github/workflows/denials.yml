@@ -1,0 +1,35 @@
+name: Marketplace claim denials (CMS public file)
+
+# Nov 7, 2026: downloads CMS's small Transparency in Coverage public use file for marketplace issuers (about 1 MB per
+# plan year) and writes the Texas table to reports/denials/. Public government files only: no storage keys, no rented
+# machines, nothing deployed. insurers/denials.py
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Plan years, comma separated"
+        default: "2024,2025,2026"
+      state:
+        description: "State (two letters)"
+        default: "TX"
+
+permissions:
+  contents: write
+
+jobs:
+  denials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests==2.33.0 python-calamine==0.8.3
+      - run: python insurers/denials.py --years "${{ inputs.years }}" --state "${{ inputs.state }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/denials 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Marketplace claim denials $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }
