@@ -21,6 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 IDLE = '/tmp/hosp_idle'                        # hosp_area.py writes this when its scope has nothing to do for now
 OWN = ['s7', 'nc', 'ct']                       # scopes from before state_scopes.json (no insurer-build pre-check, as before)
 SHARED = [k for k in json.load(open(f'{HERE}/state_scopes.json')) if not k.startswith('_')]
+TX_BUILDS = ['hosp-tx-2026-10']               # Texas metros' hospital builds this loop also moves along
 MAX_SECONDS = 320 * 60                         # the job's timeout is 350 minutes
 E = {k: ''.join(os.environ.get(k, '').split()) for k in ('R2_ACCOUNT_ID', 'R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_BUCKET')}
 s3 = boto3.client('s3', endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
@@ -50,6 +51,16 @@ def main():
             if r.returncode: print(f'{scope}: hosp_area.py stopped with code {r.returncode}', flush=True)
             elif stage(f'site/builds/hosp-{stb(scope)}-{month}/state.json') != 'done' and not os.path.exists(IDLE):
                 working.append(scope)   # hospital machines still working: come back to it next pass
+        # Nov 7, 2026 (audit rebuild, Betsy OK'd): Texas metros' hospital build, when set back to h2/publish (hosp_redo_now.py),
+        # moves along here too, so it isn't a second job waiting on this lock (a newer waiting job cancels the older one)
+        for tb in TX_BUILDS:
+            if stage(f'site/builds/{tb}/state.json') in ('h2', 'publish'):
+                if os.path.exists(IDLE): os.remove(IDLE)
+                print(f'--- {tb}', flush=True)
+                env = {k: v for k, v in os.environ.items() if k != 'HOSP_SCOPE'}
+                r = subprocess.run([sys.executable, f'{HERE}/hosp_area.py', 'run'], env={**env, 'BUILD': tb})
+                if r.returncode: print(f'{tb}: hosp_area.py stopped with code {r.returncode}', flush=True)
+                elif stage(f'site/builds/{tb}/state.json') != 'done': working.append(tb)
         if not working:
             print('every scope finished or waiting on its insurer build: freeing the lock', flush=True); return
         if time.time() - t0 > MAX_SECONDS:
