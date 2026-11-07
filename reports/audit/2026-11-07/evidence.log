@@ -1,0 +1,259 @@
+reading the deployed site...
+  dfw: 3 insurer lines, 2 hospital-file lines sampled
+  el-paso: 3 insurer lines, 2 hospital-file lines sampled
+  austin: 3 insurer lines, 2 hospital-file lines sampled
+  san-antonio: 3 insurer lines, 2 hospital-file lines sampled
+  houston: 3 insurer lines, 2 hospital-file lines sampled
+  mcallen: 3 insurer lines, 2 hospital-file lines sampled
+  killeen-temple: 3 insurer lines, 2 hospital-file lines sampled
+  brownsville-harlingen: 3 insurer lines, 2 hospital-file lines sampled
+  corpus-christi: 3 insurer lines, 2 hospital-file lines sampled
+  beaumont-port-arthur: 3 insurer lines, 2 hospital-file lines sampled
+  lubbock: 3 insurer lines, 2 hospital-file lines sampled
+  waco: 3 insurer lines, 2 hospital-file lines sampled
+  longview: 3 insurer lines, 2 hospital-file lines sampled
+  college-station-bryan: 3 insurer lines, 2 hospital-file lines sampled
+  amarillo: 3 insurer lines, 2 hospital-file lines sampled
+  tyler: 3 insurer lines, 2 hospital-file lines sampled
+  abilene: 3 insurer lines, 2 hospital-file lines sampled
+  midland: 3 insurer lines, 2 hospital-file lines sampled
+  odessa: 3 insurer lines, 2 hospital-file lines sampled
+  wichita-falls: 3 insurer lines, 2 hospital-file lines sampled
+  texarkana: 3 insurer lines, 2 hospital-file lines sampled
+  skip san-angelo (no page or prefix)
+  victoria: 3 insurer lines, 2 hospital-file lines sampled
+  small-towns: 3 insurer lines, 2 hospital-file lines sampled
+  tennessee: 3 insurer lines, 2 hospital-file lines sampled
+  colorado: 3 insurer lines, 2 hospital-file lines sampled
+  oklahoma: 3 insurer lines, 2 hospital-file lines sampled
+  alabama: 3 insurer lines, 2 hospital-file lines sampled
+  mississippi: 3 insurer lines, 2 hospital-file lines sampled
+  missouri: 3 insurer lines, 2 hospital-file lines sampled
+  georgia: 3 insurer lines, 2 hospital-file lines sampled
+  north-carolina: 3 insurer lines, 2 hospital-file lines sampled
+  connecticut: 3 insurer lines, 2 hospital-file lines sampled
+  illinois: 3 insurer lines, 2 hospital-file lines sampled
+  arkansas: 3 insurer lines, 2 hospital-file lines sampled
+  maryland: 3 insurer lines, 2 hospital-file lines sampled
+  new-mexico: 3 insurer lines, 2 hospital-file lines sampled
+  montana: 3 insurer lines, 2 hospital-file lines sampled
+  louisiana: 3 insurer lines, 2 hospital-file lines sampled
+  indiana: 3 insurer lines, 2 hospital-file lines sampled
+  kentucky: 3 insurer lines, 2 hospital-file lines sampled
+  ohio: 3 insurer lines, 2 hospital-file lines sampled
+  arizona: 3 insurer lines, 2 hospital-file lines sampled
+  north-dakota: 3 insurer lines, 2 hospital-file lines sampled
+  south-dakota: 3 insurer lines, 2 hospital-file lines sampled
+  iowa: 3 insurer lines, 2 hospital-file lines sampled
+  minnesota: 3 insurer lines, 2 hospital-file lines sampled
+  nebraska: 3 insurer lines, 2 hospital-file lines sampled
+  kansas: 3 insurer lines, 2 hospital-file lines sampled
+  pennsylvania: 3 insurer lines, 2 hospital-file lines sampled
+  delaware: 3 insurer lines, 2 hospital-file lines sampled
+  west-virginia: 3 insurer lines, 2 hospital-file lines sampled
+  new-jersey: 3 insurer lines, 2 hospital-file lines sampled
+  massachusetts: 3 insurer lines, 2 hospital-file lines sampled
+  rhode-island: 3 insurer lines, 2 hospital-file lines sampled
+  vermont: 3 insurer lines, 2 hospital-file lines sampled
+  new-hampshire: 3 insurer lines, 2 hospital-file lines sampled
+  maine: 3 insurer lines, 2 hospital-file lines sampled
+  south-carolina: 3 insurer lines, 2 hospital-file lines sampled
+  washington: 3 insurer lines, 2 hospital-file lines sampled
+  oregon: 3 insurer lines, 2 hospital-file lines sampled
+  idaho: 3 insurer lines, 2 hospital-file lines sampled
+  utah: 3 insurer lines, 2 hospital-file lines sampled
+  alaska: 3 insurer lines, 2 hospital-file lines sampled
+  nevada: 3 insurer lines, 2 hospital-file lines sampled
+  hawaii: 3 insurer lines, 2 hospital-file lines sampled
+  wyoming: 3 insurer lines, 2 hospital-file lines sampled
+  new-york: 3 insurer lines, 2 hospital-file lines sampled
+  virginia: 3 insurer lines, 2 hospital-file lines sampled
+  district-of-columbia: 3 insurer lines, 2 hospital-file lines sampled
+  florida: 3 insurer lines, 2 hospital-file lines sampled
+  wisconsin: 3 insurer lines, 2 hospital-file lines sampled
+  los-angeles: 3 insurer lines, 2 hospital-file lines sampled
+  san-diego-inland-empire: 3 insurer lines, 2 hospital-file lines sampled
+  bay-area: 3 insurer lines, 2 hospital-file lines sampled
+  sacramento-northern-california: 3 insurer lines, 2 hospital-file lines sampled
+  central-california: 3 insurer lines, 2 hospital-file lines sampled
+  new-york-city: 3 insurer lines, 2 hospital-file lines sampled
+  long-island: 3 insurer lines, 2 hospital-file lines sampled
+  hudson-valley: 3 insurer lines, 2 hospital-file lines sampled
+  western-new-york: 3 insurer lines, 2 hospital-file lines sampled
+  upstate-new-york: 3 insurer lines, 2 hospital-file lines sampled
+  south-florida: 3 insurer lines, 2 hospital-file lines sampled
+  tampa-bay: 3 insurer lines, 2 hospital-file lines sampled
+  central-florida: 3 insurer lines, 2 hospital-file lines sampled
+  southwest-florida: 3 insurer lines, 2 hospital-file lines sampled
+  north-florida: 3 insurer lines, 2 hospital-file lines sampled
+  chicago-area: 3 insurer lines, 2 hospital-file lines sampled
+  central-southern-illinois: 3 insurer lines, 2 hospital-file lines sampled
+  philadelphia-area: 3 insurer lines, 2 hospital-file lines sampled
+  western-pennsylvania: 3 insurer lines, 2 hospital-file lines sampled
+  central-eastern-pennsylvania: 3 insurer lines, 2 hospital-file lines sampled
+  oakland-county: 3 insurer lines, 2 hospital-file lines sampled
+  macomb-county: 3 insurer lines, 2 hospital-file lines sampled
+  detroit-wayne-county: 3 insurer lines, 2 hospital-file lines sampled
+  ann-arbor-washtenaw: 3 insurer lines, 2 hospital-file lines sampled
+  west-michigan: 3 insurer lines, 2 hospital-file lines sampled
+  mid-northern-michigan: 3 insurer lines, 2 hospital-file lines sampled
+  dfw: 8 insurer lines, 3 hospital-file lines sampled
+  el-paso: 8 insurer lines, 3 hospital-file lines sampled
+  austin: 8 insurer lines, 3 hospital-file lines sampled
+  san-antonio: 8 insurer lines, 3 hospital-file lines sampled
+  houston: 8 insurer lines, 3 hospital-file lines sampled
+  mcallen: 8 insurer lines, 3 hospital-file lines sampled
+  killeen-temple: 8 insurer lines, 3 hospital-file lines sampled
+  brownsville-harlingen: 8 insurer lines, 3 hospital-file lines sampled
+  corpus-christi: 8 insurer lines, 3 hospital-file lines sampled
+  beaumont-port-arthur: 8 insurer lines, 3 hospital-file lines sampled
+  lubbock: 8 insurer lines, 3 hospital-file lines sampled
+  waco: 8 insurer lines, 3 hospital-file lines sampled
+  longview: 8 insurer lines, 3 hospital-file lines sampled
+  college-station-bryan: 8 insurer lines, 3 hospital-file lines sampled
+  amarillo: 8 insurer lines, 3 hospital-file lines sampled
+  tyler: 8 insurer lines, 3 hospital-file lines sampled
+  abilene: 8 insurer lines, 3 hospital-file lines sampled
+  midland: 8 insurer lines, 3 hospital-file lines sampled
+  odessa: 8 insurer lines, 3 hospital-file lines sampled
+  wichita-falls: 8 insurer lines, 3 hospital-file lines sampled
+  texarkana: 8 insurer lines, 3 hospital-file lines sampled
+  skip san-angelo (no page or prefix)
+  victoria: 8 insurer lines, 3 hospital-file lines sampled
+  small-towns: 8 insurer lines, 3 hospital-file lines sampled
+  tennessee: 8 insurer lines, 3 hospital-file lines sampled
+  colorado: 8 insurer lines, 3 hospital-file lines sampled
+  oklahoma: 8 insurer lines, 3 hospital-file lines sampled
+  alabama: 8 insurer lines, 3 hospital-file lines sampled
+  mississippi: 8 insurer lines, 3 hospital-file lines sampled
+  missouri: 8 insurer lines, 3 hospital-file lines sampled
+  georgia: 8 insurer lines, 3 hospital-file lines sampled
+  north-carolina: 8 insurer lines, 3 hospital-file lines sampled
+  connecticut: 8 insurer lines, 3 hospital-file lines sampled
+  illinois: 8 insurer lines, 3 hospital-file lines sampled
+  arkansas: 8 insurer lines, 3 hospital-file lines sampled
+  maryland: 8 insurer lines, 3 hospital-file lines sampled
+  new-mexico: 8 insurer lines, 3 hospital-file lines sampled
+  montana: 8 insurer lines, 3 hospital-file lines sampled
+  louisiana: 8 insurer lines, 3 hospital-file lines sampled
+  indiana: 8 insurer lines, 3 hospital-file lines sampled
+  kentucky: 8 insurer lines, 3 hospital-file lines sampled
+  ohio: 8 insurer lines, 3 hospital-file lines sampled
+  arizona: 8 insurer lines, 3 hospital-file lines sampled
+  north-dakota: 8 insurer lines, 3 hospital-file lines sampled
+  south-dakota: 8 insurer lines, 3 hospital-file lines sampled
+  iowa: 8 insurer lines, 3 hospital-file lines sampled
+  minnesota: 8 insurer lines, 3 hospital-file lines sampled
+  nebraska: 8 insurer lines, 3 hospital-file lines sampled
+  kansas: 8 insurer lines, 3 hospital-file lines sampled
+  pennsylvania: 8 insurer lines, 3 hospital-file lines sampled
+  delaware: 8 insurer lines, 3 hospital-file lines sampled
+  west-virginia: 8 insurer lines, 3 hospital-file lines sampled
+  new-jersey: 8 insurer lines, 3 hospital-file lines sampled
+  massachusetts: 8 insurer lines, 3 hospital-file lines sampled
+  rhode-island: 8 insurer lines, 3 hospital-file lines sampled
+  vermont: 8 insurer lines, 3 hospital-file lines sampled
+  new-hampshire: 8 insurer lines, 3 hospital-file lines sampled
+  maine: 8 insurer lines, 3 hospital-file lines sampled
+  south-carolina: 8 insurer lines, 3 hospital-file lines sampled
+  washington: 8 insurer lines, 3 hospital-file lines sampled
+  oregon: 8 insurer lines, 3 hospital-file lines sampled
+  idaho: 8 insurer lines, 3 hospital-file lines sampled
+  utah: 8 insurer lines, 3 hospital-file lines sampled
+  alaska: 8 insurer lines, 3 hospital-file lines sampled
+  nevada: 8 insurer lines, 3 hospital-file lines sampled
+  hawaii: 8 insurer lines, 3 hospital-file lines sampled
+  wyoming: 8 insurer lines, 3 hospital-file lines sampled
+  new-york: 8 insurer lines, 3 hospital-file lines sampled
+  virginia: 8 insurer lines, 3 hospital-file lines sampled
+  district-of-columbia: 8 insurer lines, 3 hospital-file lines sampled
+  florida: 8 insurer lines, 3 hospital-file lines sampled
+  wisconsin: 8 insurer lines, 3 hospital-file lines sampled
+  los-angeles: 8 insurer lines, 3 hospital-file lines sampled
+  san-diego-inland-empire: 8 insurer lines, 3 hospital-file lines sampled
+  bay-area: 8 insurer lines, 3 hospital-file lines sampled
+  sacramento-northern-california: 8 insurer lines, 3 hospital-file lines sampled
+  central-california: 8 insurer lines, 3 hospital-file lines sampled
+  new-york-city: 8 insurer lines, 3 hospital-file lines sampled
+  long-island: 8 insurer lines, 3 hospital-file lines sampled
+  hudson-valley: 8 insurer lines, 3 hospital-file lines sampled
+  western-new-york: 8 insurer lines, 3 hospital-file lines sampled
+  upstate-new-york: 8 insurer lines, 3 hospital-file lines sampled
+  south-florida: 8 insurer lines, 3 hospital-file lines sampled
+  tampa-bay: 8 insurer lines, 3 hospital-file lines sampled
+  central-florida: 8 insurer lines, 3 hospital-file lines sampled
+  southwest-florida: 8 insurer lines, 3 hospital-file lines sampled
+  north-florida: 8 insurer lines, 3 hospital-file lines sampled
+  chicago-area: 8 insurer lines, 3 hospital-file lines sampled
+  central-southern-illinois: 8 insurer lines, 3 hospital-file lines sampled
+  philadelphia-area: 8 insurer lines, 3 hospital-file lines sampled
+  western-pennsylvania: 8 insurer lines, 3 hospital-file lines sampled
+  central-eastern-pennsylvania: 8 insurer lines, 3 hospital-file lines sampled
+  oakland-county: 8 insurer lines, 3 hospital-file lines sampled
+  macomb-county: 8 insurer lines, 3 hospital-file lines sampled
+  detroit-wayne-county: 8 insurer lines, 3 hospital-file lines sampled
+  ann-arbor-washtenaw: 8 insurer lines, 3 hospital-file lines sampled
+  west-michigan: 8 insurer lines, 3 hospital-file lines sampled
+  mid-northern-michigan: 8 insurer lines, 3 hospital-file lines sampled
+250 insurer and 100 hospital packets; tracing sources...
+pushed checklist and results template
+  table 2026-10_690_08D0_in-network-rates_31_of_35: 1 sampled lines, 2 source rows (0.0 GB)
+  table 2026-10-05_curative_in-network-rates_003-of-006: 1 sampled lines, 2 source rows (0.8 GB)
+  table 2026-08-22_A00005_ffs_in-network: 1 sampled lines, 2 source rows (2.0 GB)
+  table 2026-10_040_05C0_in-network-rates_3_of_9: 1 sampled lines, 6 source rows (7.9 GB)
+pushed batch 1
+  table 2026-10_590_10G0_in-network-rates_1_of_2: 1 sampled lines, 6 source rows (1.0 GB)
+  table 2026-10-05_pl-22u-hr23_Aetna-Health-Inc.---Connecticut: 1 sampled lines, 2 source rows (10.8 GB)
+pushed batch 2
+  table 2026-10-01_WMK_I_PLAN6_57A0_Wellmark: 1 sampled lines, 2 source rows (0.8 GB)
+  table 2026-10_690_08B0_in-network-rates_10_of_35: 1 sampled lines, 6 source rows (1.3 GB)
+pushed batch 3
+  table FloridaBlue_BCI_in-network-rates: 1 sampled lines, 2 source rows (0.8 GB)
+  table 2026-09-25_000005200_in-network-rates_02_of_10: 1 sampled lines, 12 source rows (2.3 GB)
+  table 2026-09-14_Blue-Cross-and-Blue-Shield-of-Illinois_PPO-Participating-Provider-Options_in-network-rates: 1 sampled lines, 2 source rows (6.0 GB)
+pushed batch 4
+  table 2026-10_040_05C0_in-network-rates_8_of_9: 1 sampled lines, 10 source rows (8.2 GB)
+  table 2026-10_254_39F0_in-network-rates_2_of_6: 1 sampled lines, 2 source rows (8.9 GB)
+  table 2026-10-01_sutter-health-plus_in-network-rates_small-group-plans: 1 sampled lines, 6 source rows (13.1 GB)
+  table 2026-10-01_3610008_Capital-Blue: 1 sampled lines, 4 source rows (14.7 GB)
+pushed batch 5
+  table 2026-10-14_Blue-Cross-and-Blue-Shield-of-Oklahoma_BlueOptions-PPO_in-network-rates: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-10_266_38B0_in-network-rates_1_of_3: 1 sampled lines, 2 source rows (3.7 GB)
+  table CA_AHPNMED0000_08_08: 1 sampled lines, 2 source rows (8.2 GB)
+pushed batch 6
+  table FloridaBlue_MBI_in-network-rates: 1 sampled lines, 2 source rows (0.9 GB)
+pushed batch 7
+  table part-00155-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53057-30.c000: 1 sampled lines, 2 source rows (0.0 GB)
+  table 2026-10_590_10P0_in-network-rates_1_of_2: 1 sampled lines, 2 source rows (0.9 GB)
+  table 2026-10-01_ICMND_NonRLRX_in-network-rates: 1 sampled lines, 2 source rows (1.5 GB)
+pushed batch 8
+  table 2026-10_250_31H0_in-network-rates: 1 sampled lines, 4 source rows (0.1 GB)
+  table FloridaBlue_IBO_in-network-rates: 1 sampled lines, 2 source rows (0.9 GB)
+  table 2026-10-01_OPEN_Health-Alliance-Plan: 1 sampled lines, 2 source rows (7.6 GB)
+  table 2026-09-14_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Premier_in-network-rates: 1 sampled lines, 8 source rows (12.4 GB)
+pushed batch 9
+  table 2026-09-03_mountain-health-co-op_10373_in-network-rates: 1 sampled lines, 4 source rows (0.3 GB)
+  table 2026-08-22_A00008_ffs_in-network: 1 sampled lines, 2 source rows (2.0 GB)
+  table 2026-10-01_OPEN_Health-Alliance-Plan: 1 sampled lines, 4 source rows (7.6 GB)
+  table CA_AHPNMED0000_03_08: 1 sampled lines, 2 source rows (7.9 GB)
+  table 2026-10_040_05C0_in-network-rates_3_of_9: 1 sampled lines, 4 source rows (7.9 GB)
+  table 2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_MyBlue-Health-HMO_in-network-rates: 1 sampled lines, 8 source rows (8.3 GB)
+pushed batch 10
+  table 2026-09-28_centene-management-company-llc_ambetter-ga_in-network: 1 sampled lines, 18 source rows (1.3 GB)
+  table 2026-10-01_cigna-health-life-insurance-company_florida-connect_in-network-rates: 1 sampled lines, 6 source rows (2.1 GB)
+  table 2026-10-01_OPEN_Health-Alliance-Plan: 1 sampled lines, 2 source rows (7.6 GB)
+pushed batch 11
+  table 2026-10_590_10P0_in-network-rates_1_of_2: 1 sampled lines, 2 source rows (0.9 GB)
+  table 149026-in-network-rates: 1 sampled lines, 2 source rows (2.1 GB)
+  table 2026-09-30_000005015_M31_in-network-rates_11_of_25: 1 sampled lines, 4 source rows (3.6 GB)
+  table MO_CEFPMED0000_03_03: 1 sampled lines, 6 source rows (4.8 GB)
+  table ME_HXAXMED0001: 1 sampled lines, 8 source rows (4.9 GB)
+pushed batch 12
+  table WI_AHPNMEDWI00_04_04: 1 sampled lines, 2 source rows (4.5 GB)
+  table 2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_MyBlue-Health-HMO_in-network-rates: 1 sampled lines, 8 source rows (8.3 GB)
+pushed batch 13
+  table 2026-10-01_NETWORKBLUE_BCBSNE: 1 sampled lines, 4 source rows (1.8 GB)
+  table 2026-10_161_21Q0_in-network-rates_1_of_9: 1 sampled lines, 2 source rows (7.1 GB)
+  table 2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_MyBlue-Health-HMO_in-network-rates: 1 sampled lines, 4 source rows (8.3 GB)
+pushed batch 14
+350 packets in 14 batches: /home/runner/work/files.healthcare_price-files-bot/files.healthcare_price-files-bot/reports/audit/2026-11-07/packets
