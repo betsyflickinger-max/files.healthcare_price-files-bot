@@ -225,7 +225,8 @@ def main():
         # Nov 7, 2026 (Betsy: "why wait till tomorrow?"): November's DFW build starts now instead of on the 8th
         if int(time.strftime('%d')) < 8 and not E.get('FORCE') and BID not in ('2026-11',): log('waiting for the 8th'); return
         busy = insurer_bot_busy()
-        if busy and not E.get('FORCE'): log(busy, 'insurer files still being read; waiting'); return
+        # Nov 7, 2026 (Betsy: "get everything up to date"): November's DFW build starts with the files already read
+        if busy and not E.get('FORCE') and BID not in ('2026-11',): log(busy, 'insurer files still being read; waiting'); return
         if REBUILD and not E.get('FORCE'):
             # wait until every network named in dfw_rebuild.json is read (or has failed), or until "go_by" (UTC)
             man = {r['slot']: r for r in csv.DictReader(io.StringIO(s3.get_object(Bucket=B, Key='bot/insurers/manifest.csv')['Body'].read().decode()))}
