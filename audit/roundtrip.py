@@ -309,7 +309,7 @@ def stream_lines(key):
     if '.zip' in key.lower():   # a zipped original: unpack the zip to a temp file, read its first data file
         tmp = tempfile.NamedTemporaryFile(suffix='.zip', delete=False)
         body = s3.get_object(Bucket=B, Key=key)['Body']
-        src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body) if key.endswith('.zst') else body
+        src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
         while True:
             b = src.read(1 << 22)
             if not b:
@@ -320,7 +320,7 @@ def stream_lines(key):
         name = next(n for n in z.namelist() if not n.endswith('/') and not n.startswith('__MACOSX'))
         return io.TextIOWrapper(z.open(name), encoding='utf-8-sig', errors='replace', newline='')
     body = s3.get_object(Bucket=B, Key=key)['Body']
-    rd = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body) if key.endswith('.zst') else body
+    rd = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
     return io.TextIOWrapper(io.BufferedReader(rd, 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
 
 
