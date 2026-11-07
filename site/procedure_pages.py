@@ -698,6 +698,9 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     wrong = {i for i, x in enumerate(H.get('src') or []) if WRONG_AREA.search(str(x[4] or ''))}
     hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc and r[0] not in wrong], 'p': hc.get('p'),
           'r': [r for r in hc.get('r', []) if r[0] < nsrc and r[1] < nins and r[0] not in wrong]}   # a per-code file newer than the page's lists: skip unknown entries
+    if drg:   # Nov 7, 2026 (audit D3, Betsy OK'd): a hospital-stay amount under $100 is a DRG weight or placeholder, not a price
+        hc['r'] = [r for r in hc['r'] if r[5] or not (r[6] or 0) < 100]
+        hc['c'] = [r for r in hc['c'] if not (r[2] or 0) < 100]
     hcash = {}
     for r in hc.get('c', []):
         if r[5] == 0 and (r[0] not in hcash or r[2] < hcash[r[0]]['v']):
@@ -2108,6 +2111,19 @@ def patch_notes(d, block):
     return False
 
 
+DRGW_OLD = "H.codes[code] = h || {c: [], r: []};"
+DRGW_NEW = ("H.codes[code] = /*DRGW Nov 7 2026: hospital-stay amounts under $100 are weights, not prices*/ ((h, C) => { if (/DRG/.test((C || {}).type || '')) "
+            "{ h.r = (h.r || []).filter(r => r[5] || !(r[6] < 100)); h.c = (h.c || []).filter(r => !(r[2] < 100)); } return h; })(h || {c: [], r: []}, D.codes[code]);")
+
+
+def drop_drg_weights(text):
+    """Price Finder pages: leave hospital-stay (DRG) amounts under $100 out of every hospital-file view (audit rule D3, Nov 7, 2026).
+    Builds after Nov 4 already drop them (h2_build.py); this covers pages built before. Idempotent; None if the code isn't as expected."""
+    if '/*DRGW' in text:
+        return text
+    return text.replace(DRGW_OLD, DRGW_NEW, 1) if DRGW_OLD in text else None
+
+
 def label_high(text):
     """Teach a Price Finder page to show the 'unusually high' flag (bit 8). Idempotent; None if the page's code isn't as expected."""
     if PF_NEW in text:
@@ -2185,12 +2201,15 @@ def deploy(force=False, only_areas=None):
         for root, _, fs in os.walk(f'{d}/site'):
             if root.endswith('price-finder') and 'index.html' in fs:
                 pth = os.path.join(root, 'index.html'); t0 = open(pth, encoding='utf-8').read(); t1 = label_high(t0)
-                if t1 is None: print('price finder code not as expected, flag label not added:', pth)
-                elif t1 != t0: open(pth, 'w', encoding='utf-8').write(t1)
+                if t1 is None: print('price finder code not as expected, flag label not added:', pth); t1 = t0
+                t2 = drop_drg_weights(t1)
+                if t2 is None: print('price finder code not as expected, stay-weight filter not added:', pth); t2 = t1
+                if t2 != t0: open(pth, 'w', encoding='utf-8').write(t2)
         if first:
             try:   # the layout the monthly refresh starts from
                 lay = s3.get_object(Bucket=B, Key='site/deploy/price-finder.html')['Body'].read().decode()
                 new_lay = label_high(lay)
+                new_lay = drop_drg_weights(new_lay or lay) or new_lay
                 if new_lay and new_lay != lay:
                     s3.put_object(Bucket=B, Key='site/deploy/price-finder.html', Body=new_lay.encode(), ContentType='text/html; charset=utf-8')
             except Exception as e:
