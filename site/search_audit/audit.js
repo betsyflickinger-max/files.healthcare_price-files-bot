@@ -1,26 +1,43 @@
-// Search audit (Nov 7, 2026): does the Price Finder search find each care item's codes by the names people type?
-// Old search (before Nov 7) vs the live pf-table.js. Usage: pull the site (python site/site_files.py pull w), serve w/site on
-// localhost:8765 (python -m http.server 8765), write tests.json with site/search_audit/make_tests.py, then node site/search_audit/audit.js.
-// Nov 7 result: old search missed the right code for 63 of 111 care items (24 on their own plain name); new: 0 missed.
-const {chromium}=require('playwright');const fs=require('fs');
-const SP=process.env.AUDIT_DIR||'./';
-const tests=JSON.parse(fs.readFileSync(SP+'tests.json'));
-(async()=>{const b=await chromium.launch();const p=await b.newPage();
-await p.goto('http://localhost:8765/price-finder/',{waitUntil:'domcontentloaded'});await p.waitForTimeout(2500);
-const res=await p.evaluate((tests)=>{
- // OLD search, copied from the version live before Nov 7 (pf-table.js "search: any word order")
- var SYN={mri:'magnetic resonance',ct:'computed tomography',cat:'computed tomography','x-ray':'xray',xray:'x-ray',ultrasound:'sonogram',echo:'echocardiogram',egd:'upper endoscopy',mammogram:'mammography',mammo:'mammography','c-section':'cesarean',csection:'cesarean',physical:'preventive',checkup:'preventive',bloodwork:'blood',scope:'endoscopy',replacement:'arthroplasty',shot:'injection',stitches:'repair'};
- var toks=t=>String(t).toLowerCase().replace(/[^a-z0-9 -]+/g,' ').split(/ +/).filter(Boolean);
- var hasW=(n,w)=>{var w2=w.replace(/s$/,'');return n.indexOf(w)>=0||n.indexOf(w2)>=0||(SYN[w]&&n.indexOf(SYN[w])>=0)};
- var codes=Object.keys(D.codes);
- function oldSearch(qq){var tw=toks(qq);var exact=codes.filter(c=>c.toLowerCase()===qq.trim().toLowerCase());
-  var all=codes.filter(c=>{var n=(D.codes[c].name||'').toLowerCase();return tw.length&&tw.every(w=>hasW(n,w))});
-  var near=all.length?[]:codes.map(c=>{var n=(D.codes[c].name||'').toLowerCase();return [c,tw.filter(w=>w.length>2&&hasW(n,w)).length]}).filter(x=>x[1]).sort((a,b)=>b[1]-a[1]).map(x=>x[0]);
-  return {list:exact.concat(all.filter(c=>exact.indexOf(c)<0),near).slice(0,60),exactMatch:all.length+exact.length>0}}
- function newSearch(q){var pr=document.getElementById('proc');pr.value=q;pr.dispatchEvent(new Event('change',{bubbles:true}));
-  var bx=document.querySelector('.ux-hits');return bx?[...bx.querySelectorAll('button[data-c]')].map(x=>x.dataset.c):['OPENED:'+S.code]}
- return tests.map(([iid,name,q,exp])=>{const inData=exp.filter(c=>D.codes[c]);const o=oldSearch(q),n=newSearch(q);
-  const rank=(l)=>{let r=l.findIndex(c=>inData.includes(c));return r<0?null:r+1};
-  return {iid,name,q,inData:inData.length,oldRank:rank(o.list),oldExact:o.exactMatch,oldTop:o.list.slice(0,3).map(c=>D.codes[c].name),newRank:rank(n)}});
-},tests);
-fs.writeFileSync(SP+'audit.json',JSON.stringify(res));await b.close()})();
+// Search audit (Nov 7, 2026): on one Price Finder page, can each care item be found by the names people type, does
+// typing each of its codes open that code, and does a search keep prices hidden until a code is picked?
+// Run by site/search_audit/run_all.py (which serves the site and lists the pages); writes <AUDIT_DIR>/result-<n>.json.
+// Background: the search before Nov 7 missed the right code for 63 of 111 care items (24 on their own plain name).
+const {chromium} = require('playwright');
+const fs = require('fs');
+const DIR = process.env.AUDIT_DIR || '.', PAGE = process.env.PAGE_PATH || '/price-finder/', N = process.env.PAGE_N || '0';
+const BASE = process.env.BASE || 'http://localhost:8765';
+const tests = JSON.parse(fs.readFileSync(DIR + '/tests.json'));
+(async () => {
+  const b = await chromium.launch();
+  const p = await b.newPage();
+  const errs = [];
+  p.on('pageerror', e => errs.push(e.message));
+  // 1) a word search shows a list and no prices; the address keeps ?q= only
+  await p.goto(BASE + PAGE + '?q=' + encodeURIComponent('knee replacement'), {waitUntil: 'domcontentloaded'});
+  await p.waitForFunction(() => typeof D !== 'undefined' && typeof S !== 'undefined' && document.getElementById('title'), null, {timeout: 60000});
+  await p.waitForTimeout(1500);
+  const searchView = await p.evaluate(() => ({
+    list: !!document.querySelector('.ux-hits button[data-c]'),
+    pricesHidden: document.body.classList.contains('pf-searching') && !(document.getElementById('board') || {}).offsetHeight,
+    noCodeInUrl: !new URLSearchParams(location.search).get('code')}));
+  // 2) each care item by its names; 3) each of its codes typed whole opens that code
+  const res = await p.evaluate(tests => {
+    const pr = document.getElementById('proc');
+    const run = q => { pr.value = q; pr.dispatchEvent(new Event('change', {bubbles: true}));
+      const bx = document.querySelector('.ux-hits'); return bx ? [...bx.querySelectorAll('button[data-c]')].map(x => x.dataset.c) : ['OPENED:' + S.code]; };
+    const out = {names: [], codes: []}, seen = {};
+    tests.forEach(([iid, name, q, exp]) => {
+      const inData = exp.filter(c => D.codes[c]); if (!inData.length) return;
+      const l = run(q), r = l.findIndex(c => inData.includes(c));
+      out.names.push({item: name, q, rank: r < 0 ? null : r + 1});
+      inData.forEach(c => { if (seen[c]) return; seen[c] = 1;   // hospital-stay codes typed the way people write them: "DRG 23", "743"
+        const typed = /DRG/.test(D.codes[c].type || '') && c.length < 3 ? 'DRG ' + c : c, o = run(typed);
+        out.codes.push({item: name, code: typed, ok: o[0] === 'OPENED:' + c, got: o[0] || 'a list with no codes'}); });
+    });
+    // a lone "5" must not open a code
+    const five = run('5'); out.five = five[0] && five[0].indexOf('OPENED:') === 0 ? five[0] : 'ok';
+    return out;
+  }, tests);
+  fs.writeFileSync(DIR + '/result-' + N + '.json', JSON.stringify({page: PAGE, searchView, ...res, errors: errs.slice(0, 5)}));
+  await b.close();
+})().catch(e => { fs.writeFileSync(DIR + '/result-' + N + '.json', JSON.stringify({page: PAGE, crash: String(e).slice(0, 300)})); process.exit(0); });

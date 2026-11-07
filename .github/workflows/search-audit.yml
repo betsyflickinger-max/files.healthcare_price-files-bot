@@ -1,0 +1,47 @@
+name: Search audit (daily, every Price Finder page)
+
+# Nov 7, 2026 (Betsy's myomectomy search): checks the live site once a day, after any build or fix. On every
+# Price Finder page: each of the 111 care items can be found by the names people type, each of its codes opens when
+# typed, and a search shows no prices until a code is picked. A red run (GitHub emails it) means something to fix;
+# the table is in the run summary and in R2 control/data/search_audit.json. See site/search_audit/.
+on:
+  schedule:
+    - cron: "41 10 * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [.github/workflows/search-audit.yml, site/search_audit/**]
+
+concurrency:
+  group: search-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      PYTHONUNBUFFERED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install -q boto3==1.35.36
+      - run: npm install --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
+      - run: python site/site_files.py pull w
+      - id: audit
+        run: python site/search_audit/run_all.py w/site
+        continue-on-error: true
+      - run: python board/to_r2_control.py out/board 'search_audit.json'
+      - if: steps.audit.outcome == 'failure'
+        run: echo "Search audit found problems; see the table above." && exit 1
