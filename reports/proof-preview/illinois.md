@@ -1,35 +1,35 @@
 # Card #2 preview: Illinois price pages, before and after
 
-Built 2026-10-31 by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 (Illinois). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.
+Built 2026-11-07 by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 (Illinois). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.
 
 ## Knee arthroscopy with meniscectomy (29881)
 
-Providers on the page by kind and proof: surgery center not_covered: 159; surgery center proved: 20; practice, clinic, lab or imaging center not_covered: 18780; practice, clinic, lab or imaging center wrong_specialty: 450; hospital not_covered: 564
+Providers on the page by kind and proof: surgery center not_covered: 159; surgery center proved: 20; practice, clinic, lab or imaging center not_covered: 18785; practice, clinic, lab or imaging center wrong_specialty: 450; hospital not_covered: 564
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 19973; left out as out of state 3; ranked providers 278; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19978; left out as out of state 3; ranked providers 278; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
-| 1 | Rush University Medical Center $553 | Rush University Medical Center $553 |  |
-| 2 | St. Alexius Medical Center $553 | St. Alexius Medical Center $553 |  |
-| 3 | Waukegan Illinois Hospital Company LLC $553 | Waukegan Illinois Hospital Company LLC $553 |  |
-| 4 | Morris Hospital $619 | Morris Hospital $619 |  |
-| 5 | La Rabida Children's Hospital $630 | La Rabida Children's Hospital $630 |  |
-| 6 | Roseland Community Hospital Association $663 | Roseland Community Hospital Association $663 |  |
-| 7 | Ferrell Hospital Community Foundation $700 | Ferrell Hospital Community Foundation $700 |  |
-| 8 | Julia Rackley Perry Memorial Hospital $700 | Julia Rackley Perry Memorial Hospital $700 |  |
-| 9 | Katherine Shaw Bethea Hospital $700 | Katherine Shaw Bethea Hospital $700 |  |
-| 10 | Mendota Community Hospital $700 | Mendota Community Hospital $700 |  |
+| 1 | Morris Hospital $619 | Morris Hospital $619 |  |
+| 2 | La Rabida Children's Hospital $630 | La Rabida Children's Hospital $630 |  |
+| 3 | Roseland Community Hospital Association $663 | Roseland Community Hospital Association $663 |  |
+| 4 | Ferrell Hospital Community Foundation $700 | Ferrell Hospital Community Foundation $700 |  |
+| 5 | Julia Rackley Perry Memorial Hospital $700 | Julia Rackley Perry Memorial Hospital $700 |  |
+| 6 | Katherine Shaw Bethea Hospital $700 | Katherine Shaw Bethea Hospital $700 |  |
+| 7 | Mendota Community Hospital $700 | Mendota Community Hospital $700 |  |
+| 8 | Osf Healthcare System $700 | Osf Healthcare System $700 |  |
+| 9 | Osf Healthcare System $700 | Osf Healthcare System $700 |  |
+| 10 | Osf Healthcare System $700 | Osf Healthcare System $700 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 450; lowest before $553, after $553
+Left out of the figures (clinicians whose specialty doesn't perform this code): 450; lowest before $619, after $619
 
 Also listed, may not offer this procedure: 0
 
 ## Cataract surgery (66984)
 
-Providers on the page by kind and proof: surgery center not_covered: 128; surgery center proved: 46; practice, clinic, lab or imaging center not_covered: 20126; practice, clinic, lab or imaging center proved: 5; practice, clinic, lab or imaging center wrong_specialty: 466; hospital not_covered: 556
+Providers on the page by kind and proof: surgery center not_covered: 128; surgery center proved: 46; practice, clinic, lab or imaging center not_covered: 20130; practice, clinic, lab or imaging center proved: 5; practice, clinic, lab or imaging center wrong_specialty: 466; hospital not_covered: 556
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 21327; left out as out of state 3; ranked providers 289; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 21331; left out as out of state 3; ranked providers 289; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -50,9 +50,9 @@ Also listed, may not offer this procedure: 0
 
 ## Gallbladder removal (laparoscopic) (47562)
 
-Providers on the page by kind and proof: surgery center not_covered: 177; surgery center proved: 2; practice, clinic, lab or imaging center not_covered: 19119; practice, clinic, lab or imaging center wrong_specialty: 468; hospital not_covered: 569
+Providers on the page by kind and proof: surgery center not_covered: 177; surgery center proved: 2; practice, clinic, lab or imaging center not_covered: 19123; practice, clinic, lab or imaging center wrong_specialty: 468; hospital not_covered: 569
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 20335; left out as out of state 3; ranked providers 256; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 20339; left out as out of state 3; ranked providers 256; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -73,32 +73,32 @@ Also listed, may not offer this procedure: 0
 
 ## Carpal tunnel release (64721)
 
-Providers on the page by kind and proof: surgery center not_covered: 138; surgery center proved: 39; practice, clinic, lab or imaging center not_covered: 18354; practice, clinic, lab or imaging center proved: 3; practice, clinic, lab or imaging center wrong_specialty: 452; hospital not_covered: 564
+Providers on the page by kind and proof: surgery center not_covered: 138; surgery center proved: 39; practice, clinic, lab or imaging center not_covered: 18358; practice, clinic, lab or imaging center proved: 3; practice, clinic, lab or imaging center wrong_specialty: 452; hospital not_covered: 564
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 19550; left out as out of state 3; ranked providers 286; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19554; left out as out of state 3; ranked providers 284; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
-| 1 | Swedishamerican Hospital $349 | Swedishamerican Hospital $349 |  |
-| 2 | Swedishamerican Hospital $349 | Swedishamerican Hospital $349 |  |
-| 3 | Carlinville Area Hospital Association $355 | Carlinville Area Hospital Association $355 |  |
-| 4 | Abraham Lincoln Memorial Hospital $371 | Abraham Lincoln Memorial Hospital $371 |  |
-| 5 | Deaconess Illinois Crossroads Inc $371 | Deaconess Illinois Crossroads Inc $371 |  |
-| 6 | Gibson Community Hospital Association $371 | Gibson Community Hospital Association $371 |  |
-| 7 | Memorial Medical Center $371 | Memorial Medical Center $371 |  |
-| 8 | Passavant Memorial Area Hospital Association $371 | Passavant Memorial Area Hospital Association $371 |  |
-| 9 | Taylorville Memorial Hospital $371 | Taylorville Memorial Hospital $371 |  |
-| 10 | Cook County $426 | Cook County $426 |  |
+| 1 | Abraham Lincoln Memorial Hospital $371 | Abraham Lincoln Memorial Hospital $371 |  |
+| 2 | Deaconess Illinois Crossroads Inc $371 | Deaconess Illinois Crossroads Inc $371 |  |
+| 3 | Gibson Community Hospital Association $371 | Gibson Community Hospital Association $371 |  |
+| 4 | Memorial Medical Center $371 | Memorial Medical Center $371 |  |
+| 5 | Passavant Memorial Area Hospital Association $371 | Passavant Memorial Area Hospital Association $371 |  |
+| 6 | Taylorville Memorial Hospital $371 | Taylorville Memorial Hospital $371 |  |
+| 7 | Cook County $426 | Cook County $426 |  |
+| 8 | Cook County Hospital $426 | Cook County Hospital $426 |  |
+| 9 | John H Stroger Hospital of Cook County $426 | John H Stroger Hospital of Cook County $426 |  |
+| 10 | John H Stroger Jr Hospital Cook County $426 | John H Stroger Jr Hospital Cook County $426 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 452; lowest before $349, after $349
+Left out of the figures (clinicians whose specialty doesn't perform this code): 452; lowest before $371, after $371
 
 Also listed, may not offer this procedure: 0
 
 ## Colonoscopy (diagnostic) (45378)
 
-Providers on the page by kind and proof: surgery center not_covered: 151; surgery center proved: 30; practice, clinic, lab or imaging center not_covered: 19246; practice, clinic, lab or imaging center proved: 3; practice, clinic, lab or imaging center wrong_specialty: 476; hospital not_covered: 567; hospital proved: 1
+Providers on the page by kind and proof: surgery center not_covered: 151; surgery center proved: 30; practice, clinic, lab or imaging center not_covered: 19250; practice, clinic, lab or imaging center proved: 3; practice, clinic, lab or imaging center wrong_specialty: 476; hospital not_covered: 567; hospital proved: 1
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 20474; left out as out of state 3; ranked providers 291; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 20478; left out as out of state 3; ranked providers 291; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -119,32 +119,32 @@ Also listed, may not offer this procedure: 0
 
 ## Total knee replacement (27447)
 
-Providers on the page by kind and proof: surgery center not_covered: 153; surgery center proved: 25; practice, clinic, lab or imaging center not_covered: 19043; practice, clinic, lab or imaging center proved: 1; practice, clinic, lab or imaging center wrong_specialty: 449; hospital not_covered: 569
+Providers on the page by kind and proof: surgery center not_covered: 153; surgery center proved: 25; practice, clinic, lab or imaging center not_covered: 19048; practice, clinic, lab or imaging center proved: 1; practice, clinic, lab or imaging center wrong_specialty: 449; hospital not_covered: 569
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 20240; left out as out of state 3; ranked providers 270; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 20245; left out as out of state 3; ranked providers 255; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
-| 1 | United Shockwave Services, Ltd. $1,567 | United Shockwave Services, Ltd. $1,567 |  |
-| 2 | Southwestern Medical Center, LLC $1,572 | Southwestern Medical Center, LLC $1,572 |  |
-| 3 | Surgery Center at 900 N Michigan Ave LLC $1,572 | Surgery Center at 900 N Michigan Ave LLC $1,572 |  |
-| 4 | Roseland Community Hospital Association $1,597 | Roseland Community Hospital Association $1,597 |  |
-| 5 | Cook County $1,609 | Cook County $1,609 |  |
-| 6 | Cook County Hospital $1,609 | Cook County Hospital $1,609 |  |
-| 7 | John H Stroger Hospital of Cook County $1,609 | John H Stroger Hospital of Cook County $1,609 |  |
-| 8 | John H Stroger Jr Hospital Cook County $1,609 | John H Stroger Jr Hospital Cook County $1,609 |  |
-| 9 | John H. Stroger, Jr. Hospital of Cook County $1,609 | John H. Stroger, Jr. Hospital of Cook County $1,609 |  |
-| 10 | Provident Hospital of Cook County $1,609 | Provident Hospital of Cook County $1,609 |  |
+| 1 | South Shore Hospital Corporation $1,672 | South Shore Hospital Corporation $1,672 |  |
+| 2 | St. Bernard Hospital $1,672 | St. Bernard Hospital $1,672 |  |
+| 3 | Henry Ford Health St. John Hospital $1,708 | Henry Ford Health St. John Hospital $1,708 |  |
+| 4 | St Josephs Hospital Breese of the Hospital Sisters of the Third Orde $1,746 | St Josephs Hospital Breese of the Hospital Sisters of the Third Orde $1,746 |  |
+| 5 | Hshs Good Shepherd Hospital Inc $1,755 | Hshs Good Shepherd Hospital Inc $1,755 |  |
+| 6 | Hshs Holy Family Hospital Inc $1,755 | Hshs Holy Family Hospital Inc $1,755 |  |
+| 7 | St Anthonys Memorial Hospital of the Hospital Sisters of the Third $1,755 | St Anthonys Memorial Hospital of the Hospital Sisters of the Third $1,755 |  |
+| 8 | St Elizabeths Hospital of the Hospital Sisters of the Third Order $1,755 | St Elizabeths Hospital of the Hospital Sisters of the Third Order $1,755 |  |
+| 9 | St Francis Hospital of the Hospital Sisters of the Third Order of St F $1,755 | St Francis Hospital of the Hospital Sisters of the Third Order of St F $1,755 |  |
+| 10 | St Johns Hospital of the Hospital Sisters of the Third Order of St F $1,755 | St Johns Hospital of the Hospital Sisters of the Third Order of St F $1,755 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 449; lowest before $1,567, after $1,567
+Left out of the figures (clinicians whose specialty doesn't perform this code): 449; lowest before $1,672, after $1,672
 
 Also listed, may not offer this procedure: 0
 
 ## MRI knee/joint without contrast (73721)
 
-Providers on the page by kind and proof: surgery center not_covered: 145; practice, clinic, lab or imaging center not_covered: 22279; practice, clinic, lab or imaging center proved: 38; practice, clinic, lab or imaging center wrong_specialty: 458; hospital not_covered: 535; hospital proved: 1
+Providers on the page by kind and proof: surgery center not_covered: 145; practice, clinic, lab or imaging center not_covered: 22284; practice, clinic, lab or imaging center proved: 38; practice, clinic, lab or imaging center wrong_specialty: 458; hospital not_covered: 535; hospital proved: 1
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 23456; left out as out of state 3; ranked providers 172; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 23461; left out as out of state 3; ranked providers 171; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -165,32 +165,32 @@ Also listed, may not offer this procedure: 0
 
 ## Vaginal delivery (global) (59400)
 
-Providers on the page by kind and proof: surgery center not_covered: 155; practice, clinic, lab or imaging center not_covered: 10896; practice, clinic, lab or imaging center wrong_specialty: 8233; hospital not_covered: 582
+Providers on the page by kind and proof: surgery center not_covered: 160; practice, clinic, lab or imaging center not_covered: 6900; practice, clinic, lab or imaging center wrong_specialty: 12235; hospital not_covered: 582
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 19866; left out as out of state 3; ranked providers 16622; kind doc; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19877; left out as out of state 3; ranked providers 16623; kind doc; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
-| 1 | Amg Illinois Ltd $810 | Alliance Healthcare Services Inc $975 |  |
-| 2 | Alliance Healthcare Services Inc $975 | Northland Hearing Centers, Inc. $1,153 |  |
-| 3 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 4 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 5 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 6 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 7 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 8 | Forefront Dermatology, S.C. $1,128 | Northland Hearing Centers, Inc. $1,153 |  |
-| 9 | Forefront Dermatology, S.C. $1,128 | Union Hospital Inc $1,289 |  |
-| 10 | Forefront Dermatology, S.C. $1,128 | Ferrell Hospital Community Foundation $1,307 |  |
+| 1 | Amg Illinois Ltd $810 | Union Hospital Inc $1,289 |  |
+| 2 | Alliance Healthcare Services Inc $975 | Pinnacle Pain Management $1,325 |  |
+| 3 | Forefront Dermatology, S.C. $1,128 | Hedges Clinic Service Corp $1,332 |  |
+| 4 | Forefront Dermatology, S.C. $1,128 | Northwest Internal Medicine Group LLC $1,332 |  |
+| 5 | Forefront Dermatology, S.C. $1,128 | Oak Brook Center for Health Inc $1,332 |  |
+| 6 | Forefront Dermatology, S.C. $1,128 | Rheumatic Disease Center Physicians, S.C $1,332 |  |
+| 7 | Forefront Dermatology, S.C. $1,128 | Union Associated Physicians Clinic, LLC $1,337 |  |
+| 8 | Forefront Dermatology, S.C. $1,128 | The Baby Academy Usa LLC $1,428 |  |
+| 9 | Forefront Dermatology, S.C. $1,128 | Circle Medical Care Group PA $1,458 |  |
+| 10 | Forefront Dermatology, S.C. $1,128 | Southern Illinois Medical Care Associates LLC $1,458 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 8231; lowest before $810, after $975
+Left out of the figures (clinicians whose specialty doesn't perform this code): 12232; lowest before $810, after $1,289
 
 Also listed, may not offer this procedure: 0
 
 ## Office visit, returning patient (low complexity, about 20 min) (99213)
 
-Providers on the page by kind and proof: surgery center not_covered: 66; practice, clinic, lab or imaging center not_covered: 29316; practice, clinic, lab or imaging center proved: 529; hospital not_covered: 527; hospital proved: 1
+Providers on the page by kind and proof: surgery center not_covered: 67; practice, clinic, lab or imaging center not_covered: 29329; practice, clinic, lab or imaging center proved: 529; hospital not_covered: 528; hospital proved: 1
 
-Check: per-code insurer file found (site/every-st/illinois/2026-10/t/); providers with rates 30439; left out as out of state 4; ranked providers 140; kind fac; states seen {'IL': 146821, 'MO': 7, 'IN': 3, 'KS': 2}
+Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 30454; left out as out of state 4; ranked providers 139; kind fac; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
@@ -213,9 +213,9 @@ Also listed, may not offer this procedure: 0
 
 | Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |
 |---|---|---|---|
-| surgery center | 162 | 1272 | 0 |
-| practice, clinic, lab or imaging center | 579 | 177159 | 0 |
-| hospital | 3 | 5033 | 0 |
+| surgery center | 162 | 1278 | 0 |
+| practice, clinic, lab or imaging center | 579 | 173207 | 0 |
+| hospital | 3 | 5034 | 0 |
 
 ## Areas and the state the page code gives them
 
@@ -262,7 +262,25 @@ Also listed, may not offer this procedure: 0
 | Louisiana | louisiana | LA | LA |
 | Indiana | indiana | IN | IN |
 | Kentucky | kentucky | KY | KY |
+| Ohio | ohio | OH | OH |
 | Arizona | arizona | AZ | AZ |
+| North Dakota | north-dakota | ND | ND |
+| South Dakota | south-dakota | SD | SD |
+| Iowa | iowa | IA | IA |
+| Minnesota | minnesota | MN | MN |
+| Nebraska | nebraska | NE | NE |
+| Kansas | kansas | KS | KS |
+| Pennsylvania | pennsylvania | PA | PA |
+| Delaware | delaware | DE | DE |
+| West Virginia | west-virginia | WV | WV |
+| New Jersey | new-jersey | NJ | NJ |
+| Massachusetts | massachusetts | MA | MA |
+| Rhode Island | rhode-island | RI | RI |
+| Vermont | vermont | VT | VT |
+| New Hampshire | new-hampshire | NH | NH |
+| Maine | maine | ME | ME |
+| South Carolina | south-carolina | SC | SC |
+| Washington | washington | WA | WA |
 | Oregon | oregon | OR | OR |
 | Idaho | idaho | ID | ID |
 | Utah | utah | UT | UT |
@@ -280,3 +298,24 @@ Also listed, may not offer this procedure: 0
 | San Francisco Bay Area, California | bay-area | CA | CA |
 | Sacramento & Northern California, California | sacramento-northern-california | CA | CA |
 | Central California, California | central-california | CA | CA |
+| New York City, New York | new-york-city | NY | NY |
+| Long Island, New York | long-island | NY | NY |
+| Hudson Valley, New York | hudson-valley | NY | NY |
+| Western New York & Finger Lakes, New York | western-new-york | NY | NY |
+| Capital Region, Central & Northern New York, New York | upstate-new-york | NY | NY |
+| South Florida, Florida | south-florida | FL | FL |
+| Tampa Bay, Florida | tampa-bay | FL | FL |
+| Orlando & Central Florida, Florida | central-florida | FL | FL |
+| Southwest Florida, Florida | southwest-florida | FL | FL |
+| North Florida & the Panhandle, Florida | north-florida | FL | FL |
+| Chicago Area, Illinois | chicago-area | IL | IL |
+| Central & Southern Illinois, Illinois | central-southern-illinois | IL | IL |
+| Philadelphia Area, Pennsylvania | philadelphia-area | PA | PA |
+| Pittsburgh & Western Pennsylvania, Pennsylvania | western-pennsylvania | PA | PA |
+| Central & Eastern Pennsylvania, Pennsylvania | central-eastern-pennsylvania | PA | PA |
+| Oakland County, Michigan | oakland-county | MI | MI |
+| Macomb County, Michigan | macomb-county | MI | MI |
+| Detroit & Wayne County, Michigan | detroit-wayne-county | MI | MI |
+| Ann Arbor & Washtenaw County, Michigan | ann-arbor-washtenaw | MI | MI |
+| West Michigan, Michigan | west-michigan | MI | MI |
+| Mid-Michigan, Northern Michigan & the U.P., Michigan | mid-northern-michigan | MI | MI |
