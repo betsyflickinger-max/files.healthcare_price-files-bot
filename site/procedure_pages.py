@@ -698,7 +698,10 @@ def summarize(D, code, t, h, loc=None, st=None, pst=None, proof=None):
     wrong = {i for i, x in enumerate(H.get('src') or []) if WRONG_AREA.search(str(x[4] or ''))}
     hc = {'c': [r for r in hc.get('c', []) if r[0] < nsrc and r[0] not in wrong], 'p': hc.get('p'),
           'r': [r for r in hc.get('r', []) if r[0] < nsrc and r[1] < nins and r[0] not in wrong]}   # a per-code file newer than the page's lists: skip unknown entries
-    if drg:   # Nov 7, 2026 (audit D3, Betsy OK'd): a hospital-stay amount under $100 is a DRG weight or placeholder, not a price
+    # Nov 7, 2026 (audit D3, Betsy OK'd): hospice agencies' contracts in a hospital's file are per-day hospice rates, never a
+    # price for the procedure (DFW hip replacement "lowest" was Century Hospice $142 at Medical City McKinney)
+    hc['r'] = [r for r in hc['r'] if not HOSPICE.search(str((H.get('ins') or [''])[r[1]] or ''))]
+    if drg:   # a hospital-stay amount under $100 is a DRG weight or placeholder, not a price
         hc['r'] = [r for r in hc['r'] if r[5] or not (r[6] or 0) < 100]
         hc['c'] = [r for r in hc['c'] if not (r[2] or 0) < 100]
     hcash = {}
@@ -2111,9 +2114,10 @@ def patch_notes(d, block):
     return False
 
 
+HOSPICE = re.compile(r'hospice', re.I)
 DRGW_OLD = "H.codes[code] = h || {c: [], r: []};"
-DRGW_NEW = ("H.codes[code] = /*DRGW Nov 7 2026: hospital-stay amounts under $100 are weights, not prices*/ ((h, C) => { if (/DRG/.test((C || {}).type || '')) "
-            "{ h.r = (h.r || []).filter(r => r[5] || !(r[6] < 100)); h.c = (h.c || []).filter(r => !(r[2] < 100)); } return h; })(h || {c: [], r: []}, D.codes[code]);")
+DRGW_NEW = ("H.codes[code] = /*DRGW Nov 7 2026: hospital-stay amounts under $100 are weights, hospice contracts are not procedure prices*/ ((h, C) => { h.r = (h.r || []).filter(r => !/hospice/i.test(H.ins[r[1]] || '')); if (/DRG/.test((C || {}).type || '')) "
+            "{ h.r = h.r.filter(r => r[5] || !(r[6] < 100)); h.c = (h.c || []).filter(r => !(r[2] < 100)); } return h; })(h || {c: [], r: []}, D.codes[code]);")
 
 
 def drop_drg_weights(text):
