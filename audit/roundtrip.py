@@ -29,6 +29,7 @@ s3 = boto3.client('s3', endpoint_url=ENDPOINT, aws_access_key_id=E['R2_ACCESS_KE
                   region_name=os.environ.get('STORAGE_REGION') or 'auto')
 B = E['R2_BUCKET']
 NUM = re.compile(r'-?\d[\d,]*\.?\d*')
+KEEP_ROWS = False   # Layer 3 packets keep the source rows / line text
 
 
 def ls(prefix):
@@ -234,6 +235,9 @@ def check_insurer(ins, max_gb):
                      and (str(r[3] or '').lower().startswith('percent')) == x['pct']]
             ent = {str(r[8] or '') for r in rs}
             x['source_entity'] = '; '.join(sorted(ent))[:120]
+            if KEEP_ROWS:
+                names = ('code', 'npi', 'billing_class', 'type', 'rate', 'modifier', 'arrangement', 'expires')
+                x['source_rows'] = [dict(zip(names, r[:8])) for r in (exact + [r for r in rs if r not in exact])[:6]]
             x['source_date'] = '; '.join(sorted({str(r[9] or '') for r in rs}))[:60]
             if not rs:
                 x.update(verdict='not found in source', detail='no row for this code and NPI in the file')
@@ -358,6 +362,8 @@ def judge(x, text):
     has_amt = money_in(text, float(x['value']))
     x['verdict'] = 'match' if has_code and has_amt else 'amount not on cited line' if has_code else 'code not on cited line'
     x['detail'] = '' if x['verdict'] == 'match' else text[:200].replace('\n', ' ')
+    if KEEP_ROWS:
+        x['source_text'] = text[:900].replace('\n', ' ')
 
 
 def check_hospital(hosp, max_gb):
