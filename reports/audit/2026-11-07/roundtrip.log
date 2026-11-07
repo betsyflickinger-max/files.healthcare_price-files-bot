@@ -1,0 +1,209 @@
+reading the deployed site...
+  dfw: 12 insurer lines, 5 hospital-file lines sampled
+  el-paso: 12 insurer lines, 5 hospital-file lines sampled
+  austin: 12 insurer lines, 5 hospital-file lines sampled
+  san-antonio: 12 insurer lines, 5 hospital-file lines sampled
+  houston: 12 insurer lines, 5 hospital-file lines sampled
+  mcallen: 12 insurer lines, 5 hospital-file lines sampled
+  killeen-temple: 12 insurer lines, 5 hospital-file lines sampled
+  brownsville-harlingen: 12 insurer lines, 5 hospital-file lines sampled
+  corpus-christi: 12 insurer lines, 5 hospital-file lines sampled
+  beaumont-port-arthur: 12 insurer lines, 5 hospital-file lines sampled
+  lubbock: 12 insurer lines, 5 hospital-file lines sampled
+  waco: 12 insurer lines, 5 hospital-file lines sampled
+  longview: 12 insurer lines, 5 hospital-file lines sampled
+  college-station-bryan: 12 insurer lines, 5 hospital-file lines sampled
+  amarillo: 12 insurer lines, 5 hospital-file lines sampled
+  tyler: 12 insurer lines, 5 hospital-file lines sampled
+  abilene: 12 insurer lines, 5 hospital-file lines sampled
+  midland: 12 insurer lines, 5 hospital-file lines sampled
+  odessa: 12 insurer lines, 5 hospital-file lines sampled
+  wichita-falls: 12 insurer lines, 5 hospital-file lines sampled
+  texarkana: 12 insurer lines, 5 hospital-file lines sampled
+  skip san-angelo (no page or prefix)
+  victoria: 12 insurer lines, 3 hospital-file lines sampled
+  small-towns: 12 insurer lines, 5 hospital-file lines sampled
+  tennessee: 12 insurer lines, 5 hospital-file lines sampled
+  colorado: 12 insurer lines, 5 hospital-file lines sampled
+  oklahoma: 12 insurer lines, 5 hospital-file lines sampled
+  alabama: 12 insurer lines, 5 hospital-file lines sampled
+  mississippi: 13 insurer lines, 5 hospital-file lines sampled
+  missouri: 12 insurer lines, 5 hospital-file lines sampled
+  georgia: 12 insurer lines, 5 hospital-file lines sampled
+  north-carolina: 12 insurer lines, 5 hospital-file lines sampled
+  connecticut: 12 insurer lines, 5 hospital-file lines sampled
+  illinois: 12 insurer lines, 5 hospital-file lines sampled
+  arkansas: 12 insurer lines, 5 hospital-file lines sampled
+  maryland: 12 insurer lines, 5 hospital-file lines sampled
+  new-mexico: 12 insurer lines, 5 hospital-file lines sampled
+  montana: 12 insurer lines, 5 hospital-file lines sampled
+  louisiana: 12 insurer lines, 5 hospital-file lines sampled
+  indiana: 12 insurer lines, 5 hospital-file lines sampled
+  kentucky: 12 insurer lines, 5 hospital-file lines sampled
+  ohio: 12 insurer lines, 5 hospital-file lines sampled
+  arizona: 12 insurer lines, 5 hospital-file lines sampled
+  north-dakota: 12 insurer lines, 5 hospital-file lines sampled
+  south-dakota: 12 insurer lines, 5 hospital-file lines sampled
+  iowa: 12 insurer lines, 5 hospital-file lines sampled
+  minnesota: 12 insurer lines, 5 hospital-file lines sampled
+  nebraska: 12 insurer lines, 5 hospital-file lines sampled
+  kansas: 12 insurer lines, 5 hospital-file lines sampled
+  pennsylvania: 12 insurer lines, 5 hospital-file lines sampled
+  delaware: 12 insurer lines, 5 hospital-file lines sampled
+  west-virginia: 12 insurer lines, 5 hospital-file lines sampled
+  new-jersey: 12 insurer lines, 5 hospital-file lines sampled
+  massachusetts: 12 insurer lines, 5 hospital-file lines sampled
+  rhode-island: 12 insurer lines, 5 hospital-file lines sampled
+  vermont: 12 insurer lines, 5 hospital-file lines sampled
+  new-hampshire: 12 insurer lines, 5 hospital-file lines sampled
+  maine: 12 insurer lines, 5 hospital-file lines sampled
+  south-carolina: 12 insurer lines, 5 hospital-file lines sampled
+  washington: 12 insurer lines, 5 hospital-file lines sampled
+  oregon: 12 insurer lines, 5 hospital-file lines sampled
+  idaho: 12 insurer lines, 5 hospital-file lines sampled
+  utah: 12 insurer lines, 5 hospital-file lines sampled
+  alaska: 12 insurer lines, 5 hospital-file lines sampled
+  nevada: 12 insurer lines, 5 hospital-file lines sampled
+  hawaii: 12 insurer lines, 5 hospital-file lines sampled
+  wyoming: 12 insurer lines, 5 hospital-file lines sampled
+  new-york: 12 insurer lines, 5 hospital-file lines sampled
+  virginia: 12 insurer lines, 5 hospital-file lines sampled
+  district-of-columbia: 12 insurer lines, 5 hospital-file lines sampled
+  florida: 12 insurer lines, 5 hospital-file lines sampled
+  wisconsin: 12 insurer lines, 5 hospital-file lines sampled
+  los-angeles: 12 insurer lines, 5 hospital-file lines sampled
+  san-diego-inland-empire: 12 insurer lines, 5 hospital-file lines sampled
+  bay-area: 12 insurer lines, 5 hospital-file lines sampled
+  sacramento-northern-california: 12 insurer lines, 5 hospital-file lines sampled
+  central-california: 12 insurer lines, 5 hospital-file lines sampled
+  new-york-city: 12 insurer lines, 5 hospital-file lines sampled
+  long-island: 12 insurer lines, 5 hospital-file lines sampled
+  hudson-valley: 12 insurer lines, 5 hospital-file lines sampled
+  western-new-york: 12 insurer lines, 5 hospital-file lines sampled
+  upstate-new-york: 12 insurer lines, 5 hospital-file lines sampled
+  south-florida: 12 insurer lines, 5 hospital-file lines sampled
+  tampa-bay: 12 insurer lines, 5 hospital-file lines sampled
+  central-florida: 12 insurer lines, 5 hospital-file lines sampled
+  southwest-florida: 12 insurer lines, 5 hospital-file lines sampled
+  north-florida: 12 insurer lines, 5 hospital-file lines sampled
+  chicago-area: 12 insurer lines, 5 hospital-file lines sampled
+  central-southern-illinois: 12 insurer lines, 5 hospital-file lines sampled
+  philadelphia-area: 12 insurer lines, 5 hospital-file lines sampled
+  western-pennsylvania: 12 insurer lines, 5 hospital-file lines sampled
+  central-eastern-pennsylvania: 12 insurer lines, 5 hospital-file lines sampled
+  oakland-county: 12 insurer lines, 5 hospital-file lines sampled
+  macomb-county: 12 insurer lines, 5 hospital-file lines sampled
+  detroit-wayne-county: 12 insurer lines, 5 hospital-file lines sampled
+  ann-arbor-washtenaw: 12 insurer lines, 5 hospital-file lines sampled
+  west-michigan: 12 insurer lines, 5 hospital-file lines sampled
+  mid-northern-michigan: 12 insurer lines, 5 hospital-file lines sampled
+1165 insurer lines and 483 hospital-file lines sampled
+  table 2026-09-25_000005300_in-network-rates_09_of_09: 1 sampled lines, 2 source rows (0.0 GB)
+  table 2026-09-03_mountain-health-co-op_10036_in-network-rates: 1 sampled lines, 4 source rows (0.0 GB)
+  table 2026-10_362_52G0_in-network-rates_02_of_04: 1 sampled lines, 4 source rows (0.0 GB)
+  table 2026-10_362_52G0_in-network-rates_01_of_04: 1 sampled lines, 4 source rows (0.0 GB)
+  table 2026-10_415_63B0_in-network-rates: 1 sampled lines, 2 source rows (0.0 GB)
+  table 2026-09-30_000000011_in-network-rates_25_of_25: 1 sampled lines, 2 source rows (0.0 GB)
+  table 2026-10-01_bluecross_LB_in-network-rates_1_of_1: 1 sampled lines, 4 source rows (0.1 GB)
+  table part-00173-tid-2303779325164631027-0036ed4d-b91c-4e35-86ce-aa26a0fa4f17-53113-39.c000: 1 sampled lines, 10 source rows (0.1 GB)
+  table 2026-09-28_centene-management-company-llc_ambetter-pa_in-network: 1 sampled lines, 2 source rows (0.2 GB)
+  table INN_SELECT_HMO_2026-09-27: 2 sampled lines, 64 source rows (0.2 GB)
+  table 2026-11-01_CCHI2_Medica-Insurance-Company: 1 sampled lines, 2 source rows (0.2 GB)
+  table 2026-11-01_CELE_Medica-Insurance-Company: 1 sampled lines, 2 source rows (0.3 GB)
+  table 2026-09-28_centene-management-company-llc_ambetter-ms_in-network: 1 sampled lines, 2 source rows (0.3 GB)
+  table INN_COMMERCIAL_HMO_2026-09-27: 1 sampled lines, 8 source rows (0.3 GB)
+  table INN_MGB_ASO_2026-09-27: 2 sampled lines, 30 source rows (0.3 GB)
+  table 2026-10_690_08Q0_in-network-rates_10_of_35: 1 sampled lines, 6 source rows (0.3 GB)
+  table 2026-10_690_08D0_in-network-rates_15_of_35: 2 sampled lines, 16 source rows (0.4 GB)
+  table 2026-10-01_cigna-health-life-insurance-company_ifp-texas-connect_in-network-rates: 1 sampled lines, 2 source rows (0.4 GB)
+  table 2026-10_690_08D0_in-network-rates_16_of_35: 1 sampled lines, 10 source rows (0.4 GB)
+  table 2026-10-14_Blue-Cross-and-Blue-Shield-of-Oklahoma_Blue-Choice-PPO_in-network-rates: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-10-14_Blue-Cross-and-Blue-Shield-of-Oklahoma_BlueOptions-PPO_in-network-rates: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-10-14_Blue-Cross-and-Blue-Shield-of-Oklahoma_Blue-Traditional-PAR_in-network-rates: 2 sampled lines, 10 source rows (0.5 GB)
+  table 2026-10-01_bluecross_IE_in-network-rates_1_of_1: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-09-06_BCI_QHP-Metro-PQA-Southeast_ffs_in-network: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-10-01_bluechoice_CG_in-network-rates_1_of_1: 1 sampled lines, 2 source rows (0.5 GB)
+  table 2026-09-25_000005300_in-network-rates_06_of_09: 2 sampled lines, 72 source rows (0.6 GB)
+  table 2026-09-25_000005300_in-network-rates_02_of_09: 1 sampled lines, 10 source rows (0.6 GB)
+  table 2026-09-25_000005307_in-network-rates_04_of_11: 1 sampled lines, 36 source rows (0.6 GB)
+  table 2026-09-25_000005307_in-network-rates_02_of_11: 1 sampled lines, 12 source rows (0.6 GB)
+  table 2026-10-05_curative_in-network-rates_002-of-006: 1 sampled lines, 2 source rows (0.7 GB)
+  table 2026-09-14_Blue-Cross-and-Blue-Shield-of-Oklahoma_Blue-Traditional-PAR_in-network-rates: 1 sampled lines, 3 source rows (0.7 GB)
+  table FloridaBlue_BCI_in-network-rates: 1 sampled lines, 2 source rows (0.8 GB)
+  table 2026-09-25_000005308_in-network-rates_04_of_09: 2 sampled lines, 30 source rows (0.9 GB)
+  table 2026-09-25_000005303_in-network-rates_07_of_09: 2 sampled lines, 80 source rows (0.9 GB)
+  table 149354-in-network-rates: 1 sampled lines, 4 source rows (0.9 GB)
+  table FloridaBlue_IBO_in-network-rates: 1 sampled lines, 2 source rows (0.9 GB)
+  table 2026-10_590_10P0_in-network-rates_1_of_2: 1 sampled lines, 2 source rows (0.9 GB)
+  table FloridaBlue_MBI_in-network-rates: 4 sampled lines, 22 source rows (0.9 GB)
+  table 2026-10-08_HOMETOWN-HEALTH-PLAN_110103-A-1-STEEL-INC-EPO-GOLD-PLUS_in-network-rates: 1 sampled lines, 6 source rows (0.9 GB)
+  table 2026-09-28_centene-management-company-llc_ambetter-mi_in-network: 1 sampled lines, 4 source rows (0.9 GB)
+  table 2026-10_590_10G0_in-network-rates_1_of_2: 1 sampled lines, 2 source rows (1.0 GB)
+  table 2026-10_590_10E0_in-network-rates_1_of_2: 2 sampled lines, 8 source rows (1.0 GB)
+  table caresource_HIXIN_specific_in-network-rates: 1 sampled lines, 2 source rows (1.1 GB)
+  table 2026-10-05_curative_in-network-rates_004-of-006: 3 sampled lines, 22 source rows (1.2 GB)
+  table 2026-10_271_35B0_in-network-rates_5_of_6: 1 sampled lines, 18 source rows (1.2 GB)
+  table 2026-10_690_08B0_in-network-rates_15_of_35: 1 sampled lines, 4 source rows (1.2 GB)
+  table 2026-11_690_08C0_in-network-rates_8_of_35: 2 sampled lines, 36 source rows (1.2 GB)
+  table 2026-09-28_centene-management-company-llc_ambetter-ga_in-network: 1 sampled lines, 8 source rows (1.3 GB)
+  table 2026-10_690_08B0_in-network-rates_8_of_35: 1 sampled lines, 8 source rows (1.3 GB)
+  table 2026-09-01_BCBSMI_Blue-Cross-Blue-Shield-of-Michigan_in-network-rates: 1 sampled lines, 4 source rows (1.4 GB)
+  table 2026-09-28_centene-management-company-llc_ambetter-tx_in-network: 9 sampled lines, 897 source rows (1.4 GB)
+  table 2026-10_690_08B0_in-network-rates_11_of_35: 1 sampled lines, 4 source rows (1.6 GB)
+  table 2026-11-01_050_Medica-Insurance-Company: 2 sampled lines, 4 source rows (1.6 GB)
+  table 2026-11-01_ICHO_Medica-Health-Plans: 1 sampled lines, 2 source rows (1.8 GB)
+  table 2026-10-01_PHPNI_Options-innetwork-file-1: 1 sampled lines, 50 source rows (1.9 GB)
+  table 2026-10_271_35E0_in-network-rates_3_of_6: 1 sampled lines, 4 source rows (1.9 GB)
+  table 2026-10-01_cigna-health-life-insurance-company_fl-ifp-hmo-connect_in-network-rates: 1 sampled lines, 4 source rows (2.0 GB)
+  table 2026-11-01_035_Medica-Insurance-Company: 1 sampled lines, 2 source rows (2.0 GB)
+  table 2026-08-22_A00022_ffs_in-network: 2 sampled lines, 20 source rows (2.0 GB)
+  table 2026-08-22_A00005_ffs_in-network: 1 sampled lines, 4 source rows (2.0 GB)
+  table 2026-10-01_cigna-health-life-insurance-company_florida-connect_in-network-rates: 1 sampled lines, 4 source rows (2.1 GB)
+  table 2026-09-25_000005200_in-network-rates_05_of_10: 1 sampled lines, 8 source rows (2.2 GB)
+  table 2026-10_425_61F0_in-network-rates_8_of_9: 1 sampled lines, 2 source rows (2.3 GB)
+  table 2026-09-25_000005200_in-network-rates_01_of_10: 1 sampled lines, 16 source rows (2.3 GB)
+  table 2026-09-25_000005202_in-network-rates_08_of_10: 1 sampled lines, 16 source rows (2.4 GB)
+  table HWY: 1 sampled lines, 2 source rows (2.4 GB)
+  table 2026-10_051_06E0_in-network-rates_1_of_9: 1 sampled lines, 2 source rows (2.6 GB)
+  table 2026-10-01_UPAR_NonRLRX_in-network-rates: 1 sampled lines, 2 source rows (2.6 GB)
+  table 2026-10_271_35B0_in-network-rates_3_of_6: 1 sampled lines, 4 source rows (2.7 GB)
+  table 2026-10_131_17B0_in-network-rates_24_of_31: 1 sampled lines, 12 source rows (2.7 GB)
+  table 2026-10_271_35B0_in-network-rates_1_of_6: 1 sampled lines, 2 source rows (3.2 GB)
+  table 2026-09-30_000005015_M31_in-network-rates_13_of_25: 1 sampled lines, 30 source rows (3.3 GB)
+  table IN_AHPEMEDINUD_04_06: 1 sampled lines, 2 source rows (3.4 GB)
+  table 2026-09-01_113412303ALN_Blue-Cross-Blue-Shield-of-Arizona: 1 sampled lines, 2 source rows (3.4 GB)
+  table NH_HXABMED0000_01_02: 6 sampled lines, 34 source rows (3.4 GB)
+  table 2026-09-30_000005044_in-network-rates_12_of_25: 1 sampled lines, 24 source rows (3.5 GB)
+  table 2026-10_370_PPO1_in-network-rates: 3 sampled lines, 40 source rows (3.5 GB)
+  table 2026-10_161_21Q0_in-network-rates_2_of_9: 1 sampled lines, 12 source rows (4.3 GB)
+  table KY_HXDCMED0001_04_04: 1 sampled lines, 6 source rows (4.3 GB)
+  table WI_AHPNMEDWI00_02_04: 1 sampled lines, 10 source rows (4.4 GB)
+  table CO_HYLYMED0000: 1 sampled lines, 4 source rows (4.6 GB)
+# Data accuracy audit, Layer 2 (independent round trip): 2026-11-07
+
+audit/roundtrip.py, which shares no code with the bot. Random price lines as the pages carry them, traced back to the source.
+
+## Insurer lines: 1165 sampled, 112 traced, 112 matched (100.0%)
+
+| Verdict | Lines |
+|---|---|
+| not checked (time budget used up) | 1052 |
+| match | 112 |
+| source table not found | 1 |
+
+## Hospital-file lines: 483 sampled, 467 traced, 386 matched (82.7%)
+
+| Verdict | Lines |
+|---|---|
+| match | 386 |
+| not found in source | 31 |
+| code not on cited line | 31 |
+| amount not on cited line | 19 |
+| not checked (read error) | 16 |
+
+Insurer name check: 0 sampled lines where the file's own insurer name doesn't match the insurer shown.
+
+Matched lines whose source row carries a caveat: expired 6, modifier 12
+
+Every sampled line with its verdict: roundtrip.csv.
+Seed 20261107; rerun with the same seed to get the same sample.
