@@ -222,7 +222,8 @@ def main():
     st = getj(SP + 'state.json', {'stage': 'wait', 'launches': {}, 'problems': [], 'log': []})
     log('build', BID, 'stage', st['stage'])
     if st['stage'] == 'wait':
-        if int(time.strftime('%d')) < 8 and not E.get('FORCE'): log('waiting for the 8th'); return
+        # Nov 7, 2026 (Betsy: "why wait till tomorrow?"): November's DFW build starts now instead of on the 8th
+        if int(time.strftime('%d')) < 8 and not E.get('FORCE') and BID not in ('2026-11',): log('waiting for the 8th'); return
         busy = insurer_bot_busy()
         if busy and not E.get('FORCE'): log(busy, 'insurer files still being read; waiting'); return
         if REBUILD and not E.get('FORCE'):
