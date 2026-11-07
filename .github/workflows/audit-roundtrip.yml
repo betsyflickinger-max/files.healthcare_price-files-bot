@@ -20,7 +20,7 @@ on:
         default: "400"
 
 concurrency:
-  group: audit-roundtrip
+  group: audit-roundtrip-v2
   cancel-in-progress: false
 
 permissions:

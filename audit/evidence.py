@@ -164,7 +164,7 @@ def main():
     print(f'{len(ins)} insurer and {len(hosp)} hospital packets; tracing sources...', flush=True)
     R.KEEP_ROWS = True
     R.check_hospital(hosp, 6)
-    R.check_insurer([x for x in ins if x.get('npi')], 60)
+    R.check_insurer([x for x in ins if x.get('npi')], 15, 120)
     od = os.path.join(R.REPO, 'reports', 'audit', R.TODAY, 'packets')
     os.makedirs(od, exist_ok=True)
     open(os.path.join(od, 'AUDITOR.md'), 'w').write(AUDITOR)
