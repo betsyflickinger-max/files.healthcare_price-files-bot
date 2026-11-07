@@ -527,8 +527,10 @@
   }
   function find(q) {
     index();
-    var qt = qToks(q).map(function (x) { return [x[0], x[1] * wt(x[0]), x[2]]; }).filter(function (x) { return x[1] > 0; });
-    if (!qt.length) return {likely: [], other: []};
+    var all = qToks(q).map(function (x) { return [x[0], x[1] * wt(x[0]), x[2]]; });
+    var unknown = all.filter(function (x) { return x[1] <= 0; }).map(function (x) { return x[0]; });
+    var qt = all.filter(function (x) { return x[1] > 0; });
+    if (!qt.length) return {likely: [], other: [], unknown: unknown};
     var top = qt.reduce(function (m, x) { return x[1] > m[1] ? x : m; }, qt[0]);
     // care items whose everyday words carry the query's most specific word
     // (the best-matching ones only: "knee replacement" is the knee item, not every replacement)
@@ -548,9 +550,20 @@
     sc = sc.filter(function (x) { return !seen[x[0]]; });
     var best = sc.length ? sc[0][1] : 0;
     var other = sc.filter(function (x) { return x[1] >= best * 0.6; }).map(function (x) { return x[0]; });
-    return {likely: likely, other: other};
+    return {likely: likely, other: other, unknown: unknown};
   }
   var li = function (c) { return '<li><button type="button" data-c="' + E(c) + '">' + E(D.codes[c].name) + ' <span>' + E(D.codes[c].type || 'CPT') + ' ' + E(c) + '</span></button></li>'; };
+  // Nov 7, 2026 (Betsy): log what testers search for and whether they found it, so searches like "myomectomy" that
+  // find nothing show up in the control center (Visitors tab). Uses the tester tracker (/hcf-t.js, site/home_v2.py),
+  // which loads only for invited testers; public visitors are not logged.
+  var openQ = null;
+  function trk(o) { try { if (window.hcfTrack) window.hcfTrack(o); else setTimeout(function () { if (window.hcfTrack) window.hcfTrack(o); }, 2000); } catch (e) {} }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('.ux-hits button[data-c]'); if (!b || !openQ) return;
+    var c = b.dataset.c, i = [].indexOf.call(document.querySelectorAll('.ux-hits button[data-c]'), b);
+    trk({ev: 'search-pick', detail: ('“' + openQ + '” → ' + c + ' ' + ((D.codes[c] || {}).name || '') + ' (#' + (i + 1) + ' in the list)').slice(0, 220)}); openQ = null;
+  }, true);
+  addEventListener('pagehide', function () { if (openQ && document.querySelector('.ux-hits')) { trk({ev: 'search-left', detail: ('“' + openQ + '”').slice(0, 220)}); openQ = null; } });
   function showHits(q) {
     var box = document.querySelector('.ux-hits');
     if (!box) {
@@ -560,6 +573,7 @@
     }
     window.__uxQ = q;
     if (/^\d+$/.test(q.trim())) {
+      openQ = q; trk({ev: 'search-miss', detail: ('“' + q + '”: not a whole billing code').slice(0, 220)});
       box.innerHTML = '<p><b>There is no billing code “' + E(q.trim()) + '” here.</b> Procedure codes have 5 characters, like 58140. Hospital-stay codes (DRGs) have 3 digits, like 743. Or type the procedure\'s name.</p>';
       return;
     }
@@ -567,6 +581,9 @@
     r.likely.forEach(function (a) { var cs = a[2].filter(function (c) { return D.codes[c]; }); if (!cs.length) return; n += cs.length;
       h += '<p class="pf-likely"><b>' + E(a[0]) + '</b>: the codes it is usually billed under. Pick one to see its prices.</p><ul>' + cs.map(li).join('') + '</ul>'; });
     var other = r.other.slice(0, Math.max(0, 60 - n)); n += other.length;
+    var unk = r.unknown.length ? 'no code here uses the word' + (r.unknown.length > 1 ? 's ' : ' ') + r.unknown.map(function (w) { return '“' + w + '”'; }).join(', ') : '';
+    openQ = q; trk({ev: n && (!unk || r.likely.length) ? 'search' : 'search-miss', detail: ('“' + q + '”: ' + (n ? (n >= 60 ? '60+' : n) + ' codes' + (r.likely.length ? ', usually billed as ' + r.likely.map(function (a) { return a[0]; }).join('; ') : '') : 'nothing matched') + (unk ? '; ' + unk : '')).slice(0, 220)});
+    if (unk && n && !r.likely.length) h = '<p class="pf-other">' + unk.charAt(0).toUpperCase() + E(unk.slice(1)) + ', so these match your other words.</p>' + h;
     if (other.length) h += (r.likely.length ? '<p class="pf-other"><b>Other codes with these words</b></p>' : '') + '<ul>' + other.map(li).join('') + '</ul>';
     box.innerHTML = '<p><b>' + (n ? (n >= 60 ? '60+' : n) + ' billing code' + (n === 1 ? ' matches' : 's match') + ' “' + E(q) + '”.</b> Pick one:' :
       'Nothing matches “' + E(q) + '”.</b> Try one word, like “knee” or “MRI”, or a billing code.') + '</p>' + h;
@@ -586,7 +603,7 @@
     var sp = document.getElementById('spanel'), sb = document.querySelector('.q .sbtn');
     if (sp) sp.hidden = true; if (sb) sb.setAttribute('aria-expanded', 'false');
     var c = codeOf((raw.split('·').pop() || '').trim()) || codeOf(raw);
-    if (c) { pick(c); return; }
+    if (c) { trk({ev: 'search-pick', detail: ('typed the code ' + raw + ' → ' + c + ' ' + (D.codes[c].name || '')).slice(0, 220)}); openQ = null; pick(c); return; }
     showHits(raw); render(); window.scrollTo(0, 0);
   }, true);
   (function () {   // arriving from a search (?q=): a whole code opens it, anything else gets the list

@@ -139,7 +139,10 @@ def main():
              "first_view_at": rows[0]["t"] if rows else None}]
 
     what = {"tap": "Tapped", "search": "Searched", "guess": "Guess game", "guess-skip": "Skipped the guess game", "answer": "Answered the question", "chapter": "Reached story step", "jar": "Used the deductible jar", "signup": "Signed up",
-            "leave": "Left the page"}
+            "leave": "Left the page",
+            # Price Finder search (Nov 7, 2026; site/assets/pf-table.js): what testers typed and whether they found it
+            "search-miss": "Search found nothing", "search-left": "Searched, left without picking a code",
+            "search-pick": "Picked a code from a search"}
     ev_rows = []
     for e in reversed([e for e in evs if e.get("ev") != "view"]):
         d = e.get("detail") or ""
