@@ -179,7 +179,9 @@ def stem(url):
     return b
 
 
-def check_insurer(ins, max_gb):
+def check_insurer(ins, max_gb, minutes=120):
+    import time
+    stop = time.time() + minutes * 60
     import duckdb
     con = duckdb.connect()
     host = ENDPOINT.replace('https://', '').rstrip('/')
@@ -190,8 +192,14 @@ def check_insurer(ins, max_gb):
     by_table = collections.defaultdict(list)
     for x in ins:
         by_table[stem(x['url'])].append(x)
-    for st, xs in by_table.items():
+    order = sorted(by_table, key=lambda st: sum(s for _, s in idx.get(st, [])))   # smallest tables first
+    for st in order:
+        xs = by_table[st]
         keys = idx.get(st, [])
+        if time.time() > stop:
+            for x in xs:
+                x.update(verdict='not checked (time budget used up)', detail='')
+            continue
         if not keys:
             for x in xs:
                 x.update(verdict='source table not found', detail=f'no table named {st}')
@@ -423,7 +431,8 @@ def main():
     ap.add_argument('--seed', type=int, default=int(TODAY.replace('-', '')))
     ap.add_argument('--areas')
     ap.add_argument('--site', help='an extracted bundle (test runs)')
-    ap.add_argument('--max-table-gb', type=float, default=40)
+    ap.add_argument('--max-table-gb', type=float, default=12)
+    ap.add_argument('--minutes', type=float, default=120, help='time budget for the insurer tables')
     ap.add_argument('--max-file-gb', type=float, default=4)
     args = ap.parse_args()
     rnd = random.Random(args.seed)
@@ -437,7 +446,7 @@ def main():
     del files
     print(len(ins), 'insurer lines and', len(hosp), 'hospital-file lines sampled', flush=True)
     check_hospital(hosp, args.max_file_gb)
-    check_insurer(ins, args.max_table_gb)
+    check_insurer(ins, args.max_table_gb, args.minutes)
     report(ins, hosp, args)
 
 
