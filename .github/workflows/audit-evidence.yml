@@ -13,7 +13,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: audit-evidence-v2
+  group: audit-evidence-v3
   cancel-in-progress: false
 
 permissions:
