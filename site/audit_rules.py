@@ -139,7 +139,7 @@ class Out:
 
 def audit_area(args):
     """One area: rules A-E over its featured (or all) codes, and the snapshot rows. Runs in its own process."""
-    site_dir, a, all_codes, snap_dir = args
+    site_dir, a, all_codes, snap_dir, only = args
     import pyarrow as pa, pyarrow.parquet as pq
     store = pp.Store(site_dir)
     slug = a['slug']
@@ -153,7 +153,7 @@ def audit_area(args):
     if slug not in pp.STATES and slug not in pp.CA_REGIONS and slug not in TX_SLUGS:
         o.add('A9', detail=f'slug {slug!r} not in state lists; read as {st}')
     featured = [r['code'] for r in csv.DictReader(open(os.path.join(HERE, 'codes89.csv')))]
-    codes = [c for c in (D['codes'] if all_codes else featured) if c in D['codes']]
+    codes = [c for c in (D['codes'] if all_codes else featured) if c in D['codes'] and (not only or c in only)]
     nets = [n.split('|', 1) for n in D['nets']]
     fac, dates, urls, labs = D['fac'], D['dates'], D['urls'], D.get('labs') or []
     scope = {k: set(v) for k, v in (D.get('scope') or {}).items()}
@@ -396,6 +396,7 @@ def main():
     ap.add_argument('--site', help='an extracted bundle (default: download the deployed one)')
     ap.add_argument('--areas')
     ap.add_argument('--all-codes', action='store_true')
+    ap.add_argument('--codes', help='test run: only these codes')
     ap.add_argument('--no-links', action='store_true')
     ap.add_argument('--no-upload', action='store_true')
     ap.add_argument('--workers', type=int, default=3)
@@ -420,7 +421,7 @@ def main():
     os.makedirs(snap, exist_ok=True)
     res = []
     with ProcessPoolExecutor(A.workers) as ex:
-        for r in ex.map(audit_area, [(site_dir, a, A.all_codes, snap) for a in areas]):
+        for r in ex.map(audit_area, [(site_dir, a, A.all_codes, snap, set(A.codes.split(',')) if A.codes else None) for a in areas]):
             print(f"  {r['area']}: {sum(r['n'].values())} findings, {dict(r['checked'])}", flush=True)
             res.append(r)
     # links
