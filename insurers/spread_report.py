@@ -111,6 +111,11 @@ def collect(con, tabs, codes, bench, work):
                    tin varchar, billing_code varchar, billing_class varchar, setting varchar, v double,
                    medicare_amount double, far_from_medicare boolean, repeated_amount boolean, one_amount_many_codes boolean)""")
     clist = ", ".join(f"'{c}'" for c in codes)
+    # insurer = the short name in the DFW network list (insurers/networks.csv) for the file's network label, so the
+    # people-covered weights (keyed by that name) line up; the file's own reporting entity name otherwise
+    nets = [(r["network_label"], r["insurer"]) for r in csv.DictReader(open(HERE / "networks.csv"))]
+    con.execute("create or replace temp table nets (network_label varchar, insurer varchar)")
+    con.executemany("insert into nets values (?, ?)", sorted(set(nets)))
     for month, src in tabs:
         path = src
         if not os.path.exists(src):       # an R2 key: download once, read locally, delete
@@ -124,7 +129,8 @@ def collect(con, tabs, codes, bench, work):
         g = lambda c: f"cast({c} as varchar)" if c in have else "''"
         mod = "coalesce(cast(billing_code_modifier as varchar), '') = ''" if "billing_code_modifier" in have else "true"
         con.execute(f"""insert into s select '{month}', coalesce(nullif({g('last_updated_on')}, ''), '{month}'),
-                          coalesce(nullif({g('file_label')}, ''), {g('source_file')}), {g('reporting_entity_name')}, npi, tin,
+                          coalesce(nullif({g('file_label')}, ''), {g('source_file')}),
+                          coalesce((select any_value(insurer) from nets where network_label = {g('file_label')}), {g('reporting_entity_name')}), npi, tin,
                           case when billing_code in ({clist}) then billing_code else ltrim(billing_code, '0') end, lower({g('billing_class')}), {g('setting')}, v, medicare_amount,
                           far_from_medicare, repeated_amount, one_amount_many_codes
                         from ({rate_labels.labeled_sql(t, bench, have)})
