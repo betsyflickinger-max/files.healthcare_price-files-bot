@@ -31,7 +31,6 @@ import csv
 import gzip
 import io
 import json
-import os
 import sys
 from pathlib import Path
 

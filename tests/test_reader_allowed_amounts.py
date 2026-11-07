@@ -1,7 +1,6 @@
 """The hospital file reader keeps the 2026 (CMS v3.0) allowed-amount fields: median, 10th and 90th percentile, and the
 count of allowed amounts. Small made-up files in all three CMS layouts (CSV tall, CSV wide, JSON). No storage needed.
 Run: python -m pytest tests/"""
-import csv
 import json
 import os
 import sys

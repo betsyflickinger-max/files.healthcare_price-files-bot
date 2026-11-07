@@ -11,7 +11,6 @@ Nothing here changes the live site or R2. To go live, the calls move into site/u
 """
 import argparse
 import csv
-import os
 import sys
 import tarfile
 from pathlib import Path
