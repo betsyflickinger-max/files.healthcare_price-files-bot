@@ -176,7 +176,7 @@ def main():
             (hosp if 'hospital' in hit[0] else ins).append(hit[0])
         else:   # keep the Layer 1 example itself as a packet (the auditor reads it from the page data fields given)
             ins.append(dict(area=hnt['area'], code=hnt['code'], provider=hnt['provider'], npi=hnt['npi'], net=f"{hnt['insurer']}|{hnt['plan']}",
-                            fee='', pct=False, value=float(hnt['value'] or 0), file_date=hnt['file_date'], url=hnt['url'],
+                            fee='', pct='% of charges' in (hnt.get('detail') or ''), value=float(hnt['value'] or 0), file_date=hnt['file_date'], url=hnt['url'],
                             why=f"risky: Layer 1 {hnt['rule']} ({hnt['level']}): {hnt['detail'][:80]}"))
     del files
     print(f'{len(ins)} insurer and {len(hosp)} hospital packets; tracing sources...', flush=True)
