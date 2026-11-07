@@ -39,6 +39,13 @@ def stb(scope): return 'st' if scope == 's7' else 'st' + scope
 
 def main():
     t0 = time.time()
+    # Nov 7, 2026 (Betsy): the DFW and Texas monthly builds (site-build.yml's two steps) run here too, once per run.
+    # site-build.yml waits on this same lock, and each newer waiting pages job cancelled it, so DFW's build never got a turn
+    # (live DFW page still from Oct 12). Both scripts only move their build one step along and return.
+    for script in ('orchestrate.py', 'orchestrate_tx.py'):
+        print(f'--- {script}', flush=True)
+        r = subprocess.run([sys.executable, f'{HERE}/{script}'])
+        if r.returncode: print(f'{script} stopped with code {r.returncode}', flush=True)
     while True:
         working = []
         for scope in OWN + SHARED:
