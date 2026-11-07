@@ -182,7 +182,7 @@ Follow AUDITOR.md. One results row per packet.
 
 ## P170 · dfw · code 29826 · risky: Layer 1 D6 (Major): 100.5% of charges (hospital file)
 
-**Page data says:** MEDICAL CITY ALLIANCE (NPI none on page) · WellMed /  ·  fee · $100.50 · file date 2026-09-01
+**Page data says:** MEDICAL CITY ALLIANCE (NPI none on page) · WellMed /  ·  fee · percent of charges $100.50 · file date 2026-09-01
 **Source link on the page:** https://stctrprodsnsvc00455826e6.blob.core.windows.net/pt-final-posting-files/46-4027347_MEDICAL-CITY-ALLIANCE_standardcharges.json?si=dpx-pt-json-access-policy&spr=https&sv=2026-02-06&sr=c&sig=ks%2BgfAjyEHlZmeP2PYJ%2f9NpMuCoRStjTb2bhIy9Y6LM%3D
 **Published procedure page:** amount $100.50 does not appear on the page. provider name not found on the page (the page lists the lowest and highest only)
 **Automatic trace:** not traced
@@ -220,7 +220,7 @@ Follow AUDITOR.md. One results row per packet.
 
 ## P174 · mcallen · code 22551 · risky: Layer 1 D6 (Major): 108.0% of charges
 
-**Page data says:** Weslaco Physicians Rehab Ltd (NPI 1174726624) · BCBSTX / Blue Advantage HMO ·  fee · $108.00 · file date 2026-09-15
+**Page data says:** Weslaco Physicians Rehab Ltd (NPI 1174726624) · BCBSTX / Blue Advantage HMO ·  fee · percent of charges $108.00 · file date 2026-09-15
 **Source link on the page:** https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Advantage-HMO_in-network-rates.json.gz
 **Published procedure page:** amount $108.00 does not appear on the page. provider name not found on the page (the page lists the lowest and highest only)
 **Automatic trace:** not checked (table too big for this run) · 22 GB
