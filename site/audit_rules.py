@@ -43,7 +43,8 @@ REPO = os.path.dirname(HERE)
 sys.path.insert(0, HERE)
 import procedure_pages as pp   # noqa: E402  Layer 1 may share the bot's readers; Layer 2 (audit/) must not
 
-TODAY = dt.date.today().isoformat()
+from zoneinfo import ZoneInfo
+TODAY = dt.datetime.now(ZoneInfo('America/Chicago')).date().isoformat()   # Betsy works in Central time
 LEVEL = {'A1': 'Critical', 'A3': 'Critical', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
          'C4': 'Major', 'D1': 'Critical', 'D2': 'Major', 'D3': 'Critical', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
          'E2': 'Critical', 'E4': 'Major', 'F1': 'Review', 'F2': 'Review', 'F3': 'Review'}
