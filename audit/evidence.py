@@ -123,6 +123,24 @@ def risky_from_layer1(n):
     return out
 
 
+def publish(od, what):
+    """On GitHub Actions: commit and push the packets folder now, so each batch is readable as soon as it's written."""
+    if not os.environ.get('GITHUB_ACTIONS'):
+        return
+    import subprocess
+    sh = lambda *a: subprocess.run(a, cwd=R.REPO, capture_output=True, text=True)
+    sh('git', 'config', 'user.name', 'price-files-bot')
+    sh('git', 'config', 'user.email', 'price-files-bot@users.noreply.github.com')
+    sh('git', 'add', od)
+    if sh('git', 'commit', '-m', f'Evidence packets {R.TODAY}: {what}').returncode == 0:
+        ref = os.environ.get('GITHUB_REF_NAME', 'audit')
+        for _ in range(3):
+            sh('git', 'pull', '--rebase', '-q', 'origin', ref)
+            if sh('git', 'push', 'origin', f'HEAD:{ref}').returncode == 0:
+                print('pushed', what, flush=True)
+                return
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--random', type=int, default=300)
@@ -163,8 +181,6 @@ def main():
     del files
     print(f'{len(ins)} insurer and {len(hosp)} hospital packets; tracing sources...', flush=True)
     R.KEEP_ROWS = True
-    R.check_hospital(hosp, 6)
-    R.check_insurer([x for x in ins if x.get('npi')], 15, 120)
     od = os.path.join(R.REPO, 'reports', 'audit', R.TODAY, 'packets')
     os.makedirs(od, exist_ok=True)
     open(os.path.join(od, 'AUDITOR.md'), 'w').write(AUDITOR)
@@ -175,7 +191,14 @@ def main():
         w.writerow(['packet', 'why', 'page_ok', 'source_ok', 'place_ok', 'insurer_ok', 'meaning_ok', 'link_ok', 'fresh_ok', 'verdict', 'note'])
         for i, (k, x) in enumerate(allp, 1):
             w.writerow([f'P{i:03d}', x.get('why', ''), '', '', '', '', '', '', '', '', ''])
+    publish(od, 'checklist and results template')
+    import time
+    stop = time.time() + 150 * 60          # whole run: batches not reached in time are written untraced, never lost
     for b in range(0, len(allp), 25):
+        part = allp[b:b + 25]   # Nov 7 (Betsy): each batch is traced, written and pushed as soon as it's done, so review can start
+        if time.time() < stop:
+            R.check_hospital([x for k, x in part if k == 'H'], 6)
+            R.check_insurer([x for k, x in part if k == 'I' and x.get('npi')], 15, max(1, (stop - time.time()) / 60))
         L = [f'# Evidence packets {b + 1}-{min(b + 25, len(allp))} ({R.TODAY})', '', 'Follow AUDITOR.md. One results row per packet.', '']
         for i, (k, x) in enumerate(allp[b:b + 25], b + 1):
             name = x.get('provider') or x.get('hospital')
@@ -197,6 +220,7 @@ def main():
                 L += [f"**Cited line of the archived original:** {(x.get('source_text') or 'n/a')[:900]}"]
             L.append('')
         open(os.path.join(od, f'batch-{b // 25 + 1:02d}.md'), 'w').write('\n'.join(L))
+        publish(od, f'batch {b // 25 + 1}')
     print(f'{len(allp)} packets in {(len(allp) + 24) // 25} batches: {od}')
 
 
