@@ -5,9 +5,8 @@
     "dfw:2026-11"
   ],
   "release_by": "2026-11-21T00:00",
-  "why": "Nov 7, 2026 (Betsy: raise November to $650 for the DFW update, then queue everything else after it): the DFW November build goes first with the extra $150; the seven-state (s7), NY/CA/VA/DC/FL/WI (n5) and North Carolina November refreshes, and any other November state build not started, wait until DFW is live, then run in turn (December's budget if November's runs out).",
+  "why": "Nov 7, 2026 (Betsy): the DFW November build (starts Nov 8) and then the Texas metros go first; the seven-state refresh (s7: Colorado, Georgia, Missouri still to publish; Tennessee, Oklahoma, Alabama, Mississippi already live for November) resumes now because it is nearly done. North Carolina (nc) and California (n5: the other five n5 states are live for November) wait until DFW is live, then run. Any November state build not started waits too.",
   "pause_scopes": [
-    "s7",
     "n5",
     "nc"
   ],

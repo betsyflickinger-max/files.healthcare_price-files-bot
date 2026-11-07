@@ -21,7 +21,7 @@ if bid == 'all':
         try: return json.loads(s3.get_object(Bucket=B, Key=k)['Body'].read())
         except Exception: return {}
     def live(root):
-        ms = sorted(d.rstrip('/').rsplit('/', 1)[1] for d in dirs(root) if has(d + 'embed.json'))
+        ms = sorted(m for m in (d.rstrip('/').rsplit('/', 1)[1] for d in dirs(root)) if m[:2] == '20' and has(root + m + '/embed.json'))
         return ms[-1] if ms else '-'
     def nobj(p): return sum(pg.get('KeyCount', 0) for pg in s3.get_paginator('list_objects_v2').paginate(Bucket=B, Prefix=p))
     def show(b):
