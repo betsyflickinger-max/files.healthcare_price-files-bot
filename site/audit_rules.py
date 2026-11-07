@@ -45,12 +45,13 @@ import procedure_pages as pp   # noqa: E402  Layer 1 may share the bot's readers
 
 from zoneinfo import ZoneInfo
 TODAY = dt.datetime.now(ZoneInfo('America/Chicago')).date().isoformat()   # Betsy works in Central time
-LEVEL = {'A1': 'Critical', 'A3': 'Critical', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
+LEVEL = {'A1': 'Critical', 'A3': 'Critical', 'A3b': 'Major', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
          'C4': 'Major', 'D1': 'Critical', 'D2': 'Major', 'D3': 'Critical', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
          'E2': 'Critical', 'E4': 'Major', 'F1': 'Review', 'F2': 'Review', 'F3': 'Review'}
 WHAT = {
     'A1': "provider's practice ZIP is in another state than the page",
     'A3': "hospital price file belongs to another hospital or another state",
+    'A3b': "page names a hospital differently than the hospital whose file it is",
     'A4': "quarantined hospital file still has rows in the page data",
     'A9': "page's state guessed (slug not in the state list)",
     'B1': "insurer's rows link to another insurer's file host",
@@ -106,6 +107,31 @@ def load_identity():
     except OSError:
         pass
     return out
+
+
+def load_file_ccn():
+    """hand-checked file -> hospital (site/hospital_file_ccn.csv), with Medicare's name for that hospital"""
+    names = {}
+    try:
+        for r in csv.DictReader(open(os.path.join(REPO, 'reference', 'geo', 'medicare_hospitals.csv'), encoding='utf-8')):
+            names[r['ccn']] = r['name']
+    except OSError:
+        pass
+    out = []
+    try:
+        for r in csv.DictReader(open(os.path.join(HERE, 'hospital_file_ccn.csv'), encoding='utf-8')):
+            out.append((r['url_contains'].lower(), r['ccn'], names.get(r['ccn'], '')))
+    except OSError:
+        pass
+    return out
+
+
+COMMON = set('the of and at for medical center hospital hospitals health healthcare system llc llp inc regional general memorial '
+             'surgical surgery texas tx campus'.split())
+
+
+def distinct(name):
+    return {w for w in re.findall(r'[a-z]{3,}', (name or '').lower()) if w not in COMMON}
 
 
 def file_state(r):
@@ -184,10 +210,14 @@ def audit_area(args):
     hsrc = H.get('src') or []
     hins = H.get('ins') or []
     bad_src = {}
+    fccn = load_file_ccn()
     for s, x in enumerate(hsrc):
         url = (x[4] if len(x) > 4 else '') or ''
         if qrx.search(url):
             bad_src[s] = 'A4'
+        for frag, ccn, mname in fccn:
+            if frag and frag in url.lower() and mname and distinct(mname) and not (distinct(mname) & distinct(x[0])):
+                o.add('A3b', provider=x[0], url=url, detail=f'the file is {mname.title()} (CCN {ccn}, site/hospital_file_ccn.csv) but the page names it {x[0]}')
         r = ident.get(url.strip())
         if r:
             fs = file_state(r)
