@@ -122,7 +122,7 @@ Follow AUDITOR.md. One results row per packet.
 
 ## P214 · houston · code 19120 · risky: Layer 1 D6 (Major): 6000% of charges (hospital file)
 
-**Page data says:** HSA ST. JOSEPH LLC (NPI none on page) · Magellan Behavioral Health /  ·  fee · $6,000.00 · file date 2026-09-01
+**Page data says:** HSA ST. JOSEPH LLC (NPI none on page) · Magellan Behavioral Health /  ·  fee · percent of charges $6,000.00 · file date 2026-09-01
 **Source link on the page:** https://sjmctx.org/pricetransparency/204835578_hsa-st.-joseph-llc_standardcharges.csv
 **Published procedure page:** amount $6,000.00 does not appear on the page. in file $3,158.00 Harris Health · Houston hospital price file, hospital fee only · list price $3,255.00 · 3/24/2026 · line 30,553 ↗ over 6 months old $3,674.42 Hsa St. Joseph LLC · Houston hospital price file, hospital fee only · list price $15,952.82 · 2026-09-01 · line 19,818 ↗ $3,870.35 El Campo Memorial Hospital · El Campo hospital price file, hospital fee only · list price $8,536.00 · 2026-03-01 · row 7,794 ↗ ov
 **Automatic trace:** not traced
