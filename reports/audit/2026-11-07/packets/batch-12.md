@@ -14,7 +14,7 @@ Follow AUDITOR.md. One results row per packet.
 
 ## P277 · san-antonio · code 22551 · risky: Layer 1 D6 (Major): 108.0% of charges
 
-**Page data says:** Laredo Rehabilitation Hospital LLC (NPI 1710389929) · BCBSTX / Blue Advantage HMO ·  fee · $108.00 · file date 2026-09-15
+**Page data says:** Laredo Rehabilitation Hospital LLC (NPI 1710389929) · BCBSTX / Blue Advantage HMO ·  fee · percent of charges $108.00 · file date 2026-09-15
 **Source link on the page:** https://app0004702110a5prdnc685.blob.core.windows.net/output/2026-09-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Advantage-HMO_in-network-rates.json.gz
 **Published procedure page:** amount $108.00 does not appear on the page. provider name not found on the page (the page lists the lowest and highest only)
 **Automatic trace:** not checked (table too big for this run) · 22 GB
