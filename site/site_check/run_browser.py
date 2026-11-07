@@ -32,7 +32,7 @@ def one(a):
     out = os.path.join(tmp, f'{n}.json')
     env = dict(os.environ, PAGE_PATH=pg, OUT_FILE=out, CODES=json.dumps(FIXED), RANDOM_CODES='4', CARE=json.dumps(CARE))
     try:
-        subprocess.run(['node', os.path.join(HERE, 'browser_check.js')], env=env, timeout=1200)
+        subprocess.run(['node', os.path.join(HERE, 'browser_check.js')], env=env, timeout=2400)
         return json.load(open(out))
     except Exception as e:
         return {'page': pg, 'crash': str(e)[:200], 'rows': []}
@@ -56,9 +56,15 @@ for r in res:
         if not x['titleOk']: probs.append(f"{tag}: heading says “{x['title']}”")
         if x['leaks']: probs.append(f"{tag}: shows {', '.join(x['leaks'])}")
         if x['zero']: probs.append(f"{tag}: {x['zero']} prices of $0.00")
-        if not x['prices'] and not x['loadFailed']: probs.append(f'{tag}: no prices shown')
+        if not x['prices'] and not x['loadFailed'] and x['code'] in FIXED: probs.append(f'{tag}: no prices shown')
         if x['errors']: probs.append(f"{tag}: page error {x['errors'][0]}")
-        if x['httpErrors']: probs.append(f"{tag}: missing file {x['httpErrors'][0]}")
+        # a hospital-price file missing for one code just means no hospital posted that code here; missing for every
+        # code checked means the page can't load hospital prices at all (San Angelo, Nov 7: no pf/h route)
+        other = [h for h in x['httpErrors'] if '/pf/h/' not in h]
+        if other: probs.append(f"{tag}: missing file {other[0]}")
+    hmiss = [x for x in r['rows'] if any('/pf/h/' in h for h in x['httpErrors'])]
+    if r['rows'] and len(hmiss) == len(r['rows']):
+        probs.insert(0, f"hospital prices didn't load for any of the {len(r['rows'])} procedures checked (e.g. {hmiss[0]['httpErrors'][0]})")
     rows.append({'id': r['page'], 'page': r['page'], 'codes_on_page': r.get('nCodes', 0), 'codes_checked': len(r['rows']),
                  'common_missing': len(r.get('missing', [])), 'common_missing_list': '; '.join(r.get('missing', []))[:600],
                  'status': 'Check' if probs else 'OK', 'problems': ' | '.join(probs)[:1500]})

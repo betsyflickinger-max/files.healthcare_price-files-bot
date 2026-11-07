@@ -44,5 +44,5 @@ jobs:
       - run: npm install --no-save playwright@1.47.2 && npx playwright install --with-deps chromium
       - run: python site/site_files.py pull w
       - run: python site/site_check/static_check.py w/site
-      - run: python site/site_check/run_browser.py w 6
+      - run: python site/site_check/run_browser.py w 3
       - run: python board/to_r2_control.py out/board 'site_check_*.json'
