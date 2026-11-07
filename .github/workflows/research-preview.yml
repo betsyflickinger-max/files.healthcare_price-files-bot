@@ -1,0 +1,40 @@
+name: Research text - page preview (no deploy)
+
+# Nov 7, 2026: applies site/research_text.py (methodology notes on contracted vs. paid rates and price vs. quality, the
+# "which network files your plan uses" framing, and a CMS quality strip on ONE DFW hospital page) to copies of the live
+# pages and writes before/after HTML to reports/research-preview/. Reads the live bundle from R2 (read only), like
+# "Proof of procedures - price page preview". Deploys nothing; the live site is unchanged.
+on:
+  workflow_dispatch:
+    inputs:
+      ccn:
+        description: "Hospital for the quality strip (CCN)"
+        default: "450021"
+
+permissions:
+  contents: write
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36
+      - run: python site/research_preview.py --ccn "${{ inputs.ccn }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the preview
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/research-preview 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Research text preview $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }
