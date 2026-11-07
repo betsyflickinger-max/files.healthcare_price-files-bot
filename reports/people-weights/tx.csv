@@ -1,0 +1,15 @@
+insurer,mlr_parent_group,individual_lives,small_group_lives,large_group_lives,insured_lives_total,insured_source,self_funded_lives_reported_to_mlr,employer_join_key,self_funded_employers_5500,self_funded_participants_5500,f5500_years,self_funded_source,people_total_listed,rate_table_insurer,note
+BCBSTX,Health Care Service Corp (HCSC),1445546,542592,1519799,3507937,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",4157904,hcsc,,,,Form 5500 side not loaded in this run,,BCBSTX,
+UnitedHealthcare,UnitedHealth Group,730972,42148,713537,1486657,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",8,uhc,,,,Form 5500 side not loaded in this run,,UnitedHealthcare,
+Aetna,CVS Health (Aetna),245819,873,123716,370408,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,aetna,,,,Form 5500 side not loaded in this run,,Aetna,
+Cigna,Cigna Group,100167,0,136724,236891,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",2314955,cigna,,,,Form 5500 side not loaded in this run,,Cigna,
+Anthem,,,,,,not in the MLR file for Texas,,anthem,,,,Form 5500 side not loaded in this run,,Anthem,no Texas comprehensive lives under Elevance in the 2024 MLR file; counted only through employer plans that list Anthem networks
+Wellpoint,Elevance Health (Anthem),,,,,not in the MLR file for Texas,,,,,,Form 5500 side not loaded in this run,,Wellpoint,Elevance brand; no Texas comprehensive lives under Elevance in the 2024 MLR file
+Ambetter,Centene (Ambetter),521891,0,0,521891,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Ambetter,
+Oscar,Oscar Health,141000,0,0,141000,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Oscar,
+Molina,Molina Healthcare,18942,0,0,18942,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Molina,
+BSW Health Plan,Baylor Scott & White Health Plan,230684,15851,17023,263558,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",80686,,,,,Form 5500 side not loaded in this run,,BSW Health Plan,
+Community Health Choice,"Community Health Choice, Inc.",110756,0,0,110756,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Community Health Choice,
+CHRISTUS Health Plan,CHRISTUS HEALTH PLAN,49341,0,0,49341,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,CHRISTUS Health Plan,
+Curative,Curative Inc Grp,0,0,45697,45697,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Curative,
+Moda,Oregon Dental Grp,4486,0,0,4486,"CMS MLR public use file, reporting year 2024 (lives on Dec 31, 2024)",,,,,,Form 5500 side not loaded in this run,,Moda,"Moda Health Plan, Inc. files under the Oregon Dental group in the MLR file"

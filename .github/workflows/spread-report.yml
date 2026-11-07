@@ -1,0 +1,44 @@
+name: Spread report (research, reads big tables)
+
+# Nov 7, 2026: month-by-month spread of DFW insurer rates for 8 high-volume codes (insurers/spread_report.py).
+# COST: it downloads every DFW insurer table for each month asked (tens of GB of R2 reads). It never writes to the site
+# and rents no machine. It only runs when started by hand with the "yes" box filled in.
+on:
+  workflow_dispatch:
+    inputs:
+      months:
+        description: "Months to read, comma separated (at least 3 in a row; e.g. 2026-09,2026-10,2026-11)"
+        default: ""
+      confirm_reads:
+        description: "Type yes to confirm the R2 reads (tens of GB)"
+        default: "no"
+
+permissions:
+  contents: write
+
+jobs:
+  spread:
+    if: ${{ inputs.confirm_reads == 'yes' && inputs.months != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 duckdb==1.5.6
+      - run: sudo mkdir -p /mnt/spread && sudo chown $USER /mnt/spread
+      - run: python insurers/spread_report.py --months "${{ inputs.months }}" --work /mnt/spread | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/spread 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Spread report $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }

@@ -1,0 +1,32 @@
+name: Hospital labor share (CMS cost reports)
+
+# Nov 7, 2026: costreports/labor_share.py. Downloads CMS's public hospital cost report files (HCRIS, about 135 MB per
+# fiscal year) and writes reports/labor-share/dfw.md and .csv for Dallas-Fort Worth hospitals. Public government files
+# only: no storage keys, no rented machines, nothing deployed.
+on:
+  workflow_dispatch:
+    inputs:
+      years:
+        description: "Federal fiscal-year files, comma separated"
+        default: "2022,2023,2024,2025"
+
+permissions:
+  contents: write
+
+jobs:
+  labor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests==2.33.0 duckdb==1.5.6
+      - run: python costreports/labor_share.py --years "${{ inputs.years }}" --work /tmp/hcris | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Save the report
+        run: |
+          git config user.name "price-files-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/labor-share 2>/dev/null || true
+          git diff --cached --quiet || { git commit -qm "Hospital labor share $(date -u +%F)"; git pull -q --rebase origin "${GITHUB_REF_NAME}"; git push -q origin HEAD:"${GITHUB_REF_NAME}"; }

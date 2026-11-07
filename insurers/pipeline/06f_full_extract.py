@@ -321,6 +321,12 @@ def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_gro
             "header": {k: v for k, v in meta.items() if isinstance(v, (str, int, float, bool))},
             "roster_provider_groups_in_scope": n_groups, "roster_npis_in_scope": n_npis}
     out = inventory.census(con, t, base)
+    try:   # Nov 7, 2026: counts of "may never be used" labels (labels only; off until Betsy switches it on, see rate_labels.py)
+        import rate_labels
+        if rate_labels.IN_CENSUS:
+            out["rate_labels"] = rate_labels.counts(con, t, rate_labels.bench_from_storage(con, str(DATA / "med_all.json")))
+    except Exception as e:
+        out["rate_labels"] = {"rate_labels_skipped": f"{type(e).__name__}: {str(e)[:200]}"}
     memb = MEMB / Path(rates).name
     if memb.exists():
         out.update(inventory.roster(con, f"read_parquet('{memb}')"))
