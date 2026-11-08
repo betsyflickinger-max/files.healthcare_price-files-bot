@@ -253,10 +253,13 @@ def main():
         # line every minute, and each machine's own log folder (both wrote the same log.txt, so each erased the other's)
         common = dict(TOUT=TOUT, OUTP=SP, WK=f'work/every/{BID}/', ACACHE='work/every/Acache/', NOXPART='1', PIECE_GB='0.4',
                       MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='6', WTHREADS='2', WMEM='6GB', WORK='/d',
-                      STALL_MIN='240', MEMLOG='1', BCLAIM='1', BCLAIM_H='3')
+                      STALL_MIN='240', MEMLOG='1', BCLAIM='1', BCLAIM_H='3', SPLIT='4')
         # Nov 8, 2026 4:30am CT (Betsy: "how do we speed it up"): each batch is 100-135 million rows and its last step runs on
         # one core, so 3 workers left 32 GB machines 60-80% idle. Now 6 workers on 64 GB machines (8 cores), 6 machines,
         # each starting at a different point in the list and claiming batches (BCLAIM) so no two do the same one.
+        # Nov 8, 2026 6am CT: the 64 GB machines have a smaller disk (200 GB), and 6 whole batches at once spilled ~40 GB each
+        # to disk: "No space left on device" within minutes, every restart, and no batch finished in 90 minutes. SPLIT=4 cuts
+        # each batch into 4 pieces (every_code.py: a quarter of the codes each), so each worker's spill is about a quarter.
         if st.get('fieldrules'): common['FIELDRULES'] = st['fieldrules'] if isinstance(st['fieldrules'], str) else '1'
         ins_done = exists(TOUT + 'embed.json')
         for n_ in range(N_INS):
