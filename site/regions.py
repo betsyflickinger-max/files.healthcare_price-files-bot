@@ -165,7 +165,7 @@ RETIRED = {'oakland-macomb': 'michigan', 'detroit-ann-arbor': 'michigan'}
 def zip_county(state_code):
     """{zip5: county} for one state (Census 2020 ZCTA -> county with the most land)"""
     for p in (os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), os.path.join(HERE, 'medicare_areas_zip.csv'),
-              os.path.join(HERE, '..', 'data', 'zip_county_all.csv')):   # Nov 7, 2026: every state (Colorado has one Medicare area)
+              os.path.join(HERE, '..', 'data', 'zip_county_all.csv'), os.path.join(HERE, 'zip_county_all.csv')):   # Nov 7: every state (Colorado); the machines' copy sits beside this file
         if os.path.exists(p):
             m = {r['zip5']: r['county'] for r in csv.DictReader(open(p)) if r['state'] == state_code}
             if m: return m
