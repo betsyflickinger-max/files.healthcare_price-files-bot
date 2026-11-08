@@ -903,12 +903,20 @@ def _prac_raw(wks):
     raw = {}
     def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
     keys = [k_ for wk_ in wks for k_, _ in ls(wk_ + 'P/')]
+    # Nov 8, 2026: read in groups of 48. Executor.map starts every download at once and keeps each parsed file until the
+    # merge reaches it; the merge is slower than 16 downloads, so parsed files piled up: North Carolina (6 pieces per batch,
+    # 1,536 units) filled 64 GB and then 128 GB here. Groups keep at most 48 parsed files in memory at a time. Ids interned
+    # (the same doctor and practice ids repeat in every file).
+    _in = sys.intern
     with ThreadPoolExecutor(16) as P_:
-        for m_ in P_.map(_rd, keys):
-            for pid_, v_ in m_.items():
-                r_ = raw.setdefault(pid_, {'d': set(), 'o': Counter(), 't': None})
-                r_['d'].update(v_[0]); r_['o'].update(v_[1])
-                if len(v_) > 2 and v_[2]: r_['t'] = v_[2]
+        for g_ in range(0, len(keys), 48):
+            for m_ in P_.map(_rd, keys[g_:g_ + 48]):
+                for pid_, v_ in m_.items():
+                    r_ = raw.setdefault(_in(str(pid_)), {'d': set(), 'o': Counter(), 't': None})
+                    r_['d'].update(_in(x) if isinstance(x, str) else x for x in v_[0]); r_['o'].update(v_[1])
+                    if len(v_) > 2 and v_[2]: r_['t'] = v_[2]
+                del m_
+            if g_ and g_ % 960 == 0: log(f'practice work files: {g_} of {len(keys)} read, {len(raw)} practices')
     return raw
 # Oct 18, 2026: requested codes go straight into the build they were asked from: their t/<code>.txt is already in TOUT
 # (served as soon as it's written), and embed.json moves them from "coming" (or "carried") to built codes. One run per
