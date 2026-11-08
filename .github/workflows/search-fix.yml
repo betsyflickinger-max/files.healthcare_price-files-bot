@@ -43,7 +43,9 @@ jobs:
           sys.path.insert(0, 'site'); import ux_polish as u
           n = 0
           for p in glob.glob('w/site/**/price-finder/index.html', recursive=True):
-              s = open(p, encoding='utf-8').read(); t = u.patch_pf(s)
+              s = open(p, encoding='utf-8').read()
+              if u.MARK_PF not in s: continue   # redirect stubs and pages without the polish block
+              t = u.patch_pf(s)
               if t != s: open(p, 'w', encoding='utf-8').write(t); n += 1
           print(n, 'Price Finder pages given the new bills section')
           PY

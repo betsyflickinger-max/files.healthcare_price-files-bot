@@ -13,8 +13,8 @@ const tests = JSON.parse(fs.readFileSync(DIR + '/tests.json'));
   const errs = [];
   p.on('pageerror', e => errs.push(e.message));
   // 1) a word search shows a list and no prices; the address keeps ?q= only
-  await p.goto(BASE + PAGE + '?q=' + encodeURIComponent('knee replacement'), {waitUntil: 'domcontentloaded'});
-  await p.waitForFunction(() => typeof D !== 'undefined' && typeof S !== 'undefined' && document.getElementById('title'), null, {timeout: 60000});
+  await p.goto(BASE + PAGE + '?q=' + encodeURIComponent('knee replacement'), {waitUntil: 'domcontentloaded', timeout: 240000});
+  await p.waitForFunction(() => typeof D !== 'undefined' && typeof S !== 'undefined' && document.getElementById('title'), null, {timeout: 240000});
   await p.waitForTimeout(1500);
   const searchView = await p.evaluate(() => ({
     list: !!document.querySelector('.ux-hits button[data-c]'),

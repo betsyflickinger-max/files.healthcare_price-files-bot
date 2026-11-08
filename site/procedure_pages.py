@@ -200,6 +200,10 @@ class Store:
             if not hasattr(self, '_proofs'):
                 self._proofs = {}
             if st not in self._proofs:
+                # one state's tables in memory at a time (all of them at once ran the Nov 7 build out of memory)
+                self._proofs = {}
+                import gc
+                gc.collect()
                 from proof import Proof, load_taxonomy, load_taxonomy_state
                 try:
                     self._proofs[st] = (Proof(self.s3, self.B, tax=load_taxonomy(self.s3, self.B)) if st == 'TX' else
