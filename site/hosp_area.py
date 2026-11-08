@@ -567,8 +567,15 @@ def state_by_state(O, st):
     failed = [a for a in areas if str(st['published'].get(a, '')).startswith('failed')]
     O.log('state pages:', live, 'of', len(areas), 'live;', ('FAILED: ' + ', '.join(failed) + ';') if failed else '',
           busy, 'hospital machines working;', 'insurer build still running for ' + ', '.join(waiting) if waiting else 'every state built')
-    if all(a in st['published'] for a in areas):
+    # Nov 8, 2026: a state split into regional pages isn't finished until its regions are live (or have used up their tries).
+    # Missouri/Colorado/Georgia went 'done' with no region published because 'failed: too big' counted as published.
+    pending = [r for a in areas if _regions and a in _regions.REGIONS and a in _regions.ON for r in _regions.REGIONS[a]
+               if not str(st['published'].get(r, '')).startswith('live') and f'split-failed-{a}' not in st.get('alerts', {})
+               and st.get('publish_tries', {}).get(r, 0) < PUBLISH_TRIES]
+    if all(a in st['published'] for a in areas) and not pending:
         st['stage'] = 'done'; O.log('published:', st['published'])
+    elif pending and not busy:
+        O.log('regional pages still to publish:', ', '.join(pending))
     elif not busy:
         open(IDLE, 'w').write('waiting for ' + ', '.join(waiting))   # nothing to do until another state's build finishes
     O.putj(SP + 'state.json', st)
