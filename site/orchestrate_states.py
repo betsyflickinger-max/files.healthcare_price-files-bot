@@ -64,7 +64,7 @@ WBIG = {'georgia': dict(SPLIT='4', WORKERS='1', WMEM='26GB', WTHREADS='8'),
         # Oct 16 11:40am CT (Betsy OK'd): North Carolina's batches are 165-210M rows (Georgia-size). Many took over 2 hours,
         # so the 120-min freeze check restarted 13 machines mid-batch and threw the work away. Split each unfinished batch
         # into 6 pieces (~30M rows, like Georgia's, which fit 4 x 6 GB workers) and allow 4 hours before the check fires.
-        'north-carolina': dict(SPLIT='6', STALL_MIN='240'),
+        'north-carolina': dict(SPLIT='6', STALL_MIN='240', MEMLOG='1'),   # Nov 7, 2026 11:59pm CT: memory log, final step filled 64 and 128 GB
         # Oct 31, 2026 (Betsy OK'd): Ohio has Georgia's problem. Its insurer tables are 277 GB for 410k providers (Indiana
         # 120 GB / 157k), so its batches are ~90-100M rows and don't fit a worker's 6 GB: 6 machines landed 1.2 batches an
         # hour (Indiana ~1 a minute per machine) and the price check projected $303. Split each unfinished batch into 4

@@ -961,6 +961,7 @@ for k_, _ in ls(WK + 'B/'):
     summary.update(summ_)
     for kk, v in scp_.items(): scope.setdefault(kk, set()).update(v)
 nb = covered(done_units, NB, SPLIT)
+log('final step: reloaded', len(done_units), 'finished units,', len(scope), 'scope entries')   # Nov 7, 2026: phase marks (North Carolina ran out of memory somewhere after stage B)
 if nb < NB: log(f'{nb}/{NB} buckets in; another machine will write embed.json'); LOGFLUSH(); sys.exit(0)
 if not summary: log('ERROR 0 codes across all buckets; not writing embed.json'); LOGFLUSH(); sys.exit(0)
 codes = {}
@@ -968,6 +969,7 @@ for c_, n_ in summary.items():
     t_, nm = NAMES.get(c_, ('CPT', ''))
     if c_ in FEAT: codes[c_] = {'name': FEAT[c_]['plain_name'], 'cat': FEAT[c_]['category'], 'type': FEAT[c_]['code_type'], 'n': n_, 'f': None}
     else: codes[c_] = {'name': (nm or f'{t_} {c_}').strip(), 'cat': 'description as written in the insurer file', 'type': t_, 'n': n_, 'f': None, 'd': 1}
+log('final step: codes table', len(codes), 'codes; reading the pending list')
 PENDING = {}
 for wk_ in [WK] + [w_ for w_ in E.get('ALSO_WK', '').split(',') if w_]:
     for k_, _ in ls(wk_ + 'pending/'):
@@ -995,13 +997,16 @@ if PRACTICE:
     # 'i' IRS tax-exempt list, 'b' organization NPI + Medicare directory agree, 'm' Medicare directory majority, 's' solo, 'n' none)
     from collections import Counter
     import practice_names
+    log('final step: reading practice work files'); LOGFLUSH()
     raw = _prac_raw([WK] + [w_ for w_ in E.get('ALSO_WK', '').split(',') if w_])   # Oct 22: an earlier phase's practices too
+    log('final step: practice work read,', len(raw), 'practices; naming them'); LOGFLUSH()
     c_ = duckdb.connect(); c_.execute(f"set memory_limit='{E.get('MEM','12GB')}'; set temp_directory='{D}/tmp'")
     prac = practice_names.name_all(raw, ptab, npis, c_, s3, B, str(D))
     embed['prac'] = prac
     how = Counter(v_[2] for v_ in prac.values())
     log('practices', len(prac), 'named: IRS', how['i'], 'two sources agree', how['b'], 'Medicare majority', how['m'], 'solo', how['s'],
         'no public name', how['n'], 'doctors in a no-name group', sum(len(v_[3]) for v_ in prac.values() if v_[2] == 'n'))
+log('final step: writing embed.json'); LOGFLUSH()
 s3.put_object(Bucket=B, Key=TOUT + 'embed.json', Body=json.dumps(embed, separators=(',', ':')).encode())
 s3.put_object(Bucket=B, Key=TOUT + 'npis.json', Body=json.dumps(npis).encode())
 log('DONE', len(codes), 'codes', len(ptab), 'providers', len(nets), 'networks', sum(summary.values()), 'lines')
