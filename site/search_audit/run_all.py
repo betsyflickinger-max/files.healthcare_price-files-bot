@@ -8,6 +8,7 @@ doesn't open when typed, prices showing under a search, or a lone "5" opening a 
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -19,7 +20,9 @@ work = tempfile.mkdtemp()
 env = dict(os.environ, AUDIT_DIR=work)
 subprocess.run([sys.executable, os.path.join(HERE, 'make_tests.py')], env=env, check=True)
 pages = sorted('/' + os.path.relpath(os.path.dirname(p), site).replace(os.sep, '/') + '/'
-               for p in glob.glob(os.path.join(site, '**', 'price-finder', 'index.html'), recursive=True))
+               for p in glob.glob(os.path.join(site, '**', 'price-finder', 'index.html'), recursive=True)
+               # only real Price Finders: Michigan and California are region hubs, two more are redirects (no price data)
+               if re.search(r'const D\s*=', open(p, encoding='utf-8', errors='replace').read()))
 srv = subprocess.Popen([sys.executable, '-m', 'http.server', '8765', '-d', site], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 time.sleep(2)
 rows, bad = [], 0

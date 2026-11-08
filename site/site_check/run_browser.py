@@ -7,6 +7,7 @@ import concurrent.futures as cf
 import glob
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -21,7 +22,9 @@ sys.path.insert(0, os.path.join(ROOT, 'site'))
 import search_aliases as sa  # noqa: E402
 CARE = [[n, cs] for n, _, cs in sa.build()]
 pages = sorted('/' + os.path.relpath(os.path.dirname(p), os.path.join(W, 'site')).replace(os.sep, '/') + '/'
-               for p in glob.glob(os.path.join(W, 'site', '**', 'price-finder', 'index.html'), recursive=True))
+               for p in glob.glob(os.path.join(W, 'site', '**', 'price-finder', 'index.html'), recursive=True)
+               # only real Price Finders: Michigan and California are region hubs, two more are redirects (no price data)
+               if re.search(r'const D\s*=', open(p, encoding='utf-8', errors='replace').read()))
 tmp = tempfile.mkdtemp()
 srv = subprocess.Popen([sys.executable, os.path.join(HERE, 'serve.py'), W, '8765'])
 time.sleep(5)
