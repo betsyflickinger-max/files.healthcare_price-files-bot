@@ -48,6 +48,8 @@ def main():
     def orch():
         if time.time() - last_orch[0] < 1200: return
         last_orch[0] = time.time()
+        # pick up fixes pushed while this job runs (a running job otherwise keeps the code it started with for ~6 hours)
+        subprocess.run(['git', '-C', os.path.join(HERE, '..'), 'pull', '-q', '--ff-only', 'origin', 'main'])
         for script in ('orchestrate.py', 'orchestrate_tx.py'):
             print(f'--- {script}', flush=True)
             r = subprocess.run([sys.executable, f'{HERE}/{script}'])
