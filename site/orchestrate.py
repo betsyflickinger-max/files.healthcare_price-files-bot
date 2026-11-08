@@ -291,17 +291,19 @@ def cleanup(prev):
     work/every/<build>/ scratch for builds other than the live one."""
     import re
     keep = {BID, prev}
-    gone = 0
+    dead = []
     for k in ls('site/every/') + ls('work/every/'):
-        m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?)/', k)
+        m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?b?)/', k)
         if not m: continue                       # CURRENT, Acache/ and anything unexpected are left alone
         b = m.group(2)
-        if (m.group(1) == 'site' and b not in keep) or (m.group(1) == 'work' and b != BID):
-            s3.delete_object(Bucket=B, Key=k); gone += 1
+        if (m.group(1) == 'site' and b not in keep) or (m.group(1) == 'work' and b != BID): dead.append(k)
     for k in ls('data/2026-10-10/hosp_every/rows/'):   # copied to data/hosp_every/rows/ on Oct 11
-        if exists('data/hosp_every/rows/' + k.rsplit('/', 1)[1]): s3.delete_object(Bucket=B, Key=k); gone += 1
-    log('cleanup: deleted', gone, 'leftover build files')
-    return gone
+        if exists('data/hosp_every/rows/' + k.rsplit('/', 1)[1]): dead.append(k)
+    # Nov 8, 2026: 1,000 per call (one call per file took over an hour after November's DFW deploy and held up Texas)
+    for i in range(0, len(dead), 1000):
+        s3.delete_objects(Bucket=B, Delete={'Objects': [{'Key': k} for k in dead[i:i + 1000]], 'Quiet': True})
+    log('cleanup: deleted', len(dead), 'leftover build files')
+    return len(dead)
 
 
 def publish(st):
@@ -371,6 +373,7 @@ def publish(st):
     with tarfile.open('/tmp/pub/site.tgz', 'w:gz') as t: t.add('/tmp/pub/deploy', arcname='.')
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
+    putj(SP + 'state.json', st)   # Nov 8, 2026: live is recorded before the cleanup, so a stopped cleanup never re-deploys
     st['cleanup'] = cleanup(prev)
     putj(SP + 'state.json', st)   # DFW is live; with 23 Texas pages the rebuilds below can outlast the workflow's time limit
     st['cities'] = refresh_cities('/tmp/pub/deploy/site/cities.json')
