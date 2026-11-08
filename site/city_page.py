@@ -368,7 +368,13 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     w.sub("'Dallas area", f"'{locname} Medicare area", n=w.s.count("'Dallas area") or 1)
     w.sub('<button type="button" id="vMap" aria-pressed="false">Map</button>',
           '<button type="button" id="vMap" aria-pressed="false" hidden>Map</button>')   # the map's base layer and locations are DFW only
-    left = [m.group(0) for m in re.finditer(r'.{40}(?:DFW|Dallas|Fort Worth).{40}', w.s)]
+    chk = w.s
+    if slug in _regions.PARENT:   # Nov 8, 2026: Missouri has a Dallas County; its regional page lists it among the region's counties
+        import html as _h
+        for t in {CITIES[slug][1], _h.escape(CITIES[slug][1]), _h.escape(CITIES[slug][1], quote=False)}:
+            chk = chk.replace(t, '')
+        chk = re.sub(r'(?<=[,\s])Dallas(?= County|,)', '', chk)
+    left = [m.group(0) for m in re.finditer(r'.{40}(?:DFW|Dallas|Fort Worth).{40}', chk)]
     if left: sys.exit('STOP: DFW wording left on the page:\n  ' + '\n  '.join(left[:10]))
     pre, post = w.s.split('\x00')
     open(page, 'w', encoding='utf-8').write(med_areas.patch_page(join(pre, D, post)) if D['med'].get('ar') else join(pre, D, post))
