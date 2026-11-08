@@ -3,7 +3,7 @@
 San Angelo's page asks for its hospital lines (…/price-finder/pf/h/<code>.txt) but its deploy had no pf/h function, so no
 hospital price ever loaded there (the robot tester found it; R2 had 3,350 hospital code files for the area). For each area
 whose insurer route (functions/<area>/price-finder/pf/t/[code].js) points at an R2 build folder that also holds hospital
-files (<build>/hosp/hosp_index.json), this writes the matching pf/h function if it's missing, the same way city_page.py
+files (<build>/hosp/h/), this writes the matching pf/h function if it's missing, the same way city_page.py
 does. Needs R2 credentials in the environment; without them it does nothing.
 """
 import glob
@@ -31,10 +31,11 @@ def repair(d):
         if not m or "PREFIX + 't/' + code" not in js:
             continue
         pre = json.loads(m.group(1))
-        try:
-            s3.head_object(Bucket=B, Key=pre + 'hosp/hosp_index.json')
+        try:   # the hospital code files themselves (San Angelo's build has hosp/h/ but no hosp_index.json)
+            if not s3.list_objects_v2(Bucket=B, Prefix=pre + 'hosp/h/', MaxKeys=1).get('KeyCount'):
+                continue      # no hospital files for this area: nothing to serve
         except Exception:
-            continue      # no hospital files for this area: nothing to serve
+            continue
         os.makedirs(hdir, exist_ok=True)
         open(os.path.join(hdir, '[code].js'), 'w', encoding='utf-8').write(
             js.replace(m.group(1), json.dumps(pre + 'hosp/h/')).replace("PREFIX + 't/' + code", "PREFIX + code"))

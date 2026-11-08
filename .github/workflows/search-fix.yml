@@ -3,7 +3,7 @@ name: Search fix (Price Finder search, Nov 7 2026)
 # Nov 7, 2026 (Betsy's "transabdominal myomectomy" test): deploys the new site/assets/pf-table.js to the live site.
 # The site push (site/sitewide.py -> site/pf_table.py) copies pf-table.js into every Price Finder page. Re-running is safe. Rerun 1 (Nov 7): words typed as two ("lower back", "anti reflux"). Rerun 2: search events for the Visitors tab. Rerun 3 (Nov 7 testers): birth bills on Price Finder pages
 # (ux_polish PF block, also saved to the R2 page copies future builds start from), DRG pages lose the doctor's-fee row,
-# and sitewide adds missing hospital-price routes (San Angelo). Rerun 4: one-area notes, anesthesia note + link.
+# and sitewide adds missing hospital-price routes (San Angelo). Rerun 4: one-area notes, anesthesia note + link. Rerun 5: San Angelo route (hosp/h/ check).
 on:
   push:
     branches: [main]
