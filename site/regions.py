@@ -102,19 +102,31 @@ REGIONS = {
         'western-mountains-plains-colorado': ('Western Slope, Mountains & Eastern Plains', '01', 'Colorado', '-109.1,36.9,-102.0,41.0',
             ['Alamosa', 'Archuleta', 'Baca', 'Bent', 'Chaffee', 'Cheyenne', 'Conejos', 'Costilla', 'Crowley', 'Delta', 'Dolores', 'Eagle', 'Garfield', 'Grand', 'Gunnison', 'Hinsdale', 'Jackson', 'Kiowa', 'Kit Carson', 'La Plata', 'Lake', 'Lincoln', 'Logan', 'Mesa', 'Mineral', 'Moffat', 'Montezuma', 'Montrose', 'Morgan', 'Otero', 'Ouray', 'Phillips', 'Pitkin', 'Prowers', 'Rio Blanco', 'Rio Grande', 'Routt', 'Saguache', 'San Juan', 'San Miguel', 'Sedgwick', 'Summit', 'Washington', 'Yuma']),
     },
+    # Nov 8, 2026: Georgia came out at 27.4 MiB (over the host's 25). Same method (Census metro, whole counties). Atlanta's
+    # 29-county metro would be ~19 MiB on its own (Detroit-area pages ran bigger than provider counts suggested), so it is three
+    # pages; the rest of the state splits by its 3-digit ZIP areas (313-317 and 398-399 = South & Coastal).
+    'georgia': {
+        'atlanta': ('Atlanta (Fulton, DeKalb & Clayton)', '01', 'Atlanta', '-84.9,33.3,-84.0,34.2', ['Fulton', 'DeKalb', 'Clayton']),
+        'atlanta-north-west-suburbs': ('Atlanta North & West Suburbs', '01', 'Atlanta', '-85.4,33.5,-83.7,34.6', ['Cobb', 'Gwinnett', 'Cherokee', 'Forsyth', 'Paulding', 'Douglas', 'Bartow', 'Barrow', 'Pickens', 'Dawson', 'Carroll', 'Haralson']),
+        'atlanta-south-east-suburbs': ('Atlanta South & East Suburbs', '01', 'Atlanta', '-85.2,32.8,-83.3,34.0', ['Henry', 'Fayette', 'Coweta', 'Newton', 'Walton', 'Rockdale', 'Spalding', 'Butts', 'Lamar', 'Morgan', 'Meriwether', 'Pike', 'Jasper', 'Heard']),
+        'north-middle-georgia': ('North, Middle & East Georgia (Athens, Augusta, Macon, Columbus)', '99', 'Rest of Georgia',
+            '-85.7,31.7,-81.3,35.0', ['Baldwin', 'Banks', 'Bibb', 'Bleckley', 'Bulloch', 'Burke', 'Candler', 'Catoosa', 'Chattahoochee', 'Chattooga', 'Clarke', 'Columbia', 'Crawford', 'Crisp', 'Dade', 'Dodge', 'Dooly', 'Elbert', 'Emanuel', 'Evans', 'Fannin', 'Floyd', 'Franklin', 'Gilmer', 'Glascock', 'Gordon', 'Greene', 'Habersham', 'Hall', 'Hancock', 'Harris', 'Hart', 'Houston', 'Jackson', 'Jefferson', 'Jenkins', 'Johnson', 'Jones', 'Laurens', 'Lincoln', 'Lumpkin', 'Macon', 'Madison', 'Marion', 'McDuffie', 'Monroe', 'Montgomery', 'Murray', 'Muscogee', 'Oconee', 'Oglethorpe', 'Peach', 'Polk', 'Pulaski', 'Putnam', 'Rabun', 'Richmond', 'Schley', 'Screven', 'Stephens', 'Stewart', 'Talbot', 'Taliaferro', 'Tattnall', 'Taylor', 'Telfair', 'Toombs', 'Towns', 'Treutlen', 'Troup', 'Twiggs', 'Union', 'Upson', 'Walker', 'Warren', 'Washington', 'Webster', 'Wheeler', 'White', 'Whitfield', 'Wilcox', 'Wilkes', 'Wilkinson']),
+        'south-coastal-georgia': ('South & Coastal Georgia (Savannah, Albany, Valdosta)', '99', 'Rest of Georgia', '-85.2,30.3,-80.8,32.6',
+            ['Appling', 'Atkinson', 'Bacon', 'Baker', 'Ben Hill', 'Berrien', 'Brantley', 'Brooks', 'Bryan', 'Calhoun', 'Camden', 'Charlton', 'Chatham', 'Clay', 'Clinch', 'Coffee', 'Colquitt', 'Cook', 'Decatur', 'Dougherty', 'Early', 'Echols', 'Effingham', 'Glynn', 'Grady', 'Irwin', 'Jeff Davis', 'Lanier', 'Lee', 'Liberty', 'Long', 'Lowndes', 'McIntosh', 'Miller', 'Mitchell', 'Pierce', 'Quitman', 'Randolph', 'Seminole', 'Sumter', 'Terrell', 'Thomas', 'Tift', 'Turner', 'Ware', 'Wayne', 'Worth']),
+    },
 }
 LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
 HOSP_V = 2   # Oct 31: hospital placement; v2 adds ZIP-prefix and CMS Provider of Services ZIPs (raising it re-places hospitals)
 SPLIT_V = 2   # Oct 31: v2 keeps every state code and the 'coming' list on regional pages; raising it splits again
 STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois': 'IL', 'pennsylvania': 'PA', 'michigan': 'MI',
-              'missouri': 'MO', 'colorado': 'CO'}
+              'missouri': 'MO', 'colorado': 'CO', 'georgia': 'GA'}
 # Oct 31, 2026 (Betsy): New York, Florida, Illinois and Pennsylvania fit on one page, so their statewide page stays live (its
 # address and /costs/ pages never change) and the regions are added beside it. California's statewide page was too big, so its
 # address became a page linking to the regions.
 ALONGSIDE = {'new-york', 'florida', 'illinois', 'pennsylvania'}
 # States whose regional pages are switched on (hosp_area.py splits them on its next hourly run). A state not listed here is
 # built and published exactly as before. Pennsylvania: its first state build is split as soon as it is done (no rebuild).
-ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania', 'michigan', 'missouri', 'colorado'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
+ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania', 'michigan', 'missouri', 'colorado', 'georgia'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
 PARENT = {r: s for s, R in REGIONS.items() for r in R}
 NEIGHBORS = {   # regions that share a border, linked from each regional page for people who live near one
     'los-angeles': ['san-diego-inland-empire', 'central-california'],
@@ -138,7 +150,12 @@ NEIGHBORS = {   # regions that share a border, linked from each regional page fo
     'denver-metro': ['boulder-northern-colorado', 'colorado-springs-pueblo', 'western-mountains-plains-colorado'],
     'boulder-northern-colorado': ['denver-metro', 'western-mountains-plains-colorado'],
     'colorado-springs-pueblo': ['denver-metro', 'western-mountains-plains-colorado'],
-    'western-mountains-plains-colorado': ['denver-metro', 'boulder-northern-colorado', 'colorado-springs-pueblo'], 'mid-northern-michigan': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw', 'west-michigan'],
+    'western-mountains-plains-colorado': ['denver-metro', 'boulder-northern-colorado', 'colorado-springs-pueblo'],
+    'atlanta': ['atlanta-north-west-suburbs', 'atlanta-south-east-suburbs'],
+    'atlanta-north-west-suburbs': ['atlanta', 'atlanta-south-east-suburbs', 'north-middle-georgia'],
+    'atlanta-south-east-suburbs': ['atlanta', 'atlanta-north-west-suburbs', 'north-middle-georgia'],
+    'north-middle-georgia': ['atlanta-north-west-suburbs', 'atlanta-south-east-suburbs', 'south-coastal-georgia'],
+    'south-coastal-georgia': ['north-middle-georgia'], 'mid-northern-michigan': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw', 'west-michigan'],
 }   # region slug -> state page slug
 # Nov 2, 2026: regional pages replaced by smaller ones. When the state's address page is next published (city_page.py
 # landing_page), each one's address becomes a short page pointing to the state's regions and it leaves the area lists.
