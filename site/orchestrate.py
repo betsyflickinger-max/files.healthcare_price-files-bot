@@ -138,7 +138,7 @@ def launch(role, size, script, env):
     return False
 
 
-RUN_INS = "for t in $(seq 1 40); do /root/v/bin/python /root/h/every_code.py >> /root/run.log 2>&1 && break; sleep 5; done"
+RUN_INS = "for t in $(seq 1 40); do /root/v/bin/python /root/h/every_code.py >> /root/run.log 2>&1 && break; /root/v/bin/python /root/h/save_runlog.py >> /root/run.log 2>&1; sleep 5; done"   # Nov 7: save_runlog.py keeps each crash readable
 RUN_HOSP = "for t in 1 2 3; do /root/v/bin/python /root/h/hosp_every.py >> /root/run.log 2>&1 && break; sleep 5; done"
 RUN_H2 = """/root/v/bin/python - >> /root/run.log 2>&1 <<'PY'
 import boto3, os, json
