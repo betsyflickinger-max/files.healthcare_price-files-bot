@@ -50,10 +50,11 @@ def main():
         last_orch[0] = time.time()
         # pick up fixes pushed while this job runs (a running job otherwise keeps the code it started with for ~6 hours)
         subprocess.run(['git', '-C', os.path.join(HERE, '..'), 'pull', '-q', '--ff-only', 'origin', 'main'])
-        for script in ('orchestrate.py', 'orchestrate_tx.py'):
-            print(f'--- {script}', flush=True)
-            r = subprocess.run([sys.executable, f'{HERE}/{script}'])
-            if r.returncode: print(f'{script} stopped with code {r.returncode}', flush=True)
+        # Nov 8, 2026: side by side, not one after the other: DFW's publish step (map + deploy, 45+ minutes) held up
+        # Houston's relaunch for that long
+        ps = [(script, subprocess.Popen([sys.executable, f'{HERE}/{script}'])) for script in ('orchestrate.py', 'orchestrate_tx.py')]
+        for script, p in ps:
+            if p.wait(): print(f'{script} stopped with code {p.returncode}', flush=True)
     orch()
     while True:
         orch()
