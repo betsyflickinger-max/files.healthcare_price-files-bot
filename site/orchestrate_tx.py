@@ -37,7 +37,7 @@ SIZE = 's-8vcpu-32gb-amd'                     # 400 GB disk: the biggest Texas t
 # batches an hour: 146 of 256 in 12 hours. Machines past what the account allows simply wait for a free slot.
 FAST = dict(WORKERS='6', WMEM='6GB', WTHREADS='2', SPLIT='4', BCLAIM='1', BCLAIM_H='3', STALL_MIN='240', MEMLOG='1')
 SIZE_BIG = 'm-8vcpu-64gb-intel'
-BIG = [('houston', 12, FAST),
+BIG = [('houston', 20, FAST),   # Nov 8, 2026 (Betsy): run as many machines as the account allows until everything is done
        ('san-antonio', 6, FAST),
        ('austin', 6, FAST),
        ('el-paso', 2, FAST)]
