@@ -42,11 +42,19 @@ def main():
     # Nov 7, 2026 (Betsy): the DFW and Texas monthly builds (site-build.yml's two steps) run here too, once per run.
     # site-build.yml waits on this same lock, and each newer waiting pages job cancelled it, so DFW's build never got a turn
     # (live DFW page still from Oct 12). Both scripts only move their build one step along and return.
-    for script in ('orchestrate.py', 'orchestrate_tx.py'):
-        print(f'--- {script}', flush=True)
-        r = subprocess.run([sys.executable, f'{HERE}/{script}'])
-        if r.returncode: print(f'{script} stopped with code {r.returncode}', flush=True)
+    # Nov 8, 2026: and again every 20 minutes while this job runs (it can hold the lock ~6 hours, and DFW's build only
+    # moved one step per job: a machine that stopped waited hours to be relaunched)
+    last_orch = [0.0]
+    def orch():
+        if time.time() - last_orch[0] < 1200: return
+        last_orch[0] = time.time()
+        for script in ('orchestrate.py', 'orchestrate_tx.py'):
+            print(f'--- {script}', flush=True)
+            r = subprocess.run([sys.executable, f'{HERE}/{script}'])
+            if r.returncode: print(f'{script} stopped with code {r.returncode}', flush=True)
+    orch()
     while True:
+        orch()
         working = []
         for scope in OWN + SHARED:
             month = month_for(stb(scope), s3, E['R2_BUCKET'])   # Nov 1, 2026: last month's build first while it's under way
