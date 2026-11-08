@@ -85,18 +85,36 @@ REGIONS = {
         'mid-northern-michigan': ('Mid-Michigan, Northern Michigan & the U.P.', '99', 'Rest of Michigan', '-90.5,41.7,-82.1,47.5',
             ['Alcona', 'Alger', 'Alpena', 'Antrim', 'Arenac', 'Baraga', 'Bay', 'Benzie', 'Charlevoix', 'Cheboygan', 'Chippewa', 'Clare', 'Clinton', 'Crawford', 'Delta', 'Dickinson', 'Eaton', 'Emmet', 'Genesee', 'Gladwin', 'Gogebic', 'Grand Traverse', 'Gratiot', 'Hillsdale', 'Houghton', 'Huron', 'Ingham', 'Iosco', 'Iron', 'Isabella', 'Jackson', 'Kalkaska', 'Keweenaw', 'Lapeer', 'Leelanau', 'Lenawee', 'Livingston', 'Luce', 'Mackinac', 'Manistee', 'Marquette', 'Menominee', 'Midland', 'Missaukee', 'Monroe', 'Montmorency', 'Ogemaw', 'Ontonagon', 'Oscoda', 'Otsego', 'Presque Isle', 'Roscommon', 'Saginaw', 'Sanilac', 'Schoolcraft', 'Shiawassee', 'St. Clair', 'Tuscola', 'Wexford']),
     },
+    # Nov 7, 2026 (Betsy OK'd): Missouri (25.0 MiB) and Colorado (27.3 MiB) came out over the host's 25 MiB limit once Anthem's
+    # networks went on. Same method as the other states (Healthcare folder area-methods-comparison.md, Oct 15): whole counties,
+    # grouped by Census metro area; Missouri's three regions are its three Medicare doctor-fee areas plus each metro's outer
+    # counties. Colorado has one Medicare area; Boulder goes with Northern Colorado to keep the Denver page small.
+    'missouri': {
+        'st-louis-area': ('St. Louis Area', '01', 'Metropolitan St. Louis', '-91.5,37.9,-90.1,39.2', ['St. Louis', 'St. Louis city', 'St. Charles', 'Jefferson', 'Franklin', 'Lincoln', 'Warren']),
+        'kansas-city-area': ('Kansas City Area (Missouri side)', '02', 'Metropolitan Kansas City', '-94.7,38.4,-93.4,39.8', ['Jackson', 'Clay', 'Platte', 'Cass', 'Ray', 'Clinton', 'Lafayette']),
+        'rest-of-missouri': ('Springfield, Columbia & the Rest of Missouri', '99', 'Rest of Missouri', '-95.8,35.9,-89.1,40.7',
+            ['Adair', 'Andrew', 'Atchison', 'Audrain', 'Barry', 'Barton', 'Bates', 'Benton', 'Bollinger', 'Boone', 'Buchanan', 'Butler', 'Caldwell', 'Callaway', 'Camden', 'Cape Girardeau', 'Carroll', 'Carter', 'Cedar', 'Chariton', 'Christian', 'Clark', 'Cole', 'Cooper', 'Crawford', 'Dade', 'Dallas', 'Daviess', 'DeKalb', 'Dent', 'Douglas', 'Dunklin', 'Gasconade', 'Gentry', 'Greene', 'Grundy', 'Harrison', 'Henry', 'Hickory', 'Holt', 'Howard', 'Howell', 'Iron', 'Jasper', 'Johnson', 'Knox', 'Laclede', 'Lawrence', 'Lewis', 'Linn', 'Livingston', 'Macon', 'Madison', 'Maries', 'Marion', 'McDonald', 'Mercer', 'Miller', 'Mississippi', 'Moniteau', 'Monroe', 'Montgomery', 'Morgan', 'New Madrid', 'Newton', 'Nodaway', 'Oregon', 'Osage', 'Ozark', 'Pemiscot', 'Perry', 'Pettis', 'Phelps', 'Pike', 'Polk', 'Pulaski', 'Putnam', 'Ralls', 'Randolph', 'Reynolds', 'Ripley', 'Saline', 'Schuyler', 'Scotland', 'Scott', 'Shannon', 'Shelby', 'St. Clair', 'St. Francois', 'Ste. Genevieve', 'Stoddard', 'Stone', 'Sullivan', 'Taney', 'Texas', 'Vernon', 'Washington', 'Wayne', 'Webster', 'Worth', 'Wright']),
+    },
+    'colorado': {
+        'denver-metro': ('Denver Metro', '01', 'Colorado', '-105.9,39.1,-103.7,40.1', ['Denver', 'Adams', 'Arapahoe', 'Jefferson', 'Douglas', 'Broomfield', 'Elbert', 'Clear Creek', 'Gilpin', 'Park']),
+        'boulder-northern-colorado': ('Boulder & Northern Colorado', '01', 'Colorado', '-106.2,39.9,-103.6,41.0', ['Boulder', 'Larimer', 'Weld']),
+        'colorado-springs-pueblo': ('Colorado Springs, Pueblo & Southern Front Range', '01', 'Colorado', '-106.0,37.0,-103.9,39.2', ['El Paso', 'Teller', 'Pueblo', 'Fremont', 'Custer', 'Huerfano', 'Las Animas']),
+        'western-mountains-plains-colorado': ('Western Slope, Mountains & Eastern Plains', '01', 'Colorado', '-109.1,36.9,-102.0,41.0',
+            ['Alamosa', 'Archuleta', 'Baca', 'Bent', 'Chaffee', 'Cheyenne', 'Conejos', 'Costilla', 'Crowley', 'Delta', 'Dolores', 'Eagle', 'Garfield', 'Grand', 'Gunnison', 'Hinsdale', 'Jackson', 'Kiowa', 'Kit Carson', 'La Plata', 'Lake', 'Lincoln', 'Logan', 'Mesa', 'Mineral', 'Moffat', 'Montezuma', 'Montrose', 'Morgan', 'Otero', 'Ouray', 'Phillips', 'Pitkin', 'Prowers', 'Rio Blanco', 'Rio Grande', 'Routt', 'Saguache', 'San Juan', 'San Miguel', 'Sedgwick', 'Summit', 'Washington', 'Yuma']),
+    },
 }
 LIVE = True   # Oct 31, 2026: test split checked row by row (region-test.yml: 0 differences) and the LA page built at 12.1 MiB
 HOSP_V = 2   # Oct 31: hospital placement; v2 adds ZIP-prefix and CMS Provider of Services ZIPs (raising it re-places hospitals)
 SPLIT_V = 2   # Oct 31: v2 keeps every state code and the 'coming' list on regional pages; raising it splits again
-STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois': 'IL', 'pennsylvania': 'PA', 'michigan': 'MI'}
+STATE_CODE = {'california': 'CA', 'new-york': 'NY', 'florida': 'FL', 'illinois': 'IL', 'pennsylvania': 'PA', 'michigan': 'MI',
+              'missouri': 'MO', 'colorado': 'CO'}
 # Oct 31, 2026 (Betsy): New York, Florida, Illinois and Pennsylvania fit on one page, so their statewide page stays live (its
 # address and /costs/ pages never change) and the regions are added beside it. California's statewide page was too big, so its
 # address became a page linking to the regions.
 ALONGSIDE = {'new-york', 'florida', 'illinois', 'pennsylvania'}
 # States whose regional pages are switched on (hosp_area.py splits them on its next hourly run). A state not listed here is
 # built and published exactly as before. Pennsylvania: its first state build is split as soon as it is done (no rebuild).
-ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania', 'michigan'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
+ON = {'california', 'new-york', 'florida', 'illinois', 'pennsylvania', 'michigan', 'missouri', 'colorado'}   # Oct 31 evening: NY/FL/IL split test matched row for row (run 41220975545)
 PARENT = {r: s for s, R in REGIONS.items() for r in R}
 NEIGHBORS = {   # regions that share a border, linked from each regional page for people who live near one
     'los-angeles': ['san-diego-inland-empire', 'central-california'],
@@ -115,7 +133,12 @@ NEIGHBORS = {   # regions that share a border, linked from each regional page fo
     'central-eastern-pennsylvania': ['philadelphia-area', 'western-pennsylvania'],
     'oakland-county': ['macomb-county', 'detroit-wayne-county', 'mid-northern-michigan'], 'macomb-county': ['oakland-county', 'detroit-wayne-county', 'mid-northern-michigan'],
     'detroit-wayne-county': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw'], 'ann-arbor-washtenaw': ['detroit-wayne-county', 'oakland-county', 'mid-northern-michigan'],
-    'west-michigan': ['mid-northern-michigan'], 'mid-northern-michigan': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw', 'west-michigan'],
+    'west-michigan': ['mid-northern-michigan'],
+    'st-louis-area': ['rest-of-missouri'], 'kansas-city-area': ['rest-of-missouri'], 'rest-of-missouri': ['st-louis-area', 'kansas-city-area'],
+    'denver-metro': ['boulder-northern-colorado', 'colorado-springs-pueblo', 'western-mountains-plains-colorado'],
+    'boulder-northern-colorado': ['denver-metro', 'western-mountains-plains-colorado'],
+    'colorado-springs-pueblo': ['denver-metro', 'western-mountains-plains-colorado'],
+    'western-mountains-plains-colorado': ['denver-metro', 'boulder-northern-colorado', 'colorado-springs-pueblo'], 'mid-northern-michigan': ['oakland-county', 'macomb-county', 'ann-arbor-washtenaw', 'west-michigan'],
 }   # region slug -> state page slug
 # Nov 2, 2026: regional pages replaced by smaller ones. When the state's address page is next published (city_page.py
 # landing_page), each one's address becomes a short page pointing to the state's regions and it leaves the area lists.
@@ -124,9 +147,11 @@ RETIRED = {'oakland-macomb': 'michigan', 'detroit-ann-arbor': 'michigan'}
 
 def zip_county(state_code):
     """{zip5: county} for one state (Census 2020 ZCTA -> county with the most land)"""
-    for p in (os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), os.path.join(HERE, 'medicare_areas_zip.csv')):
+    for p in (os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), os.path.join(HERE, 'medicare_areas_zip.csv'),
+              os.path.join(HERE, '..', 'data', 'zip_county_all.csv')):   # Nov 7, 2026: every state (Colorado has one Medicare area)
         if os.path.exists(p):
-            return {r['zip5']: r['county'] for r in csv.DictReader(open(p)) if r['state'] == state_code}
+            m = {r['zip5']: r['county'] for r in csv.DictReader(open(p)) if r['state'] == state_code}
+            if m: return m
     raise FileNotFoundError('medicare_areas_zip.csv')
 
 

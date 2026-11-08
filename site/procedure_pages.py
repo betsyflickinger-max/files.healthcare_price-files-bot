@@ -1099,6 +1099,8 @@ def anes_med(S, area):
         pre3 = {r['contractor'][:3] for r in cf if r['locality_name'] in (st, 'REST OF ' + st)}
         cons = {r['contractor'] for r in cf if r['contractor'][:3] in pre3}
         locs = [r for r in cf if r['contractor'] in cons and r['locality'] in nums]
+        if not nums:   # Nov 7, 2026: a region of a one-Medicare-area state (Colorado): the state's own locality
+            locs = [r for r in cf if r['locality_name'] in (st, 'REST OF ' + st)]
     else:
         cons = {r['contractor'] for r in cf if r['locality_name'] in (st, 'REST OF ' + st) or r['locality_name'].startswith(st + ', ')}   # 'HAWAII, GUAM'
         locs = [r for r in cf if r['contractor'] in cons]
