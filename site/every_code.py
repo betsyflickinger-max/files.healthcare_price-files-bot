@@ -901,7 +901,12 @@ def _prac_raw(wks):
     """the practice work files (stage B, PRACTICE=1) of these work folders: {practice id: {'d': doctors, 'o': orgs, 't': tax ID}}"""
     from collections import Counter
     raw = {}
-    def _rd(k_): return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
+    def _rd(k_):
+        for t_ in range(4):   # Nov 8, 2026: one dropped download ("Connection broken") killed NC's whole final step
+            try: return json.loads(s3.get_object(Bucket=B, Key=k_)['Body'].read())
+            except Exception:
+                if t_ == 3: raise
+                time.sleep(5 * (t_ + 1))
     keys = [k_ for wk_ in wks for k_, _ in ls(wk_ + 'P/')]
     # Nov 8, 2026: read in groups of 48. Executor.map starts every download at once and keeps each parsed file until the
     # merge reaches it; the merge is slower than 16 downloads, so parsed files piled up: North Carolina (6 pieces per batch,
