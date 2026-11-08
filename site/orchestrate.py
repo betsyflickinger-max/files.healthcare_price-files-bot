@@ -257,6 +257,10 @@ def main():
         ins_done = exists(TOUT + 'embed.json')
         ensure(st, 'ins1', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins1/'), ins_done)
         ensure(st, 'ins2', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins2/', AORDER='desc', BORDER='desc'), ins_done)
+        # Nov 8, 2026: November's DFW data (97 tables, 141.8 GB) is far bigger than October's; no batch finished in the first
+        # hour on 32 GB. Two more machines start in the middle and work outward (every_code.py BORDER mid / middesc)
+        ensure(st, 'ins3', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins3/', BORDER='mid'), ins_done)
+        ensure(st, 'ins4', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins4/', AORDER='desc', BORDER='middesc'), ins_done)
         todo = getj(SP + 'hosp_todo.json', [])
         hdone = {k.rsplit('/', 1)[1][:-5] for k in ls(HPFX + 'done/')}
         left = [j for j in todo if j['id'] not in hdone]
