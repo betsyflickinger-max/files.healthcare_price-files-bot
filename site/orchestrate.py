@@ -293,7 +293,7 @@ def cleanup(prev):
     keep = {BID, prev}
     dead = []
     for k in ls('site/every/') + ls('work/every/'):
-        m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?b?)/', k)
+        m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?)/', k)
         if not m: continue                       # CURRENT, Acache/ and anything unexpected are left alone
         b = m.group(2)
         if (m.group(1) == 'site' and b not in keep) or (m.group(1) == 'work' and b != BID): dead.append(k)
