@@ -274,3 +274,17 @@ for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("si
                                  f"{z[0]['memory']} MB, {z[0]['disk']} GB disk") if z else "not offered")
     acct = _rq.get(f"{droplets.API}/account", headers=droplets._h(), timeout=60).json()["account"]
     print("  account droplet limit:", acct.get("droplet_limit"), "| status:", acct.get("status"))
+
+# Nov 8, 2026 (Betsy OK'd): "stop:<exact machine name>" deletes that one page-build machine (only names starting
+# "upfront-site-"), so its build relaunches it on the next pass with today's code. Storage is not touched.
+for x in [x for x in os.environ.get("BUILDS", "").split(",") if x.startswith("stop:")]:
+    import requests as _rq
+    name = x.split(":", 1)[1].strip()
+    if not name.startswith("upfront-site-"):
+        print(f"=== stop {name}: refused (only page-build machines, upfront-site-...)"); continue
+    ds = [d for d in _rq.get(f"{droplets.API}/droplets", params={"per_page": 200}, headers=droplets._h(), timeout=60).json()["droplets"]
+          if d["name"] == name]
+    if not ds: print(f"=== stop {name}: no such machine")
+    for d in ds:
+        r = _rq.delete(f"{droplets.API}/droplets/{d['id']}", headers=droplets._h(), timeout=60)
+        print(f"=== stop {name} ({d.get('size_slug')}): HTTP {r.status_code}")
