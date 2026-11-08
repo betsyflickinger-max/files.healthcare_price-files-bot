@@ -40,7 +40,7 @@ TOUT = f'site/every/{BID}/'
 HPFX = 'data/hosp_every/'
 RESERVE = 1
 SIZE_INS, SIZE_HOSP, SIZE_H2 = 'm-8vcpu-64gb-intel', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'   # Nov 8, 2026: insurer part 16 -> 32 -> 64 GB (see build1)
-N_INS = 6   # Nov 8, 2026: insurer machines (was 2)
+N_INS = 10   # Nov 8, 2026: insurer machines (was 2); past the first 6 they launch only as slots free up (Texas finishing)
 BUNDLE_V = '2026-11-08b'   # Nov 8, 2026: a build already under way re-packs the code once when this changes, so relaunched machines get fixes
 REGIONS = ['nyc3', 'sfo3', 'nyc1']
 
