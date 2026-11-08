@@ -1977,7 +1977,7 @@ Hospitals and insurers: if we couldn't find your price file, or it's broken, the
 
 
 # ---------------------------------------------------------------- build
-def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender=False):
+def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender=False, force_some=False):
     site = os.path.join(site_dir, 'site')
     site_settings(site)
     areas = json.load(open(os.path.join(site, 'cities.json'), encoding='utf-8'))
@@ -2019,7 +2019,7 @@ def build(site_dir, store, only_areas=None, only_codes=None, prev=None, rerender
             names.setdefault(c, D['codes'][c]['name'])
             cats.setdefault(c, D['codes'][c].get('cat', ''))
         del D
-        rebuild = (only_areas is None or a['slug'] in only_areas) and (new_month or not keep or prev.get('fp', {}).get(a['slug']) != fp)
+        rebuild = (only_areas is None or a['slug'] in only_areas) and (force_some or new_month or not keep or prev.get('fp', {}).get(a['slug']) != fp)
         if rebuild:
             todo.append(a)
         else:
@@ -2231,9 +2231,13 @@ def patch_method_proof(d):
 
 
 def deploy(force=False, only_areas=None):
-    """only_areas: rebuild just these areas (others keep last run's figures, so the indexes still cover every area); not with --force."""
-    if force and only_areas:
-        sys.exit('--areas needs the last run\'s figures for the other areas; leave out --force')
+    """only_areas: rebuild just these areas (others keep last run's figures, so the indexes still cover every area); with --force,
+    those areas rebuild even if their figures haven't changed (Nov 8, 2026)."""
+    # Nov 8, 2026: --force with --areas rebuilds just those areas no matter what, keeping the last run's figures for the rest
+    # (a forced rebuild of every area runs past GitHub's 5h40m job limit, so code changes go out in batches)
+    force_some = bool(force and only_areas)
+    if force_some:
+        force = False
     import boto3
     E = {k: "".join(os.environ.get(k, "").split()) for k in
          ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "CLOUDFLARE_API_TOKEN")}
@@ -2277,7 +2281,7 @@ def deploy(force=False, only_areas=None):
             except Exception as e:
                 print('layout not updated:', e)
         home_before = open(f'{d}/site/index.html', encoding='utf-8').read()
-        st = build(d, Store(d), only_areas, prev=prev, rerender=not first)
+        st = build(d, Store(d), only_areas, prev=prev, rerender=not first, force_some=force_some and first)
         changed = (not prev) or not first or st['pages'] > 0 or st.get('notes_changed') or open(f'{d}/site/index.html', encoding='utf-8').read() != home_before
         if not changed:
             print('no area page changed since the last run; nothing to deploy')
