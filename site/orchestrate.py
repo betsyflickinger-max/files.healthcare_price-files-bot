@@ -296,7 +296,9 @@ def cleanup(prev):
         m = re.match(r'^(site|work)/every/([0-9]{4}-[0-9]{2}(?:-[0-9]{2})?)/', k)
         if not m: continue                       # CURRENT, Acache/ and anything unexpected are left alone
         b = m.group(2)
-        if (m.group(1) == 'site' and b not in keep) or (m.group(1) == 'work' and b != BID): dead.append(k)
+        # prev == BID: this build is being re-published (a run stopped after the deploy), so the build before it is not
+        # known here; keep every site/ build (the rollback copy) and clear only work/ scratch
+        if (m.group(1) == 'site' and b not in keep and prev != BID) or (m.group(1) == 'work' and b != BID): dead.append(k)
     for k in ls('data/2026-10-10/hosp_every/rows/'):   # copied to data/hosp_every/rows/ on Oct 11
         if exists('data/hosp_every/rows/' + k.rsplit('/', 1)[1]): dead.append(k)
     # Nov 8, 2026: 1,000 per call (one call per file took over an hour after November's DFW deploy and held up Texas)
