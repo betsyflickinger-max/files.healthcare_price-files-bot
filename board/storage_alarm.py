@@ -183,6 +183,15 @@ def card_alarm():
                       f"This month's machine spend is ${mtd:,.2f} and the credit was ${credit:,.2f}, so ${card:,.2f} goes on your card so far. "
                       f"The bot keeps renting until the card spend reaches ${cap:,.0f} this month, then stops renting new machines "
                       f"(files being read finish; nothing is deleted). To change the limit, tell Claude (it's `_card_cap` in build_approvals.json)."))
+    # Nov 8, 2026 (Betsy OK'd): warn at 80% of the limit, with a month-end projection, so the limit is a decision
+    # made ahead of time and not a surprise stop (Nov 5 the bot stopped renting with no warning).
+    if cap * 0.8 <= card < cap:
+        day, days = int(time.strftime("%d")), 30
+        proj = max(0.0, mtd / max(day, 1) * days - credit)
+        notes.append((f"Card spending at 80% of the ${cap:,.0f} limit ({month})",
+                      f"${card:,.2f} of this month's ${cap:,.0f} card limit is used (day {day}). At this month's pace the card total "
+                      f"would reach about ${proj:,.0f} by month-end. At ${cap:,.0f} the bot stops renting new machines (files being read "
+                      f"finish; nothing is deleted). To raise or keep the limit, tell Claude (`_card_cap` in build_approvals.json)."))
     if card >= cap:
         notes.append((f"Card spending cap reached ({month}): no new machines this month",
                       f"${card:,.2f} of this month's ${mtd:,.2f} machine spend is on your card, which reaches the ${cap:,.0f} limit you set. "

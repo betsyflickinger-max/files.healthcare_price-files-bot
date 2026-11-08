@@ -1,0 +1,33 @@
+name: Daily build status
+
+# Nov 8, 2026 (Betsy OK'd): every morning, one comment on the "Daily build status" issue (emailed to Betsy):
+# every area's November/December build, the month's machine spend against her card limit, and anything stuck.
+on:
+  schedule:
+    - cron: "13 13 * * *"   # 7:13am Central (standard time)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36 requests
+      - run: python board/daily_status.py | tee -a "$GITHUB_STEP_SUMMARY"

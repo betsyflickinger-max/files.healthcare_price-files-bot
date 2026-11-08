@@ -260,6 +260,37 @@ def label_tables(st):
     return key
 
 
+# Nov 8, 2026 (Betsy OK'd, after Georgia/NC/California looped for days on 32 GB machines with no alarm): each pass reads a
+# per-state machine's runlog.txt (written by save_runlog.py after every failed try). Killed for memory -> move that machine
+# one size up (32 -> 64 -> 128 GB; the resize code below stops and relaunches it). Still failing at 128 GB, or 3+ failed
+# tries for any other reason -> one GitHub issue (Betsy gets the email). Never more than one issue per machine per build.
+LADDER = ['s-8vcpu-32gb-amd', 'm-8vcpu-64gb-intel', 'm-16vcpu-128gb-intel']
+def _bigger(a, b): return a in LADDER and (b not in LADDER or LADDER.index(a) > LADDER.index(b))
+def _crash_check(st, slug, i, want):
+    role = f'{slug}-c{i + 1}'
+    cc = st.setdefault('crash', {}).setdefault(role, {})
+    cur = cc['size'] if _bigger(cc.get('size'), want) else want
+    try: txt = s3.get_object(Bucket=B, Key=f'{SP}{role}/runlog.txt')['Body'].read().decode('utf-8', 'replace')
+    except Exception: return cur
+    h = dict(l.split(': ', 1) for l in txt.splitlines()[:6] if ': ' in l)
+    saved, oom = h.get('saved', ''), h.get('oom') == 'yes'
+    try: tries = int(h.get('tries', '1'))
+    except ValueError: tries = 1
+    if not saved or saved == cc.get('seen'): return cur
+    cc['seen'] = saved
+    if oom and cur in LADDER and LADDER.index(cur) < len(LADDER) - 1:
+        cc['size'] = cur = LADDER[LADDER.index(cur) + 1]
+        log(f'{role} ran out of memory; moving it to {cur}')
+        st.setdefault('log', []).append(f"{time.strftime('%b %d %H:%M')} UTC: {role} ran out of memory; moved to {cur}")
+    elif (oom or tries >= 3) and not cc.get('alarm'):
+        cc['alarm'] = saved
+        why = 'ran out of memory on the biggest machine size the bot uses (128 GB)' if oom else f'has failed {tries} times in a row'
+        O.issue(f'Build stuck: {O.BID} {role} keeps restarting',
+                f'The {slug} machine `{role}` {why}, so the build is looping instead of finishing. Its crash notes are in storage at '
+                f'`{SP}{role}/runlog.txt` (fleet check: `tail:{SP}{role}/run`). Tell Claude to look at it.')
+    return cur
+
+
 def practice_for(st, slug):
     """Oct 22, 2026: a new build uses the practice view when build_defaults.json says so (st['practice']). An update build
     matches the build it will be merged into (merge_build.py stops on a mix): practice view if that build has a practice
@@ -712,6 +743,7 @@ def main():
                 # (build_defaults.json per_state "size"). A running machine of the old size is stopped once, so
                 # the next step relaunches it at the new size; the planned swap never counts as a failure.
                 want = ps.get('size', SIZE); name = f'upfront-site-{O.BID}-{slug}-c{i + 1}'
+                want = _crash_check(st, slug, i, want)   # Nov 8, 2026: memory kills move up a size; loops raise an alarm
                 # Nov 3, 2026: a new size gives every slot a clean start once. washington-c3..c6 had "failed 8 times"
                 # on 32 GB machines, so ensure() refused them even after the 64 GB fix and the state stayed at 2.
                 sz = st.setdefault('size_reset', {})
