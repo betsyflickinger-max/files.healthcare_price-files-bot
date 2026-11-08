@@ -1,10 +1,10 @@
-name: Stuck-build watchdog (hourly)
+name: Stuck-build watchdog (every 15 min)
 # Nov 3, 2026 (Betsy OK'd): every state page build, once an hour, from outside. A build with machines billing and nothing
 # saved in 3 hours gets ONE issue (an email) and is cut to 2 machines until it moves again; a build waiting 12+ hours gets
 # one issue; a daily summary comment ~7 AM CT. See board/build_watchdog.py.
 on:
   schedule:
-    - cron: "50 * * * *"
+    - cron: "5,20,35,50 * * * *"   # Nov 8, 2026: every 15 minutes (was hourly)
   workflow_dispatch:
     inputs:
       dry:

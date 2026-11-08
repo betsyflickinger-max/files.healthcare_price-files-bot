@@ -22,6 +22,13 @@ hold also sat on a build that could never finish. This job looks at every state 
                    stage, results saved and saved in the last 24 h, and the price check's hours / dollars left.
 
 When a stuck build moves again (new results in the last hour) its issue closes and the cap is removed by itself.
+Nov 8, 2026 (Betsy: "why were they not built before?"): this only watched the state builds, hourly, with a 3-hour
+window, so DFW's and Texas's November builds broke three times (DFW restarting every hour, then a full disk on every
+machine, Houston waiting behind DFW, the Texas pages filling the runner's disk) and nothing noticed for 1-3 hours. Now it
+runs every 15 minutes and watches DFW (site/builds/<YYYY-MM>/) and Texas (site/builds/tx-<YYYY-MM>/) too: no results for
+45 minutes with machines billing -> issue; a build stage with no machines for 45 minutes -> issue; Texas pages
+publishing with no new page for 45 minutes -> issue. Each issue mentions Betsy so GitHub emails her.
+
 Read-only apart from: GitHub issues/comments, and the cap/state files under bot/watchdog/ in R2. Never deletes data.
 Run with DRY=1 to print what it would do.
 """
@@ -45,6 +52,9 @@ API = f"https://api.github.com/repos/{REPO}"
 DO = "https://api.digitalocean.com/v2"
 DRY = bool(os.environ.get("DRY"))
 STUCK_H, WAIT_H, MEM_FREE_GB, CAP = 3, 12, 1.0, 2
+STUCK_H_FAST = 0.75   # Nov 8, 2026: DFW and Texas save a result every ~15 minutes (batches in pieces): 45 minutes
+NOMACH_H = 0.75   # Nov 8, 2026: a build stage with no machines, or Texas pages not moving, this long -> issue
+WHO = "@betsyflickinger-max"
 MAX_AGE_H, DONE_GRACE_H = 96, 2
 DONE_STAGES = ("live", "done", "held", "hosp")
 REAP_TITLE = "Build machines cleaned up"
@@ -111,11 +121,11 @@ def droplets():
     return out
 
 
-BID_RE = re.compile(r"^upfront-site-(st[a-z0-9]*-\d{4}-\d{2}[a-z]?)-")
+BID_RE = re.compile(r"^upfront-site-((?:st[a-z0-9]*-|tx-)?\d{4}-\d{2}[a-z]?)-")   # state, Texas (tx-) and DFW builds
 
 
 def machines_by_build():
-    """{build id: [droplet, ...]} for state page builds (not their hospital-step machines)."""
+    """{build id: [droplet, ...]} for state, Texas and DFW page builds (not hospital-step machines)."""
     out = {}
     for d in droplets():
         m = BID_RE.match(d["name"])
@@ -132,10 +142,15 @@ def saved_since(bid, st, since):
     """(results saved after `since`, all results) for this build's states: stage-B results (B/, P/) and stage-A tables
     finishing (Acache/<table>.done, top level only, so the per-bucket files aren't listed)."""
     ym = "v" + bid.split("-", 1)[1].replace("-", "")   # st-2026-11 -> v202611, st-2026-10b -> v202610b (orchestrate_states.wk)
+    if bid[0].isdigit():   # DFW (orchestrate.py): work/every/<bid>/, shared Acache
+        places = [(f"work/every/{bid}/B/", None), (f"work/every/{bid}/P/", None), ("work/every/Acache/", "/")]
+    else:
+        root = "work/every-tx" if bid.startswith("tx-") else "work/every-st"
+        places = [p for slug in (st.get("machines") or {}) for p in ((f"{root}/{slug}/{ym}/B/", None),
+                  (f"{root}/{slug}/{ym}/P/", None), (f"{root}/{slug}/Acache/", "/"))]
     new = total = 0
-    for slug in (st.get("machines") or {}):
-        for pre, delim in ((f"work/every-st/{slug}/{ym}/B/", None), (f"work/every-st/{slug}/{ym}/P/", None),
-                           (f"work/every-st/{slug}/Acache/", "/")):
+    if True:
+        for pre, delim in places:
             for o in ls(pre, delim):
                 if pre.endswith("Acache/") and not o["Key"].endswith(".done"):
                     continue
@@ -181,7 +196,9 @@ def find_issue(title):
     return None
 
 
-def states_of(st):
+def states_of(st, bid=""):
+    if bid[:1].isdigit():
+        return "DFW"
     return ", ".join(s.replace("-", " ").title() for s in (st.get("machines") or {})) or "?"
 
 
@@ -193,17 +210,19 @@ def ct(t):
 def stuck(bid, st, ds, why, detail):
     title = f"Build stuck: {bid}"
     cap_key = f"{W}cap/{bid}.json"
-    if not getj(cap_key):
+    capped = bid.startswith("st")   # the machine cap is read by the state builds only (machine_shares.build_cap)
+    if capped and not getj(cap_key):
         putj(cap_key, {"most": CAP, "at": NOW, "why": why})
         log(bid, "capped at", CAP, "machines:", why)
     if find_issue(title):
         log(bid, "already reported"); return
-    body = (f"**{states_of(st)}** ({bid}) looks stuck: **{why}**.\n\n{detail}\n\n"
-            f"**What I did:** cut this build to at most {CAP} machines (it had {len(ds)}), so it can't keep billing "
-            f"for nothing. Nothing was deleted; finished work stays saved.\n\n"
-            f"**What to do:** ask Claude to look at it (Fleet check workflow, `mon:` and `tail:` modes show memory and "
+    body = (f"{WHO} **{states_of(st, bid)}** ({bid}) looks stuck: **{why}**.\n\n{detail}\n\n"
+            + (f"**What I did:** cut this build to at most {CAP} machines (it had {len(ds)}), so it can't keep billing "
+               f"for nothing. Nothing was deleted; finished work stays saved.\n\n" if capped else
+               "**What I did:** nothing automatic yet for this build; finished work stays saved.\n\n")
+            + f"**What to do:** ask Claude to look at it (Fleet check workflow, `mon:` and `tail:` modes show memory and "
             f"live machine logs). This issue closes itself, and the cap comes off, once the build saves new results again.")
-    gh("POST", "/issues", json={"title": f"{title} ({states_of(st)})", "body": body})
+    gh("POST", "/issues", json={"title": f"{title} ({states_of(st, bid)})", "body": body})
 
 
 def unstick(bid):
@@ -224,7 +243,8 @@ def builds():
         k = o["Key"]
         if k.endswith("/state.json") and k.count("/") == 3:
             bid = k.split("/")[2]
-            if bid.startswith("st"):
+            # state builds, Texas (tx-YYYY-MM) and DFW (YYYY-MM[x]) builds; Nov 8, 2026: DFW and Texas added
+            if bid.startswith(("st", "tx-")) or re.match(r"^\d{4}-\d{2}[a-z]?$", bid):
                 out[bid] = (getj(k, {}), o["LastModified"].timestamp())
     return out
 
@@ -282,23 +302,36 @@ def main():
     seen = getj(W + "seen.json", {})          # {bid: first time seen waiting}
     month = time.strftime("%Y-%m", time.gmtime(NOW))
     rows = []
-    for bid, (st, _) in sorted(allb.items()):
+    for bid, (st, lastmod) in sorted(allb.items()):
         ds = mine.get(bid, [])
         stage = st.get("stage", "?")
+        if month not in bid and not bid.startswith("st"):
+            continue   # DFW / Texas: only this month's build (older ones sit unfinished on purpose, e.g. 2026-10b)
+        # Nov 8, 2026: Texas pages are built on GitHub's runner, not machines: no new page for 45 min -> stuck
+        if bid.startswith("tx-") and stage == "publish":
+            done = sum(1 for v in (st.get("cities") or {}).values() if v == "live")
+            if NOW - lastmod > NOMACH_H * 3600:
+                stuck(bid, st, [], f"no Texas page finished in {round((NOW - lastmod) / 60)} minutes",
+                      f"Publishing the Texas pages; {done} done so far. Each page takes about 7 minutes. The site keeps "
+                      f"each page's previous version until its new one is built.")
+            else:
+                unstick(bid)
+            continue
         ck = (st.get("cost_check") or {}).get("last") or {}
         if ds:
             oldest = min(ts(d["created_at"]) for d in ds)
-            new2, total = saved_since(bid, st, NOW - STUCK_H * 3600)
+            sh = STUCK_H if bid.startswith("st") else STUCK_H_FAST
+            new2, total = saved_since(bid, st, NOW - sh * 3600)
             new24, _ = saved_since(bid, st, NOW - 24 * 3600)
             pinned = memory_pinned(ds)
             rows.append((bid, states_of(st), stage, len(ds), total, new24, ck))
             log(bid, stage, f"{len(ds)} machines, oldest {round((NOW - oldest) / 3600, 1)} h;",
                 f"{new2} saved in {STUCK_H} h, {total} results; memory pinned: {pinned}")
-            if NOW - oldest > STUCK_H * 3600 and new2 == 0 and stage == "build":
+            if NOW - oldest > sh * 3600 and new2 == 0 and stage.startswith("build"):
                 mem = pinned and len(pinned) * 2 >= len(ds)
-                stuck(bid, st, ds, f"nothing saved in {STUCK_H} hours" + ("; its machines are out of memory" if mem else ""),
+                stuck(bid, st, ds, f"nothing saved in {round(sh * 60)} minutes" + ("; its machines are out of memory" if mem else ""),
                       f"{len(ds)} machines have been running (the oldest since {ct(oldest)}); {total} results saved in "
-                      f"all, none in the last {STUCK_H} hours. Stage: {stage}."
+                      f"all, none in the last {round(sh * 60)} minutes. Stage: {stage}."
                       + (f"\n\n**Likely cause: memory.** {len(pinned)} of {len(ds)} machines had under {MEM_FREE_GB:.0f} GB "
                          f"free for the last 30 minutes ({', '.join(pinned[:8])}). Workers killed for memory leave no "
                          f"error message (Washington, Nov 2-3)." if mem else ""))
@@ -307,6 +340,13 @@ def main():
                 if new1:
                     unstick(bid)
             seen.pop(bid, None)
+        elif month in bid and stage.startswith("build") and not bid.startswith("st"):
+            # Nov 8, 2026: DFW / Texas in a build stage with no machines at all (Houston waited behind DFW's publish)
+            first = seen.setdefault(bid, NOW)
+            if NOW - first > NOMACH_H * 3600:
+                stuck(bid, st, [], f"stage '{stage}' with no machines running for {round((NOW - first) / 60)} minutes",
+                      "A build stage normally has machines working. Its manager may be stuck behind another job, out of "
+                      "machine slots, or at the card limit.")
         elif month in bid and stage in ("wait", "split"):
             first = seen.setdefault(bid, NOW)
             if NOW - first > WAIT_H * 3600 and not find_issue(f"Build waiting: {bid}"):
