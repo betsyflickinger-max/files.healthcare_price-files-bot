@@ -31,10 +31,16 @@ E = os.environ
 SP = O.SP                                     # site/builds/tx-YYYY-MM/
 SIZE = 's-8vcpu-32gb-amd'                     # 400 GB disk: the biggest Texas tables are ~38 GB before splitting
 # machines per city, biggest first, and stage B settings from the October run (Oct 12 v2 relaunch)
-BIG = [('houston', 5, dict(WORKERS='2', WMEM='13GB', WTHREADS='4')),   # Oct 12 test: ~3x the parts per hour of 4 x 6 GB on Houston's 60-90M-row parts
-       ('san-antonio', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
-       ('austin', 2, dict(WORKERS='4', WMEM='6GB', WTHREADS='2')),
-       ('el-paso', 1, dict(WORKERS='5', WMEM='5GB', WTHREADS='2'))]
+# Nov 8, 2026: the big metros use the setup that finished DFW's November build (~1,000 pieces) in 75 minutes on 15 machines:
+# each 100-160M-row batch cut in 4 pieces (SPLIT), 6 workers on a 64 GB machine (the per-row step uses one core per worker;
+# whole batches on 200 GB disks overflowed), machines claiming pieces (BCLAIM). Before, Houston's 5 machines did ~12 whole
+# batches an hour: 146 of 256 in 12 hours. Machines past what the account allows simply wait for a free slot.
+FAST = dict(WORKERS='6', WMEM='6GB', WTHREADS='2', SPLIT='4', BCLAIM='1', BCLAIM_H='3', STALL_MIN='240', MEMLOG='1')
+SIZE_BIG = 'm-8vcpu-64gb-intel'
+BIG = [('houston', 12, FAST),
+       ('san-antonio', 6, FAST),
+       ('austin', 6, FAST),
+       ('el-paso', 2, FAST)]
 ZIP3 = {'houston': ('770', '775'), 'san-antonio': ('780', '782'), 'austin': ('786', '787'), 'el-paso': ('798', '799')}  # as tx_split.py
 DFW3 = [('750', '753'), ('760', '762')]
 AREAS = [m for m in CITIES if m not in ZIP3 and m not in STATE_OF]   # state pages: orchestrate_states.py   # the rest of Texas: 18 metro areas + small-towns, by reference/geo/tx_zip_metro.csv
@@ -171,7 +177,7 @@ def main():
                            WK=f"work/every-tx/{m}/v{MONTH.replace('-', '')}/", ACACHE=f'work/every-tx/{m}/Acache/', NOXPART='1', ACLAIM='1',
                            PIECE_GB='0.4', MAXPIECES='3', THREADS='6', MEM='18GB', WORK='/d', ASTART=str(i * 5), BSTART=str(i * 256 // n), **w)
                 if st.get('fieldrules'): env['FIELDRULES'] = st['fieldrules'] if isinstance(st['fieldrules'], str) else '1'
-                ensure(st, f'{m}-c{i + 1}', SIZE, O.RUN_INS, env, False)
+                ensure(st, f'{m}-c{i + 1}', SIZE_BIG if w is FAST else SIZE, O.RUN_INS, env, False)
         log('metros still building:', ', '.join(left) or 'none')
         if not left: st['stage'] = 'publish'
     if st['stage'] == 'publish':
