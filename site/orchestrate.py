@@ -10,7 +10,7 @@ One build per month (build id = YYYY-MM). State lives in R2 site/builds/<id>/sta
            site/every/CURRENT at the new build and deploy with wrangler. If a check fails: nothing goes live, an issue opens.
 Dead machines are relaunched (up to 3 times per role). Machines delete themselves when done.
 Env: R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY R2_BUCKET DIGITALOCEAN_TOKEN [CLOUDFLARE_API_TOKEN] [FORCE=1] [BUILD=YYYY-MM]"""
-import csv, io, json, os, subprocess, sys, tarfile, time, urllib.request
+import csv, io, json, os, shutil, subprocess, sys, tarfile, time, urllib.request
 import pages_spill  # noqa: E402  (site/pages_spill.py, Nov 2, 2026)
 import boto3
 
@@ -393,6 +393,7 @@ def refresh_cities(cities_json):
         try: r = subprocess.run([sys.executable, f'{HERE}/city_page.py', c['slug'], '--deploy', '--out', f"/tmp/city-{c['slug']}"],
                                 capture_output=True, text=True, timeout=3600)
         except subprocess.TimeoutExpired: r = subprocess.CompletedProcess([], 1, '', 'timed out after 20 minutes')
+        shutil.rmtree(f"/tmp/city-{c['slug']}", ignore_errors=True)   # Nov 8, 2026: ~1 GB per page filled the runner's disk
         print(r.stdout[-1500:], r.stderr[-1500:])
         out[c['slug']] = 'rebuilt' if r.returncode == 0 else 'kept last version (failed)'
         if r.returncode != 0:

@@ -16,7 +16,7 @@ Before November, "force_tx" starts build tx-YYYY-MM-metros: only the 18 metro ar
 by hand). Once started, it carries on by itself on the 6-hourly runs.
 Dead machines are relaunched up to 3 times per role; machines delete themselves when done.
 Env: as orchestrate.py, plus [FORCE_TX=1] (skip the 8th / DFW / insurer-bot waits) and [TX_BUILD=YYYY-MM]."""
-import csv, io, json, os, subprocess, sys, time
+import csv, io, json, os, shutil, subprocess, sys, time
 
 MONTH = os.environ.get('TX_BUILD') or time.strftime('%Y-%m')
 FIRST = '2026-11'
@@ -183,8 +183,10 @@ def main():
     if st['stage'] == 'publish':
         res = st.setdefault('cities', {})
         for m in ([] if EARLY else CITY_PAGES) + AREAS:
-            if m in res: continue   # a run stopped by the workflow's time limit carries on with the next page
+            if res.get(m) == 'live': continue   # a stopped run carries on with the next page; a failed page is tried again
             r = subprocess.run([sys.executable, f'{O.HERE}/city_page.py', m, '--deploy', '--out', f'/tmp/txcity-{m}'], capture_output=True, text=True, timeout=3600)
+            # Nov 8, 2026: each page leaves ~1 GB (the unpacked site); 20+ pages filled the runner's disk ("No space left")
+            shutil.rmtree(f'/tmp/txcity-{m}', ignore_errors=True)
             print(r.stdout[-1500:], r.stderr[-1500:])
             res[m] = 'live' if r.returncode == 0 else 'kept previous page (failed)'
             if r.returncode: issue(f'Texas {MONTH}: {m} page not rebuilt', 'The page keeps its previous version.\n\n```\n' + (r.stdout + r.stderr)[-3000:] + '\n```')
