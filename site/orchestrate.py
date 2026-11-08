@@ -39,8 +39,9 @@ SP = f'site/builds/{BID}/'
 TOUT = f'site/every/{BID}/'
 HPFX = 'data/hosp_every/'
 RESERVE = 1
-SIZE_INS, SIZE_HOSP, SIZE_H2 = 's-8vcpu-32gb-amd', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'   # Nov 8, 2026: insurer part 16 -> 32 GB (see build1)
-BUNDLE_V = '2026-11-08'   # Nov 8, 2026: a build already under way re-packs the code once when this changes, so relaunched machines get fixes
+SIZE_INS, SIZE_HOSP, SIZE_H2 = 'm-8vcpu-64gb-intel', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'   # Nov 8, 2026: insurer part 16 -> 32 -> 64 GB (see build1)
+N_INS = 6   # Nov 8, 2026: insurer machines (was 2)
+BUNDLE_V = '2026-11-08b'   # Nov 8, 2026: a build already under way re-packs the code once when this changes, so relaunched machines get fixes
 REGIONS = ['nyc3', 'sfo3', 'nyc1']
 
 
@@ -251,16 +252,16 @@ def main():
         # every hour and started over. Now: 32 GB machines, 2 threads and 6 GB per worker, a 4-hour watchdog, a memory
         # line every minute, and each machine's own log folder (both wrote the same log.txt, so each erased the other's)
         common = dict(TOUT=TOUT, OUTP=SP, WK=f'work/every/{BID}/', ACACHE='work/every/Acache/', NOXPART='1', PIECE_GB='0.4',
-                      MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='3', WTHREADS='2', WMEM='6GB', WORK='/d',
-                      STALL_MIN='240', MEMLOG='1')
+                      MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='6', WTHREADS='2', WMEM='6GB', WORK='/d',
+                      STALL_MIN='240', MEMLOG='1', BCLAIM='1', BCLAIM_H='3')
+        # Nov 8, 2026 4:30am CT (Betsy: "how do we speed it up"): each batch is 100-135 million rows and its last step runs on
+        # one core, so 3 workers left 32 GB machines 60-80% idle. Now 6 workers on 64 GB machines (8 cores), 6 machines,
+        # each starting at a different point in the list and claiming batches (BCLAIM) so no two do the same one.
         if st.get('fieldrules'): common['FIELDRULES'] = st['fieldrules'] if isinstance(st['fieldrules'], str) else '1'
         ins_done = exists(TOUT + 'embed.json')
-        ensure(st, 'ins1', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins1/'), ins_done)
-        ensure(st, 'ins2', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins2/', AORDER='desc', BORDER='desc'), ins_done)
-        # Nov 8, 2026: November's DFW data (97 tables, 141.8 GB) is far bigger than October's; no batch finished in the first
-        # hour on 32 GB. Two more machines start in the middle and work outward (every_code.py BORDER mid / middesc)
-        ensure(st, 'ins3', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins3/', BORDER='mid'), ins_done)
-        ensure(st, 'ins4', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins4/', AORDER='desc', BORDER='middesc'), ins_done)
+        for n_ in range(N_INS):
+            ensure(st, f'ins{n_ + 1}', SIZE_INS, RUN_INS, dict(common, OUTP=SP + f'ins{n_ + 1}/', BSTART=str(n_ * 256 // N_INS),
+                                                               AORDER='desc' if n_ % 2 else 'asc'), ins_done)
         todo = getj(SP + 'hosp_todo.json', [])
         hdone = {k.rsplit('/', 1)[1][:-5] for k in ls(HPFX + 'done/')}
         left = [j for j in todo if j['id'] not in hdone]
