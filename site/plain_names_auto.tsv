@@ -10124,3 +10124,383 @@ C9290	Bupivacaine liposome numbing injection, per 10 mg
 99191	Running a heart-lung pump to cool the body, 45 minutes
 G1004	Reporting code: imaging order checked with decision-support software
 G1010	Reporting code: imaging order checked with decision-support software
+0706T	Remote amblyopia treatment, physician or provider review and interaction
+0079U	Genetic comparison test, multiple DNA markers
+0757T	Digital whole slide pathology scan, special stain, group 2
+0705T	Remote amblyopia treatment, technician or support staff time
+0704T	Remote amblyopia treatment setup and patient education
+0751T	Digital pathology slide scan, level 2 complexity
+0134A	COVID-19 mRNA vaccine shot, 50 mcg bivalent, additional dose
+0124A	COVID-19 mRNA vaccine shot, bivalent 30 mcg, injection
+74710	Pelvis measurement X-ray, with or without placenta location
+0503T	Heart artery blood flow estimate from CT scan images
+0066U	Placental protein test from vaginal fluid, per specimen
+0145U	Urine drug screen, 65 or more drugs, mass spectrometry
+0014M	Liver scarring blood test, three markers
+0014U	Blood or marrow cancer gene rearrangement test, genome sequencing
+0150U	Urine drug screen, 120 or more drugs, mass spectrometry
+0146U	Urine drug screen, 80 or more drugs, mass spectrometry
+0012U	Inherited disorder gene rearrangement test, whole genome, blood
+0013U	Solid tumor gene rearrangement test, genome sequencing, tissue
+0053U	Prostate biopsy gene test for tumor grade, four genes
+0144U	Urine drug screen, 160 or more drugs, mass spectrometry
+0147U	Urine drug screen, 85 or more drugs, mass spectrometry
+0149U	Urine drug screen, 60 or more drugs, mass spectrometry
+0148U	Urine drug screen, 100 or more drugs, mass spectrometry
+0056U	Heart transplant rejection blood test, cell-free DNA
+0143U	Urine drug screen, 120 or more drugs, mass spectrometry
+0139U	Autism metabolic blood test, six carbon metabolites
+0168U	Fetal chromosome abnormality screen, cell-free DNA blood test
+87450	Antigen test by enzyme immunoassay, one organism, single step
+50954	Ureter scope exam with tissue sample
+27852	Ankle scope with lining tissue biopsy
+15962	Heel pressure sore removal with skin pinch graft
+95006	Skin prick allergy test for antibiotics, biologicals or insects
+70050	Eye X-ray to locate foreign object
+33532	Internal mammary artery implanted into heart muscle
+50560	Kidney scope to remove stone or foreign object
+27379	Knee arthroscopy with plica removal
+19250	One-sided breast removal with lymph nodes and immediate implant
+55170	Scrotum reshaping surgery
+19161	Partial breast removal, both sides
+19211	One-sided full breast removal with immediate implant
+27304	Deep thigh abscess drainage with bone opening
+92515	Speech, voice, and language evaluation
+49551	Femoral groin hernia repair, both sides
+67104	Retina reattachment with xenon light laser
+67224	Xenon light laser treatment for advanced retinopathy
+27413	Knee ligament repair with tendon transfer
+33835	Ascending aorta graft with heart valve replacement
+36485	Central venous catheter placement through small cut
+61053	Brain fluid puncture with dye injection for X-ray
+67144	Xenon light laser to prevent retinal detachment
+65445	Heat cautery of corneal lesion
+54320	Urethra rebuilding at penis or scrotum
+61052	Spinal fluid puncture with dye for myelogram
+19215	One-sided breast removal with later implant placement
+51749	Complex urine flow test, before and after
+76500	Brain ultrasound, midline structures measurement
+70020	Brain ventricle X-ray with contrast dye
+51740	Bladder pressure and filling test
+52105	Bladder camera exam with ureter catheter, hospital
+52280	Bladder camera exam with urethral stretching, hospital
+92500	Pure tone hearing test
+52107	Bladder camera exam with ureter catheter and biopsy, hospital
+51744	Electronic urine flow test, before and after
+27408	Knee collateral ligament repair with tendon transfer
+81211	BRCA1 and BRCA2 gene test for inherited breast cancer risk
+47611	Gallbladder removal with bile duct exam by scope
+51786	Bladder filling test with sphincter muscle EMG
+51788	Bladder filling test with sphincter EMG and urine flow
+51796	Bladder pressure measurement through suprapubic needle
+27436	Kneecap fracture repair with internal fixation
+50554	Kidney scope exam with tissue sample
+51731	Bladder pressure test before and after medicine
+35000	Repair of neck artery aneurysm, direct
+81213	BRCA1 and BRCA2 rare variant gene test
+91310	COVID-19 vaccine adjuvanted, 5 mcg, preservative-free dose
+56520	Freezing treatment of simple benign vulvar lesion
+50558	Kidney scope exam with radioactive tracer
+51765	Urethral measurement test before and after medicine
+33284	Removal of implanted heart event monitor
+39510	Diaphragm hernia repair through abdomen incision
+61045	Brain ventricle puncture with contrast dye injection
+27850	Diagnostic ankle joint scope exam
+67213	Freezing treatment of retina lesion
+66980	Lens implant during cataract surgery
+39500	Diaphragm hernia repair through open abdomen incision
+75368	Brain artery imaging with contrast, series of images
+31595	Cutting one side's recurrent laryngeal nerve, separate procedure
+52222	Bladder scope with burning treatment of lesion
+91314	Bivalent mRNA COVID-19 vaccine, 25 mcg preservative-free dose
+38540	Removal of deep neck lymph nodes
+27490	Knee meniscus repair with arthroscope
+61030	Brain ventricle puncture with contrast injection
+74275	Colon X-ray with barium and air contrast
+45319	Lower colon scope with retrograde washout
+46762	Anal sphincter repair with artificial sphincter implant, adult
+51732	Bladder pressure test before and after medicine, with liquid
+60242	Near-total thyroid gland removal
+96905	Ultraviolet light skin treatment session
+75696	Neck blood vessel X-ray, both sides, with catheter
+23357	Shoulder scope with lining tissue biopsy
+27414	Knee side and cross ligaments repair, delayed
+81214	BRCA1 breast cancer gene full sequence test
+91315	COVID-19 mRNA vaccine, 10 mcg dose, preservative free
+51746	Detailed urine flow measurement, first test
+51755	Urethra ultrasound flow test before and after medicine
+46932	Freezing treatment of anal lesions
+39060	Chest mediastinum opening to remove foreign body
+58430	Uterine interposition surgery
+17301	Mohs skin cancer surgery, follow-up stage, up to 5 sections
+27410	Knee collateral or cruciate ligament repair, delayed
+39070	Breastbone opening to remove chest foreign body
+74615	Test of each lung's breathing function
+78307	Whole-body or multi-area nuclear imaging scan
+67510	Behind-eye injection of air or contrast dye
+27378	Knee scope partial meniscus removal
+72180	Pelvis X-ray with stereo imaging pair
+67146	Laser treatment to prevent retinal detachment
+70302	Dental X-ray of all teeth, maximum views
+70362	Throat X-ray study with contrast dye
+19187	Both breasts subcutaneous mastectomy with delayed implant
+59505	Cesarean birth with classical incision
+67214	Xenon light treatment for retinal lesion
+51787	Electromyography with urine flow test
+52232	Bladder scope with burning or removal of small tumor
+54305	Penile curvature release with foreskin graft
+67106	Laser repair of detached retina
+61025	Brain ventricle puncture with gas injection
+73205	Heart sound recording with ECG, same day
+19251	Both breasts removed with immediate implant, modified radical
+78112	Nuclear scan for slow gastrointestinal blood loss
+41500	Tongue fixation with a device, not stitches
+67223	Freezing treatment for retina damage, one eye
+19351	Nipple and areola reconstruction, both breasts
+46920	Removal of anal warts by burning
+17300	Chemical skin cancer removal, first stage
+53021	Widen urinary opening in infant, hospital setting
+72290	Spine disc X-ray with contrast dye
+67103	Eye surgery to reattach detached retina with freezing
+50956	Ureter scope with burn treatment in hospital
+51743	Bladder flow test before and after medication
+19205	Both breasts removed, radical type
+52212	Bladder scope with burn treatment in hospital
+67222	Heat treatment for retina damage, one eye
+19228	One breast removed with later implant placement
+70040	Eye X-ray to locate foreign object
+67226	Laser treatment for retina damage, one eye
+74242	Upper GI X-ray series with contrast, complete
+51730	Bladder pressure test with detailed pressure readings
+19386	Custom mold made for breast implant fitting
+19183	Both breasts removed beneath skin, nipple kept
+49506	Groin hernia repair, both sides, age 5 and up
+19181	Both breasts removed completely, simple type
+93021	Heart rhythm recording during exercise, report only
+51742	Additional bladder flow test, each extra
+37732	Vein removal and tie-off in one leg with ulcer
+46933	Freezing treatment of extensive anal warts
+75555	Limited heart MRI for structure and function, with and without contrast
+62286	Air contrast brain imaging via lumbar injection
+49430	Air contrast injection for retroperitoneal imaging
+55601	Both seminal vesicles opened surgically
+19225	Both breasts removed with immediate implant placement
+40826	Stitching a mouth cut up to 2.5 cm
+15942	Removal of sitting-bone pressure sore with flap closure
+20826	Partial thumb reattachment at base joint
+78271	Vitamin B12 absorption test with intrinsic factor
+67143	Freezing treatment to prevent retinal detachment
+15932	Removal of tailbone pressure sore with bone removal
+19121	Removal of breast lesions, both breasts
+45371	Flexible colon scope to the bend, with washout
+91313	Bivalent mRNA COVID-19 vaccine, 50 mcg adult dose
+23356	Keyhole shoulder surgery with tissue repair
+92300	Contact lens fitting, initial
+23355	Diagnostic keyhole shoulder exam
+61051	Brain fluid space puncture with drug injection
+19216	Both breasts removed with delayed implant
+23358	Keyhole shoulder surgery to remove loose body
+74460	Air contrast X-ray behind the abdominal lining
+66220	Eye wall bulge repair without graft
+78402	Nuclear scan of heart blood pool
+22500	Spine manipulation under anesthesia, any region
+21380	Repair of eye socket floor fracture
+77500	Radioactive iodine thyroid uptake, single reading
+24001	Elbow joint opened surgically with drainage
+19212	Both breasts removed with immediate implant
+91317	Bivalent mRNA COVID-19 vaccine, 3 mcg dose
+93001	Heart electrical tracing only, no interpretation
+78721	Kidney function scan with radioactive tracer
+75846	Azygos vein X-ray study, selective, complete
+52800	Bladder stone crushing and removal
+78272	Vitamin B-12 absorption test with intrinsic factor
+61612	Skull base carotid artery repair, petrous canal
+61610	Skull base carotid artery repair, cavernous sinus
+15943	Ischial pressure sore removal with bone trim and flap
+4307F	Alcohol use screening completed for patient
+64508	Numbing injection at carotid sinus, separate procedure
+54154	Circumcision with clamp and nerve block, age 1 month or older
+50550	Kidney scope exam, hospital
+41146	Tongue removal with neck lymph node dissection
+17302	Mohs skin cancer surgery, follow-up stage, six or more sections
+42250	Closure of opening between mouth and sinus, under 1 cm
+50556	Kidney scope exam with cautery treatment, hospital
+70019	Thyroid hormone uptake blood test
+51738	Bladder flow test before and after nerve block
+95835	Manual muscle strength test, all four limbs and trunk
+19254	Mastectomy on one side with delayed breast implant
+19331	Breast implant removal, both sides
+15785	Skin sanding abrasion, one body region
+95850	Joint motion measurement with written report
+27853	Ankle scope procedure to remove loose fragment
+78270	Vitamin B-12 absorption test, with and without intrinsic factor
+27851	Ankle joint scope surgery
+63615	Spinal cord lesion biopsy or removal, image-guided
+67035	Eye vitrectomy, mechanical
+27374	Knee arthroscopic surgery
+67212	Heat treatment to destroy retinal lesion
+27376	Knee scope with lining tissue biopsy
+61332	Eye socket exploration through skull, with biopsy
+52100	Bladder scope exam, hospital
+54510	Testicle lesion removal
+19245	Mastectomy on both breasts, modified radical
+65455	Freezing treatment of corneal lesion
+76001	Fluoroscopy guidance over one hour
+19141	Breast tissue removal for enlarged male breasts, both sides
+82700	Stool fat test
+82606	Vitamin B-12 blood test, bioassay method
+86660	Syphilis antibody test (TPI)
+85545	Lupus cell prep test
+V2532	Gas permeable contact lens
+0373U	Respiratory infection panel with antibiotic resistance genes
+0369U	Stomach and bowel infection panel, 31 germs with resistance genes
+0370U	Surgical wound infection panel, 34 germs with resistance genes
+0374U	Urinary and genital infection panel with resistance genes
+0006U	Medication, drug, and supplement screening, 120+ substances
+G0365	Vein mapping for dialysis access
+L3964	Wheelchair-attached mobile arm support
+G0275	Kidney artery angiogram, one or both sides
+0451U	Multiple myeloma blood test tracking paraprotein over time
+E0230	Ice cap or ice collar
+L3969	Monosuspension arm and hand support
+K0734	Protective wheelchair seat cushion, under 22 inches wide
+L3968	Friction dampening arm support
+C1879	Implantable tissue marker
+L3966	Mobile arm support for reclining wheelchair
+L3974	Mobile arm support with forearm supinator
+0450U	Multiple myeloma paraprotein sequencing blood test
+K0737	Skin protection and positioning wheelchair cushion, 22 inches or wider
+C9367	Skin substitute dermal template per square centimeter
+E0238	Moist non-electric heating pad
+E0571	Electric compressor for nebulizer treatments
+L3970	Elevating arm support for upper arm
+K0736	Skin protection and positioning wheelchair cushion, under 22 inches wide
+K0735	Skin protection wheelchair cushion, 22 inches or wider
+L3965	Wheelchair-attached arm support, Rancho type
+L3972	Lateral rocker arm support with elastic
+84526	Kidney urea clearance test
+82335	Urine calcium qualitative screening test
+82385	Liver cephalin flocculation test
+87041	Bacterial culture test
+84400	Sulfonamide blood level test
+86285	Hepatitis B surface antigen test
+82505	Duodenal chymotrypsin test
+86045	Strep carbohydrate antibody test, anti-A
+82596	Cryoglobulin blood test
+83005	Guanase blood test
+82293	Bromsulfalein dye liver function test
+84000	Phenolsulfonphthalein kidney dye test
+82019	Adrenal gland function test
+84440	Thymol turbidity liver test
+82345	Stool calcium test, timed collection
+86402	Aspergillus antibody gel diffusion test
+84109	Urine porphobilinogen test
+82011	Aspirin level blood test
+84645	Zinc sulfate turbidity liver test
+82614	Blood cystine screening test
+82490	Blood chromium test
+83974	Gastric pepsin test
+82927	Additional free and total gastric acid test
+83535	Thyroxine T4 blood test
+85165	Capillary fragility test
+84317	Stool starch screening test
+82018	Adrenaline and related hormones test
+81051	Fractional gastric analysis test
+86125	Blood type and crossmatch test
+83577	Plasma thrombin antecedent test
+82155	Amylase isoenzyme test
+83533	Protein-bound iodine test
+87055	Stool culture test
+85150	Calcium clotting time test
+86286	Hepatitis B surface antigen test, concentrated serum
+51748	Bladder flow and pressure test before and after medicine
+67102	Retinal detachment repair using heat (diathermy)
+33282	Implanted heart rhythm recorder that patient can trigger
+32000	Chest fluid drainage by needle, first session
+19255	Both breasts removed with delayed implant placement
+52805	Bladder stone crushed and removed, large or complicated
+15875	Liposuction of one body area
+78285	Gut absorption test using a tracer
+54330	Urethra repair with penile curve release, single stage
+61480	Skull opening at back of head for brainstem tractotomy
+91316	Covid-19 bivalent mRNA vaccine, 10 mcg dose
+52605	Bladder lesion burning through urethra, hospital follow-up
+77941	Non-surgical eye tumor location scan
+67907	Eyelid droop repair with eye muscle transfer
+51789	Extra muscle nerve test electrodes, each additional
+56521	Freezing of multiple benign vulvar lesions
+64814	Pelvic sympathetic nerve removal, hypogastric or presacral
+21350	Cheekbone fracture repair with open surgery
+20005	Deep or complicated skin abscess drained through incision
+52202	Bladder scope exam with tissue sample, hospital
+38535	Deep armpit lymph node removal or biopsy
+19186	One-breast under-skin removal with delayed implant
+51747	Extra bladder flow test with pressure, add-on
+27411	Second knee inner ligament and capsule repair
+91312	Covid-19 bivalent mRNA vaccine, 30 mcg dose
+15963	Heel pressure sore removal with skin flap and bone repair
+70301	Extra dental X-ray film, add-on
+72250	Spine dye X-ray (myelogram) of lower back
+43225	Throat scope with muscle cut to open esophagus
+54325	Urethra rebuild in scrotum or perineum
+40760	Lip cleft repair with lower lip flap, Abbe method
+51776	Urethra pressure test with belly pressure, first
+0469T	Retinal polarization scan eye screening, both eyes
+0900T	Heart MRI blood flow estimate using software analysis
+0899T	Heart MRI blood flow measurement using software-assisted analysis
+0154A	COVID-19 vaccine shot administration, booster dose
+73511	Pelvis and hip X-ray with side view, one or both hips
+15800	Facial skin abrasion or acid peel
+76301	Thermogram imaging of both sides
+19311	Breast augmentation with implants, both breasts
+73640	Foot tarsal bones X-ray
+33950	Heart transplant
+58618	Open surgery to release adhesions around ovaries and tubes
+77940	Non-surgical brain tumor location mapping
+2051A	Removal of middle ear lesion
+70262	X-ray of skull, sinuses and face, complete
+97202	Physical therapy office visit with combined treatments
+70682	Sinus tract X-ray study
+51779	Bladder and urethral pressure test with abdominal pressure, additional
+51775	Bladder and urethral pressure test, additional
+52190	Separate kidney function test using catheters
+51759	Urethral Doppler flow scan, additional void
+19310	Breast augmentation with implant, one side
+76300	Heat imaging (thermogram), one side
+93570	Balloon angioplasty of a heart artery
+19229	Both breasts removal with delayed implants
+21420	Treatment of upper jaw fracture
+50950	Ureteroscopy, hospital setting
+70012	Residual lung volume test
+15827	Face lift with chin and neck fat pad
+19224	Breast removal with immediate implant, one side
+42895	Limited throat removal with radical neck surgery
+52110	Bladder scope with ejaculatory duct catheter, hospital
+27377	Knee arthroscopy with loose body removal
+19221	Breast removal, both sides
+75819	Brain wave test (electroencephalogram)
+19184	Subcutaneous breast removal with immediate implant, one side
+19185	Subcutaneous breast removal with immediate implants, both sides
+51769	Urethral fluid flow test, additional location
+51778	Bladder and urethral pressure test with abdominal pressure, first
+50952	Ureteroscopy with catheter placement, hospital
+51737	Urine flow test before and after medication
+50960	Ureter scope with stone or foreign object removal, hospital
+93781	Circulation time test using two or more materials
+96030	Chemotherapy for cancer
+27373	Diagnostic knee arthroscopy
+51752	Urethral Doppler flow test, multiple voids, one transducer
+51768	Urethral fluid flow test, one void with local
+49630	Repair of twisted omentum
+67142	Retinal detachment prevention treatment (diathermy)
+39050	Chest cavity surgery through neck to remove foreign object
+67216	Laser treatment of retina lesion
+75691	Neck vertebral artery X-ray, one side, direct needle puncture
+90321	Comprehensive first nursing home visit
+81052	Tubeless stomach acid test (Diagnex Blue)
+90120	Comprehensive first home visit
+97000	Physical therapy office visit with one treatment type
+36480	Central venous catheter placement with pressure monitoring
+C9225	Fluocinolone acetonide eye implant
+E2223	Wheelchair tire valve replacement, each
+L3672	Custom shoulder airplane brace without joints
