@@ -39,7 +39,8 @@ SP = f'site/builds/{BID}/'
 TOUT = f'site/every/{BID}/'
 HPFX = 'data/hosp_every/'
 RESERVE = 1
-SIZE_INS, SIZE_HOSP, SIZE_H2 = 's-8vcpu-16gb-amd', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'
+SIZE_INS, SIZE_HOSP, SIZE_H2 = 's-8vcpu-32gb-amd', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'   # Nov 8, 2026: insurer part 16 -> 32 GB (see build1)
+BUNDLE_V = '2026-11-08'   # Nov 8, 2026: a build already under way re-packs the code once when this changes, so relaunched machines get fixes
 REGIONS = ['nyc3', 'sfo3', 'nyc1']
 
 
@@ -244,12 +245,18 @@ def main():
         except Exception: st['fieldrules'] = False
         log(len(todo), 'of', len(jobs), 'hospital files changed')
     if st['stage'] == 'build1':
+        if st.get('bundle_v') != BUNDLE_V: bundle(); st['bundle_v'] = BUNDLE_V
+        # Nov 8, 2026: November's DFW build (97 tables, 141.8 GB) finished stage A at 04:16 UTC and then went 3.5 hours
+        # without one stage-B batch: each batch took longer than the 60-minute stall watchdog, so the script restarted
+        # every hour and started over. Now: 32 GB machines, 2 threads and 6 GB per worker, a 4-hour watchdog, a memory
+        # line every minute, and each machine's own log folder (both wrote the same log.txt, so each erased the other's)
         common = dict(TOUT=TOUT, OUTP=SP, WK=f'work/every/{BID}/', ACACHE='work/every/Acache/', NOXPART='1', PIECE_GB='0.4',
-                      MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='3', WTHREADS='1', WMEM='2500MB', WORK='/d')
+                      MAXPIECES='3', THREADS='4', MEM='9GB', WORKERS='3', WTHREADS='2', WMEM='6GB', WORK='/d',
+                      STALL_MIN='240', MEMLOG='1')
         if st.get('fieldrules'): common['FIELDRULES'] = st['fieldrules'] if isinstance(st['fieldrules'], str) else '1'
         ins_done = exists(TOUT + 'embed.json')
-        ensure(st, 'ins1', SIZE_INS, RUN_INS, common, ins_done)
-        ensure(st, 'ins2', SIZE_INS, RUN_INS, dict(common, AORDER='desc', BORDER='desc'), ins_done)
+        ensure(st, 'ins1', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins1/'), ins_done)
+        ensure(st, 'ins2', SIZE_INS, RUN_INS, dict(common, OUTP=SP + 'ins2/', AORDER='desc', BORDER='desc'), ins_done)
         todo = getj(SP + 'hosp_todo.json', [])
         hdone = {k.rsplit('/', 1)[1][:-5] for k in ls(HPFX + 'done/')}
         left = [j for j in todo if j['id'] not in hdone]
