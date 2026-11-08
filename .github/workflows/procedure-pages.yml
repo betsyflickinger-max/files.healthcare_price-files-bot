@@ -17,7 +17,7 @@ on:
         type: boolean
         default: false
       areas:
-        description: "Only these areas, comma-separated slugs (e.g. georgia,ohio). A forced rebuild of every area runs past the 6-hour limit, so do it in batches."
+        description: "Only these areas, comma-separated slugs (e.g. georgia,ohio). Separate batches with ';' to build them one after another, each in its own job (a forced rebuild of every area at once runs past the 6-hour limit)."
         type: string
         default: ""
 
@@ -30,7 +30,22 @@ permissions:
   contents: write
 
 jobs:
+  plan:   # Nov 8, 2026: one job per batch of areas, run one at a time (each job has its own 5h40m limit)
+    runs-on: ubuntu-latest
+    outputs:
+      batches: ${{ steps.b.outputs.batches }}
+    steps:
+      - id: b
+        env:
+          IN: ${{ inputs.areas }}
+        run: python3 -c "import json,os; v=os.environ.get('IN') or ''; print('batches='+json.dumps([b.strip() for b in v.split(';') if b.strip()] or ['']))" >> "$GITHUB_OUTPUT"
   pages:
+    needs: plan
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        batch: ${{ fromJSON(needs.plan.outputs.batches) }}
     runs-on: ubuntu-latest
     timeout-minutes: 340   # Oct 18: a forced rebuild of every area takes over 2 hours
     env:
@@ -42,7 +57,7 @@ jobs:
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       FORCE: ${{ inputs.force && '--force' || '' }}
-      AREAS: ${{ inputs.areas && format('--areas {0}', inputs.areas) || '' }}
+      AREAS: ${{ matrix.batch && format('--areas {0}', matrix.batch) || '' }}
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
