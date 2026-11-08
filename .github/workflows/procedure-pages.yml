@@ -8,15 +8,19 @@ name: Procedure pages
 on:
   schedule:
     - cron: "17 11 * * *"
-  push:                       # a change to the page code re-renders every page
-    branches: [main]
-    paths: [site/procedure_pages.py]
+  # Nov 8, 2026: no longer runs on a push of procedure_pages.py. A forced rebuild of every area (about 100 now) runs past
+  # GitHub's 5h40m limit and saves nothing; dispatch it in batches with the areas input instead.
   workflow_dispatch:
     inputs:
       force:
         description: "Rebuild every page even if nothing changed"
         type: boolean
         default: false
+      areas:
+        description: "Only these areas, comma-separated slugs (e.g. georgia,ohio). A forced rebuild of every area runs past the 6-hour limit, so do it in batches."
+        type: string
+        default: ""
+
 
 concurrency:
   group: procedure-pages   # Oct 18: own queue; hourly state jobs kept bumping it from the shared one. deploy() re-checks the live site and rebuilds if it changed.
@@ -37,7 +41,8 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      FORCE: ${{ (inputs.force || github.event_name == 'push') && '--force' || '' }}
+      FORCE: ${{ inputs.force && '--force' || '' }}
+      AREAS: ${{ inputs.areas && format('--areas {0}', inputs.areas) || '' }}
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +54,7 @@ jobs:
           node-version: "20"
       - run: pip install boto3==1.35.36 pillow==10.4.0 pyarrow==26.0.0   # pyarrow: provider ZIPs for the out-of-state check (Oct 19, 2026)
       - shell: bash
-        run: python site/procedure_pages.py deploy $FORCE | tee -a "$GITHUB_STEP_SUMMARY"
+        run: python site/procedure_pages.py deploy $FORCE $AREAS | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Homepage v2 (/v2/) and tester tracking, from the same figures (site/home_v2.py; skips if nothing changed)
         shell: bash
         run: python site/home_v2.py deploy | tee -a "$GITHUB_STEP_SUMMARY"
