@@ -18,6 +18,9 @@ on:
       hospital:
         description: "hospital-file lines to sample"
         default: "400"
+      minutes:
+        description: "time budget for the insurer tables (minutes)"
+        default: "120"
 
 concurrency:
   group: audit-roundtrip-v3
@@ -46,7 +49,7 @@ jobs:
       - name: Round trip
         run: |
           set -o pipefail
-          python -u audit/roundtrip.py --insurer "${{ inputs.insurer || '1000' }}" --hospital "${{ inputs.hospital || '400' }}" 2>&1 | tee /tmp/rt.log
+          python -u audit/roundtrip.py --insurer "${{ inputs.insurer || '1000' }}" --hospital "${{ inputs.hospital || '400' }}" --minutes "${{ inputs.minutes || '120' }}" 2>&1 | tee /tmp/rt.log
       - name: Report
         if: always()
         run: |

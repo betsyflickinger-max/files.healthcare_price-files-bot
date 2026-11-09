@@ -102,12 +102,17 @@ def prefixes(files, slug):
 
 
 def money_in(text, v):
-    for x in NUM.findall(text or ''):
-        try:
-            if abs(float(x.replace(',', '')) - v) < 0.006:
-                return True
-        except ValueError:
-            pass
+    """Nov 9, 2026: a CSV line is split into its fields first. Reading the whole line at once glued neighbors together
+    ("249,174.3" read as 249,174.3), which made 23 good lines look wrong in the first round trip."""
+    s = (text or '').lstrip()
+    parts = [text or ''] if s[:1] in ('{', '[') else next(csv.reader([text or '']), [])
+    for p in parts:
+        for x in NUM.findall(p):
+            try:
+                if abs(float(x.replace(',', '')) - v) < 0.006:
+                    return True
+            except ValueError:
+                pass
     return False
 
 
@@ -305,11 +310,18 @@ def raw_index():
 
 
 def stream_lines(key):
+    """The archived original as text. Nov 9, 2026: what's inside is decided by its first bytes, not its name: many hospitals
+    serve gzip or zip under a .csv or .ashx name, and reading those as text gave garbage ("code not on cited line", "file
+    ended before the cited line"). A zip's data file is its largest file."""
     import zstandard
-    if '.zip' in key.lower():   # a zipped original: unpack the zip to a temp file, read its first data file
+    body = s3.get_object(Bucket=B, Key=key)['Body']
+    src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
+    src = io.BufferedReader(src, 1 << 20)
+    head = src.peek(4)[:4]
+    if head[:2] == b'\x1f\x8b':
+        return io.TextIOWrapper(io.BufferedReader(gzip.GzipFile(fileobj=src), 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+    if head == b'PK\x03\x04' or '.zip' in key.lower():
         tmp = tempfile.NamedTemporaryFile(suffix='.zip', delete=False)
-        body = s3.get_object(Bucket=B, Key=key)['Body']
-        src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
         while True:
             b = src.read(1 << 22)
             if not b:
@@ -317,11 +329,9 @@ def stream_lines(key):
             tmp.write(b)
         tmp.close()
         z = zipfile.ZipFile(tmp.name)
-        name = next(n for n in z.namelist() if not n.endswith('/') and not n.startswith('__MACOSX'))
-        return io.TextIOWrapper(z.open(name), encoding='utf-8-sig', errors='replace', newline='')
-    body = s3.get_object(Bucket=B, Key=key)['Body']
-    rd = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
-    return io.TextIOWrapper(io.BufferedReader(rd, 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+        inner = max((i for i in z.infolist() if not i.is_dir() and not i.filename.startswith('__MACOSX')), key=lambda i: i.file_size)
+        return io.TextIOWrapper(io.BufferedReader(z.open(inner), 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+    return io.TextIOWrapper(src, encoding='utf-8-sig', errors='replace', newline='')
 
 
 def check_hospital_file(key, xs):
