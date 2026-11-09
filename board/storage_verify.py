@@ -56,7 +56,7 @@ def split(side, prefix):
     for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=prefix, Delimiter="/"):
         rows += _rows(page)
         subs += [p["Prefix"] for p in page.get("CommonPrefixes", [])]
-    return rows, subs
+    return rows, list(dict.fromkeys(subs))   # same folder twice across pages would list it twice
 
 
 def full(side, prefix):
@@ -68,12 +68,8 @@ def full(side, prefix):
     return rows
 
 
-def main():
-    out, label = sys.argv[1], sys.argv[2]
-    t0 = time.time()
-    files = {"r2": {}, "b2": {}}
-    errs = []
-
+def run(files, errs):
+    """Fill files from both buckets; returns the deepest folder list (for the summary)."""
     def add(side, rows):
         d = files[side]
         for k, s, t in rows:
@@ -103,6 +99,21 @@ def main():
                 add(side, f.result())
             except Exception as e:
                 errs.append(f"{side}:{p}: {e!r}"[:300])
+    return level
+
+
+def main():
+    out, label = sys.argv[1], sys.argv[2]
+    t0 = time.time()
+    files = {"r2": {}, "b2": {}}
+    errs = []
+    try:
+        level = run(files, errs)
+    except Exception as e:   # e.g. a worker process died: no trustworthy result, so say so and exit 2
+        with open(f"{out}/{label}-summary.json", "w") as f:
+            json.dump(dict(errors=errs + [f"listing stopped: {e!r}"[:300]], seconds=round(time.time() - t0)), f, indent=1)
+        print("? ? ? ? ? ? 1")
+        sys.exit(2)
     R, Bk = files["r2"], files["b2"]
     missing = sorted(k for k in R if k not in Bk)
     differ = sorted(k for k in R if k in Bk and R[k][0] != Bk[k][0])
@@ -118,7 +129,10 @@ def main():
                 errors=errs, folders_listed=len(level), seconds=round(time.time() - t0))
     with open(f"{out}/{label}-summary.json", "w") as f:
         json.dump(summ, f, indent=1)
-    print(f"{len(missing)} {len(differ)} {len(extra)} {len(extra_all) - len(extra)} {len(R)} {int(summ['r2_newest'])} {len(errs)}")
+    if errs:   # incomplete listing: counts would be misleading, so print none (the caller sees exit 2 either way)
+        print(f"? ? ? ? ? ? {len(errs)}")
+    else:
+        print(f"{len(missing)} {len(differ)} {len(extra)} {len(extra_all) - len(extra)} {len(R)} {int(summ['r2_newest'])} 0")
     sys.exit(2 if errs else 0)
 
 
