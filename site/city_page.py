@@ -254,6 +254,8 @@ def build(slug, template, embed, rvu, med_all, t5, out, hosp_index=None, arb_fil
     open(page, 'w', encoding='utf-8').write(join(pre, T, post)); json.dump(T['hosp'], open(hosp, 'w'))
     if hosp_index:
         H = json.load(open(hosp_index))
+        if 'h' in H:   # Nov 9, 2026: 'h' names the per-code folder (hosp_area.py); the page itself doesn't carry it
+            H.pop('h'); hosp_index = f'{out}/hosp_index_page.json'; json.dump(H, open(hosp_index, 'w'), separators=(',', ':'))
         if set(H) != set(T['hosp']): sys.exit(f'STOP: hospital index keys {sorted(H)} differ from the page\'s {sorted(T["hosp"])}')
         hosp, nh = hosp_index, len(H['src'])
         print(f'{name}: {nh} hospital price files')
