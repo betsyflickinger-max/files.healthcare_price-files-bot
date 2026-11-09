@@ -22,6 +22,7 @@ jobs:
       - run: pip install -q boto3 requests
       - run: |
           cd insurers && python - <<'PY'
+          import sys; sys.path[:0] = [".", "../bot"]
           import collections, time, store, fleet
           s3, b = store.r2()
           jobs, claims = fleet.jobs(s3, b), fleet.claims(s3, b)
