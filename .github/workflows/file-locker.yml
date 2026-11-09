@@ -21,9 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 340
     env:
-      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
-      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
-      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      # Locks apply to the Backblaze bucket only (the B2_* secrets, same as storage-copy / copy-progress).
+      STORAGE_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      STORAGE_REGION: us-east-005
+      R2_BUCKET: ${{ secrets.B2_BUCKET }}
       LOCKER_KEY_ID: ${{ secrets.LOCKER_KEY_ID }}
       LOCKER_APP_KEY: ${{ secrets.LOCKER_APP_KEY }}
       DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
