@@ -73,10 +73,14 @@ def gh(method, path, **kw):
 
 
 def pages(path, key, **params):
+    """Every page of a GitHub list. Raises on any API error: a failed page must never read as "nothing there"."""
     out, page = [], 1
     while True:
         r = gh("GET", path, params={**params, "per_page": 100, "page": page})
-        items = r.json().get(key, []) if r.ok else []
+        if not r.ok:
+            raise RuntimeError(f"GitHub {path} page {page}: HTTP {r.status_code}")
+        data = r.json()
+        items = data.get(key, []) if key else data
         out += items
         if len(items) < 100:
             return out
@@ -84,7 +88,7 @@ def pages(path, key, **params):
 
 
 def open_issue():
-    for i in gh("GET", "/issues", params={"state": "open", "per_page": 100}).json():
+    for i in pages("/issues", None, state="open"):
         if i.get("title", "").startswith(TITLE) and "pull_request" not in i:
             return i
     return None
@@ -113,10 +117,13 @@ def hold_keys(s3, b):
 
 
 def read(s3, b, k):
+    """A hold file's text; "" only when the file truly doesn't exist (any other error raises)."""
     try:
         return s3.get_object(Bucket=b, Key=k)["Body"].read().decode("utf-8", "replace").strip()
-    except ClientError:
-        return ""
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") in ("NoSuchKey", "404", "NotFound"):
+            return ""
+        raise
 
 
 def do_h():
@@ -135,7 +142,7 @@ def machines():
 
 def running_runs():
     out = []
-    for st in ("in_progress", "queued", "waiting"):
+    for st in ("in_progress", "queued", "waiting", "pending", "requested"):
         for r in pages("/actions/runs", "workflow_runs", status=st):
             f = Path(r.get("path") or "").name
             if f not in KEEP_ON:
@@ -144,17 +151,14 @@ def running_runs():
 
 
 def status(s3, b):
-    """(ready, lines)"""
+    """(ready, lines). Any error checking raises, so a failed check never reads as "nothing running"."""
     ms, runs = machines(), running_runs()
     cl = fleet.claims(s3, b)
     live = []
-    try:
-        for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=fleet.D):
-            for o in pg.get("Contents", []):
-                if time.time() - o["LastModified"].timestamp() < 600:
-                    live.append(o["Key"].split("/")[-1].removesuffix(".json"))
-    except ClientError:
-        pass
+    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=fleet.D):
+        for o in pg.get("Contents", []):
+            if time.time() - o["LastModified"].timestamp() < 600:
+                live.append(o["Key"].split("/")[-1].removesuffix(".json"))
     lines = [f"- Rented machines still on: {len(ms)}" + (f" ({', '.join(ms)})" if ms else ""),
              f"- GitHub jobs still running or queued: {len(runs)}" + ("".join(f"\n  - {x}" for x in runs[:30]) if runs else ""),
              f"- Files being read right now (claims): {len(cl)}",
@@ -164,37 +168,65 @@ def status(s3, b):
     ready = not ms and not runs and not live
     if ready and cl:
         lines[2] += " (stale: nothing is running that could be reading them; they go back in line after the resume)"
+    if live:
+        lines.append("  Always-on servers keep checking in until their service is stopped (`systemctl stop` on the server).")
     lines.append(f"\n**Ready for the final pass: {'yes' if ready else 'no'}.**" +
                  ("" if ready else " Machines finish the file they're on and return themselves; check again later."))
     return ready, lines
+
+
+def _save(issue, state, err=""):
+    """Rewrite the issue with everything done so far (called after every step, and on failure)."""
+    wrote, kept, paused, failed = state["holds"], state["kept"], state["workflows"], state["failed"]
+    body = (("**The pause stopped partway** (" + err[:300] + "). Everything done so far is listed below and `resume` "
+             "undoes exactly that.\n\n" if err else "") +
+            f"Paused for the move from Cloudflare R2 to Backblaze. **Nothing is deleted and no machine is stopped:** "
+            f"machines finish the file they're reading, then return themselves.\n\n"
+            f"- Put {len(wrote)} queues on hold in {state['store']} (machines check between files)" +
+            (f"; {len(kept)} were already on hold and are left as they are" if kept else "") +
+            f"\n- Turned off {len(paused)} workflows that use storage:" + "".join(f"\n  - {w['name']}" for w in paused) +
+            ("".join(f"\n- **Could not turn off:** {w['name']}" for w in failed)) +
+            f"\n- Left on: {', '.join(sorted(KEEP_ON))}\n\n"
+            f"To undo: run the **Maintenance** workflow with `resume`. It turns back on only these workflows and removes "
+            f"only these hold files.\n\n<!-- maintenance: {json.dumps(state)} -->")
+    r = gh("PATCH", f"/issues/{issue}", json={"body": body})
+    if not r.ok:
+        raise RuntimeError(f"couldn't save the pause record to issue #{issue}: HTTP {r.status_code}")
 
 
 def pause(s3, b, where):
     if open_issue():
         print("already paused; status only")
         return
-    issue = gh("POST", "/issues", json={"title": f"{TITLE}: storage move to Backblaze", "assignees": [REPO.split("/")[0]],
-                                        "body": "Pausing now; details follow."}).json()["number"]
+    # The issue comes first so the hold files can name it; its record is saved after every step, so a pause that
+    # stops partway can still be undone exactly.
+    r = gh("POST", "/issues", json={"title": f"{TITLE}: storage move to Backblaze", "assignees": [REPO.split("/")[0]],
+                                    "body": "Pausing now; details follow.\n\n<!-- maintenance: " + json.dumps(
+                                        {"workflows": [], "holds": [], "kept": [], "failed": [], "store": where}) + " -->"})
+    if not r.ok:
+        raise RuntimeError(f"couldn't open the maintenance issue: HTTP {r.status_code}")
+    issue = r.json()["number"]
+    state = {"workflows": [], "holds": [], "kept": [], "failed": [], "store": where}
     note = f"{STAMP} {fleet.iso()}: storage move to Backblaze (issue #{issue})"
-    wrote, kept = [], []
-    for k in hold_keys(s3, b):
-        if read(s3, b, k):
-            kept.append(k)
-            continue
-        s3.put_object(Bucket=b, Key=k, Body=note.encode())
-        wrote.append(k)
-    paused = [w for w in storage_workflows() if gh("PUT", f"/actions/workflows/{w['id']}/disable").status_code == 204]
-    state = {"workflows": paused, "holds": wrote, "store": where}
-    body = (f"Paused for the move from Cloudflare R2 to Backblaze. **Nothing is deleted and no machine is stopped:** "
-            f"machines finish the file they're reading, then return themselves.\n\n"
-            f"- Put {len(wrote)} queues on hold in {where} (machines check between files)" +
-            (f"; {len(kept)} were already on hold and are left as they are" if kept else "") +
-            f"\n- Turned off {len(paused)} workflows that use storage:" + "".join(f"\n  - {w['name']}" for w in paused) +
-            f"\n- Left on: {', '.join(sorted(KEEP_ON))}\n\n"
-            f"To undo: run the **Maintenance** workflow with `resume`. It turns back on only these workflows and removes "
-            f"only these hold files.\n\n<!-- maintenance: {json.dumps(state)} -->")
-    gh("PATCH", f"/issues/{issue}", json={"body": body})
-    print(f"paused: issue #{issue}, {len(paused)} workflows off, {len(wrote)} holds written, {len(kept)} already held")
+    try:
+        for k in hold_keys(s3, b):
+            if read(s3, b, k):
+                state["kept"].append(k)
+                continue
+            state["holds"].append(k)           # recorded before the write: resume only removes files carrying our STAMP
+            s3.put_object(Bucket=b, Key=k, Body=note.encode())
+        _save(issue, state)
+        for w in storage_workflows():
+            ok = gh("PUT", f"/actions/workflows/{w['id']}/disable").status_code == 204
+            state["workflows" if ok else "failed"].append(w)
+        _save(issue, state)
+    except Exception as e:
+        _save(issue, state, err=repr(e))
+        raise
+    print(f"paused: issue #{issue}, {len(state['workflows'])} workflows off ({len(state['failed'])} failed), "
+          f"{len(state['holds'])} holds written, {len(state['kept'])} already held")
+    if state["failed"]:
+        sys.exit("some workflows could not be turned off; see the issue")
     return issue
 
 
@@ -204,8 +236,12 @@ def resume(s3, b):
         print("nothing to resume: no open maintenance issue")
         return
     m = MARK.search(issue.get("body") or "")
-    state = json.loads(m.group(1)) if m else {"workflows": [], "holds": []}
-    back = [w["name"] for w in state["workflows"] if gh("PUT", f"/actions/workflows/{w['id']}/enable").status_code == 204]
+    if not m:
+        sys.exit(f"issue #{issue['number']} has no pause record; not touching anything (check it by hand)")
+    state = json.loads(m.group(1))
+    back, still_off = [], []
+    for w in state["workflows"]:
+        (back if gh("PUT", f"/actions/workflows/{w['id']}/enable").status_code == 204 else still_off).append(w["name"])
     stores = [(s3, b)] + ([r2_direct()] if env("STORAGE_ENDPOINT") and r2_direct() else [])
     removed, left = 0, []
     for c, bk in stores:
@@ -216,9 +252,13 @@ def resume(s3, b):
                 removed += 1
             elif txt:
                 left.append(k)   # someone changed it since: not ours to remove
-    gh("POST", f"/issues/{issue['number']}/comments", json={"body":
-        f"Resumed: turned {len(back)} of {len(state['workflows'])} workflows back on and lifted {removed} hold files."
-        + (f" Left alone (changed since the pause): {', '.join(sorted(set(left)))}." if left else "") + " Closing."})
+    msg = (f"Resumed: turned {len(back)} of {len(state['workflows'])} workflows back on and lifted {removed} hold files."
+           + (f" Left alone (changed since the pause): {', '.join(sorted(set(left)))}." if left else ""))
+    if still_off:
+        gh("POST", f"/issues/{issue['number']}/comments", json={"body": msg + " **Could not turn back on:** " +
+            ", ".join(still_off) + ". Leaving this issue open; run `resume` again."})
+        sys.exit(f"{len(still_off)} workflows could not be turned back on")
+    gh("POST", f"/issues/{issue['number']}/comments", json={"body": msg + " Closing."})
     gh("PATCH", f"/issues/{issue['number']}", json={"state": "closed"})
     print(f"resumed: {len(back)} workflows on, {removed} holds removed, {len(left)} left alone")
 
