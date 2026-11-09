@@ -136,11 +136,21 @@ from botocore.config import Config
 s3 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
                   aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"],
                   config=Config(retries={{"max_attempts": 10, "mode": "adaptive"}}, max_pool_connections=40))
+r2 = boto3.client("s3", endpoint_url=f"https://{{os.environ['R2_ACCOUNT_ID']}}.r2.cloudflarestorage.com", region_name="auto",
+                  aws_access_key_id=os.environ["R2_ACCESS_KEY_ID"], aws_secret_access_key=os.environ["R2_SECRET_ACCESS_KEY"],
+                  config=Config(retries={{"max_attempts": 10, "mode": "adaptive"}}, max_pool_connections=40))
 B, P = os.environ["B2B"], os.environ["STALE"]
 keys = [l.rstrip("\\n") for l in open("/var/log/v1-extra.txt") if l.rstrip("\\n")]
 ok, bad, LK = open("/var/log/stale-moved.txt", "a"), open("/var/log/stale-failed.txt", "a"), threading.Lock()
 def mv(k):   # copy, confirm same size, only then hide the original (its old version stays; nothing is deleted)
     try:
+        # Nov 9 (reviewer): ask R2 about this exact file first; only a clear "not there" lets it move
+        try:
+            r2.head_object(Bucket=os.environ["R2_BUCKET"], Key=k)
+            raise RuntimeError("still in R2: not moved")
+        except r2.exceptions.ClientError as e:
+            if e.response.get("Error", {{}}).get("Code") not in ("404", "NoSuchKey", "NotFound"):
+                raise
         s3.copy({{"Bucket": B, "Key": k}}, B, P + k)
         if s3.head_object(Bucket=B, Key=P + k)["ContentLength"] != s3.head_object(Bucket=B, Key=k)["ContentLength"]:
             raise RuntimeError("copy size mismatch")
@@ -220,7 +230,8 @@ def main():
         "machine returns itself when done.")}).json()["number"]
     h = {"Authorization": f"Bearer {e('DIGITALOCEAN_TOKEN')}", "Content-Type": "application/json"}
     r = None
-    for size in SIZES:
+    # Nov 9 (reviewer): the full listing needs ~7 GB of memory, so the 8 GB size is only for the original copy
+    for size in (SIZES if mode == "full" else [x for x in SIZES if "16gb" in x]):
         for region in REGIONS:
             r = requests.post(f"{DO}/droplets", headers=h, timeout=60, json=dict(
                 name=f"upfront-copy-r2-b2-{issue}", region=region, size=size, image="ubuntu-24-04-x64",
