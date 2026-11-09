@@ -1,0 +1,41 @@
+name: Queue peek (one-off, read only)
+on:
+  push:
+    branches: [queue-peek]
+permissions:
+  contents: read
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -q boto3 requests
+      - run: |
+          cd insurers && python - <<'PY'
+          import collections, time, store, fleet
+          s3, b = store.r2()
+          jobs, claims = fleet.jobs(s3, b), fleet.claims(s3, b)
+          paused = fleet.paused_hosts(s3, b)
+          by = collections.Counter(); mem = collections.Counter(); sc = collections.Counter(); tries = collections.Counter()
+          for jid, j in jobs.items():
+              if jid in claims: continue
+              h = fleet.host(j); by[h] += 1; mem[j.get("mem", 8)] += 1; sc[j.get("scope")] += 1
+              tries[min(int(j.get("attempts", 0)), 5)] += 1
+          print("WAITING BY HOST:", by.most_common(15))
+          print("BY SCOPE:", sc.most_common(15))
+          print("BY MEM GB:", sorted(mem.items()))
+          print("BY ATTEMPTS (5=5+):", sorted(tries.items()))
+          print("HOST CAPS:", fleet.HOST_CAPS)
+          print("PAUSED HOSTS:", {h: time.strftime('%H:%MZ', time.gmtime(u)) for h, u in paused.items()})
+          print("CLAIMS:", [(fleet.host(jobs.get(k) or {}), c.get("name")) for k, c in claims.items()])
+          PY
