@@ -283,11 +283,12 @@ def redo(areas):
         before = len(plan[a]['jobs'])
         plan[a]['jobs'] = [j for j in plan[a]['jobs'] if not identity.is_wrong(wrong, j['ccn'], j['url'])]
         O.log(a, before - len(plan[a]['jobs']), "file(s) taken off as another hospital's;", len(plan[a]['jobs']), 'left')
-        try: O.s3.delete_object(Bucket=O.B, Key=O.SP + f'h2/{a}.done')
-        except Exception: pass
+        if not os.environ.get('KEEP_H2'):   # Nov 9, 2026: KEEP_H2=1 (hosp-redo.yml): the area was just rebuilt; only republish it
+            try: O.s3.delete_object(Bucket=O.B, Key=O.SP + f'h2/{a}.done')
+            except Exception: pass
         st.get('published', {}).pop(a, None)
         st.get('launches', {}).pop(f'h2-{a}', None)
-    if not S7:   # Texas areas share machines in groups: let every group whose areas are all still built count as finished
+    if not S7 and not os.environ.get('KEEP_H2'):   # Texas areas share machines in groups: let every group whose areas are all still built count as finished
         st['launches'] = {k: v for k, v in st.get('launches', {}).items() if not k.startswith('h2-')}
     st['stage'] = 'h2'
     O.putj(O.SP + 'areas.json', plan); O.putj(O.SP + 'state.json', st)
