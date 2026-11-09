@@ -82,8 +82,14 @@ def open_issue():
 
 def storage_workflows():
     """Active workflows that run on a schedule and use storage."""
-    out = []
-    for w in gh("GET", "/actions/workflows", params={"per_page": 100}).json().get("workflows", []):
+    out, ws, page = [], [], 1
+    while True:   # Nov 9, 2026: the repo has more than 100 workflows; only the first page was checked before
+        got = gh("GET", "/actions/workflows", params={"per_page": 100, "page": page}).json().get("workflows", [])
+        ws += got
+        if len(got) < 100:
+            break
+        page += 1
+    for w in ws:
         f = Path(w["path"])
         if w["state"] != "active" or f.name in KEEP_RUNNING or not f.exists():
             continue

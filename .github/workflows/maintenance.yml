@@ -1,0 +1,43 @@
+name: Maintenance (pause / status / resume the bot)
+# Nov 9, 2026: for the storage move to Backblaze. pause = hold the queues and turn off every workflow that uses
+# storage (machines finish their file, nothing is stopped or deleted); status = what is still running; resume = undo
+# exactly that. See board/maintenance.py.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "pause, status or resume"
+        type: choice
+        options: [status, pause, resume]
+        default: status
+permissions:
+  contents: read
+  issues: write
+  actions: write
+concurrency:
+  group: maintenance
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ACTION: ${{ inputs.action }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+      R2X_KEY: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2X_SECRET: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2X_BUCKET: ${{ secrets.R2_BUCKET }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3 requests
+      - run: python board/maintenance.py
