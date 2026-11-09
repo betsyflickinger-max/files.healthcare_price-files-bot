@@ -1,0 +1,37 @@
+name: File locker (history, raw, research packages)
+# Nov 9, 2026 (Betsy): locks history/, raw/ and research/packages/ in Backblaze (Object Lock, governance mode, 10 years)
+# so nothing there can be deleted by a script or a mistake. Uses its own key (LOCKER_KEY_ID / LOCKER_APP_KEY); never
+# deletes or rewrites anything. The first pass can take several runs; each run resumes where the last stopped.
+# Start with a dry run (counts only) from the Actions tab: "Run workflow" -> dry_run = 1.
+on:
+  schedule:
+    - cron: "41 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "1 = count only, change nothing"
+        default: "1"
+permissions:
+  contents: read
+concurrency:
+  group: file-locker
+  cancel-in-progress: false
+jobs:
+  lock:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    env:
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      LOCKER_KEY_ID: ${{ secrets.LOCKER_KEY_ID }}
+      LOCKER_APP_KEY: ${{ secrets.LOCKER_APP_KEY }}
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || '0' }}
+      TIME_BUDGET_MIN: "320"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3
+      - run: python board/file_locker.py
