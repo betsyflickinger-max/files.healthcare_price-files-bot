@@ -46,7 +46,7 @@ import procedure_pages as pp   # noqa: E402  Layer 1 may share the bot's readers
 from zoneinfo import ZoneInfo
 TODAY = dt.datetime.now(ZoneInfo('America/Chicago')).date().isoformat()   # Betsy works in Central time
 LEVEL = {'A1': 'Major', 'A3': 'Critical', 'A3r': 'Review', 'A3b': 'Major', 'A4': 'Major', 'A9': 'Critical', 'B1': 'Critical', 'B2': 'Major', 'C1': 'Critical',
-         'C4': 'Info', 'D1': 'Info', 'D2': 'Major', 'D3': 'Critical', 'D3i': 'Info', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
+         'C4': 'Info', 'D1': 'Info', 'D2': 'Major', 'D3': 'Critical', 'D3p': 'Info', 'D3i': 'Info', 'D6': 'Major', 'E1': 'Major', 'E1s': 'Info',
          'E2': 'Critical', 'E4': 'Major', 'F1': 'Review', 'F2': 'Review', 'F3': 'Review'}
 WHAT = {
     'A1': "provider's practice ZIP is in another state than the page (procedure pages leave them out; Price Finder lists them)",
@@ -62,6 +62,7 @@ WHAT = {
     'D1': "$0, negative or filler-looking amount not flagged in the data (the pages' own filters keep these out of prices)",
     'D2': "same amount on 5+ procedures for one place and network, not labeled flat",
     'D3': "hospital-file stay rate under $100 (a weight, not a price; reaches the pages)",
+    'D3p': "hospital-file stay rate under $100 in the data (the page's own filter, /*DRGW, leaves it out)",
     'D3i': "insurer-file stay rate under $100 (the pages' low-rate filter drops these)",
     'D6': "percent of charges above 100%",
     'E1': "file date missing or unreadable",
@@ -168,9 +169,19 @@ class Out:
 
 def audit_area(args):
     """One area: rules A-E over its featured (or all) codes, and the snapshot rows. Runs in its own process."""
-    site_dir, a, all_codes, snap_dir, only = args
-    import pyarrow as pa, pyarrow.parquet as pq
+    site_dir, a, all_codes, snap_dir, only = args[:5]
+    prefixes = args[5] if len(args) > 5 else None   # Nov 9, 2026 (audit gate): a build not live yet names its own per-code folders
+    try:
+        import pyarrow as pa, pyarrow.parquet as pq
+    except ImportError:          # the gate can run without the snapshot
+        import types
+        pa = types.SimpleNamespace(string=str, bool_=bool, float64=float, int16=int,
+                                   schema=lambda f: types.SimpleNamespace(names=[k for k, _ in f]))
+        pq = None
+        snap_dir = None
     store = pp.Store(site_dir)
+    if prefixes:
+        store.prefix = lambda area, kind: prefixes.get(kind)
     slug = a['slug']
     o = Out(slug)
     page = os.path.join(site_dir, 'site', a['path'].strip('/'), 'index.html')
@@ -178,6 +189,9 @@ def audit_area(args):
         o.add('E2', detail='no Price Finder page in the bundle for ' + a['path'])
         return o.__dict__
     D, _, fp = pp.page_data(page)
+    # Nov 9, 2026: pages carrying the stay-weight filter (procedure_pages.drop_drg_weights, Nov 7) never show a hospital-file
+    # stay amount under $100, so one left in the data is Info (D3p), not Critical
+    drgw = '/*DRGW' in open(page, encoding='utf-8', errors='replace').read()
     st = pp.area_state(a)
     if slug not in pp.STATES and slug not in pp.CA_REGIONS and slug not in TX_SLUGS:
         o.add('A9', detail=f'slug {slug!r} not in state lists; read as {st}')
@@ -236,7 +250,8 @@ def audit_area(args):
             o.add('E2', provider=x[0], detail='hospital file with no link')
 
     w_ins = w_h = None
-    os.makedirs(os.path.join(snap_dir, slug), exist_ok=True)
+    if snap_dir:
+        os.makedirs(os.path.join(snap_dir, slug), exist_ok=True)
     ins_schema = pa.schema([('code', pa.string()), ('npi', pa.string()), ('provider', pa.string()), ('city', pa.string()),
                             ('kind', pa.string()), ('insurer', pa.string()), ('plan', pa.string()), ('fee', pa.string()),
                             ('pct', pa.bool_()), ('value', pa.float64()), ('flags', pa.int16()), ('label', pa.string()),
@@ -300,7 +315,7 @@ def audit_area(args):
                                  ('value', float(v)), ('flags', int(fl)), ('label', lab), ('file_date', fdate), ('url', url),
                                  ('other_values', json.dumps([z[0] for z in (r[8] if len(r) > 8 and isinstance(r[8], list) else [])]))):
                     cols[col].append(val)
-        if cols['code']:
+        if cols['code'] and snap_dir:
             tb = pa.table(cols, schema=ins_schema)
             if w_ins is None:
                 w_ins = pq.ParquetWriter(os.path.join(snap_dir, slug, 'insurer.parquet'), ins_schema, compression='zstd')
@@ -324,7 +339,7 @@ def audit_area(args):
                 if v < 0:
                     o.add('D1', **base, detail='negative hospital rate')
                 if drg and not r[4] and 0 < v < 100:
-                    o.add('D3', **base, detail='hospital stay under $100 in the hospital file')
+                    o.add('D3p' if drgw else 'D3', **base, detail='hospital stay under $100 in the hospital file')
             elif v > 100:
                 o.add('D6', **base, detail=f'{v}% of charges (hospital file)')
             for col, val in (('code', c), ('hospital', x[0]), ('city', x[1]), ('insurer', ins),
@@ -344,7 +359,7 @@ def audit_area(args):
                              ('doctor_line', False), ('pct', False), ('value', float(r[2] or 0)), ('cash', True),
                              ('file_date', x[3] if len(x) > 3 else ''), ('url', x[4] if len(x) > 4 else ''), ('source_row', str(r[4]) if len(r) > 4 else '')):
                 hc[col].append(val)
-        if hc['code']:
+        if hc['code'] and snap_dir:
             tb = pa.table(hc, schema=h_schema)
             if w_h is None:
                 w_h = pq.ParquetWriter(os.path.join(snap_dir, slug, 'hospital.parquet'), h_schema, compression='zstd')
@@ -476,18 +491,29 @@ def main():
     # snapshots: upload, then compare with the newest earlier one
     prev = None
     if not A.no_upload:
-        days = sorted({k.split('/')[2] for k in _ls(s3, B, 'history/published/') if k.count('/') >= 3} - {TODAY})
+        keys = [k for k in _ls(s3, B, 'history/published/') if k.count('/') >= 4]
+        days = sorted({k.split('/')[2] for k in keys} - {TODAY})
         prev = days[-1] if days else None
+        # Nov 9, 2026: the publish gate (site/audit_gate.py) also saves a snapshot each time one area goes live, so the newest
+        # earlier day may hold only a few areas: each area is compared with its own newest earlier snapshot
+        prev_of = {}
+        for k in keys:
+            _, _, day, area_, fn = k.split('/', 4)
+            if fn == 'insurer.parquet' and day < TODAY and day > prev_of.get(area_, ''):
+                prev_of[area_] = day
         for root, _, fs in os.walk(snap):
             for fn in fs:
                 p = os.path.join(root, fn)
                 s3.upload_file(p, B, 'history/published/' + os.path.relpath(p, '/tmp/audit-snap'))
     F = []
     if prev:
-        pdir = f'/tmp/audit-snap/{prev}'
         for r in res:
+            pday = prev_of.get(r['area'])
+            if not pday:
+                continue
+            pdir = f'/tmp/audit-snap/{pday}'
             for k in ('insurer.parquet',):
-                key = f"history/published/{prev}/{r['area']}/{k}"
+                key = f"history/published/{pday}/{r['area']}/{k}"
                 try:
                     os.makedirs(f"{pdir}/{r['area']}", exist_ok=True)
                     s3.download_file(B, key, f"{pdir}/{r['area']}/{k}")

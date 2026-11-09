@@ -442,6 +442,13 @@ def publish_one(O, st, a, how):
         st['published'][a] = f'{TOO_BIG} ({mib:.1f} MiB; the host takes 25): needs regional pages (site/regions.py)' if mib else \
             f'{TOO_BIG}: needs regional pages (site/regions.py)'
         size_alerts(O, st, a, mib if mib else SIZE_LIMIT_MIB + 1, newest_build(O.s3, O.B, a))
+    elif r.returncode != 0 and 'held by the audit gate' in out:   # Nov 9, 2026: the same build fails the same checks; no retries
+        st['published'][a] = 'held by the audit gate: Critical findings (storage audit/gate/)'
+        g = [l for l in out.splitlines() if l.startswith('audit gate ') or l.startswith('    ')][:40]
+        alert_once(O, st, f'gate-{a}-{newest_build(O.s3, O.B, a)}', f'{a}: Price Finder page held by the audit gate',
+                   f'The {a} page was built but not published: the data accuracy rule checks (site/audit_gate.py) found Critical '
+                   'problems. The live page is unchanged. Fix the cause in the bot, then clear this area from `published` in its '
+                   'state.json to try again.\n\n```\n' + '\n'.join(g)[-3500:] + '\n```')
     else:
         st['published'][a] = how if r.returncode == 0 else 'failed: page not published (see this run\'s log)'
         if r.returncode == 0: size_alerts(O, st, a, mib)
