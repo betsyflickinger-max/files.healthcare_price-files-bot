@@ -334,6 +334,15 @@ def publish(st):
         st['stage'] = 'held'
         issue(f'Website refresh {BID} held: checks failed', f'Nothing went live.\n\n```\n{chk.stdout}\n```\nNew page saved to R2 `{SP}page_new.html`.')
         return
+    # Nov 9, 2026 (Betsy): the audit's rule checks on the new DFW page and this build's per-code files (site/audit_gate.py)
+    import audit_gate
+    gok, gmsg, gsnap = audit_gate.check('/tmp/pub/new.html', 'dfw', '/price-finder/', {'t': TOUT + 't/', 'h': TOUT + 'h/'}, s3, B)
+    print(gmsg, flush=True)
+    if not gok:
+        st['stage'] = 'held'
+        issue(f'Website refresh {BID} held by the audit gate', 'Nothing went live: the data accuracy rule checks found Critical problems '
+              f'(site/audit_gate.py; full list in storage audit/gate/).\n\n```\n{gmsg[-3500:]}\n```')
+        return
     # map locations for this build (site/every/<BID>/geo.json). Never blocks the refresh: if it fails, the map
     # says it is being updated and the rest of the Price Finder works as before.
     try: g = subprocess.run([py, f'{HERE}/geo_build.py', '/tmp/pub/new.html', BID], capture_output=True, text=True, timeout=1500)
@@ -376,6 +385,7 @@ def publish(st):
     with tarfile.open('/tmp/pub/site.tgz', 'w:gz') as t: t.add('/tmp/pub/deploy', arcname='.')
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
     deploy_lock.release()
+    audit_gate.save_snapshot(s3, B, 'dfw', gsnap)
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
     putj(SP + 'state.json', st)   # Nov 8, 2026: live is recorded before the cleanup, so a stopped cleanup never re-deploys
     st['cleanup'] = cleanup(prev)

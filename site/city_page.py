@@ -523,6 +523,12 @@ def main():
         sys.exit(f'STOP: the {name} page is {os.path.getsize(page) / 2**20:.1f} MiB; the website host takes files up to 25 MiB. '
                  f'Split it into regional pages (site/regions.py) like California.')
     print(f'page size: {os.path.getsize(page) / 2**20:.1f} MiB (the website host takes up to 25 MiB)', flush=True)   # Nov 1, 2026: hosp_area.py records it and warns near the limit
+    gsnap = None
+    if A.deploy and not A.map_only:   # Nov 9, 2026 (Betsy): the audit's rule checks before anything goes live (site/audit_gate.py)
+        import audit_gate
+        ok, gmsg, gsnap = audit_gate.check(page, A.city, f'/{A.city}/price-finder/', {'t': prefix + 't/', 'h': (hpre + 'h/') if hidx else None}, s3, B)
+        print(gmsg, flush=True)
+        if not ok: sys.exit(f'STOP: held by the audit gate (Critical findings above); the live {name} page is unchanged')
     maps = make_map(A, E, s3, B, written, prefix, page)
     s3.upload_file(page, B, f'site/deploy/cities/{A.city}/price-finder.html')
     if A.map_only: print('map files and page saved in', A.out, '(not deployed)'); return
@@ -562,6 +568,7 @@ def main():
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
     s3.upload_file(f'{A.out}/site.tgz', B, 'site/deploy/current.tgz')
     deploy_lock.release()
+    if gsnap: audit_gate.save_snapshot(s3, B, A.city, gsnap)
     print(f'live: https://files.healthcare/{A.city}/price-finder/')
 
 

@@ -61,7 +61,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install boto3==1.35.36 duckdb==1.1.3 requests==2.32.3 rapidfuzz==3.10.0
+      - run: pip install boto3==1.35.36 duckdb==1.1.3 requests==2.32.3 rapidfuzz==3.10.0 pyarrow==26.0.0
       - name: Insurer part
         run: |
           [ -z "$FORCE" ] && unset FORCE
@@ -100,6 +100,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - run: pip install boto3==1.35.36 duckdb==1.1.3 requests==2.32.3 rapidfuzz==3.10.0
+      - run: pip install boto3==1.35.36 duckdb==1.1.3 requests==2.32.3 rapidfuzz==3.10.0 pyarrow==26.0.0
       - name: Hospitals and pages (every scope)
         run: python site/pages_loop.py 2>&1 | tee -a "$GITHUB_STEP_SUMMARY"
