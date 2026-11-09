@@ -345,6 +345,7 @@ def publish(st):
         issue(f'Website refresh {BID} ready, not deployed', 'Checks passed but the CLOUDFLARE_API_TOKEN secret is not set, so it could not deploy.\n\n```\n' + chk.stdout + '\n```')
         return
     # deploy: site files come from R2 (the site is not in this public repo)
+    import deploy_lock; deploy_lock.acquire(s3, B, f'monthly refresh {BID}')   # Nov 8, 2026: one site deploy at a time
     s3.download_file(B, 'site/deploy/current.tgz', '/tmp/pub/site.tgz')
     shutil.rmtree('/tmp/pub/deploy', ignore_errors=True)
     with tarfile.open('/tmp/pub/site.tgz') as t: t.extractall('/tmp/pub/deploy')
@@ -374,6 +375,7 @@ def publish(st):
     s3.upload_file('/tmp/pub/new.html', B, 'site/deploy/price-finder.html')
     with tarfile.open('/tmp/pub/site.tgz', 'w:gz') as t: t.add('/tmp/pub/deploy', arcname='.')
     s3.upload_file('/tmp/pub/site.tgz', B, 'site/deploy/current.tgz')
+    deploy_lock.release()
     st['stage'] = 'live'; st['live_at'] = time.strftime('%Y-%m-%d %H:%M')
     putj(SP + 'state.json', st)   # Nov 8, 2026: live is recorded before the cleanup, so a stopped cleanup never re-deploys
     st['cleanup'] = cleanup(prev)

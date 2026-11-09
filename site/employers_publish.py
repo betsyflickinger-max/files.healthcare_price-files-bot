@@ -72,6 +72,7 @@ def main():
     out = Path(a.out); shutil.rmtree(out, ignore_errors=True); out.mkdir(parents=True)
     latest = json.loads(s3.get_object(Bucket=B, Key="bot/employers/latest.json")["Body"].read())
     s3.download_file(B, f"bot/employers/{latest['date']}/site_employers.json", str(out / "site_employers.json"))
+    import deploy_lock; deploy_lock.acquire(s3, B, 'employer plans publish')   # Nov 8, 2026: one site deploy at a time
     s3.download_file(B, "site/deploy/current.tgz", str(out / "site.tgz"))
     etag = s3.head_object(Bucket=B, Key="site/deploy/current.tgz")["ETag"]
     d = out / "deploy"
@@ -139,6 +140,7 @@ def main():
     with tarfile.open(out / "site_new.tgz", "w:gz") as t:
         t.add(d, arcname=".")
     s3.upload_file(str(out / "site_new.tgz"), B, "site/deploy/current.tgz")
+    deploy_lock.release()
     for key, f in tmpl:
         s3.upload_file(str(f), B, key)
     print("live: https://files.healthcare/employer-plans/ and https://files.healthcare/insurers/")

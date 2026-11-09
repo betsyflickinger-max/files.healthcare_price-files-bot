@@ -2286,6 +2286,9 @@ def deploy(force=False, only_areas=None):
         if not changed:
             print('no area page changed since the last run; nothing to deploy')
             return
+        # Nov 8, 2026: from here to the save, no other deploy runs (site/deploy_lock.py); if one landed while this built,
+        # the loop re-renders on the newer site while holding the lock, so the next check passes
+        import deploy_lock; deploy_lock.acquire(s3, B, 'procedure pages' + (f" ({','.join(sorted(only_areas))})" if only_areas else ''))
         if s3.head_object(Bucket=B, Key=KEY)['ETag'] == etag:
             break
         print(f'the live site changed while building (another build deployed); starting over from the newer site (attempt {attempt + 2})')
@@ -2309,6 +2312,7 @@ def deploy(force=False, only_areas=None):
     s3.upload_file('/tmp/costs-site.tgz', B, KEY)
     s3.put_object(Bucket=B, Key=SKEY, Body=json.dumps(st).encode())
     print('deployed and saved to', KEY)
+    deploy_lock.release()
 
 
 if __name__ == '__main__':

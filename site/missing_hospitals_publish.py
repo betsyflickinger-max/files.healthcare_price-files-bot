@@ -50,6 +50,7 @@ def main():
         sys.exit("STOP: no reports/watch/missing-hospitals-*.csv; run bot/missing_export.py first")
     s3, B = store.r2()
     out = Path(a.out); shutil.rmtree(out, ignore_errors=True); out.mkdir(parents=True)
+    import deploy_lock; deploy_lock.acquire(s3, B, 'missing-hospitals publish')   # Nov 8, 2026: one site deploy at a time
     s3.download_file(B, "site/deploy/current.tgz", str(out / "site.tgz"))
     etag = s3.head_object(Bucket=B, Key="site/deploy/current.tgz")["ETag"]
     d = out / "deploy"
@@ -84,6 +85,7 @@ def main():
     with tarfile.open(out / "site_new.tgz", "w:gz") as t:
         t.add(d, arcname=".")
     s3.upload_file(str(out / "site_new.tgz"), B, "site/deploy/current.tgz")
+    deploy_lock.release()
     print(f"live: https://files.healthcare/price-file-watch/hospitals/ ({n} hospitals)")
 
 

@@ -530,6 +530,7 @@ def main():
     if not E.get('CLOUDFLARE_API_TOKEN'): sys.exit('CLOUDFLARE_API_TOKEN is not set; built but not deployed')
     # deploy: same steps as orchestrate.publish
     d = f'{A.out}/deploy'; shutil.rmtree(d, ignore_errors=True)
+    import deploy_lock; deploy_lock.acquire(s3, B, f'{A.city} Price Finder page')   # Nov 8, 2026: one site deploy at a time
     s3.download_file(B, 'site/deploy/current.tgz', f'{A.out}/site.tgz')
     with tarfile.open(f'{A.out}/site.tgz') as t: t.extractall(d)
     if not os.path.isdir(f'{d}/functions/price-finder') or not os.path.isfile(f'{d}/site/price-finder/index.html'):
@@ -560,6 +561,7 @@ def main():
     if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
     s3.upload_file(f'{A.out}/site.tgz', B, 'site/deploy/current.tgz')
+    deploy_lock.release()
     print(f'live: https://files.healthcare/{A.city}/price-finder/')
 
 
@@ -578,6 +580,7 @@ def landing_page(A):
                       aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(E.get('STORAGE_REGION') or 'auto'))
     st, R = CITIES[A.city][0], _regions.REGIONS[A.city]
     d = f'{A.out}/deploy'; shutil.rmtree(d, ignore_errors=True)
+    import deploy_lock; deploy_lock.acquire(s3, B, f'{A.city} Price Finder page')   # Nov 8, 2026: one site deploy at a time
     s3.download_file(B, 'site/deploy/current.tgz', f'{A.out}/site.tgz')
     with tarfile.open(f'{A.out}/site.tgz') as t: t.extractall(d)
     if not os.path.isfile(f'{d}/site/index.html'): sys.exit('STOP: site/deploy/current.tgz has no site/index.html; nothing deployed')
@@ -630,6 +633,7 @@ as the rest of the site. Pick the region where you're getting care.</p></div></s
     if r.returncode != 0: sys.exit('deploy failed; the preview site is unchanged')
     with tarfile.open(f'{A.out}/site.tgz', 'w:gz') as t: t.add(d, arcname='.')
     s3.upload_file(f'{A.out}/site.tgz', B, 'site/deploy/current.tgz')
+    deploy_lock.release()
     print(f'live: https://files.healthcare/{A.city}/price-finder/')
 
 

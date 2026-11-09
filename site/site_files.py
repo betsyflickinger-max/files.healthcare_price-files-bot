@@ -33,6 +33,8 @@ def pull(d):
 
 
 def push(d):
+    import deploy_lock   # Nov 8, 2026: one site deploy at a time (site/deploy_lock.py)
+    deploy_lock.acquire(s3, B, 'site push (' + os.environ.get('GITHUB_WORKFLOW', 'by hand') + ')')
     if s3.head_object(Bucket=B, Key=KEY)["ETag"] != open(f"{d}/.etag").read():
         sys.exit("STOP: the live site changed since the pull (a build deployed). Pull again and redo the edit.")
     if not os.path.isfile(f"{d}/site/price-finder/index.html") or not os.path.isdir(f"{d}/functions"):
@@ -51,6 +53,7 @@ def push(d):
     s3.upload_file(f"{d}/site.tgz", B, KEY)
     open(f"{d}/.etag", "w").write(s3.head_object(Bucket=B, Key=KEY)["ETag"])
     print("deployed and saved to", KEY)
+    deploy_lock.release()
 
 
 if __name__ == "__main__":
