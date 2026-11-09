@@ -16,6 +16,29 @@ jobs:
           B2B: ${{ secrets.B2_BUCKET }}
         run: |
           pip -q install boto3
+          echo "== copy machine activity (DigitalOcean monitoring, last 3h, 15-min averages)"
+          ID=$(curl -s -H "Authorization: Bearer $DOT" "https://api.digitalocean.com/v2/droplets?tag_name=upfront-copy" | python3 -c "import json,sys; d=json.load(sys.stdin)['droplets']; print(d[0]['id'] if d else '')")
+          if [ -n "$ID" ]; then
+            E=$(date +%s); S=$((E-10800))
+            for m in "bandwidth?interface=public&direction=inbound" "bandwidth?interface=public&direction=outbound" "cpu?"; do
+              echo "-- $m"
+              curl -s -H "Authorization: Bearer $DOT" "https://api.digitalocean.com/v2/monitoring/metrics/droplet/${m}&host_id=$ID&start=$S&end=$E" | python3 -c "
+          import json,sys,datetime
+          r=json.load(sys.stdin).get('data',{}).get('result',[])
+          if not r: print('no data'); sys.exit()
+          if len(r)>1:  # cpu: sum non-idle modes per timestamp
+              tot={}
+              for s in r:
+                  for t,v in s['values']:
+                      tot.setdefault(t,{})[s['metric'].get('mode')]=float(v)
+              pts=sorted(tot.items())
+              prev=None
+              for t,modes in pts[::15]:
+                  print(datetime.datetime.utcfromtimestamp(t).strftime('%H:%M'), {k:round(v) for k,v in modes.items() if k in ('user','system','iowait','idle')})
+          else:
+              for t,v in r[0]['values'][::15]: print(datetime.datetime.utcfromtimestamp(t).strftime('%H:%M'), round(float(v),1), 'Mbps')"
+            done
+          fi
           echo "== droplets"
           curl -s -H "Authorization: Bearer $DOT" "https://api.digitalocean.com/v2/droplets?per_page=200" | python3 -c "
           import json,sys
