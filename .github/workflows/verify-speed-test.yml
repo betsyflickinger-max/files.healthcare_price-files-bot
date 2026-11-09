@@ -1,0 +1,31 @@
+name: verify speed test (read-only listing of both buckets)
+on:
+  push:
+    branches: [fast-verify]
+permissions:
+  contents: read
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with: {sparse-checkout: board}
+      - name: List both buckets in full (read only) and compare
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          B2K: ${{ secrets.B2_ACCESS_KEY_ID }}
+          B2S: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+          B2B: ${{ secrets.B2_BUCKET }}
+        run: |
+          pip -q install boto3
+          nproc; mkdir -p out
+          /usr/bin/time -v python3 board/storage_verify.py out t 2> time.txt; echo "exit $?"
+          grep -E "Elapsed|Maximum resident" time.txt
+          python3 -c "import json; d=json.load(open('out/t-summary.json')); d['errors']=d['errors'][:3]; print(json.dumps(d, indent=1))"
+          echo "-- missing by top folder"; cut -d/ -f1-2 out/t-missing.txt | sort | uniq -c | sort -rn | head -12
+          echo "-- differ by top folder"; cut -d/ -f1-2 out/t-differ.txt | sort | uniq -c | sort -rn | head -8
+          echo "-- stale (Backblaze-only, outside protected folders) by top folder"; cut -d/ -f1-3 out/t-extra.txt | sort | uniq -c | sort -rn | head -12
