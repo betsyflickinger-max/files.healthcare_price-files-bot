@@ -341,7 +341,10 @@ def check_hospital_file(key, xs):
         if head.lstrip()[:1] in ('{', '['):
             import ijson
             f = stream_lines(key)
-            for n, item in enumerate(ijson.items(f.buffer if hasattr(f, 'buffer') else f, 'standard_charge_information.item', use_float=True), 1):
+            raw = f.buffer if hasattr(f, 'buffer') else f
+            if hasattr(raw, 'peek') and raw.peek(3)[:3] == b'\xef\xbb\xbf':   # Nov 9, 2026: files that start with a byte-order mark
+                raw.read(3)                                                      # (Methodist, AdventHealth) were "read errors"
+            for n, item in enumerate(ijson.items(raw, 'standard_charge_information.item', use_float=True), 1):
                 if n in want:
                     text = json.dumps(item)
                     for x in want[n]:
@@ -363,6 +366,47 @@ def check_hospital_file(key, xs):
     for x in xs:
         if 'verdict' not in x:
             x.update(verdict='not found in source', detail='file ended before the cited line')
+    miss = [x for x in xs if x['verdict'] in ('code not on cited line', 'amount not on cited line', 'not found in source')]
+    if miss:
+        try:
+            locate(key, miss)
+        except Exception as e:
+            for x in miss:
+                x['detail'] = f"{x['detail'][:150]} | search failed: {type(e).__name__}"
+
+
+def locate(key, miss):
+    """Nov 9, 2026: for a line that didn't match, find where in this file the code and amount really are. A steady offset
+    means the bot counts lines differently; nowhere in the file means the row came from another version of the file."""
+    f = stream_lines(key)
+    head = f.read(4096)
+    is_json = head.lstrip()[:1] in ('{', '[')
+    found = {id(x): [] for x in miss}
+    pats = [(x, re.compile(r'(?<![0-9A-Za-z])0*' + re.escape(x['code'].lstrip('0') or '0') + r'(?![0-9A-Za-z])')) for x in miss]
+    f = stream_lines(key)
+    if is_json:
+        import ijson
+        raw = f.buffer if hasattr(f, 'buffer') else f
+        if hasattr(raw, 'peek') and raw.peek(3)[:3] == b'\xef\xbb\xbf':
+            raw.read(3)
+        it = ((n, json.dumps(item)) for n, item in enumerate(ijson.items(raw, 'standard_charge_information.item', use_float=True), 1))
+    else:
+        it = enumerate(f, 1)
+    total = 0
+    for n, text in it:
+        total = n
+        for x, rx in pats:
+            if rx.search(text) and money_in(text, float(x['value'])):
+                found[id(x)].append(n)
+    for x in miss:
+        ns, r = found[id(x)], int(x['row'])
+        if ns:
+            near = min(ns, key=lambda n: abs(n - r))
+            x['detail'] = (f"code and amount are on line {near:,} (cited {r:,}, off by {near - r:+,}); {len(ns)} line(s) carry both; "
+                           f"file has {total:,} {'items' if is_json else 'lines'} | " + x['detail'][:120])
+            x['verdict'] = 'found on another line'
+        else:
+            x['detail'] = f"code and amount not anywhere in this file ({total:,} {'items' if is_json else 'lines'}) | " + x['detail'][:120]
 
 
 def judge(x, text):
