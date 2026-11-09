@@ -60,7 +60,10 @@ GROUP_NOT_DELIVERY = ('207N', '207W', '207Y', '207X', '2085', '207Z', '2084', '2
                       '231H', '2355', '152W', '122', '1223', '111N', '2251', '225X', '213E', '101Y', '103T', '1041', '291U', '3336',
                       '332', '207L', '3674', '3675',
                       # Nov 7, 2026 (testers): prosthetics/orthotics suppliers, radiology techs; ambulatory centers are below
-                      '335', '2471')
+                      '335', '2471',
+                      # Nov 9, 2026 (live check): internal-medicine subspecialties (infectious disease, cardiology, GI,
+                      # kidney, blood/cancer, lungs). Atlanta's lowest was AIDS Healthcare Foundation (infectious disease).
+                      '207RI', '207RC', '207RG', '207RN', '207RH', '207RX', '207RP')
 
 
 def is_non_delivery(t):
@@ -83,7 +86,7 @@ NOT_DELIVERY_NAME = re.compile(r'endoscop|gastroenterolog|labone|labcorp|quest d
                                r'ambulance|anesthes', re.I)
 DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|maternal|matern|midwi|birth|family (medicine|practice|health)|'
                            r'perinat|fertility|multi-?specialty', re.I)
-NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr', re.I)
+NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr|\bchoa\b|\baids\b|\bhiv\b', re.I)
 OB_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat', re.I)
 
 
