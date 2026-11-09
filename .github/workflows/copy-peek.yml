@@ -1,0 +1,34 @@
+name: Copy peek (one-off, read only)
+on:
+  push:
+    branches: [copy-peek]
+permissions:
+  contents: read
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_KEY: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      DO_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+    steps:
+      - run: pip install -q boto3 requests
+      - run: |
+          python - <<'PY'
+          import os, boto3, requests
+          g=lambda k:"".join(os.environ[k].split())
+          ep=g("B2_ENDPOINT"); ep=ep if "://" in ep else "https://"+ep
+          s3=boto3.client("s3",endpoint_url=ep,aws_access_key_id=g("B2_KEY"),aws_secret_access_key=g("B2_SECRET"),region_name="us-east-005")
+          B=g("B2_BUCKET")
+          for o in s3.list_objects_v2(Bucket=B,Prefix="bot/migration/logs/").get("Contents",[]):
+              print("LOG", o["Key"], o["Size"], o["LastModified"])
+              body=s3.get_object(Bucket=B,Key=o["Key"])["Body"].read().decode(errors="replace").strip().splitlines()
+              for l in body[-6:]: print("   ", l[:300])
+          h={"Authorization":"Bearer "+g("DO_TOKEN")}
+          for tag in ("upfront-copy","upfront-bot","site-build"):
+              r=requests.get("https://api.digitalocean.com/v2/droplets",params={"tag_name":tag,"per_page":200},headers=h,timeout=60).json()
+              print("DROPLETS", tag, [(d["name"],d["status"],d["size_slug"],d["created_at"]) for d in r.get("droplets",[])])
+          PY
