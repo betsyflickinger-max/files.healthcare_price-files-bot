@@ -71,6 +71,20 @@ HROWS = list(csv.DictReader(open(os.path.join(HERE, '..', 'data', 'hospitals.csv
 # the file is not ruled another hospital's for (bot/identity.py), closest in name to the file (Oct 15, 2026)
 sys.path.insert(0, os.path.join(HERE, '..', 'bot'))
 import identity
+
+
+def _duck_store(con, key_id, secret, acct):
+    """Nov 9, 2026 (storage move): DuckDB reads Backblaze when STORAGE_ENDPOINT is set, else Cloudflare R2.
+    Returns the URL scheme to use ('s3' or 'r2')."""
+    ep = "".join(os.environ.get("STORAGE_ENDPOINT", "").split())
+    if ep:
+        host = ep.split("://")[-1].rstrip("/")
+        reg = "".join(os.environ.get("STORAGE_REGION", "").split()) or "auto"
+        con.execute(f"create or replace secret store (type s3, key_id '{key_id}', secret '{secret}', endpoint '{host}', "
+                    f"region '{reg}', url_style 'path')")
+        return "s3"
+    con.execute(f"create or replace secret store (type r2, key_id '{key_id}', secret '{secret}', account_id '{acct}')")
+    return "r2"
 WRONGT = identity.load(s3, B)
 BY_SHA, BY_URL = {}, {}
 for r in HROWS:
@@ -118,9 +132,9 @@ need = [s_[5] for s_ in D['hosp']['src'] if len(s_) > 5 and f'file:{s_[5]}' not 
 if need:
     try:
         con = duckdb.connect(); con.execute('INSTALL httpfs; LOAD httpfs;')
-        con.execute(f"CREATE SECRET r2 (TYPE R2, KEY_ID '{E['R2_ACCESS_KEY_ID'].strip()}', SECRET '{E['R2_SECRET_ACCESS_KEY'].strip()}', ACCOUNT_ID '{E['R2_ACCOUNT_ID'].strip()}')")
+        SCH = _duck_store(con, E['R2_ACCESS_KEY_ID'].strip(), E['R2_SECRET_ACCESS_KEY'].strip(), E['R2_ACCOUNT_ID'].strip())
         for sid in need:
-            try: r = con.execute(f"select hospital_address, type_2_npi from 'r2://{B}/data/hosp_every/rows/{sid}.parquet' limit 1").fetchone()
+            try: r = con.execute(f"select hospital_address, type_2_npi from '{SCH}://{B}/data/hosp_every/rows/{sid}.parquet' limit 1").fetchone()
             except Exception: r = None
             names[f'file:{sid}'] = list(r) if r else ['', '']
         log('read the address in', len(need), 'hospital price files')
