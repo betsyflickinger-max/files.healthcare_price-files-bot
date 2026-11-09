@@ -43,6 +43,7 @@ def existing():
 
 
 def user_data(issue, mode="full"):
+    sha = os.environ.get("GITHUB_SHA", "main")
     v = {k: e(k) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "B2_BUCKET",
                            "B2_ACCESS_KEY_ID", "B2_SECRET_ACCESS_KEY", "DIGITALOCEAN_TOKEN", "BOT_GITHUB_TOKEN")}
     return f"""#!/bin/bash
@@ -58,7 +59,7 @@ export B2K='{v['B2_ACCESS_KEY_ID']}' B2S='{v['B2_SECRET_ACCESS_KEY']}' B2B='{v['
 say() {{ python3 -c 'import json,sys; print(json.dumps({{"body": sys.stdin.read()}}))' | \\
   curl -s -o /dev/null -X POST -H "Authorization: Bearer $GHT" -H "Accept: application/vnd.github+json" \\
   https://api.github.com/repos/{REPO}/issues/{issue}/comments -d @-; }}
-apt-get update -y && apt-get install -y curl unzip python3
+apt-get update -y && apt-get install -y curl unzip python3 python3-boto3
 curl -s https://rclone.org/install.sh | bash
 OPTS="--transfers 48 --checkers 64 --retries 10 --low-level-retries 20 --b2-chunk-size 96M --stats 10m --stats-one-line --stats-log-level NOTICE --log-level NOTICE"
 # Oct 30: progress also saved to Backblaze (bot/migration/logs/) every 2 hours, so it can be read even if the GitHub
@@ -82,56 +83,89 @@ MISS=$(grep -ac 'not in' /var/log/check.log); DIFF=$(grep -ac 'sizes differ' /va
    echo; echo '```'; grep -a 'Transferred\\|Errors\\|Checks' /var/log/copy2.log | tail -4; tail -5 /var/log/check.log; echo '```'
    echo; echo "Next: switch the bot to Backblaze (repo variables STORAGE_ENDPOINT / STORAGE_REGION and the storage keys)."; }} | say
 else
+# ---- topup / final (Nov 9, 2026; independent review fixes) ----
+finish() {{ kill $TICK 2>/dev/null; rclone copy /var/log "$DST/bot/migration/logs/$MODE-$(date -u +%Y%m%d-%H%M)" \\
+  --include 'v*-missing.txt' --include 'v*-differ.txt' --include 'v*-extra*.txt' --include 'v*-summary.json' \\
+  --include 'probe*-keys.txt' --include 'copy*.log' --include 'stale-*.txt' --include 'fix.txt' --include 'final-dryrun.log' -q || true; }}
+export R2_ACCOUNT_ID='{v['R2_ACCOUNT_ID']}' R2_ACCESS_KEY_ID='{v['R2_ACCESS_KEY_ID']}' R2_SECRET_ACCESS_KEY='{v['R2_SECRET_ACCESS_KEY']}' R2_BUCKET='{v['R2_BUCKET']}'
+if ! curl -sfL "https://raw.githubusercontent.com/{REPO}/{sha}/board/storage_verify.py" -o /root/verify.py; then
+  echo "Stopped before copying anything: couldn't download the checker (storage_verify.py at {sha})." | say; finish
+else
 T0=$(date +%s)
-echo "Machine is up ($MODE). Copy pass starting: copy only, nothing deleted." | say
-rclone copy "$SRC" "$DST" $OPTS --log-file /var/log/copy.log; P1=$?
+echo "Machine is up ($MODE). Step 1: listing both buckets in full (read only)." | say
+V0=$(python3 /root/verify.py /var/log v0); V0RC=$?
+# Step 2 (reviewer blocker 1): make sure the faster comparison won't re-copy files that haven't changed.
+# Files last changed before Nov 1 13:44 UTC were already checked equal on Nov 1; they must not be re-copied.
+probe() {{ rclone copy "$SRC" "$DST" $OPTS $MW --dry-run --log-file /var/log/probe$1.log --log-level NOTICE
+  sed -n 's/^.*NOTICE: \\(.*\\): Skipped copy as --dry-run is set.*$/\\1/p' /var/log/probe$1.log > /var/log/probe$1-keys.txt
+  python3 -c "
+import sys
+old = {{l.split('\\t')[0] for l in open('/var/log/v0-r2.tsv') if int(l.rstrip().split('\\t')[2]) < 1793540640}}
+ks = [l.rstrip('\\n') for l in open('/var/log/probe$1-keys.txt')]
+print(len(ks), sum(k in old for k in ks))"; }}
+MW=""
+read PN PO <<< "$(probe 1)"
+if [ "${{PO:-999999}}" -gt 1000 ]; then MW="--modify-window 1s"; read PN PO <<< "$(probe 2)"; fi
+if [ "$V0RC" != 0 ] || [ "${{PO:-999999}}" -gt 1000 ]; then
+  echo "Stopped before copying anything. Listing ok: $([ "$V0RC" = 0 ] && echo yes || echo NO). Files the copy would redo although unchanged since Nov 1: ${{PO:-unknown}} (limit 1,000). Nothing was copied, moved or deleted." | say; finish
+else
+echo "Check passed: the copy would bring over $PN files, $PO of them older than Nov 1 (allowed up to 1,000). ${{MW:-No time tolerance needed.}} Step 3: copying." | say
+rclone copy "$SRC" "$DST" $OPTS $MW --max-transfer 4T --cutoff-mode soft --log-file /var/log/copy.log; P1=$?
 T1=$(date +%s)
-twoway() {{  # $1 = label; writes /var/log/$1-{{missing,extra,differ}}.txt
-  rclone check "$SRC" "$DST" --size-only --checkers 64 --missing-on-dst /var/log/$1-missing.txt \\
-    --missing-on-src /var/log/$1-extra-all.txt --differ /var/log/$1-differ.txt --log-file /var/log/$1-check.log --log-level NOTICE
-  grep -Ev "$KEEP" /var/log/$1-extra-all.txt > /var/log/$1-extra.txt || true
-  echo "$(wc -l < /var/log/$1-missing.txt) $(wc -l < /var/log/$1-differ.txt) $(wc -l < /var/log/$1-extra.txt)"
-}}
-read M D X <<< "$(twoway check1)"
-T2=$(date +%s)
+V1=$(python3 /root/verify.py /var/log v1); V1RC=$?; read M D X K RN NEW ER <<< "$V1"
 if [ "$MODE" = "topup" ]; then
-  kill $TICK
-  {{ echo "Top-up finished (bot kept running). Copy pass: exit $P1, $(( (T1-T0)/60 )) min. Check: $(( (T2-T1)/60 )) min."
-     echo "Right now Backblaze is missing $M files, has $D with a different size, and has $X that R2 no longer has. These are expected while the bot runs; the final pass during the pause fixes them."
+  {{ echo "Top-up finished (the bot kept running). Copy: exit $P1, $(( (T1-T0)/60 )) min in all so far."
+     echo "Right now Backblaze is missing $M files, has $D with a different size, and $X that R2 no longer has ($K more in history/raw/research, which are never moved). Listing errors: $ER. These are expected while the bot runs; the final pass during the pause fixes them."
+     echo "Lists saved in Backblaze under bot/migration/logs/topup-<time>/."
      echo; echo '```'; grep -a 'Transferred\\|Errors\\|Checks' /var/log/copy.log | tail -4; echo '```'; }} | say
 else
-  cat /var/log/check1-missing.txt /var/log/check1-differ.txt > /var/log/fix.txt
-  [ -s /var/log/fix.txt ] && rclone copy "$SRC" "$DST" $OPTS --files-from /var/log/fix.txt --no-traverse --log-file /var/log/copy-fix.log
-  STALE="migration/stale-$(date -u +%Y-%m-%d)/"
-  if [ -s /var/log/check1-extra.txt ]; then
-    pip install -q boto3 --break-system-packages >/dev/null 2>&1 || pip install -q boto3
-    STALE="$STALE" python3 - <<'PY'
+  cat /var/log/v1-missing.txt /var/log/v1-differ.txt > /var/log/fix.txt; FX=0
+  if [ -s /var/log/fix.txt ]; then rclone copy "$SRC" "$DST" $OPTS $MW --files-from-raw /var/log/fix.txt --no-traverse --log-file /var/log/copy-fix.log; FX=$?; fi
+  STALE="migration/stale-$(date -u +%Y-%m-%d)/"; : > /var/log/stale-moved.txt; : > /var/log/stale-failed.txt
+  if [ -s /var/log/v1-extra.txt ]; then STALE="$STALE" python3 - <<'PY'
 import os, boto3
 from concurrent.futures import ThreadPoolExecutor
+from botocore.config import Config
 s3 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
-                  aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"])
+                  aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"],
+                  config=Config(retries={{"max_attempts": 10, "mode": "adaptive"}}, max_pool_connections=40))
 B, P = os.environ["B2B"], os.environ["STALE"]
-keys = [l.rstrip("\\n") for l in open("/var/log/check1-extra.txt") if l.strip()]
-def mv(k):   # copy first, confirm the copy, only then hide the original (its old version stays until the 30-day rule)
-    s3.copy({{"Bucket": B, "Key": k}}, B, P + k)   # managed copy: works for files over 5 GB too
-    if s3.head_object(Bucket=B, Key=P + k)["ContentLength"] != s3.head_object(Bucket=B, Key=k)["ContentLength"]:
-        raise RuntimeError("copy size mismatch " + k)
-    s3.delete_object(Bucket=B, Key=k)
-    return k
+keys = [l.rstrip("\\n") for l in open("/var/log/v1-extra.txt") if l.rstrip("\\n")]
+ok, bad = open("/var/log/stale-moved.txt", "a"), open("/var/log/stale-failed.txt", "a")
+def mv(k):   # copy, confirm same size, only then hide the original (its old version stays; nothing is deleted)
+    try:
+        s3.copy({{"Bucket": B, "Key": k}}, B, P + k)
+        if s3.head_object(Bucket=B, Key=P + k)["ContentLength"] != s3.head_object(Bucket=B, Key=k)["ContentLength"]:
+            raise RuntimeError("copy size mismatch")
+        s3.delete_object(Bucket=B, Key=k)
+        ok.write(k + "\\n"); ok.flush()
+    except Exception as e:
+        bad.write(f"{{k}}\\t{{e!r}}"[:400] + "\\n"); bad.flush()
 with ThreadPoolExecutor(32) as ex:
-    done = list(ex.map(mv, keys))
-open("/var/log/stale-moved.txt", "w").write("\\n".join(done) + "\\n")
-print("moved", len(done))
+    list(ex.map(mv, keys))
 PY
   fi
-  read M2 D2 X2 <<< "$(twoway check2)"
-  kill $TICK
-  OK=no; [ "$M2" = 0 ] && [ "$D2" = 0 ] && [ "$X2" = 0 ] && OK=yes
-  {{ echo "Final pass finished. Copy pass: exit $P1, $(( (T1-T0)/60 )) min."
-     echo "First check: $M missing, $D size differences, $X stale (in Backblaze only). Fixed: copied $(( M + D )) again; moved $X stale files to $STALE (nothing deleted)."
-     echo "**Second check: $M2 missing, $D2 size differences, $X2 stale. Ready to switch: $OK.**"
-     echo; echo "Lists kept in Backblaze under bot/migration/logs/ (check1-*, check2-*, stale-moved.txt)."; }} | say
-  rclone copy /var/log "$DST/bot/migration/logs" --include 'check*' --include 'stale-moved.txt' --include 'fix.txt' --include 'copy-fix.log' || true
+  SM=$(wc -l < /var/log/stale-moved.txt); SF=$(wc -l < /var/log/stale-failed.txt)
+  V2=$(python3 /root/verify.py /var/log v2); V2RC=$?; read M2 D2 X2 K2 RN2 NEW2 ER2 <<< "$V2"
+  # Same-size overwrites (size-only can't see them): a last dry-run comparing size AND time must find nothing to copy
+  rclone copy "$SRC" "$DST" $OPTS $MW --dry-run --log-file /var/log/final-dryrun.log --log-level NOTICE; DR=$?
+  DRN=$(grep -ac 'Skipped copy as --dry-run is set' /var/log/final-dryrun.log)
+  QUIET=no; [ "${{NEW2:-9999999999}}" -lt "$T0" ] && QUIET=yes   # R2 got no new writes since this run started
+  OK=yes
+  for c in "$V1RC" "$V2RC" "$P1" "$FX" "$SF" "$M2" "$D2" "$X2" "$DR" "$DRN"; do [ "$c" = 0 ] || OK=no; done
+  [ "$QUIET" = yes ] || OK=no
+  {{ echo "Final pass finished."
+     echo "- Copy: exit $P1. Re-copy of missing/different: $(wc -l < /var/log/fix.txt) files, exit $FX."
+     echo "- Moved $SM files that R2 no longer has to $STALE (nothing deleted); $SF could not be moved."
+     echo "- Independent check (both buckets listed in full): $M2 missing, $D2 size differences, $X2 stale, $ER2 listing errors. R2 has $RN2 files."
+     echo "- Size-and-time dry run: $DRN files would still copy (exit $DR)."
+     echo "- R2 quiet since start (bot really paused): $QUIET."
+     echo "- Left as they are (never moved): $K2 Backblaze-only files in history/, raw/, research/."
+     echo; echo "**Ready to switch: $OK.** Every line above must be 0 / exit 0 / yes for this to say yes."
+     echo "Lists saved in Backblaze under bot/migration/logs/final-<time>/."; }} | say
+fi
+fi
+finish
 fi
 fi
 rclone copy /var/log "$DST/bot/migration/logs" --include 'copy*.log' --include 'check.log' || true
@@ -150,6 +184,17 @@ def main():
     missing = [k for k in ("B2_BUCKET", "B2_ACCESS_KEY_ID", "B2_SECRET_ACCESS_KEY", "DIGITALOCEAN_TOKEN") if not e(k)]
     if missing:
         sys.exit(f"missing secrets: {missing}")
+    h0 = {"Authorization": f"Bearer {e('DIGITALOCEAN_TOKEN')}"}
+    def tagged(tag):
+        r = requests.get(f"{DO}/droplets", params={"tag_name": tag, "per_page": 200}, headers=h0, timeout=60)
+        r.raise_for_status()
+        return [d["name"] for d in r.json()["droplets"]]
+    # Reviewer fix: never two copy machines at once (an old one could copy stale R2 files over new Backblaze ones)
+    if tagged("upfront-copy"):
+        sys.exit(f"a copy machine is already running: {tagged('upfront-copy')}; not starting another")
+    if mode == "final" and (tagged("upfront-bot") or tagged("site-build")):
+        sys.exit("final pass refused: the bot isn't paused (rented machines still running: "
+                 f"{tagged('upfront-bot') + tagged('site-build')})")
     old = existing()
     if old and not force:
         print(f"Already started (issue #{old['number']}); run with force to start again.")
