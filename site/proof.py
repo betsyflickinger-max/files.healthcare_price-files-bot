@@ -75,6 +75,16 @@ NO_RECORD = ("No Medicare or Medicaid record for this procedure ({year}). That d
              "Medicare is mostly people 65+, and rows under 11 patients are hidden.")
 
 
+# Nov 9, 2026: practice names that say they don't deliver babies (used only for delivery codes, only for groups)
+NOT_DELIVERY_NAME = re.compile(r'endoscop|gastroenterolog|labone|labcorp|quest diagnostic|dermatolog|dermatopatholog|patholog|laborator|\blabs?\b|radiolog|imaging|'
+                               r'prosthet|orthotic|speech|hearing|audiolog|dental|dentist|orthodont|oral surg|pharmac|medical supply|'
+                               r'durable medical|cardiolog|heart ?lab|orthopa?edic|podiatr|chiropract|optometr|ophthalm|eye |vision|'
+                               r'psychiat|behavioral|counsel|dialysis|kidney|urolog|oncolog|cancer|sleep|physical therap|rehab|'
+                               r'ambulance|anesthes', re.I)
+DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|maternal|matern|midwi|birth|family (medicine|practice|health)|'
+                           r'perinat|fertility|multi-?specialty', re.I)
+
+
 class Proof:
     def __init__(self, s3=None, bucket=None, year='2024', path=None, tax=None, state=None):
         self.tax = tax or {}     # npi -> primary taxonomy (NPPES), for the anesthesia check
@@ -146,6 +156,10 @@ class Proof:
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
+            # Nov 9, 2026: a practice whose own name says what it does, when its listing doesn't settle it ("Liberty Endoscopy
+            # Center" was Ohio's lowest delivery after the taxonomy check). Birth, OB, women's and family names are kept.
+            if kind == 'G' and NOT_DELIVERY_NAME.search(name_of or name or '') and not DELIVERY_NAME.search(name_of or name or ''):
+                return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
             return 'not_covered', 'Medicare is a poor guide for this procedure (mostly people 65+)'
