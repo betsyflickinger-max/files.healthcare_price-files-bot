@@ -187,7 +187,8 @@ def _save(issue, state, err=""):
             f"\n- Turned off {len(paused)} workflows that use storage:" + "".join(f"\n  - {w['name']}" for w in paused) +
             ("".join(f"\n- **Could not turn off:** {w['name']}" for w in failed)) +
             f"\n- Left on: {', '.join(sorted(KEEP_ON))}\n\n"
-            f"To undo: run the **Maintenance** workflow with `resume`. It turns back on only these workflows and removes "
+            f"To undo: run the **Maintenance** workflow with `resume` (to pause again after a partial pause, resume first)."
+            f" `resume` turns back on only these workflows and removes "
             f"only these hold files.\n\n<!-- maintenance: {json.dumps(state)} -->")
     r = gh("PATCH", f"/issues/{issue}", json={"body": body})
     if not r.ok:
@@ -244,9 +245,15 @@ def resume(s3, b):
         (back if gh("PUT", f"/actions/workflows/{w['id']}/enable").status_code == 204 else still_off).append(w["name"])
     stores = [(s3, b)] + ([r2_direct()] if env("STORAGE_ENDPOINT") and r2_direct() else [])
     removed, left = 0, []
-    for c, bk in stores:
+    for n, (c, bk) in enumerate(stores):
         for k in state["holds"]:
-            txt = read(c, bk, k)
+            try:
+                txt = read(c, bk, k)
+            except Exception as e:
+                if n == 0:
+                    raise          # the store the bot uses now must be cleaned
+                print(f"R2 cleanup skipped for {k}: {e!r}"[:200])   # old R2 copy only: leave it
+                continue
             if txt.startswith(STAMP):
                 c.delete_object(Bucket=bk, Key=k)
                 removed += 1
