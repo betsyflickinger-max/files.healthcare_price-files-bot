@@ -15,9 +15,33 @@ jobs:
           B2S: ${{ secrets.B2_SECRET_ACCESS_KEY }}
           B2B: ${{ secrets.B2_BUCKET }}
           R2A: ${{ secrets.R2_ACCOUNT_ID }}
+          R2K: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2S: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2B: ${{ secrets.R2_BUCKET }}
           CFT: ${{ secrets.CF_ANALYTICS_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           pip -q install boto3
+          echo "== R2: always-on servers, claims, hold files"
+          python3 - <<'PY'
+          import os, boto3, json
+          g = lambda k: "".join(os.environ[k].split())
+          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
+                            aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
+          B = g("R2B")
+          def ls(p):
+              out = []
+              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix=p):
+                  out += pg.get("Contents", [])
+              return out
+          for o in ls("bot/fleet/dedicated/"):
+              print("dedicated", o["Key"], o["LastModified"], s3.get_object(Bucket=B, Key=o["Key"])["Body"].read()[:200])
+          for o in ls("bot/fleet/claims/"):
+              j = json.loads(s3.get_object(Bucket=B, Key=o["Key"])["Body"].read())
+              print("claim", o["Key"].split("/")[-1], j.get("name") or j.get("machine"), j.get("at") or j.get("claimed_at"), "beat", j.get("beat") or j.get("heartbeat"))
+          for o in ls("bot/"):
+              if o["Key"].endswith("hold.txt") or "hold_" in o["Key"]:
+                  print("hold", o["Key"], o["LastModified"], s3.get_object(Bucket=B, Key=o["Key"])["Body"].read()[:120])
+          PY
           echo "== R2 file counts (Cloudflare analytics)"
           python3 - <<'PY'
           import json, os, urllib.request, datetime as dt
