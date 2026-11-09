@@ -1,4 +1,4 @@
-name: copy-peek2 website storage reads (read only)
+name: copy-peek2 website folder sizes on R2 (read only)
 on:
   push:
     branches: [copy-peek2]
@@ -8,7 +8,7 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Look (read only)
+      - name: Sizes (read only)
         env:
           R2A: ${{ secrets.R2_ACCOUNT_ID }}
           R2K: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -16,26 +16,37 @@ jobs:
           R2B: ${{ secrets.R2_BUCKET }}
         run: |
           pip -q install boto3
-          python3 - <<'PY'
-          import os, boto3, io, tarfile, re
+          cat > s.py <<'PY'
+          import os, boto3
+          from concurrent.futures import ProcessPoolExecutor
           g = lambda k: "".join(os.environ[k].split())
-          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
-                            aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
-          B = g("R2B")
-          o = s3.get_object(Bucket=B, Key="site/deploy/current.tgz")
-          print("deploy archive", o["LastModified"], o["ContentLength"])
-          t = tarfile.open(fileobj=io.BytesIO(o["Body"].read()))
-          hits = {}
-          for m in t.getmembers():
-              if not m.isfile() or not re.search(r"\.(js|ts|mjs)$", m.name) or "functions" not in m.name: continue
-              src = t.extractfile(m).read().decode("utf-8", "replace")
-              if "PF" not in src: continue
-              uses = sorted(set(re.findall(r"env\.PF\.(\w+)\(\s*([^,)]{0,90})", src)))
-              consts = sorted(set(re.findall(r"const\s+(PREFIX|PFX|\w*KEY\w*|\w*PRE\w*)\s*=\s*([^;\n]{0,90})", src)))
-              key = (tuple(uses), tuple(consts))
-              hits.setdefault(key, []).append(m.name)
-          for (uses, consts), files in sorted(hits.items(), key=lambda x: -len(x[1])):
-              print(f"\n{len(files)} files, e.g. {files[0]}")
-              for u in uses: print("   PF.", u[0], u[1])
-              for c in consts: print("   const", c[0], "=", c[1])
+          def c():
+              return boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
+                                  aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
+          def subs(p):
+              s3, out, n, b = c(), [], 0, 0
+              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p, Delimiter="/"):
+                  out += [x["Prefix"] for x in pg.get("CommonPrefixes", [])]
+                  for o in pg.get("Contents", []): n += 1; b += o["Size"]
+              return out, n, b
+          def total(p):
+              s3, n, b = c(), 0, 0
+              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p):
+                  for o in pg.get("Contents", []): n += 1; b += o["Size"]
+              return p, n, b
+          if __name__ == "__main__":
+              top, _, _ = subs("")
+              with ProcessPoolExecutor(16) as ex:
+                  lv = []
+                  for t, (s, n, b) in zip(top, ex.map(subs, top)):
+                      lv += s
+                  res = list(ex.map(total, lv))
+              agg = {}
+              for p, n, b in res:
+                  k = p.split("/")[0] + "/"
+                  if k in ("site/", "control/"): k = "/".join(p.split("/")[:2]) + "/"
+                  a = agg.setdefault(k, [0, 0]); a[0] += n; a[1] += b
+              for k, (n, b) in sorted(agg.items(), key=lambda x: -x[1][1]):
+                  print(f"{b/1e9:10.1f} GB {n:>10,} files  {k}")
           PY
+          python3 s.py
