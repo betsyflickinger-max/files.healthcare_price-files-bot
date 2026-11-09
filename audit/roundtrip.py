@@ -198,39 +198,40 @@ def check_insurer(ins, max_gb, minutes=120):
     for x in ins:
         by_table[stem(x['url'])].append(x)
     order = sorted(by_table, key=lambda st: sum(s for _, s in idx.get(st, [])))   # smallest tables first
-    for st in order:
+    def one(st):   # Nov 9, 2026: tables are read 4 at a time (the first run traced only 139 of 1,272 lines in 2 hours)
+        cur = con.cursor()
         xs = by_table[st]
         keys = idx.get(st, [])
         if time.time() > stop:
             for x in xs:
                 x.update(verdict='not checked (time budget used up)', detail='')
-            continue
+            return
         if not keys:
             for x in xs:
                 x.update(verdict='source table not found', detail=f'no table named {st}')
-            continue
+            return
         gb = sum(s for _, s in keys) / 1e9
         if gb > max_gb:
             for x in xs:
                 x.update(verdict='not checked (table too big for this run)', detail=f'{gb:.0f} GB')
-            continue
+            return
         codes = sorted({x['code'] for x in xs})
         npis = sorted({x['npi'] for x in xs if x['npi']})
         if not npis:
             for x in xs:
                 x.update(verdict='not checked (no NPI on page)', detail='')
-            continue
+            return
         lst = '[' + ','.join(f"'s3://{B}/{k}'" for k, _ in keys) + ']'
         q = f"""select billing_code, npi, billing_class, negotiated_type, negotiated_rate, billing_code_modifier, negotiation_arrangement,
                        expiration_date, reporting_entity_name, last_updated_on
                 from read_parquet({lst}, union_by_name=true)
                 where billing_code in ({','.join(repr(c) for c in codes)}) and npi in ({','.join(repr(n) for n in npis)})"""
         try:
-            rows = con.execute(q).fetchall()
+            rows = cur.execute(q).fetchall()
         except Exception as e:
             for x in xs:
                 x.update(verdict='not checked (read error)', detail=f'{type(e).__name__}: {str(e)[:150]}')
-            continue
+            return
         print(f"  table {st}: {len(xs)} sampled lines, {len(rows)} source rows ({gb:.1f} GB)", flush=True)
         src = collections.defaultdict(list)
         for r in rows:
@@ -280,6 +281,9 @@ def check_insurer(ins, max_gb, minutes=120):
             label = x['net'].split('|')[0].lower()
             if rs and not entity_ok(label, ent):
                 x['entity_flag'] = f"page says {x['net'].split('|')[0]}, file says {x['source_entity']}"
+
+    with ThreadPoolExecutor(4) as ex:
+        list(ex.map(one, order))
 
 
 FAMILY = [r'blue|bcbs|anthem|wellpoint|elevance|highmark|regence|premera|carefirst|excellus|independence|horizon|florida blue',
