@@ -31,10 +31,13 @@ jobs:
               objs += p.get("Contents", [])
           for o in sorted(objs, key=lambda o: o["LastModified"])[-25:]:
               print(o["LastModified"], o["Size"], o["Key"])
+          for k in [o["Key"] for o in objs if o["Key"].endswith(("copy.log", "summary.json")) and o["LastModified"].year == 2026 and o["LastModified"].month == 11 and o["LastModified"].day >= 9]:
+              t = s3.get_object(Bucket=B, Key=k)["Body"].read().decode("utf-8", "replace").splitlines()
+              print("==", k); print("\n".join(l for l in t[-12:] if not re.search(r"(?i)secret|token|bearer", l)))
           try:
               body = s3.get_object(Bucket=B, Key="bot/migration/logs/copy-setup.log")["Body"].read().decode("utf-8", "replace")
               lines = [l for l in body.splitlines() if not re.search(r"(?i)key|secret|token|bearer", l)]
-              print("== copy-setup.log tail"); print("\n".join(lines[-40:]))
+              print("== copy-setup.log tail"); print("\n".join(lines[-3:]))
           except Exception as e:
               print("no setup log:", e)
           PY
