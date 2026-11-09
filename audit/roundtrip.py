@@ -367,12 +367,27 @@ def check_hospital_file(key, xs):
                     break
         else:
             f = stream_lines(key)
+            rec, inq, at = [], False, 0   # Nov 9, 2026: a cited record whose quoted note spans lines is read to its end
             for n, line in enumerate(f, 1):
-                if n in want:
-                    for x in want[n]:
-                        judge(x, line)
-                if n >= last:
+                if rec:
+                    rec.append(line)
+                    inq = still_open(line, inq)
+                    if not inq:
+                        for x in want[at]:
+                            judge(x, ''.join(rec))
+                        rec = []
+                elif n in want:
+                    inq = still_open(line, False)
+                    if inq:
+                        rec, at = [line], n
+                    else:
+                        for x in want[n]:
+                            judge(x, line)
+                if n >= last and not rec:
                     break
+            if rec:
+                for x in want[at]:
+                    judge(x, ''.join(rec))
     except Exception as e:
         for x in xs:
             if 'verdict' not in x:
@@ -421,6 +436,27 @@ def locate(key, miss):
             x['verdict'] = 'found on another line'
         else:
             x['detail'] = f"code and amount not anywhere in this file ({total:,} {'items' if is_json else 'lines'}) | " + x['detail'][:120]
+
+
+def still_open(line, inq):
+    """Is a quoted CSV field still open at the end of this physical line? Quotes count only where the csv module counts them:
+    one that starts a field opens it, "" inside is a literal quote, and a stray quote mid-field (12" ruler) is just text."""
+    if '"' not in line:
+        return inq
+    i, n, start = 0, len(line), not inq
+    while i < n:
+        c = line[i]
+        if inq:
+            if c == '"':
+                if i + 1 < n and line[i + 1] == '"':
+                    i += 2; continue
+                inq = False
+        else:
+            if c == '"' and start:
+                inq = True
+            start = c == ','
+        i += 1
+    return inq
 
 
 def judge(x, text):

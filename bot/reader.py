@@ -102,18 +102,22 @@ def parse_csv(path):
     def lines():
         # Group physical lines into CSV records (a quoted field can contain line breaks), then
         # pass the first 3 records (meta keys, meta values, header) and any later record naming a target code.
-        rec, q, nrec = [], 0, 0
+        rec, q, nrec, start = [], 0, 0, 0
         for line in f:
             pos["n"] += 1
+            if not rec:
+                start = pos["n"]   # Nov 9, 2026: pages cite a record's first line, not its last
             rec.append(line); q += line.count('"')
             if q % 2:
                 continue
             text = "".join(rec); rec, q = [], 0; nrec += 1
             if nrec <= 3 or LINE_RE.search(text):
+                pos["start"] = start
                 yield text
         if rec:
             text = "".join(rec); nrec += 1
             if nrec <= 3 or LINE_RE.search(text):
+                pos["start"] = start
                 yield text
     rdr = csv.reader(lines())
     mk, mv = next(rdr), next(rdr)
@@ -153,7 +157,7 @@ def parse_csv(path):
         m = match(codes)
         if not m:
             continue
-        common = dict(base, source_row=pos["n"], description=col(row, "description"), code=m[0], code_type=m[1],
+        common = dict(base, source_row=pos["start"], description=col(row, "description"), code=m[0], code_type=m[1],
                       all_codes=";".join(f"{t}:{c}" for c, t in codes if c), modifiers=col(row, "modifiers"),
                       setting=col(row, "setting"), billing_class=col(row, "billing_class"),
                       gross_charge=col(row, "standard_charge|gross"),
