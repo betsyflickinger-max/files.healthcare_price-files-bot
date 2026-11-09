@@ -281,10 +281,16 @@ for ii, (key, size) in enumerate(files):
           select r.*, {NT_} nt_, {ST_} st_, coalesce(m.network_name, r.file_label) network_name from (select * from read_parquet('{loc}') where {pf}) r left join {mem} m using (npi, tin)
           where (billing_code_type ilike 'cpt%' or billing_code_type ilike 'hcpcs%' or billing_code_type ilike 'ms-drg%' or billing_code_type ilike 'drg%')
             and lower(negotiated_type) in ('negotiated','fee schedule','derived','percentage') and try_cast(negotiated_rate as double) >= 0{KEEP_}""")
+        # Nov 9, 2026 (audit packet P003): UnitedHealthcare/UMR stamp each file with the NEXT month (the 2026-10-01 file says
+        # last_updated_on 2026-11-01, the 2026-11-01 file says 2026-12-01). A file date later than the date in the file's own
+        # address is not when it was posted: the address date is shown instead.
+        UD_ = "try_cast(regexp_extract(source_url, '/(20[0-9]{2}-[0-9]{2}-[0-9]{2})[/_]', 1) as date)"
+        DT_ = (f"case when {UD_} is not null and try_cast(left(last_updated_on, 10) as date) > {UD_} "
+               f"then strftime({UD_}, '%Y-%m-%d') else last_updated_on end")
         con.execute(f"""create or replace temp view r1 as select {SHORT} ins, {NET} net, {KEY} code, {TYPE} ctype, name, npi, tin,
           case when billing_class ilike 'inst%' then 0 else 1 end fee, case when negotiated_type ilike 'percent%' then 1 else 0 end t,
           round(try_cast(negotiated_rate as double), 2) v, coalesce(billing_code_modifier,'') modi, st_ st,
-          nt_ nt, last_updated_on dt, source_url url from r0""")
+          nt_ nt, {DT_} dt, source_url url from r0""")
         con.execute(f"""create or replace temp view r2 as select * from r1
           where (ctype <> 'MS-DRG' and regexp_matches(code, '^[0-9A-Z][0-9]{{3}}[0-9A-Z]$')) or (ctype = 'MS-DRG' and regexp_matches(code, '^[0-9]{{1,3}}$'))""")
         sd = D / f'stage/src={tag}'
