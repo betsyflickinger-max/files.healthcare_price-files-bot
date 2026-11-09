@@ -50,7 +50,12 @@ def client():
         print("LOCKER_KEY_ID / LOCKER_APP_KEY secrets are missing, so nothing was locked. Create the 'file-locker' key "
               "in Backblaze (Read and Write, bucket files.healthcare-DATA) and add both values as GitHub secrets.")
         sys.exit(0)
-    return boto3.client("s3", endpoint_url=env("STORAGE_ENDPOINT"), aws_access_key_id=env("LOCKER_KEY_ID"),
+    ep = env("STORAGE_ENDPOINT")
+    if ep and "://" not in ep:
+        ep = "https://" + ep
+    if not ep or not B:
+        sys.exit("Backblaze endpoint or bucket is missing (secrets B2_ENDPOINT / B2_BUCKET).")
+    return boto3.client("s3", endpoint_url=ep, aws_access_key_id=env("LOCKER_KEY_ID"),
                         aws_secret_access_key=env("LOCKER_APP_KEY"), region_name=env("STORAGE_REGION") or "auto",
                         config=Config(retries={"max_attempts": 5, "mode": "adaptive"}, max_pool_connections=THREADS + 4,
                                       connect_timeout=20, read_timeout=60))
