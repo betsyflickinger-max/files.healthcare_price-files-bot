@@ -165,24 +165,24 @@ Also listed, may not offer this procedure: 0
 
 ## Vaginal delivery (global) (59400)
 
-Providers on the page by kind and proof: surgery center wrong_specialty: 160; practice, clinic, lab or imaging center not_covered: 6158; practice, clinic, lab or imaging center wrong_specialty: 12977; hospital not_covered: 582
+Providers on the page by kind and proof: surgery center wrong_specialty: 160; practice, clinic, lab or imaging center not_covered: 1859; practice, clinic, lab or imaging center wrong_specialty: 17276; hospital not_covered: 582
 
 Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19877; left out as out of state 3; ranked providers 16623; kind doc; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
 | # | Before (today) | After | Proof shown |
 |---|---|---|---|
 | 1 | Amg Illinois Ltd $810 | Union Hospital Inc $1,289 |  |
-| 2 | Alliance Healthcare Services Inc $975 | Pinnacle Pain Management $1,325 |  |
-| 3 | Forefront Dermatology, S.C. $1,128 | Hedges Clinic Service Corp $1,332 |  |
-| 4 | Forefront Dermatology, S.C. $1,128 | Northwest Internal Medicine Group LLC $1,332 |  |
-| 5 | Forefront Dermatology, S.C. $1,128 | Oak Brook Center for Health Inc $1,332 |  |
-| 6 | Forefront Dermatology, S.C. $1,128 | Rheumatic Disease Center Physicians, S.C $1,332 |  |
-| 7 | Forefront Dermatology, S.C. $1,128 | Union Associated Physicians Clinic, LLC $1,337 |  |
-| 8 | Forefront Dermatology, S.C. $1,128 | The Baby Academy Usa LLC $1,428 |  |
-| 9 | Forefront Dermatology, S.C. $1,128 | Circle Medical Care Group PA $1,458 |  |
-| 10 | Forefront Dermatology, S.C. $1,128 | Southern Illinois Medical Care Associates LLC $1,458 |  |
+| 2 | Alliance Healthcare Services Inc $975 | Hedges Clinic Service Corp $1,332 |  |
+| 3 | Forefront Dermatology, S.C. $1,128 | Oak Brook Center for Health Inc $1,332 |  |
+| 4 | Forefront Dermatology, S.C. $1,128 | The Baby Academy Usa LLC $1,428 |  |
+| 5 | Forefront Dermatology, S.C. $1,128 | Circle Medical Care Group PA $1,458 |  |
+| 6 | Forefront Dermatology, S.C. $1,128 | Wabash County Health Department $1,478 |  |
+| 7 | Forefront Dermatology, S.C. $1,128 | Advanced Family Practice, PLLC $1,523 |  |
+| 8 | Forefront Dermatology, S.C. $1,128 | Advanced Wellness Medical, LLC $1,523 |  |
+| 9 | Forefront Dermatology, S.C. $1,128 | Attune Menopause Care PLLC $1,523 |  |
+| 10 | Forefront Dermatology, S.C. $1,128 | Chicago Headache Center and Research Institute LLC $1,523 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 13134; lowest before $810, after $1,289
+Left out of the figures (clinicians whose specialty doesn't perform this code): 17433; lowest before $810, after $1,289
 
 Also listed, may not offer this procedure: 0
 
@@ -214,7 +214,7 @@ Also listed, may not offer this procedure: 0
 | Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |
 |---|---|---|---|
 | surgery center | 162 | 1118 | 0 |
-| practice, clinic, lab or imaging center | 579 | 172465 | 0 |
+| practice, clinic, lab or imaging center | 579 | 168166 | 0 |
 | hospital | 3 | 5034 | 0 |
 
 ## Areas and the state the page code gives them
