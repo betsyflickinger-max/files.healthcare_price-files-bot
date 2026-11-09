@@ -88,6 +88,13 @@ DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|maternal|m
                            r'perinat|fertility|multi-?specialty', re.I)
 NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr|\bchoa\b|\baids\b|\bhiv\b', re.I)
 OB_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat', re.I)
+# Nov 9, 2026 (third live check): blocking the wrong kinds one at a time kept missing new ones (autism and behavior-analysis
+# companies, pain centers, a children's center). Practices are now kept for births only when their registered specialty is one
+# that delivers babies (or a multi-specialty group, birthing center or community/rural health clinic), or their name says so.
+GROUP_DELIVERY_OK = DELIVERY_TAX + ('193', '261QB0400', '261QF0400', '261QR1300', '261QC1500', '261QM1300', '261QP2300')
+GROUP_DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat|family (medicine|practice|health|care)', re.I)
+ORG_WORD = re.compile(r'\b(llc|inc|corp|p\.?c|p\.?a|ltd|center|centre|services|group|associates|clinic|foundation|health|medical|practice|partners)\b', re.I)
+NEVER_DELIVERY_NAME_ALL = re.compile(NEVER_DELIVERY_NAME.pattern + r'|autism|behavio|\bpain\b|home (care|health)|hospice', re.I)
 
 
 class Proof:
@@ -170,8 +177,14 @@ class Proof:
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
             # Nov 9 (live check): Atlanta's lowest was "Buckhead Facial Plastic Surgery" (listed only as "Specialist"); children's
             # and surgical-assistant groups were the highest. These stay out even when the name also says multi-specialty.
-            if kind == 'G' and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME.search(name_of or name or '') and not OB_NAME.search(name_of or name or ''))):
+            pn = name_of or name or ''
+            org = kind == 'G' or (kind == 'P' and ORG_WORD.search(pn))     # an organization filed as a clinician
+            if org and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME_ALL.search(pn) and not OB_NAME.search(pn))):
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
+            if org and NOT_DELIVERY_NAME.search(pn) and not DELIVERY_NAME.search(pn):
+                return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
+            if kind == 'G' and gt and not gt.startswith(GROUP_DELIVERY_OK) and not GROUP_DELIVERY_NAME.search(pn):
+                return 'wrong_specialty', 'practice\'s registered specialty isn\'t one that delivers babies'
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
             return 'not_covered', 'Medicare is a poor guide for this procedure (mostly people 65+)'
