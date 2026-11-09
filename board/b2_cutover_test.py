@@ -25,16 +25,26 @@ def check(name, fn):
 
 
 def write_if_new():
+    """Job claiming on Backblaze: 4 machines race for the same claim; exactly one must win (fleet.create_only)."""
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "insurers"))
+    import fleet
+    from concurrent.futures import ThreadPoolExecutor
     k = T + "claim.json"
-    s3.put_object(Bucket=B, Key=k, Body=b"{}", IfNoneMatch="*")
-    try:
-        s3.put_object(Bucket=B, Key=k, Body=b"{}", IfNoneMatch="*")
-    except ClientError as e:
-        code = e.response.get("Error", {}).get("Code", "")
-        if code in ("PreconditionFailed", "412", "ConditionalRequestConflict"):
-            return f"second write refused as it should be ({code})"
-        raise
-    raise RuntimeError("second write was ACCEPTED: write-if-new is not enforced, so job claiming would not be safe")
+    def go(i):
+        me = {"name": f"m{i}", "droplet_id": i}
+        return fleet.create_only(s3, B, k, json.dumps(me).encode(), lambda c: c.get("name") == me["name"])
+    rounds = []
+    for r in range(3):
+        kk = k.replace(".json", f"{r}.json")
+        def go2(i, kk=kk):
+            me = {"name": f"m{i}", "droplet_id": i}
+            return fleet.create_only(s3, B, kk, json.dumps(me).encode(), lambda c: c.get("name") == me["name"])
+        with ThreadPoolExecutor(4) as ex:
+            wins = sum(ex.map(go2, range(4)))
+        rounds.append(wins)
+    if rounds != [1, 1, 1]:
+        raise RuntimeError(f"winners per round {rounds} (must be exactly 1 each)")
+    return f"3 races of 4 machines: exactly one winner each time {rounds}"
 
 
 def big_copy():
@@ -91,7 +101,7 @@ def delete_batch():
     return f"removed {len(ks)} test files (hidden copies expire via the bot/ 30-day rule)"
 
 
-check("1. write-if-new (job claiming)", write_if_new)
+check("1. job claiming (create-only, Backblaze method)", write_if_new)
 check("2. multipart copy of a big file (table moves)", big_copy)
 check("3. small copy_object", copy_object_small)
 check("4. range read", range_read)
