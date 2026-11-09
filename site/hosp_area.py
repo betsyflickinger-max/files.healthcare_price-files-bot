@@ -287,6 +287,7 @@ def redo(areas):
             try: O.s3.delete_object(Bucket=O.B, Key=O.SP + f'h2/{a}.done')
             except Exception: pass
         st.get('published', {}).pop(a, None)
+        st.get('publish_tries', {}).pop(a, None)   # Nov 9, 2026: a fresh set of publish tries
         st.get('launches', {}).pop(f'h2-{a}', None)
     if not S7 and not os.environ.get('KEEP_H2'):   # Texas areas share machines in groups: let every group whose areas are all still built count as finished
         st['launches'] = {k: v for k, v in st.get('launches', {}).items() if not k.startswith('h2-')}
