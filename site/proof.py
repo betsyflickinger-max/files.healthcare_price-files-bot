@@ -156,6 +156,9 @@ class Proof:
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
+            # Nov 9, 2026: surgery centers don't deliver babies (Houston's lowest delivery was iSurg of Spring); birthing centers do
+            if kind == 'A' and not gt.startswith('261QB0400') and not re.search(r'birth', name_of or name or '', re.I):
+                return 'wrong_specialty', 'surgery centers don\'t deliver babies'
             # Nov 9, 2026: a practice whose own name says what it does, when its listing doesn't settle it ("Liberty Endoscopy
             # Center" was Ohio's lowest delivery after the taxonomy check). Birth, OB, women's and family names are kept.
             if kind == 'G' and NOT_DELIVERY_NAME.search(name_of or name or '') and not DELIVERY_NAME.search(name_of or name or ''):
