@@ -83,6 +83,8 @@ NOT_DELIVERY_NAME = re.compile(r'endoscop|gastroenterolog|labone|labcorp|quest d
                                r'ambulance|anesthes', re.I)
 DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|maternal|matern|midwi|birth|family (medicine|practice|health)|'
                            r'perinat|fertility|multi-?specialty', re.I)
+NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr', re.I)
+OB_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat', re.I)
 
 
 class Proof:
@@ -162,6 +164,10 @@ class Proof:
             # Nov 9, 2026: a practice whose own name says what it does, when its listing doesn't settle it ("Liberty Endoscopy
             # Center" was Ohio's lowest delivery after the taxonomy check). Birth, OB, women's and family names are kept.
             if kind == 'G' and NOT_DELIVERY_NAME.search(name_of or name or '') and not DELIVERY_NAME.search(name_of or name or ''):
+                return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
+            # Nov 9 (live check): Atlanta's lowest was "Buckhead Facial Plastic Surgery" (listed only as "Specialist"); children's
+            # and surgical-assistant groups were the highest. These stay out even when the name also says multi-specialty.
+            if kind == 'G' and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME.search(name_of or name or '') and not OB_NAME.search(name_of or name or ''))):
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
