@@ -88,7 +88,7 @@ finish() {{ kill $TICK 2>/dev/null; rclone copy /var/log "$DST/bot/migration/log
   --include 'v*-missing.txt' --include 'v*-differ.txt' --include 'v*-extra*.txt' --include 'v*-summary.json' \\
   --include 'probe*-keys.txt' --include 'copy*.log' --include 'stale-*.txt' --include 'fix.txt' --include 'final-dryrun.log' -q || true; }}
 export R2_ACCOUNT_ID='{v['R2_ACCOUNT_ID']}' R2_ACCESS_KEY_ID='{v['R2_ACCESS_KEY_ID']}' R2_SECRET_ACCESS_KEY='{v['R2_SECRET_ACCESS_KEY']}' R2_BUCKET='{v['R2_BUCKET']}'
-if ! curl -sfL "https://raw.githubusercontent.com/{REPO}/{sha}/board/storage_verify.py" -o /root/verify.py; then
+if ! curl -sfL -H "Authorization: Bearer $GHT" "https://raw.githubusercontent.com/{REPO}/{sha}/board/storage_verify.py" -o /root/verify.py; then
   echo "Stopped before copying anything: couldn't download the checker (storage_verify.py at {sha})." | say; finish
 else
 T0=$(date +%s)
@@ -118,12 +118,14 @@ if [ "$MODE" = "topup" ]; then
      echo "Right now Backblaze is missing $M files, has $D with a different size, and $X that R2 no longer has ($K more in history/raw/research, which are never moved). Listing errors: $ER. These are expected while the bot runs; the final pass during the pause fixes them."
      echo "Lists saved in Backblaze under bot/migration/logs/topup-<time>/."
      echo; echo '```'; grep -a 'Transferred\\|Errors\\|Checks' /var/log/copy.log | tail -4; echo '```'; }} | say
+elif [ "$V1RC" != 0 ]; then
+  echo "Final pass stopped: the first full check had listing errors ($ER), so nothing was re-copied, moved or hidden. **Ready to switch: no.** Run the final pass again." | say
 else
   cat /var/log/v1-missing.txt /var/log/v1-differ.txt > /var/log/fix.txt; FX=0
   if [ -s /var/log/fix.txt ]; then rclone copy "$SRC" "$DST" $OPTS $MW --files-from-raw /var/log/fix.txt --no-traverse --log-file /var/log/copy-fix.log; FX=$?; fi
   STALE="migration/stale-$(date -u +%Y-%m-%d)/"; : > /var/log/stale-moved.txt; : > /var/log/stale-failed.txt
   if [ -s /var/log/v1-extra.txt ]; then STALE="$STALE" python3 - <<'PY'
-import os, boto3
+import os, boto3, threading
 from concurrent.futures import ThreadPoolExecutor
 from botocore.config import Config
 s3 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
@@ -131,16 +133,18 @@ s3 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", r
                   config=Config(retries={{"max_attempts": 10, "mode": "adaptive"}}, max_pool_connections=40))
 B, P = os.environ["B2B"], os.environ["STALE"]
 keys = [l.rstrip("\\n") for l in open("/var/log/v1-extra.txt") if l.rstrip("\\n")]
-ok, bad = open("/var/log/stale-moved.txt", "a"), open("/var/log/stale-failed.txt", "a")
+ok, bad, LK = open("/var/log/stale-moved.txt", "a"), open("/var/log/stale-failed.txt", "a"), threading.Lock()
 def mv(k):   # copy, confirm same size, only then hide the original (its old version stays; nothing is deleted)
     try:
         s3.copy({{"Bucket": B, "Key": k}}, B, P + k)
         if s3.head_object(Bucket=B, Key=P + k)["ContentLength"] != s3.head_object(Bucket=B, Key=k)["ContentLength"]:
             raise RuntimeError("copy size mismatch")
         s3.delete_object(Bucket=B, Key=k)
-        ok.write(k + "\\n"); ok.flush()
+        with LK:
+            ok.write(k + "\\n"); ok.flush()
     except Exception as e:
-        bad.write(f"{{k}}\\t{{e!r}}"[:400] + "\\n"); bad.flush()
+        with LK:
+            bad.write(f"{{k}}\\t{{e!r}}"[:400] + "\\n"); bad.flush()
 with ThreadPoolExecutor(32) as ex:
     list(ex.map(mv, keys))
 PY
