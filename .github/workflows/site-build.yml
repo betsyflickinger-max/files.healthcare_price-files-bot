@@ -1,8 +1,9 @@
 name: Website refresh (monthly)
 
 on:
-  schedule:
-    - cron: "29 */6 * * *"   # every 6 hours: move the month's build along (starts on the 8th)
+  # Nov 9, 2026 (Betsy: "do all of it"): no schedule. The hourly pages job (state-builds.yml, site/pages_loop.py) already moves the
+  # DFW and Texas builds along every pass (Nov 7); this 6-hourly run only took the shared site-build-v2 lock from it, and each
+  # newer waiting job cancelled the older one, so the regional pages sat for hours on Nov 8. By hand still works.
   workflow_dispatch:
     inputs:
       force:
