@@ -171,6 +171,10 @@ class Proof:
             hosp_kind = kind
             if kind == 'H' and gt and not gt.startswith('28'):
                 kind = 'G'
+            # Second live check: the state taxonomy table only has NPIs with Medicare records, so a pediatrics practice often has
+            # none. With no taxonomy, no Medicare hospital ID and no "hospital" in its name, it's checked as a practice too.
+            if kind == 'H' and not gt and not ccn and not re.search(r'\bhospital\b', name_of or '', re.I):
+                kind = 'G'
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
