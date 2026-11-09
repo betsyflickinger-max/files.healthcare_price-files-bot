@@ -165,6 +165,12 @@ class Proof:
             # a clinician with another specialty; a practice only when its listing names one other physician specialty
             # (Illinois: a dermatology group was the "lowest vaginal delivery"); multi-specialty groups and clinics are kept
             gt = str((t_[0] if isinstance(t_, tuple) else t_) or '')
+            # Nov 9, 2026 (live check): a practice an insurer file lists as a hospital is checked as a practice ("Emory Children's
+            # Center" was Atlanta's highest; its NPIs are pediatrics). Real hospitals (taxonomy 28...) are left as they are:
+            # some children's hospitals do deliver (Cincinnati Children's has its own delivery unit).
+            hosp_kind = kind
+            if kind == 'H' and gt and not gt.startswith('28'):
+                kind = 'G'
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
@@ -185,6 +191,7 @@ class Proof:
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
             if kind == 'G' and gt and not gt.startswith(GROUP_DELIVERY_OK) and not GROUP_DELIVERY_NAME.search(pn):
                 return 'wrong_specialty', 'practice\'s registered specialty isn\'t one that delivers babies'
+            kind = hosp_kind
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
             return 'not_covered', 'Medicare is a poor guide for this procedure (mostly people 65+)'
