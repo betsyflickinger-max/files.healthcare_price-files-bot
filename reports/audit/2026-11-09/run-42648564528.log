@@ -1,0 +1,148 @@
+downloading the deployed site...
+107 areas
+  dfw: 1164698 findings, {'insurer lines': 64693492, 'hospital lines': 170745, 'cash lines': 7710}
+  el-paso: 79082 findings, {'insurer lines': 5755760, 'hospital lines': 9758, 'cash lines': 449}
+  austin: 459878 findings, {'insurer lines': 20542729, 'hospital lines': 99301, 'cash lines': 2483}
+  san-antonio: 761927 findings, {'insurer lines': 23983695, 'hospital lines': 47159, 'cash lines': 1092}
+  houston: 1159396 findings, {'insurer lines': 61491559, 'hospital lines': 86555, 'cash lines': 2278}
+  mcallen: 76714 findings, {'insurer lines': 4685862, 'hospital lines': 12761, 'cash lines': 805}
+  killeen-temple: 39850 findings, {'insurer lines': 2460471, 'hospital lines': 3831, 'cash lines': 263}
+  brownsville-harlingen: 35106 findings, {'insurer lines': 2009540, 'hospital lines': 6915, 'cash lines': 140}
+  corpus-christi: 233427 findings, {'insurer lines': 3448704, 'hospital lines': 9186, 'cash lines': 105}
+  beaumont-port-arthur: 120318 findings, {'insurer lines': 2329913, 'hospital lines': 12041, 'cash lines': 170}
+  lubbock: 46155 findings, {'insurer lines': 2352567, 'cash lines': 493, 'hospital lines': 6143}
+  waco: 29121 findings, {'insurer lines': 2177752, 'hospital lines': 7072, 'cash lines': 492}
+  longview: 110886 findings, {'insurer lines': 1947318, 'hospital lines': 6071, 'cash lines': 94}
+  college-station-bryan: 33407 findings, {'insurer lines': 1802136, 'hospital lines': 10095, 'cash lines': 482}
+  amarillo: 38709 findings, {'insurer lines': 1973120, 'hospital lines': 7645, 'cash lines': 75}
+  tyler: 231627 findings, {'insurer lines': 3443877, 'hospital lines': 2203, 'cash lines': 82}
+  abilene: 25406 findings, {'insurer lines': 1209502, 'hospital lines': 1242, 'cash lines': 88}
+  midland: 19194 findings, {'insurer lines': 923276, 'hospital lines': 937, 'cash lines': 76}
+  odessa: 18610 findings, {'insurer lines': 793015, 'hospital lines': 2411, 'cash lines': 61}
+  wichita-falls: 13257 findings, {'insurer lines': 966220, 'hospital lines': 6362, 'cash lines': 181}
+  texarkana: 66187 findings, {'insurer lines': 1043460, 'hospital lines': 5330, 'cash lines': 40}
+  san-angelo: 25462 findings, {'insurer lines': 993894}
+  victoria: 40207 findings, {'insurer lines': 712999, 'cash lines': 78, 'hospital lines': 2925}
+  small-towns: 317752 findings, {'insurer lines': 11096266, 'hospital lines': 102895, 'cash lines': 5751}
+  tennessee: 8739 findings, {'insurer lines': 5680087, 'hospital lines': 250797, 'cash lines': 6897}
+  oklahoma: 212206 findings, {'insurer lines': 5518593, 'hospital lines': 123989, 'cash lines': 5870}
+  alabama: 2567 findings, {'insurer lines': 4579172, 'hospital lines': 95043, 'cash lines': 5173}
+  mississippi: 390 findings, {'insurer lines': 3677992, 'hospital lines': 181657, 'cash lines': 7697}
+  north-carolina: 1517 findings, {'insurer lines': 11341458, 'hospital lines': 185413, 'cash lines': 5818}
+  connecticut: 1314 findings, {'insurer lines': 6214338, 'hospital lines': 82052, 'cash lines': 2334}
+  illinois: 5985 findings, {'insurer lines': 10732674, 'hospital lines': 163844, 'cash lines': 14312}
+  arkansas: 71 findings, {'insurer lines': 2383457, 'hospital lines': 159353, 'cash lines': 5673}
+  maryland: 1945093 findings, {'insurer lines': 8425895, 'hospital lines': 47300, 'cash lines': 2444}
+  new-mexico: 948 findings, {'insurer lines': 1237959, 'hospital lines': 49003, 'cash lines': 2566}
+  montana: 946 findings, {'insurer lines': 1050927, 'hospital lines': 74037, 'cash lines': 3786}
+  louisiana: 587 findings, {'insurer lines': 3708123, 'hospital lines': 246843, 'cash lines': 7789}
+  indiana: 2541 findings, {'insurer lines': 7631956, 'hospital lines': 596960, 'cash lines': 14714}
+  kentucky: 32600 findings, {'insurer lines': 8044948, 'hospital lines': 126317, 'cash lines': 6423}
+  ohio: 2215 findings, {'insurer lines': 13601389, 'hospital lines': 463069, 'cash lines': 15462}
+  arizona: 659 findings, {'insurer lines': 5810675, 'hospital lines': 211384, 'cash lines': 6448}
+  north-dakota: 1582 findings, {'insurer lines': 666544, 'hospital lines': 17215, 'cash lines': 3205}
+  south-dakota: 880 findings, {'insurer lines': 668202, 'hospital lines': 22177, 'cash lines': 3546}
+  iowa: 2084 findings, {'insurer lines': 1587084, 'hospital lines': 177692, 'cash lines': 11414}
+  minnesota: 10846 findings, {'insurer lines': 2941264, 'hospital lines': 140394, 'cash lines': 16429}
+  nebraska: 6672 findings, {'insurer lines': 1289619, 'hospital lines': 71034, 'cash lines': 7797}
+  kansas: 677 findings, {'insurer lines': 1727166, 'hospital lines': 121020, 'cash lines': 8112}
+  pennsylvania: 799 findings, {'insurer lines': 9096987, 'hospital lines': 282902, 'cash lines': 12944}
+  delaware: 24 findings, {'insurer lines': 806601, 'hospital lines': 15227, 'cash lines': 745}
+  west-virginia: 159 findings, {'insurer lines': 1205806, 'hospital lines': 78589, 'cash lines': 4043}
+  new-jersey: 3533 findings, {'insurer lines': 8098342, 'hospital lines': 158233, 'cash lines': 7767}
+  massachusetts: 232 findings, {'insurer lines': 3983139, 'hospital lines': 86093, 'cash lines': 3596}
+  rhode-island: 130 findings, {'insurer lines': 786756, 'hospital lines': 10819, 'cash lines': 596}
+  vermont: 2726 findings, {'insurer lines': 389406, 'hospital lines': 11679, 'cash lines': 1309}
+  new-hampshire: 19 findings, {'insurer lines': 1102396, 'hospital lines': 35836, 'cash lines': 3117}
+  maine: 44 findings, {'insurer lines': 1063538, 'hospital lines': 25217, 'cash lines': 3482}
+  south-carolina: 720 findings, {'insurer lines': 5188746, 'cash lines': 3768, 'hospital lines': 87927}
+  washington: 300 findings, {'insurer lines': 7411610, 'hospital lines': 103362, 'cash lines': 6576}
+  oregon: 85 findings, {'insurer lines': 2907604, 'hospital lines': 91284, 'cash lines': 5411}
+  idaho: 110 findings, {'insurer lines': 1887908, 'hospital lines': 72142, 'cash lines': 2609}
+  utah: 154 findings, {'insurer lines': 1777910, 'hospital lines': 98891, 'cash lines': 3052}
+  alaska: 8 findings, {'insurer lines': 697180, 'hospital lines': 3198, 'cash lines': 1298}
+  nevada: 85 findings, {'insurer lines': 2492742, 'hospital lines': 38342, 'cash lines': 1953}
+  hawaii: 8 findings, {'insurer lines': 879306, 'hospital lines': 18490, 'cash lines': 1661}
+  wyoming: 6 findings, {'insurer lines': 858877, 'hospital lines': 17647, 'cash lines': 2573}
+  new-york: 16719 findings, {'insurer lines': 7577744, 'cash lines': 11004, 'hospital lines': 567823}
+  virginia: 515337 findings, {'insurer lines': 6440974, 'hospital lines': 72939, 'cash lines': 4762}
+  district-of-columbia: 128569 findings, {'insurer lines': 406731, 'hospital lines': 5430, 'cash lines': 746}
+  florida: 22924 findings, {'insurer lines': 8965875, 'hospital lines': 323988, 'cash lines': 15278}
+  wisconsin: 3278 findings, {'insurer lines': 3070292, 'hospital lines': 116493, 'cash lines': 12774}
+  los-angeles: 80472 findings, {'insurer lines': 8500069, 'hospital lines': 191165, 'cash lines': 9467}
+  san-diego-inland-empire: 42516 findings, {'insurer lines': 3566110, 'hospital lines': 74872, 'cash lines': 4531}
+  bay-area: 89917 findings, {'insurer lines': 3023539, 'hospital lines': 54093, 'cash lines': 4195}
+  sacramento-northern-california: 40492 findings, {'insurer lines': 1687544, 'hospital lines': 49656, 'cash lines': 4487}
+  central-california: 31445 findings, {'insurer lines': 2954275, 'hospital lines': 91645, 'cash lines': 5422}
+  new-york-city: 35271 findings, {'insurer lines': 3692768, 'hospital lines': 166280, 'cash lines': 2500}
+  long-island: 57727 findings, {'insurer lines': 1599098, 'hospital lines': 94532, 'cash lines': 434}
+  hudson-valley: 37527 findings, {'insurer lines': 956789, 'hospital lines': 41913, 'cash lines': 967}
+  western-new-york: 1876 findings, {'insurer lines': 424716, 'cash lines': 2889, 'hospital lines': 162567}
+  upstate-new-york: 1746 findings, {'insurer lines': 903870, 'hospital lines': 102442, 'cash lines': 4211}
+  south-florida: 11315 findings, {'insurer lines': 3102289, 'hospital lines': 141883, 'cash lines': 5137}
+  tampa-bay: 3780 findings, {'insurer lines': 1970266, 'hospital lines': 61846, 'cash lines': 3336}
+  central-florida: 2064 findings, {'insurer lines': 1769033, 'hospital lines': 35687, 'cash lines': 2316}
+  southwest-florida: 2212 findings, {'insurer lines': 652471, 'hospital lines': 12153, 'cash lines': 1054}
+  north-florida: 3163 findings, {'insurer lines': 1471597, 'hospital lines': 62616, 'cash lines': 2633}
+  chicago-area: 4355 findings, {'insurer lines': 8028935, 'hospital lines': 90237, 'cash lines': 5405}
+  central-southern-illinois: 621 findings, {'insurer lines': 2701166, 'hospital lines': 70606, 'cash lines': 8568}
+  philadelphia-area: 141 findings, {'insurer lines': 3226341, 'cash lines': 2469, 'hospital lines': 91044}
+  western-pennsylvania: 391 findings, {'insurer lines': 2743639, 'hospital lines': 124242, 'cash lines': 5574}
+  central-eastern-pennsylvania: 138 findings, {'insurer lines': 3127007, 'hospital lines': 64858, 'cash lines': 4465}
+  oakland-county: 43 findings, {'insurer lines': 1197587, 'hospital lines': 34165, 'cash lines': 692}
+  macomb-county: 2 findings, {'insurer lines': 488306, 'hospital lines': 10160, 'cash lines': 414}
+  detroit-wayne-county: 10 findings, {'insurer lines': 988133, 'hospital lines': 24690, 'cash lines': 1030}
+  ann-arbor-washtenaw: 3 findings, {'insurer lines': 243470, 'hospital lines': 25027, 'cash lines': 463}
+  west-michigan: 22 findings, {'insurer lines': 1116746, 'hospital lines': 56327, 'cash lines': 2294}
+  mid-northern-michigan: 103 findings, {'insurer lines': 2064491, 'hospital lines': 118820, 'cash lines': 6828}
+  st-louis-area: 302 findings, {'insurer lines': 2248999, 'hospital lines': 54137, 'cash lines': 2245}
+  kansas-city-area: 367 findings, {'insurer lines': 720804, 'hospital lines': 25735, 'cash lines': 1346}
+  rest-of-missouri: 458 findings, {'insurer lines': 2699128, 'hospital lines': 89714, 'cash lines': 6166}
+  denver-metro: 523 findings, {'insurer lines': 2976335, 'hospital lines': 35009, 'cash lines': 1713}
+  boulder-northern-colorado: 8 findings, {'insurer lines': 1003573, 'hospital lines': 17437, 'cash lines': 1083}
+  colorado-springs-pueblo: 95 findings, {'insurer lines': 1179201, 'hospital lines': 12899, 'cash lines': 930}
+  western-mountains-plains-colorado: 34 findings, {'insurer lines': 1232882, 'hospital lines': 20434, 'cash lines': 2854}
+  atlanta: 3207 findings, {'insurer lines': 3563732, 'hospital lines': 13863, 'cash lines': 1090}
+  atlanta-north-west-suburbs: 5211 findings, {'insurer lines': 3560766, 'hospital lines': 17990, 'cash lines': 1359}
+  atlanta-south-east-suburbs: 2571 findings, {'insurer lines': 1394515, 'hospital lines': 4277, 'cash lines': 852}
+  north-middle-georgia: 15032 findings, {'insurer lines': 4443419, 'hospital lines': 55049, 'cash lines': 3148}
+  south-coastal-georgia: 4794 findings, {'insurer lines': 2346974, 'hospital lines': 23142, 'cash lines': 2601}
+8886 distinct source links to check
+# Data accuracy audit, Layer 1: 2026-11-09
+
+Read-only rule checks on the deployed site (site/audit_rules.py). 107 areas, the 89 featured procedures; 498,023,702 insurer lines, 8,971,939 hospital-file lines, 415,629 cash lines checked in 82 min.
+
+**Critical findings: 0.** Launch gate met for Layer 1.
+
+| Rule | Level | What | Findings | Areas |
+|---|---|---|---|---|
+| A1 | Major | provider's practice ZIP is in another state than the page (procedure pages leave them out; Price Finder lists them) | 31,116 | 17 |
+| A3 | Critical | hospital price file's own address is in another state than the page | 0 | 0 |
+| A3r | Review | hospital price file was filed under another hospital (same state; check the name shown) | 4 | 4 |
+| A3b | Major | page names a hospital differently than the hospital whose file it is | 2 | 1 |
+| A4 | Major | quarantined hospital file still has rows in the page data | 682 | 2 |
+| A9 | Critical | page's state guessed (slug not in the state list) | 0 | 0 |
+| B1 | Critical | insurer's rows link to another insurer's file host | 0 | 0 |
+| B2 | Major | network shows a code its own file doesn't list | 0 | 0 |
+| C1 | Critical | NPI fails the check digit | 0 | 0 |
+| C4 | Info | facility fee filed under an individual clinician (in the data; the pages' own filters keep it off the price lists) | 5,127,222 | 24 |
+| D1 | Info | $0, negative or filler-looking amount not flagged in the data (the pages' own filters keep these out of prices) | 128,975 | 53 |
+| D2 | Major | same amount on 5+ procedures for one place and network, not labeled flat | 392 | 9 |
+| D3 | Critical | hospital-file stay rate under $100 (a weight, not a price; reaches the pages) | 0 | 0 |
+| D3p | Info | hospital-file stay rate under $100 in the data (the page's own filter, /*DRGW, leaves it out) | 109 | 5 |
+| D3i | Info | insurer-file stay rate under $100 (the pages' low-rate filter drops these) | 138 | 8 |
+| D6 | Major | percent of charges above 100% | 54,389 | 68 |
+| E1 | Major | file date missing or unreadable | 312,522 | 47 |
+| E1s | Info | file date older than 183 days (page flags it) | 2,907,867 | 102 |
+| E2 | Critical | source link missing | 0 | 0 |
+| E4 | Major | source link dead | 174 | 0 |
+| F1 | Review | price moved more than 3x since the last audit | 732,610 | 26 |
+| F2 | Review | insurer's lines fell more than 25% since the last audit | 6 | 1 |
+| F3 | Review | page lost more than 10% of its providers since the last audit | 1 | 1 |
+
+Source links checked: 8,886 distinct; ok 7,470, blocked to robots 1,131, dead 174, other errors 111 (links.csv).
+
+Change since last audit: compared with 2026-11-06.
+
+History snapshot: storage history/published/2026-11-09/<area>/insurer.parquet and hospital.parquet (kept permanently).
+Full list: storage audit/2026-11-09/failures.csv.gz. Examples (up to 25 per rule and area): examples.csv. Per area: counts.csv.
