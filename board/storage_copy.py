@@ -56,9 +56,14 @@ export RCLONE_CONFIG_B2_TYPE=b2 RCLONE_CONFIG_B2_ACCOUNT='{v['B2_ACCESS_KEY_ID']
 SRC='r2:{v['R2_BUCKET']}'; DST='b2:{v['B2_BUCKET']}'
 GHT='{v['BOT_GITHUB_TOKEN']}'; DOT='{v['DIGITALOCEAN_TOKEN']}'
 export B2K='{v['B2_ACCESS_KEY_ID']}' B2S='{v['B2_SECRET_ACCESS_KEY']}' B2B='{v['B2_BUCKET']}'
-say() {{ python3 -c 'import json,sys; print(json.dumps({{"body": sys.stdin.read()}}))' | \\
+# Nov 9: the machine's GitHub key can start workflows but can't comment on issues, so every update until now was
+# silently dropped. say() now (1) keeps every update in Backblaze (bot/migration/logs/say-<issue>.log) and
+# (2) starts copy-say.yml, which posts it to the issue with the workflow's own key.
+say() {{ M=$(cat); printf '%s %s\\n\\n' "$(date -u +%Y-%m-%dT%H:%MZ)" "$M" >> /var/log/say.log
+  rclone copyto /var/log/say.log "$DST/bot/migration/logs/say-{issue}.log" -q 2>/dev/null || true
+  printf '%s' "$M" | python3 -c 'import json,sys; print(json.dumps({{"ref": "main", "inputs": {{"issue": "{issue}", "body": sys.stdin.read()[:60000]}}}}))' | \\
   curl -s -o /dev/null -X POST -H "Authorization: Bearer $GHT" -H "Accept: application/vnd.github+json" \\
-  https://api.github.com/repos/{REPO}/issues/{issue}/comments -d @-; }}
+  https://api.github.com/repos/{REPO}/actions/workflows/copy-say.yml/dispatches -d @- || true; }}
 apt-get update -y && apt-get install -y curl unzip python3 python3-boto3
 curl -s https://rclone.org/install.sh | bash
 OPTS="--transfers 48 --checkers 64 --retries 10 --low-level-retries 20 --b2-chunk-size 96M --stats 10m --stats-one-line --stats-log-level NOTICE --log-level NOTICE"
