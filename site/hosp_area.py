@@ -86,11 +86,19 @@ def h2(areas):
         codes = json.load(open(f'{d}/embed.json'))['codes']
         open(f'{d}/page.html', 'w').write('<script type="application/json" id="data">' +
                                           json.dumps({'codes': codes, 'hosp': {'src': []}}) + '</script>')
-        env = dict(os.environ, AREA=area, UPLOAD='1', HKEY=a['prefix'] + 'hosp/h/', NP=os.environ.get('NP', '8'), MEM=os.environ.get('MEM', '11GB'))
+        # Nov 9, 2026: every run writes its per-code files to a NEW folder, named in the index ('h'). Runs used to share
+        # hosp/h/ and never cleared it, so a rebuild with fewer hospitals (a file taken off as another hospital's) left
+        # thousands of older per-code files whose hospital numbers pointed at the wrong entries of the new index
+        # (Odessa, Houston, Texarkana, Georgia; found by the Nov 9 round trip).
+        hk = a['prefix'] + 'hosp/' + time.strftime('r%Y%m%d-%H%M%S') + '/h/'
+        env = dict(os.environ, AREA=area, UPLOAD='1', HKEY=hk, NP=os.environ.get('NP', '8'), MEM=os.environ.get('MEM', '11GB'))
         r = subprocess.run([sys.executable, f'{HERE}/h2_build.py', f'{d}/rows/*.parquet', f'{HERE}/payer_name_mapping.csv',
                             f'{d}/page.html', f'{d}/out'], env=env)
         if r.returncode:
             print(area, 'h2_build failed', flush=True); continue
+        H_ = json.load(open(f'{d}/out/hosp_index.json')); H_['h'] = hk
+        json.dump(H_, open(f'{d}/out/hosp_index.json', 'w'), separators=(',', ':'))
+        s3.upload_file(f'{d}/out/hosp_index.json', B, hk[:-2] + 'hosp_index.json')
         s3.upload_file(f'{d}/out/hosp_index.json', B, a['prefix'] + 'hosp/hosp_index.json')
         n = len(json.load(open(f'{d}/out/hosp_index.json'))['src'])
         s3.put_object(Bucket=B, Key=SP + f'h2/{area}.done', Body=json.dumps({'files': n, 'secs': round(time.time() - t0),

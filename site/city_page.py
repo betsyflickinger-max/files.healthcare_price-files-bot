@@ -509,7 +509,10 @@ def main():
     for _, d_ in reversed(done):   # the area's hospital price files (site/hosp_area.py): newest insurer build that has them
         if written(d_ + 'hosp/hosp_index.json'):
             hpre = d_ + 'hosp/'; hidx = f'{A.out}/hosp_index.json'; s3.download_file(B, hpre + 'hosp_index.json', hidx); break
-    if hidx: print('hospital files from', hpre)
+    hdir = None
+    if hidx:   # Nov 9, 2026: the per-code folder written by the same run as this index (older indexes: hosp/h/)
+        hdir = json.load(open(hidx)).get('h') or hpre + 'h/'
+        print('hospital files from', hdir)
     for k, dst in [(prefix + 'npis.json', f'{A.out}/npis.json'), ('data/idr/site/arb_tx.json', f'{A.out}/arb_tx.json'),
                    (npis_key(A.city), f'{A.out}/npis.parquet')]:   # npis.parquet: practice ZIPs for the Medicare areas (Oct 30)
         try: s3.download_file(B, k, dst)
@@ -526,7 +529,7 @@ def main():
     gsnap = None
     if A.deploy and not A.map_only:   # Nov 9, 2026 (Betsy): the audit's rule checks before anything goes live (site/audit_gate.py)
         import audit_gate
-        ok, gmsg, gsnap = audit_gate.check(page, A.city, f'/{A.city}/price-finder/', {'t': prefix + 't/', 'h': (hpre + 'h/') if hidx else None}, s3, B)
+        ok, gmsg, gsnap = audit_gate.check(page, A.city, f'/{A.city}/price-finder/', {'t': prefix + 't/', 'h': hdir}, s3, B)
         print(gmsg, flush=True)
         if not ok: sys.exit(f'STOP: held by the audit gate (Critical findings above); the live {name} page is unchanged')
     maps = make_map(A, E, s3, B, written, prefix, page)
@@ -556,7 +559,7 @@ def main():
     fh = f'{d}/functions/{A.city}/price-finder/pf/h'
     if hidx:   # per-code hospital lines, same function pointed at the area's hosp/h/ folder
         os.makedirs(fh, exist_ok=True)
-        open(f'{fh}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(hpre + 'h/')).replace("PREFIX + 't/' + code", "PREFIX + code"))
+        open(f'{fh}/[code].js', 'w').write(FUNC.format(name=name, prefix=json.dumps(hdir)).replace("PREFIX + 't/' + code", "PREFIX + code"))
     else: shutil.rmtree(fh, ignore_errors=True)
     env = dict(E, CLOUDFLARE_ACCOUNT_ID=E['R2_ACCOUNT_ID'])
     subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sitewide.py'), d], check=True)   # name, Units look, share image (Oct 18)
