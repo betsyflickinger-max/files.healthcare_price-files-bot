@@ -1,6 +1,6 @@
 # Card #2 preview: Illinois price pages, before and after
 
-Built 2026-11-07 by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 (Illinois). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.
+Built 2026-11-09 by site/proof_preview.py. Nothing deployed. Proof data: Medicare 2024 + Medicaid 2023-2024 (Illinois). Order stays by price; proof only decides who is in the lowest-10 list. The highest 10 is unchanged.
 
 ## Knee arthroscopy with meniscectomy (29881)
 
@@ -165,7 +165,7 @@ Also listed, may not offer this procedure: 0
 
 ## Vaginal delivery (global) (59400)
 
-Providers on the page by kind and proof: surgery center not_covered: 160; practice, clinic, lab or imaging center not_covered: 6900; practice, clinic, lab or imaging center wrong_specialty: 12235; hospital not_covered: 582
+Providers on the page by kind and proof: surgery center wrong_specialty: 160; practice, clinic, lab or imaging center not_covered: 6246; practice, clinic, lab or imaging center wrong_specialty: 12889; hospital not_covered: 582
 
 Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19877; left out as out of state 3; ranked providers 16623; kind doc; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
@@ -182,7 +182,7 @@ Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); provider
 | 9 | Forefront Dermatology, S.C. $1,128 | Circle Medical Care Group PA $1,458 |  |
 | 10 | Forefront Dermatology, S.C. $1,128 | Southern Illinois Medical Care Associates LLC $1,458 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 12232; lowest before $810, after $1,289
+Left out of the figures (clinicians whose specialty doesn't perform this code): 13046; lowest before $810, after $1,289
 
 Also listed, may not offer this procedure: 0
 
@@ -213,8 +213,8 @@ Also listed, may not offer this procedure: 0
 
 | Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |
 |---|---|---|---|
-| surgery center | 162 | 1278 | 0 |
-| practice, clinic, lab or imaging center | 579 | 173207 | 0 |
+| surgery center | 162 | 1118 | 0 |
+| practice, clinic, lab or imaging center | 579 | 172553 | 0 |
 | hospital | 3 | 5034 | 0 |
 
 ## Areas and the state the page code gives them
@@ -246,12 +246,9 @@ Also listed, may not offer this procedure: 0
 | Victoria | victoria | TX | TX |
 | Small towns of Texas | small-towns | TX | TX |
 | Tennessee | tennessee | TN | TN |
-| Colorado | colorado | CO | CO |
 | Oklahoma | oklahoma | OK | OK |
 | Alabama | alabama | AL | AL |
 | Mississippi | mississippi | MS | MS |
-| Missouri | missouri | MO | MO |
-| Georgia | georgia | GA | GA |
 | North Carolina | north-carolina | NC | NC |
 | Connecticut | connecticut | CT | CT |
 | Illinois | illinois | IL | IL |
@@ -319,3 +316,15 @@ Also listed, may not offer this procedure: 0
 | Ann Arbor & Washtenaw County, Michigan | ann-arbor-washtenaw | MI | MI |
 | West Michigan, Michigan | west-michigan | MI | MI |
 | Mid-Michigan, Northern Michigan & the U.P., Michigan | mid-northern-michigan | MI | MI |
+| St. Louis Area, Missouri | st-louis-area | MO | MO |
+| Kansas City Area (Missouri side), Missouri | kansas-city-area | MO | MO |
+| Springfield, Columbia & the Rest of Missouri, Missouri | rest-of-missouri | MO | MO |
+| Denver Metro, Colorado | denver-metro | CO | CO |
+| Boulder & Northern Colorado, Colorado | boulder-northern-colorado | CO | CO |
+| Colorado Springs, Pueblo & Southern Front Range, Colorado | colorado-springs-pueblo | CO | CO |
+| Western Slope, Mountains & Eastern Plains, Colorado | western-mountains-plains-colorado | CO | CO |
+| Atlanta (Fulton, DeKalb & Clayton), Georgia | atlanta | GA | GA |
+| Atlanta North & West Suburbs, Georgia | atlanta-north-west-suburbs | GA | GA |
+| Atlanta South & East Suburbs, Georgia | atlanta-south-east-suburbs | GA | GA |
+| North, Middle & East Georgia (Athens, Augusta, Macon, Columbus), Georgia | north-middle-georgia | GA | GA |
+| South & Coastal Georgia (Savannah, Albany, Valdosta), Georgia | south-coastal-georgia | GA | GA |
