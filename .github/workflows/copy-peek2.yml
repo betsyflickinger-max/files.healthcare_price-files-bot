@@ -1,4 +1,4 @@
-name: copy-peek2 (read-only: what the live website reads from storage)
+name: copy-peek2 website storage reads (read only)
 on:
   push:
     branches: [copy-peek2]
