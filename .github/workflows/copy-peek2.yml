@@ -14,8 +14,23 @@ jobs:
           B2K: ${{ secrets.B2_ACCESS_KEY_ID }}
           B2S: ${{ secrets.B2_SECRET_ACCESS_KEY }}
           B2B: ${{ secrets.B2_BUCKET }}
+          R2A: ${{ secrets.R2_ACCOUNT_ID }}
+          CFT: ${{ secrets.CF_ANALYTICS_TOKEN || secrets.CLOUDFLARE_API_TOKEN }}
         run: |
           pip -q install boto3
+          echo "== R2 file counts (Cloudflare analytics)"
+          python3 - <<'PY'
+          import json, os, urllib.request, datetime as dt
+          sd = str(dt.date.today() - dt.timedelta(days=3))
+          q = 'query($a: String!, $sd: Date!) { viewer { accounts(filter: {accountTag: $a}) { st: r2StorageAdaptiveGroups(limit: 100, filter: {date_geq: $sd}) { max { payloadSize objectCount } dimensions { date bucketName } } } } }'
+          a = "".join(os.environ["R2A"].split()); t = "".join(os.environ["CFT"].split())
+          req = urllib.request.Request("https://api.cloudflare.com/client/v4/graphql", data=json.dumps({"query": q, "variables": {"a": a, "sd": sd}}).encode(),
+                                       headers={"Authorization": f"Bearer {t}", "Content-Type": "application/json"})
+          r = json.load(urllib.request.urlopen(req, timeout=60))
+          for g in (r.get("data") or {}).get("viewer", {}).get("accounts", [{}])[0].get("st", []):
+              print(g["dimensions"]["date"], g["max"]["objectCount"], "files", round(g["max"]["payloadSize"] / 1e12, 2), "TB")
+          print(r.get("errors") or "")
+          PY
           echo "== copy machine activity (DigitalOcean monitoring, last 3h, 15-min averages)"
           ID=$(curl -s -H "Authorization: Bearer $DOT" "https://api.digitalocean.com/v2/droplets?tag_name=upfront-copy" | python3 -c "import json,sys; d=json.load(sys.stdin)['droplets']; print(d[0]['id'] if d else '')")
           if [ -n "$ID" ]; then
