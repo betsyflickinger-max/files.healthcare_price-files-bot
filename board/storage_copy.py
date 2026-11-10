@@ -173,6 +173,8 @@ PY
   OK=yes
   for c in "$V1RC" "$V2RC" "$P1" "$FX" "$SF" "$M2" "$D2" "$X2" "$DR" "$DRN"; do [ "$c" = 0 ] || OK=no; done
   [ "$QUIET" = yes ] || OK=no
+  # Nov 9: the website copier (bot/site_r2.py) treats R2 as up to date for everything written before this moment
+  [ "$OK" = yes ] && {{ printf '%s' "$T0" | rclone rcat "$DST/bot/migration/switched-at.txt" || OK=no; }}
   {{ echo "Final pass finished."
      echo "- Copy: exit $P1. Re-copy of missing/different: $(wc -l < /var/log/fix.txt) files, exit $FX."
      echo "- Moved $SM files that R2 no longer has to $STALE (nothing deleted); $SF could not be moved."
