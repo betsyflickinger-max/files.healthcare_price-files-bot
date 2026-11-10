@@ -1,0 +1,51 @@
+id,area,code,npi,taxonomy,specialty_billers,specialty_clinicians,plausible,note
+S01,college-station-bryan,62322,1134656408,367500000X,37,39201,can't tell,"Some CRNAs give epidural injections for pain (37 of 39,201 billed it): rare but possible."
+S02,lubbock,55866,1205347549,363LF0000X,6,114650,no,Specialty does not do this procedure; label right.
+S03,midland,62322,1124826490,363LF0000X,0,114650,no,Specialty does not do this procedure; label right.
+S04,longview,80053,1669849683,225100000X,2,80520,no,Specialty does not do this procedure; label right.
+S05,wichita-falls,43775,1437734712,363LF0000X,1,114650,no,Specialty does not do this procedure; label right.
+S06,texarkana,63030,1639731185,152W00000X,0,35548,no,Specialty does not do this procedure; label right.
+S07,austin,45378,1306180989,1041C0700X,0,34672,no,Specialty does not do this procedure; label right.
+S08,odessa,99386,1396186185,363LF0000X,146,114650,yes,"Preventive visit (99386): routine for an NP; Medicare does not pay these codes, so its records undercount them. Label wrong."
+S09,houston,72148,1740050889,363LF0000X,45,114650,no,Specialty does not do this procedure; label right.
+S10,beaumont-port-arthur,90846,1659868172,213E00000X,0,6938,no,Specialty does not do this procedure; label right.
+S11,college-station-bryan,62322,1245481464,152W00000X,0,35548,no,Specialty does not do this procedure; label right.
+S12,college-station-bryan,62322,1528218047,207X00000X,4,16198,can't tell,Some orthopedic spine surgeons give epidurals: rare but possible.
+S13,small-towns,99386,1275066250,207R00000X,180,101718,yes,Preventive visit (99386) by an internist: routine; Medicare does not pay these codes. Label wrong.
+S14,victoria,43775,1770888596,101YP2500X,0,16243,no,Specialty does not do this procedure; label right.
+S15,odessa,77065,1215597323,207RC0200X,0,5198,no,Specialty does not do this procedure; label right.
+S16,corpus-christi,45385,1619984457,207Q00000X,122,89504,can't tell,"Some rural family doctors do colonoscopies (122 of 89,504 billed it)."
+S17,midland,85610,1124009766,207RP1001X,4,7503,no,Specialty does not do this procedure; label right.
+S18,dfw,29827,1861462020,207NS0135X,0,316,no,Specialty does not do this procedure; label right.
+S19,austin,76805,1700269651,363LF0000X,44,114650,can't tell,Some family NPs in women's health do OB ultrasounds.
+S20,mcallen,90832,1740022789,363L00000X,36,53634,yes,Psychotherapy (90832) by a nurse practitioner: psychiatric NPs do this; the generic NP taxonomy hides the specialty. Label wrong.
+S21,amarillo,80069,1861426124,363A00000X,45,87158,no,Specialty does not do this procedure; label right.
+S22,corpus-christi,85730,1518330059,101YM0800X,0,23756,no,Specialty does not do this procedure; label right.
+S23,lubbock,55866,1629412598,363LF0000X,6,114650,no,Specialty does not do this procedure; label right.
+S24,small-towns,99386,1124648027,101YP2500X,0,16243,no,Specialty does not do this procedure; label right.
+S25,lubbock,55866,1033701271,208M00000X,0,13130,no,Specialty does not do this procedure; label right.
+S26,san-antonio,27130,1851684252,207VX0201X,0,985,no,Specialty does not do this procedure; label right.
+S27,odessa,99386,1215373006,208M00000X,2,13130,no,Specialty does not do this procedure; label right.
+S28,corpus-christi,45385,1568463941,207RC0000X,0,17970,no,Specialty does not do this procedure; label right.
+S29,austin,45378,1417338856,363LF0000X,0,114650,no,Specialty does not do this procedure; label right.
+S30,texarkana,90832,1194722173,174400000X,19,11334,can't tell,"Taxonomy ""Specialist"" is too general to judge."
+S31,midland,62322,1487547949,225100000X,0,80520,no,Specialty does not do this procedure; label right.
+S32,beaumont-port-arthur,90846,1851377675,2084N0400X,1,13510,no,Specialty does not do this procedure; label right.
+S33,beaumont-port-arthur,90846,1346873486,363LA2100X,0,12085,no,Specialty does not do this procedure; label right.
+S34,waco,75571,1194794537,207QS0010X,0,1632,no,Specialty does not do this procedure; label right.
+S35,texarkana,90832,1003107749,367500000X,0,39201,no,Specialty does not do this procedure; label right.
+S36,mcallen,00812,1033575253,101YM0800X,0,23756,no,Specialty does not do this procedure; label right.
+S37,dfw,95810,1760079727,163W00000X,0,5425,no,Specialty does not do this procedure; label right.
+S38,victoria,43775,1952798084,2085R0204X,0,2456,no,Specialty does not do this procedure; label right.
+S39,waco,22551,1265544217,207P00000X,1,46930,no,Specialty does not do this procedure; label right.
+S40,mcallen,62323,1154794915,363L00000X,4,53634,can't tell,Pain-management NPs exist; rare.
+S41,dfw,81003,1609893189,2084P0800X,14,20176,no,Specialty does not do this procedure; label right.
+S42,san-antonio,27130,1770936346,103TC1900X,0,476,no,Specialty does not do this procedure; label right.
+S43,wichita-falls,99244,1922072214,207Q00000X,52,89504,yes,"Consultation (99244): Medicare stopped paying consult codes in 2010, so its records undercount them. Label wrong."
+S44,wichita-falls,64483,1437734712,363LF0000X,5,114650,can't tell,Pain-management NPs exist; rare.
+S45,tyler,43239,1033155270,363LF0000X,2,114650,no,Specialty does not do this procedure; label right.
+S46,brownsville-harlingen,45378,1215669262,363AM0700X,0,18971,no,Specialty does not do this procedure; label right.
+S47,houston,72148,1790428704,207R00000X,177,101718,no,Specialty does not do this procedure; label right.
+S48,small-towns,93000,1174007702,367500000X,0,39201,no,Specialty does not do this procedure; label right.
+S49,tyler,43239,1225252489,207N00000X,0,10709,no,Specialty does not do this procedure; label right.
+S50,waco,22551,1093342107,207W00000X,0,14708,no,Specialty does not do this procedure; label right.

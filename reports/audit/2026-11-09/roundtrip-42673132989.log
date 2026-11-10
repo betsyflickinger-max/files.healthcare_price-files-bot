@@ -1,0 +1,132 @@
+reading the deployed site...
+  dfw: 1 insurer lines, 4 hospital-file lines sampled
+  el-paso: 1 insurer lines, 4 hospital-file lines sampled
+  austin: 1 insurer lines, 4 hospital-file lines sampled
+  san-antonio: 1 insurer lines, 4 hospital-file lines sampled
+  houston: 1 insurer lines, 4 hospital-file lines sampled
+  mcallen: 1 insurer lines, 4 hospital-file lines sampled
+  killeen-temple: 1 insurer lines, 4 hospital-file lines sampled
+  brownsville-harlingen: 1 insurer lines, 4 hospital-file lines sampled
+  corpus-christi: 1 insurer lines, 4 hospital-file lines sampled
+  beaumont-port-arthur: 1 insurer lines, 4 hospital-file lines sampled
+  lubbock: 1 insurer lines, 4 hospital-file lines sampled
+  waco: 1 insurer lines, 4 hospital-file lines sampled
+  longview: 1 insurer lines, 4 hospital-file lines sampled
+  college-station-bryan: 1 insurer lines, 4 hospital-file lines sampled
+  amarillo: 1 insurer lines, 2 hospital-file lines sampled
+  tyler: 1 insurer lines, 4 hospital-file lines sampled
+  abilene: 1 insurer lines, 4 hospital-file lines sampled
+  midland: 1 insurer lines, 4 hospital-file lines sampled
+  odessa: 1 insurer lines, 4 hospital-file lines sampled
+  wichita-falls: 1 insurer lines, 4 hospital-file lines sampled
+  texarkana: 1 insurer lines, 4 hospital-file lines sampled
+  skip san-angelo (no page or prefix)
+  victoria: 1 insurer lines, 4 hospital-file lines sampled
+  small-towns: 1 insurer lines, 4 hospital-file lines sampled
+  tennessee: 1 insurer lines, 4 hospital-file lines sampled
+  oklahoma: 1 insurer lines, 4 hospital-file lines sampled
+  alabama: 1 insurer lines, 4 hospital-file lines sampled
+  mississippi: 1 insurer lines, 4 hospital-file lines sampled
+  north-carolina: 1 insurer lines, 4 hospital-file lines sampled
+  connecticut: 1 insurer lines, 4 hospital-file lines sampled
+  illinois: 1 insurer lines, 4 hospital-file lines sampled
+  arkansas: 1 insurer lines, 4 hospital-file lines sampled
+  maryland: 1 insurer lines, 4 hospital-file lines sampled
+  new-mexico: 1 insurer lines, 4 hospital-file lines sampled
+  montana: 1 insurer lines, 4 hospital-file lines sampled
+  louisiana: 1 insurer lines, 4 hospital-file lines sampled
+  indiana: 1 insurer lines, 4 hospital-file lines sampled
+  kentucky: 1 insurer lines, 4 hospital-file lines sampled
+  ohio: 1 insurer lines, 4 hospital-file lines sampled
+  arizona: 1 insurer lines, 4 hospital-file lines sampled
+  north-dakota: 1 insurer lines, 4 hospital-file lines sampled
+  south-dakota: 1 insurer lines, 4 hospital-file lines sampled
+  iowa: 1 insurer lines, 4 hospital-file lines sampled
+  minnesota: 1 insurer lines, 4 hospital-file lines sampled
+  nebraska: 1 insurer lines, 4 hospital-file lines sampled
+  kansas: 1 insurer lines, 4 hospital-file lines sampled
+  pennsylvania: 1 insurer lines, 4 hospital-file lines sampled
+  delaware: 1 insurer lines, 4 hospital-file lines sampled
+  west-virginia: 1 insurer lines, 4 hospital-file lines sampled
+  new-jersey: 1 insurer lines, 4 hospital-file lines sampled
+  massachusetts: 1 insurer lines, 4 hospital-file lines sampled
+  rhode-island: 1 insurer lines, 4 hospital-file lines sampled
+  vermont: 1 insurer lines, 4 hospital-file lines sampled
+  new-hampshire: 1 insurer lines, 4 hospital-file lines sampled
+  maine: 1 insurer lines, 4 hospital-file lines sampled
+  south-carolina: 1 insurer lines, 4 hospital-file lines sampled
+  washington: 1 insurer lines, 4 hospital-file lines sampled
+  oregon: 1 insurer lines, 4 hospital-file lines sampled
+  idaho: 1 insurer lines, 4 hospital-file lines sampled
+  utah: 1 insurer lines, 4 hospital-file lines sampled
+  alaska: 1 insurer lines, 4 hospital-file lines sampled
+  nevada: 1 insurer lines, 4 hospital-file lines sampled
+  hawaii: 1 insurer lines, 4 hospital-file lines sampled
+  wyoming: 1 insurer lines, 4 hospital-file lines sampled
+  new-york: 1 insurer lines, 4 hospital-file lines sampled
+  virginia: 1 insurer lines, 4 hospital-file lines sampled
+  district-of-columbia: 1 insurer lines, 4 hospital-file lines sampled
+  florida: 1 insurer lines, 4 hospital-file lines sampled
+  wisconsin: 1 insurer lines, 4 hospital-file lines sampled
+  los-angeles: 1 insurer lines, 4 hospital-file lines sampled
+  san-diego-inland-empire: 1 insurer lines, 4 hospital-file lines sampled
+  bay-area: 1 insurer lines, 4 hospital-file lines sampled
+  sacramento-northern-california: 1 insurer lines, 4 hospital-file lines sampled
+  central-california: 1 insurer lines, 4 hospital-file lines sampled
+  new-york-city: 1 insurer lines, 4 hospital-file lines sampled
+  long-island: 1 insurer lines, 4 hospital-file lines sampled
+  hudson-valley: 1 insurer lines, 4 hospital-file lines sampled
+  western-new-york: 1 insurer lines, 4 hospital-file lines sampled
+  upstate-new-york: 1 insurer lines, 4 hospital-file lines sampled
+  south-florida: 1 insurer lines, 4 hospital-file lines sampled
+  tampa-bay: 1 insurer lines, 4 hospital-file lines sampled
+  central-florida: 1 insurer lines, 4 hospital-file lines sampled
+  southwest-florida: 1 insurer lines, 4 hospital-file lines sampled
+  north-florida: 1 insurer lines, 4 hospital-file lines sampled
+  chicago-area: 1 insurer lines, 4 hospital-file lines sampled
+  central-southern-illinois: 1 insurer lines, 4 hospital-file lines sampled
+  philadelphia-area: 1 insurer lines, 4 hospital-file lines sampled
+  western-pennsylvania: 1 insurer lines, 4 hospital-file lines sampled
+  central-eastern-pennsylvania: 1 insurer lines, 4 hospital-file lines sampled
+  oakland-county: 1 insurer lines, 4 hospital-file lines sampled
+  macomb-county: 1 insurer lines, 4 hospital-file lines sampled
+  detroit-wayne-county: 1 insurer lines, 4 hospital-file lines sampled
+  ann-arbor-washtenaw: 1 insurer lines, 4 hospital-file lines sampled
+  west-michigan: 1 insurer lines, 4 hospital-file lines sampled
+  mid-northern-michigan: 1 insurer lines, 4 hospital-file lines sampled
+  st-louis-area: 1 insurer lines, 4 hospital-file lines sampled
+  kansas-city-area: 1 insurer lines, 4 hospital-file lines sampled
+  rest-of-missouri: 1 insurer lines, 4 hospital-file lines sampled
+  denver-metro: 1 insurer lines, 4 hospital-file lines sampled
+  boulder-northern-colorado: 1 insurer lines, 4 hospital-file lines sampled
+  colorado-springs-pueblo: 1 insurer lines, 4 hospital-file lines sampled
+  western-mountains-plains-colorado: 1 insurer lines, 4 hospital-file lines sampled
+  atlanta: 1 insurer lines, 4 hospital-file lines sampled
+  atlanta-north-west-suburbs: 1 insurer lines, 4 hospital-file lines sampled
+  atlanta-south-east-suburbs: 1 insurer lines, 4 hospital-file lines sampled
+  north-middle-georgia: 1 insurer lines, 4 hospital-file lines sampled
+  south-coastal-georgia: 1 insurer lines, 4 hospital-file lines sampled
+106 insurer lines and 422 hospital-file lines sampled
+# Data accuracy audit, Layer 2 (independent round trip): 2026-11-09
+
+audit/roundtrip.py, which shares no code with the bot. Random price lines as the pages carry them, traced back to the source.
+
+## Insurer lines: 106 sampled, 0 traced, 0 matched (0.0%)
+
+| Verdict | Lines |
+|---|---|
+| not checked (time budget used up) | 106 |
+
+## Hospital-file lines: 422 sampled, 421 traced, 415 matched (98.6%)
+
+| Verdict | Lines |
+|---|---|
+| match | 415 |
+| not found in source | 4 |
+| code not on cited line | 2 |
+| source file not found | 1 |
+
+Insurer name check: 0 sampled lines where the file's own insurer name doesn't match the insurer shown.
+
+Every sampled line with its verdict: roundtrip.csv.
+Seed 20261109; rerun with the same seed to get the same sample.

@@ -1,0 +1,53 @@
+name: Website files to R2 (after the move to Backblaze)
+# Nov 9, 2026 (Betsy chose "keep the website's files on R2"): the live site's Functions read Price Finder data from R2.
+# Every deploy copies what it needs first (site/pages_spill.py); this also copies, every 30 minutes, what the bot
+# updates between deploys (control center data, procedure pages). Copy only, never deletes. Does nothing while the
+# bot still writes to R2 (STORAGE_ENDPOINT empty). See bot/site_r2.py.
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry:
+        description: "1 = only report what would be copied"
+        default: "0"
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: site-mirror
+  cancel-in-progress: false
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+      SITE_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      SITE_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      SITE_R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: bot
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3
+      - name: Copy the website's files to R2
+        id: m
+        run: python bot/site_r2.py mirror $([ "${{ inputs.dry }}" = 1 ] && echo --dry)
+      - name: Alert if it failed
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="Website files didn't reach R2"
+          N=$(gh issue list -R "$GITHUB_REPOSITORY" --state open --search "\"$T\" in:title" --json number --jq '.[0].number')
+          B="The copy of the website's files from Backblaze to R2 failed: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}. The live site keeps showing what R2 already has (nothing breaks), but updates since then aren't live. Deploys also refuse to go out until this works."
+          if [ -n "$N" ]; then gh issue comment "$N" -R "$GITHUB_REPOSITORY" -b "$B"; else gh issue create -R "$GITHUB_REPOSITORY" -t "$T" -b "$B" -a "${GITHUB_REPOSITORY%%/*}"; fi

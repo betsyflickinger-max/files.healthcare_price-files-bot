@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: "29 9 22 1,4,7,10 *"
   workflow_dispatch:
+    inputs:
+      random: {description: "random price lines", default: "300"}
+      risky: {description: "risky lines", default: "50"}
+      focus: {description: "area slugs that get 40% of the random lines (comma-separated)", default: ""}
 
 concurrency:
   group: audit-evidence-v3
@@ -39,7 +43,7 @@ jobs:
       - name: Packets
         run: |
           set -o pipefail
-          python -u audit/evidence.py 2>&1 | tee /tmp/ev.log
+          python -u audit/evidence.py --random ${{ inputs.random || 300 }} --risky ${{ inputs.risky || 50 }} --focus "${{ inputs.focus }}" 2>&1 | tee /tmp/ev.log
       - name: Commit
         if: always()
         run: |

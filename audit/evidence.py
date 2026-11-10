@@ -146,6 +146,9 @@ def main():
     ap.add_argument('--random', type=int, default=300)
     ap.add_argument('--risky', type=int, default=50)
     ap.add_argument('--seed', type=int, default=int(R.TODAY.replace('-', '')) + 3)
+    ap.add_argument('--focus', default='', help='comma-separated area slugs that get --focus-share of the random lines '
+                                                '(Nov 9, 2026: the pages rebuilt that day)')
+    ap.add_argument('--focus-share', type=float, default=0.4)
     A = ap.parse_args()
     rnd = random.Random(A.seed)
     print('reading the deployed site...', flush=True)
@@ -155,10 +158,21 @@ def main():
     slugs = {r['code']: r['slug'] for r in csv.DictReader(open(os.path.join(R.REPO, 'site', 'procedure_slugs.csv')))} \
         if os.path.isfile(os.path.join(R.REPO, 'site', 'procedure_slugs.csv')) else {}
     n_ins, n_h = A.random * 2 // 3, A.random - A.random * 2 // 3
-    ins, hosp = R.sample(files, areas, n_ins + 40, n_h + 20, rnd, featured)
+    focus = [a for a in areas if a['slug'] in {x.strip() for x in A.focus.split(',') if x.strip()}]
+    fi_n, fh_n = (round(n_ins * A.focus_share), round(n_h * A.focus_share)) if focus else (0, 0)
+    ins, hosp = R.sample(files, areas, n_ins - fi_n + 40, n_h - fh_n + 20, rnd, featured)
     rnd.shuffle(ins)
     rnd.shuffle(hosp)
-    ins, hosp = ins[:n_ins], hosp[:n_h]
+    ins, hosp = ins[:n_ins - fi_n], hosp[:n_h - fh_n]
+    if focus:   # extra lines from the focus areas (duplicates of lines already drawn are skipped)
+        seen = {(x['area'], x['code'], x.get('provider', x.get('hospital')), x['value']) for x in ins + hosp}
+        fi, fh = R.sample(files, focus, fi_n + 20, fh_n + 10, random.Random(A.seed + 7), featured)
+        rnd.shuffle(fi)
+        rnd.shuffle(fh)
+        fi = [x for x in fi if (x['area'], x['code'], x.get('provider'), x['value']) not in seen][:fi_n]
+        fh = [x for x in fh if (x['area'], x['code'], x.get('hospital'), x['value']) not in seen][:fh_n]
+        print(f'focus areas: {len(fi)} insurer and {len(fh)} hospital lines from {len(focus)} areas', flush=True)
+        ins, hosp = ins + fi, hosp + fh
     for x in ins + hosp:
         x['why'] = 'random'
     # risky: half from Layer 1's worst findings, half the highest amounts among lines on the sampled areas' featured pages

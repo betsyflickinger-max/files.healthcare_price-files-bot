@@ -1,0 +1,31 @@
+name: Copy machine update (posts a storage-copy machine's message to its issue)
+# Nov 9, 2026: the rented copy machine's key (BOT_GITHUB_TOKEN) can start workflows but can't comment on issues,
+# so the machine starts this workflow and it posts the message with the workflow's own key.
+on:
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue number
+        required: true
+      body:
+        description: Message
+        required: true
+permissions:
+  issues: write
+concurrency:
+  group: copy-say
+  cancel-in-progress: false
+jobs:
+  say:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Post the update
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE: ${{ inputs.issue }}
+          BODY: ${{ inputs.body }}
+          REPO: ${{ github.repository }}
+        run: |
+          [[ "$ISSUE" =~ ^[0-9]+$ ]] || { echo "bad issue number"; exit 1; }
+          gh api "repos/$REPO/issues/$ISSUE/comments" -f body="$BODY" --jq .html_url

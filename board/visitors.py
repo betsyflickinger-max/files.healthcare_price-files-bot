@@ -28,6 +28,17 @@ E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_AC
 s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
                   aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"], region_name=(os.environ.get("STORAGE_REGION") or "auto"))
 B = E["R2_BUCKET"]
+# Nov 9, 2026 (storage move): the website writes visits, tester events and sign-ups to R2 itself (Pages binding PF),
+# and they stay there after the bot moves to Backblaze. Read them from R2 directly; refuse rather than report zeros.
+if os.environ.get("STORAGE_ENDPOINT"):
+    _k = {k: "".join(os.environ.get(k, "").split()) for k in ("SITE_R2_ACCESS_KEY_ID", "SITE_R2_SECRET_ACCESS_KEY", "SITE_R2_BUCKET")}
+    if not all(_k.values()):
+        raise SystemExit("SITE_R2_* secrets missing: the website's visits and sign-ups are on R2 and can't be read")
+    site = boto3.client("s3", endpoint_url=f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com", region_name="auto",
+                        aws_access_key_id=_k["SITE_R2_ACCESS_KEY_ID"], aws_secret_access_key=_k["SITE_R2_SECRET_ACCESS_KEY"])
+    SB = _k["SITE_R2_BUCKET"]
+else:
+    site, SB = s3, B
 OUT = "out/board"
 GAP = 30 * 60
 
@@ -49,9 +60,9 @@ def testers():
 
 def views():
     keys = []
-    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="logs/preview-visits/"):
+    for pg in site.get_paginator("list_objects_v2").paginate(Bucket=SB, Prefix="logs/preview-visits/"):
         keys += [o["Key"] for o in pg.get("Contents", [])]
-    get = lambda k: json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read())
+    get = lambda k: json.loads(site.get_object(Bucket=SB, Key=k)["Body"].read())
     with ThreadPoolExecutor(16) as ex:
         rows = list(ex.map(get, keys))
     lo, hi, who = TEST_WINDOW
@@ -63,9 +74,9 @@ def views():
 def events():
     """Tester actions from the tracker (R2 logs/preview-events/), oldest first."""
     keys = []
-    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="logs/preview-events/"):
+    for pg in site.get_paginator("list_objects_v2").paginate(Bucket=SB, Prefix="logs/preview-events/"):
         keys += [o["Key"] for o in pg.get("Contents", [])]
-    get = lambda k: json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read())
+    get = lambda k: json.loads(site.get_object(Bucket=SB, Key=k)["Body"].read())
     with ThreadPoolExecutor(16) as ex:
         rows = list(ex.map(get, keys))
     return sorted(rows, key=lambda r: r["t"])
@@ -154,10 +165,10 @@ def main():
                         "event": what.get(e.get("ev"), e.get("ev", "")), "detail": d, "device": e.get("device", "")})
     # email sign-ups (site/home_v2.py): private list for the control center only
     sk = []
-    for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="signups/"):
+    for pg in site.get_paginator("list_objects_v2").paginate(Bucket=SB, Prefix="signups/"):
         sk += [o["Key"] for o in pg.get("Contents", [])]
     with ThreadPoolExecutor(16) as ex:
-        sus = list(ex.map(lambda k: json.loads(s3.get_object(Bucket=B, Key=k)["Body"].read()), sk))
+        sus = list(ex.map(lambda k: json.loads(site.get_object(Bucket=SB, Key=k)["Body"].read()), sk))
     su_rows = sorted(({"id": k, "t": r.get("t"), "list": "Price alert" if r.get("list") == "alert" else "Weekly receipt", "email": r.get("email", ""),
                        "what": r.get("what", ""), "page": label(r.get("page", ""))} for k, r in zip(sk, sus)), key=lambda r: r["t"] or "", reverse=True)
     # emails never go into git (out/board is also pushed to the private data repo): straight to R2 for the control center only

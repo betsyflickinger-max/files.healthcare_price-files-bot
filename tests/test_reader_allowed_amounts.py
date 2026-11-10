@@ -83,3 +83,15 @@ def test_count_number():
     assert reader.allowed_count_number("0") == (0, True)
     assert reader.allowed_count_number("") == (None, False)
     assert reader.allowed_count_number("2,025") == (None, False)   # CMS: a thousands separator is not allowed
+
+
+def test_multiline_record_cites_first_line(tmp_path):
+    """Nov 9, 2026: a record whose note spans lines is cited at its first line (the line with the code and amount)."""
+    codes(tmp_path)
+    f = tmp_path / "notes.csv"
+    f.write_text(META + "description,code|1,code|1|type,setting,payer_name,plan_name,standard_charge|negotiated_dollar,"
+                 "standard_charge|methodology,additional_generic_notes\n"
+                 'Colonoscopy,45378,CPT,outpatient,Aetna,PPO,1400,fee schedule,"fees are 3.5%\nof revenue\nper contract"\n'
+                 "Colonoscopy,45378,CPT,outpatient,Cigna,OAP,1500,fee schedule,\n")
+    rows = list(reader.parse_csv(str(f)))
+    assert [(r["payer_name"], r["source_row"]) for r in rows] == [("Aetna", 4), ("Cigna", 7)]

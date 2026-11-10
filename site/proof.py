@@ -60,7 +60,10 @@ GROUP_NOT_DELIVERY = ('207N', '207W', '207Y', '207X', '2085', '207Z', '2084', '2
                       '231H', '2355', '152W', '122', '1223', '111N', '2251', '225X', '213E', '101Y', '103T', '1041', '291U', '3336',
                       '332', '207L', '3674', '3675',
                       # Nov 7, 2026 (testers): prosthetics/orthotics suppliers, radiology techs; ambulatory centers are below
-                      '335', '2471')
+                      '335', '2471',
+                      # Nov 9, 2026 (live check): internal-medicine subspecialties (infectious disease, cardiology, GI,
+                      # kidney, blood/cancer, lungs). Atlanta's lowest was AIDS Healthcare Foundation (infectious disease).
+                      '207RI', '207RC', '207RG', '207RN', '207RH', '207RX', '207RP')
 
 
 def is_non_delivery(t):
@@ -83,8 +86,15 @@ NOT_DELIVERY_NAME = re.compile(r'endoscop|gastroenterolog|labone|labcorp|quest d
                                r'ambulance|anesthes', re.I)
 DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|maternal|matern|midwi|birth|family (medicine|practice|health)|'
                            r'perinat|fertility|multi-?specialty', re.I)
-NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr', re.I)
+NEVER_DELIVERY_NAME = re.compile(r'plastic surg|facial|cosmetic|aesthetic|surgical assist|child|pediatr|paediatr|\bchoa\b|\baids\b|\bhiv\b', re.I)
 OB_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat', re.I)
+# Nov 9, 2026 (third live check): blocking the wrong kinds one at a time kept missing new ones (autism and behavior-analysis
+# companies, pain centers, a children's center). Practices are now kept for births only when their registered specialty is one
+# that delivers babies (or a multi-specialty group, birthing center or community/rural health clinic), or their name says so.
+GROUP_DELIVERY_OK = DELIVERY_TAX + ('193', '261QB0400', '261QF0400', '261QR1300', '261QC1500', '261QM1300', '261QP2300')
+GROUP_DELIVERY_NAME = re.compile(r'obstet|\bob\b|ob[/-]?gyn|gynecolog|women|matern|midwi|birth|perinat|family (medicine|practice|health|care)', re.I)
+ORG_WORD = re.compile(r'\b(llc|inc|corp|p\.?c|p\.?a|ltd|center|centre|services|group|associates|clinic|foundation|health|medical|practice|partners)\b', re.I)
+NEVER_DELIVERY_NAME_ALL = re.compile(NEVER_DELIVERY_NAME.pattern + r'|autism|behavio|\bpain\b|home (care|health)|hospice', re.I)
 
 
 class Proof:
@@ -155,6 +165,22 @@ class Proof:
             # a clinician with another specialty; a practice only when its listing names one other physician specialty
             # (Illinois: a dermatology group was the "lowest vaginal delivery"); multi-specialty groups and clinics are kept
             gt = str((t_[0] if isinstance(t_, tuple) else t_) or '')
+            # Nov 9, 2026 (live check): a practice an insurer file lists as a hospital is checked as a practice ("Emory Children's
+            # Center" was Atlanta's highest; its NPIs are pediatrics). Real hospitals (taxonomy 28...) are left as they are:
+            # some children's hospitals do deliver (Cincinnati Children's has its own delivery unit).
+            hosp_kind = kind
+            if kind == 'H' and gt and not gt.startswith('28'):
+                kind = 'G'
+            # Second live check: the state taxonomy table only has NPIs with Medicare records, so a pediatrics practice often has
+            # none. With no taxonomy, no Medicare hospital ID and no "hospital" in its name, it's checked as a practice too.
+            if kind == 'H' and not gt and not ccn and not re.search(r'\bhospital\b', name_of or '', re.I):
+                kind = 'G'
+            # Third live check: "Emory Children's Center" stayed after both rules above, so the insurer file ties it to an NPI with a
+            # hospital ID or hospital taxonomy. A "hospital" whose own name is a children's or other never-delivers place and doesn't
+            # say "hospital" is checked as a practice whatever its NPI says. "Children's Hospital Medical Center" is kept.
+            hn = name_of or name or ''
+            if kind == 'H' and not re.search(r'\bhospital\b', hn, re.I) and NEVER_DELIVERY_NAME_ALL.search(hn) and not OB_NAME.search(hn):
+                kind = 'G'
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
@@ -167,8 +193,15 @@ class Proof:
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
             # Nov 9 (live check): Atlanta's lowest was "Buckhead Facial Plastic Surgery" (listed only as "Specialist"); children's
             # and surgical-assistant groups were the highest. These stay out even when the name also says multi-specialty.
-            if kind == 'G' and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME.search(name_of or name or '') and not OB_NAME.search(name_of or name or ''))):
+            pn = name_of or name or ''
+            org = kind == 'G' or (kind == 'P' and ORG_WORD.search(pn))     # an organization filed as a clinician
+            if org and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME_ALL.search(pn) and not OB_NAME.search(pn))):
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
+            if org and NOT_DELIVERY_NAME.search(pn) and not DELIVERY_NAME.search(pn):
+                return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
+            if kind == 'G' and gt and not gt.startswith(GROUP_DELIVERY_OK) and not GROUP_DELIVERY_NAME.search(pn):
+                return 'wrong_specialty', 'practice\'s registered specialty isn\'t one that delivers babies'
+            kind = hosp_kind
 
         if cat in POOR_GUIDE_CATS or POOR_GUIDE_NAME.search(name or ''):
             return 'not_covered', 'Medicare is a poor guide for this procedure (mostly people 65+)'

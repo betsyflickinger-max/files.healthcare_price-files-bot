@@ -1,0 +1,24 @@
+name: Page sizes (what makes a page big)
+on:
+  workflow_dispatch:
+    inputs:
+      areas: {description: "area slugs, comma-separated", default: "kansas,dfw,houston,odessa"}
+jobs:
+  sizes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.12"}
+      - run: pip install -r requirements.txt 2>/dev/null || pip install boto3 duckdb
+      - run: FULL_PAGES=1 python -u site/page_sizes.py "${{ inputs.areas }}"
+      - uses: actions/upload-artifact@v4
+        with: {name: page-shells, path: /tmp/shell/}
