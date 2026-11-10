@@ -20,8 +20,13 @@ Views (which Medicare schedule applies), first match wins:
   lab                  code on the lab fee schedule, any fee kind
   ambulance            ambulance code (A0xxx) on the ambulance fee schedule, provider's locality, urban/rural by ZIP
   dme                  code on the DMEPOS fee schedule (state, rural by ZIP); modifier must match when the file gives one
-  anesthesia           anesthesia code 00100-01999, doctor fee: the locality's anesthesia conversion factor (PER UNIT; the
-                       insurer files don't say whether an anesthesia amount is per unit or per case, see the method doc)
+  anesthesia           anesthesia code 00100-01999, doctor fee: the locality's anesthesia conversion factor, per unit. The
+                       files have no "per unit" rate type, so each dollar rate is sorted (ANES_* below): the rate's own note
+                       ("per unit" / "per case", "case rate") first, then its size. Up to $200 = a per-unit conversion
+                       factor (about 10x Texas Medicare's $20-21; commercial factors are well under that) -> compared
+                       with Medicare's factor. $400 and up = a per-case amount -> counted, its middle shown in dollars, no
+                       ratio (no public CMS source gives typical anesthesia time per code). In between -> "unclear",
+                       counted, no ratio.
   outpatient_hospital  facility fee at a hospital (NPI matched to a CMS hospital record, site/med_local.py): OPPS national
                        x (0.60 x FY2026 wage index + 0.40) for wage-adjusted status indicators
   asc                  facility fee at a surgery center (matched): ASC national x (0.50 x wage index + 0.50)
@@ -63,6 +68,12 @@ FAC_LIST = "[" + ", ".join(f"'{p}'" for p in FAC_POS) + "]"
 PART_COLS = ["source", "scope", "table_name", "state", "insurer", "network", "status", "segment", "program", "view", "bucket", "code",
              "code_type", "modifier", "pos", "ccn", "medicare_amount", "medicare_facility", "medicare_office", "rate_kind", "rate",
              "units", "units_keep", "units_far", "units_many", "units_spec", "units_ev", "reason"]
+# anesthesia amounts: per unit up to ANES_UNIT_MAX dollars, per case from ANES_CASE_MIN (docstring above)
+ANES_UNIT_MAX, ANES_CASE_MIN = 200, 400
+ANES_CASE = "anesthesia: per case"   # rate_kind values (kept out of ratios, counted)
+ANES_UNCLEAR = f"anesthesia: unclear (between ${ANES_UNIT_MAX} and ${ANES_CASE_MIN})"
+UNIT_NOTE_SQL = r"""case when regexp_matches({x}, '\bper (time |base )?unit\b|/ ?unit\b|\bper 15 min') then 'unit'
+  when regexp_matches({x}, '\bper case\b|\bcase rate\b|\bflat (rate|fee)\b|\bper procedure\b') then 'case' else '' end"""
 # a rate's place of service from its TiC service_code list (SQL over a varchar column x)
 POS_SQL = """case when {cls} then ''
   when regexp_replace(coalesce({x}, ''), '[\\[\\]" ]', '', 'g') = '' then 'not stated'
@@ -87,7 +98,7 @@ BUCKET_SQL = """case view
   when 'outpatient_hospital' then 'Hospital outpatient facility fees'
   when 'asc' then 'Surgery-center facility fees'
   when 'facility_unmatched' then 'Facility fees, place not matched to a Medicare hospital or surgery center'
-  when 'anesthesia' then 'Anesthesia (per unit)'
+  when 'anesthesia' then 'Anesthesia (per unit: conversion factor)'
   when 'drug' then 'Part B drugs (ASP)'
   when 'lab' then 'Lab tests (lab fee schedule)'
   when 'dme' then 'Durable medical equipment and supplies'
@@ -228,7 +239,12 @@ def _units_to_part(con, units_sql, const):
       from ({units_sql})""")
     con.execute(f"""create or replace temp table uv as
       with j as (select u.p_state, u.insurer, u.network, u.status, u.segment, u.program, u.code, u.code_type, u.modifier, u.pos,
-                        u.rate_kind, u.rate, u.w, u.npi, u.tin, u.labeled_many, u.labeled_spec, bc.cat_desc,
+                        case when u.rate_kind = 'dollar' and bc.is_anes and u.fee = 'professional' and an.cf is not null then
+                               case when u.unit_note = 'unit' then 'dollar' when u.unit_note = 'case' then '{ANES_CASE}'
+                                    when u.rate <= {ANES_UNIT_MAX} then 'dollar' when u.rate >= {ANES_CASE_MIN} then '{ANES_CASE}'
+                                    else '{ANES_UNCLEAR}' end
+                             else u.rate_kind end rate_kind,
+                        u.rate, u.w, u.npi, u.tin, u.labeled_many, u.labeled_spec, bc.cat_desc,
                         case when u.p_kind = 'H' then u.p_ccn end ccn,
                         ep.npi is not null ev_npi, (ei.ccn is not null or eo.ccn is not null) ev_fac,
                         pf.facility pf_fac, pf.nonfacility pf_off, pm.share_facility sh_state, pmn.share_facility sh_us,
@@ -259,7 +275,7 @@ def _units_to_part(con, units_sql, const):
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount,
         case when rate_kind = 'dollar' then medicare_facility end medicare_facility,
         case when rate_kind = 'dollar' then medicare_office end medicare_office, rate_kind,
-        case when rate_kind = 'dollar' and view <> 'none' then rate end rate,
+        case when (rate_kind = 'dollar' or rate_kind like 'anesthesia:%') and view <> 'none' then rate end rate,
         round(sum(w))::bigint units, round(coalesce(sum(w) filter (where not (far or labeled_many or labeled_spec)), 0))::bigint units_keep,
         round(coalesce(sum(w) filter (where far), 0))::bigint units_far, round(coalesce(sum(w) filter (where labeled_many), 0))::bigint units_many,
         round(coalesce(sum(w) filter (where labeled_spec), 0))::bigint units_spec,
@@ -267,7 +283,7 @@ def _units_to_part(con, units_sql, const):
       from uve group by p_state, network, view, code, modifier, pos, ccn, rate_kind,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end,
         case when rate_kind = 'dollar' then medicare_facility end, case when rate_kind = 'dollar' then medicare_office end,
-        case when rate_kind = 'dollar' and view <> 'none' then rate end"""
+        case when (rate_kind = 'dollar' or rate_kind like 'anesthesia:%') and view <> 'none' then rate end"""
     # providers: per code, how many (and the first five, so "at least 5 providers" can be checked exactly across tables);
     # per bucket, every provider (to count providers behind a bucket or a total without double counting). A provider at a
     # hospital without evidence (a) keeps its hospital's CCN, so summarize can add evidence (b)/(c) from the hospital files.
@@ -326,7 +342,7 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
         case when l.billing_class like 'inst%' then 'facility' else 'professional' end fee,
         l.billing_code_modifier modifier,
         {POS_SQL.format(cls="l.billing_class like 'inst%'", x="l.service_code", fac=FAC_LIST)} pos,
-        {kind} rate_kind, l.v rate, l.npi, l.tin, false counted,
+        {kind} rate_kind, l.v rate, l.npi, l.tin, false counted, {UNIT_NOTE_SQL.format(x="l.addl")} unit_note,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,
         l.one_amount_many_codes labeled_many, l.specialty_mismatch labeled_spec
       from ({lab}) l join prov p on p.npi = l.npi {mj}"""
@@ -353,6 +369,7 @@ def hospital_units(t, have):
         {kind} rate_kind, try_cast(replace(replace({q('negotiated_dollar')}, '$', ''), ',', '') as double) rate,
         h.ccn npi, '' tin, lower({q('setting')}) setting,
         {q('allowed_count')} not in ('', '0') counted,
+        {UNIT_NOTE_SQL.format(x="lower(" + q('methodology') + " || ' ' || " + q('notes') + ")")} unit_note,
         'H' p_kind, coalesce(w.wage_index, 1.0) p_wi, h.ccn p_ccn, z.locality p_loc, coalesce(z.rural, '') p_rural,
         coalesce(hz.state, h.state) p_state, false labeled_many, false labeled_spec
       from {t} r cross join hosp h left join b_wi2026 w on w.ccn = h.ccn
@@ -370,7 +387,7 @@ def allowed_units(t):
         upper(coalesce(r.modifier, '')) modifier,
         {POS_SQL.format(cls="lower(r.billing_class) like 'inst%'", x="r.service_code", fac=FAC_LIST)} pos,
         case when r.allowed_amount > 0 then 'dollar' when r.allowed_amount = 0 then 'zero' else 'not a number' end rate_kind,
-        r.allowed_amount rate, cast(r.npi as varchar) npi, cast(r.tin as varchar) tin, '' setting, false counted,
+        r.allowed_amount rate, cast(r.npi as varchar) npi, cast(r.tin as varchar) tin, '' setting, false counted, '' unit_note,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,
         false labeled_many, false labeled_spec
       from {t} r join prov p on p.npi = cast(r.npi as varchar)"""

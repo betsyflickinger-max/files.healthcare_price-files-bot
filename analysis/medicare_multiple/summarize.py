@@ -33,10 +33,12 @@ WEIGHT = {"all": "p.units", "range": "p.units_keep",
 # views kept out of both totals (still reported per code and per bucket): no like-for-like Medicare amount
 NOT_IN_TOTALS = {"facility_unmatched": "Medicare amount is the national outpatient rate; the place isn't matched to a Medicare record",
                  "none": "no Medicare benchmark"}
-NOT_IN_WEIGHTED = {"anesthesia": "Medicare counts anesthesia cases, the benchmark is per unit: volumes and amounts don't line up",
-                   "asc": "no Medicare surgery-center volume file was in scope (only physician, outpatient hospital and inpatient files)"}
+NOT_IN_WEIGHTED = {"asc": "no Medicare surgery-center volume file was in scope (only physician, outpatient hospital and inpatient files)"}
+# anesthesia is compared per unit (conversion factor), so its weight is Medicare's allowed DOLLARS for the code in the state
+# (services x average allowed, Physician & Other Practitioners by Geography and Service), not a service count
+DOLLAR_WEIGHTED = {"anesthesia"}
 # Medicare volume used for each view (kinds in volumes.csv)
-VOLUME_KINDS = {"professional": ("professional",), "lab": ("professional", "outpatient"), "drug": ("professional", "outpatient"),
+VOLUME_KINDS = {"professional": ("professional",), "anesthesia": ("professional",), "lab": ("professional", "outpatient"), "drug": ("professional", "outpatient"),
                 "ambulance": ("professional",), "outpatient_hospital": ("outpatient",), "inpatient": ("inpatient",), "dme": ("dme",)}
 FIGURES = [  # (label, source, status, program filter)
     ("Insurer files, in-network", "insurer", "in-network", "commercial"),
@@ -131,20 +133,29 @@ def code_figures(con, parts_glob, codes_glob, kind, state, by_segment=False):
 
 
 def load_volumes(bench, state):
+    """{(kind, code): services} and, under ("$" + kind, code), Medicare allowed dollars where the file gives them."""
     v = {}
     for r in csv.DictReader(open(Path(bench) / "volumes.csv")):
         if r["state"] != state:
             continue
         v[(r["kind"], r["code"])] = v.get((r["kind"], r["code"]), 0) + float(r["volume"])
+        if r.get("allowed"):
+            v[("$" + r["kind"], r["code"])] = v.get(("$" + r["kind"], r["code"]), 0) + float(r["allowed"])
     return v
 
 
 def volume_for(vols, view, code):
     kinds = VOLUME_KINDS.get(view)
-    if not kinds or view in NOT_IN_WEIGHTED:
+    if not kinds or view in NOT_IN_WEIGHTED or view in DOLLAR_WEIGHTED:
         return None
     t = sum(vols.get((k, code), 0) for k in kinds)
     return t or None
+
+
+def dollars_for(vols, view, code):
+    if view not in DOLLAR_WEIGHTED:
+        return None
+    return vols.get(("$professional", code)) or None
 
 
 def summarize(con, parts_dir, bench, out, state):
@@ -160,13 +171,14 @@ def summarize(con, parts_dir, bench, out, state):
             src, status, program, view, bucket, code = k
             ok = f.get("enough_providers", False)
             vol = volume_for(vols, view, code)
+            dol = dollars_for(vols, view, code)
             code_rows.append(dict(rates=which, source=src, status=status, program=program, view=view, bucket=bucket, code=code,
                                   units=int(f["units"]), providers_at_least=f.get("providers_at_least", 0),
                                   figure="yes" if ok else f"no: fewer than {MIN_PROVIDERS} providers",
                                   p10=_r(f["p10"]) if ok else None, middle=_r(f["p50"]) if ok else None, p90=_r(f["p90"]) if ok else None,
                                   middle_private_amount=f["mid_private"] if ok else None, middle_medicare_amount=f["mid_medicare"] if ok else None,
                                   middle_vs_facility_rate=_r(f["mid_fac"]) if ok else None, middle_vs_office_rate=_r(f["mid_off"]) if ok else None,
-                                  medicare_volume_2024=vol))
+                                  medicare_volume_2024=vol, medicare_dollars_2024=dol))
     # buckets and totals, per figure
     for label, src, status, program in FIGURES:
         for which, _ in WHICH:
@@ -176,12 +188,12 @@ def summarize(con, parts_dir, bench, out, state):
             for b in sorted({r["bucket"] for r in rs}):
                 br = [r for r in rs if r["bucket"] == b]
                 ok = [r for r in br if r["figure"] == "yes"]
-                wv = [r for r in ok if r["medicare_volume_2024"]]
+                wv = [r for r in ok if r["medicare_volume_2024"] or r.get("medicare_dollars_2024")]
                 bucket_rows.append(dict(figure=label, rates=which, bucket=b, codes_with_figure=len(ok), codes_too_few_providers=len(br) - len(ok),
                                         units=sum(r["units"] for r in ok), middle_of_code_middles=nearest_rank([r["middle"] for r in ok], 50),
                                         medicare_use_weighted=_weighted(wv), codes_with_volume=len(wv)))
             ok = [r for r in rs if r["figure"] == "yes" and r["view"] not in NOT_IN_TOTALS]
-            wv = [r for r in ok if r["medicare_volume_2024"]]
+            wv = [r for r in ok if r["medicare_volume_2024"] or r.get("medicare_dollars_2024")]
             total_rows.append(dict(figure=label, rates=which, codes=len(ok), codes_weighted=len(wv),
                                    equal_weight=nearest_rank([r["middle"] for r in ok], 50), medicare_use_weighted=_weighted(wv),
                                    units=sum(r["units"] for r in ok)))
@@ -213,6 +225,8 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "tails.csv", tails)
     methods = _methods(con, pg, state)
     _write_csv(out / "methods.csv", methods)
+    anes = _anesthesia_cases(con, pg, state)
+    _write_csv(out / "anesthesia_per_case.csv", anes)
     _write_csv(out / "codes.csv", code_rows)
     _write_csv(out / "buckets.csv", bucket_rows)
     _write_csv(out / "totals.csv", total_rows)
@@ -223,7 +237,7 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "medicare_sources.csv", [dict(key=k, what=v.get("what"), year=v.get("year"), url=v.get("url"), sha256=v.get("sha256", ""))
                                                for k, v in srcs.items() if not k.startswith("_")])
     from report import write_md
-    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods)
+    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods, anes)
     return dict(codes=len(code_rows), buckets=len(bucket_rows), totals=len(total_rows))
 
 
@@ -232,8 +246,16 @@ def _r(x):
 
 
 def _weighted(rows):
-    num = sum(r["medicare_volume_2024"] * r["middle_private_amount"] for r in rows)
-    den = sum(r["medicare_volume_2024"] * r["middle_medicare_amount"] for r in rows)
+    """sum(volume x middle private amount) / sum(volume x middle Medicare amount). A dollar-weighted code (anesthesia, per
+    unit) adds Medicare's dollars D for it: D x (middle private / middle Medicare) above, D below."""
+    num = den = 0.0
+    for r in rows:
+        if r.get("medicare_dollars_2024"):
+            num += r["medicare_dollars_2024"] * r["middle_private_amount"] / r["middle_medicare_amount"]
+            den += r["medicare_dollars_2024"]
+        elif r.get("medicare_volume_2024"):
+            num += r["medicare_volume_2024"] * r["middle_private_amount"]
+            den += r["medicare_volume_2024"] * r["middle_medicare_amount"]
     return round(num / den, 3) if den else None
 
 
@@ -277,7 +299,29 @@ def _methods(con, pg, state):
     q = f"""select 'place of service (doctor fees)' question, source, status, pos method, sum(units) units, count(distinct code) codes
             from read_parquet('{pg}', union_by_name=true)
             where state = '{state}' and view = 'professional' and rate_kind = 'dollar' group by all
+            union all
+            select 'anesthesia: per unit or per case', source, status,
+                   case when rate_kind = 'dollar' then 'per unit (up to $200, or the rate says so): compared with the conversion factor'
+                        else rate_kind || ': counted, no ratio' end, sum(units), count(distinct code)
+            from read_parquet('{pg}', union_by_name=true)
+            where state = '{state}' and view = 'anesthesia' and (rate_kind = 'dollar' or rate_kind like 'anesthesia:%') group by all
             order by all"""
+    c = con.execute(q)
+    cols = [d[0] for d in c.description]
+    return [dict(zip(cols, r)) for r in c.fetchall()]
+
+
+def _anesthesia_cases(con, pg, state):
+    """Anesthesia amounts that look like a whole case: per code, how many and the middle listed amount in dollars. No ratio:
+    Medicare pays per unit (base units + time units), and no public CMS source gives typical time per code."""
+    q = f"""with d as (select source, status, program, code, rate, sum(units) w from read_parquet('{pg}', union_by_name=true)
+                       where state = '{state}' and view = 'anesthesia' and rate_kind like 'anesthesia:%' and rate is not null and units > 0
+                       group by all),
+            c as (select *, sum(w) over (partition by source, status, program, code order by rate rows unbounded preceding) cum,
+                         sum(w) over (partition by source, status, program, code) tot from d)
+            select source, status, program, code, max(tot)::bigint listed_rates,
+                   min(rate) filter (where cum >= ceil(0.5 * tot)) middle_listed_amount, min(rate) lowest, max(rate) highest
+            from c group by all order by listed_rates desc"""
     c = con.execute(q)
     cols = [d[0] for d in c.description]
     return [dict(zip(cols, r)) for r in c.fetchall()]

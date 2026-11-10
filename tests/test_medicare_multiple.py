@@ -28,7 +28,7 @@ def make_bench(d):
     d.mkdir(parents=True, exist_ok=True)
     _csv(d / "rbcs.csv", ["code", "rbcs_id", "cat", "cat_desc", "subcat", "subcat_desc", "family"],
          [["99213", "EO", "E", "Evaluation and Management", "EO", "Office", "Office visit"],
-          ["70551", "IM", "I", "Imaging", "IM", "MRI", "MRI brain"]])
+          ["70551", "IM", "I", "Imaging", "IM", "MRI", "MRI brain"], ["00790", "AN", "A", "Anesthesia", "AN", "Anesthesia", "Upper abdomen"]])
     _csv(d / "pfs.csv", ["code", "mod", "locality", "nonfacility", "facility", "status"],
          [["99213", "", LOC, 100.0, 60.0, "A"], ["70551", "", LOC, 200.0, "", "A"], ["70551", "26", LOC, 70.0, 70.0, "A"]])
     _csv(d / "zip.csv", ["zip5", "state", "locality", "rural"], [["75201", "TX", LOC, ""], ["79901", "TX", "04412-99", "R"]])
@@ -378,3 +378,28 @@ def test_posmix_and_allowed_dollars_from_geography_file():
     vol = cms.volume_rows(phy, empty, "Rndrng_Prvdr_Geo_Lvl,Rndrng_Prvdr_Geo_Desc,DRG_Cd,Tot_Dschrgs\n",
                           "Rfrg_Prvdr_Geo_Lvl,Rfrg_Prvdr_Geo_Desc,HCPCS_Cd,Tot_Suplr_Srvcs\n", {"TX"})
     assert ("TX", "professional", "99213", "F", 30.0, "vol_physician", 1500.0) in vol
+
+
+# ---------------------------------------------------------------- fix 3: anesthesia per unit vs per case
+
+def test_anesthesia_sorted_per_unit_or_per_case(tmp_path):
+    R = [row(npi="1", billing_code="00790", negotiated_rate="61.32"),                                   # per unit: 3x CF 20.44
+         row(npi="2", billing_code="00790", negotiated_rate="1500"),                                    # per case (size)
+         row(npi="3", billing_code="00790", negotiated_rate="300"),                                     # unclear
+         row(npi="4", billing_code="00790", negotiated_rate="450", additional_information="Per unit"),  # the rate says per unit
+         row(npi="5", billing_code="00790", negotiated_rate="120", additional_information="Flat rate per case")]
+    P = {r["rate"]: r for r in _reduce_one(tmp_path, R)}
+    assert P[61.32]["rate_kind"] == "dollar" and P[61.32]["medicare_amount"] == 20.44 and P[61.32]["view"] == "anesthesia"
+    assert P[450.0]["rate_kind"] == "dollar" and P[450.0]["units_far"] == 1     # 22x: kept, labeled far, goes to the tails table
+    assert P[1500.0]["rate_kind"] == P[120.0]["rate_kind"] == rates.ANES_CASE
+    assert P[300.0]["rate_kind"] == rates.ANES_UNCLEAR
+    assert P[1500.0]["medicare_amount"] is None                                 # no ratio for a whole case
+
+
+def test_anesthesia_weighted_by_medicare_dollars():
+    office = dict(medicare_volume_2024=1000, middle_private_amount=130.0, middle_medicare_amount=100.0)
+    anes = dict(medicare_volume_2024=None, medicare_dollars_2024=50000.0, middle_private_amount=61.32, middle_medicare_amount=20.44)
+    # (1000 x 130 + 50000 x 3.0) / (1000 x 100 + 50000) = 280000 / 150000
+    assert summ._weighted([office, anes]) == round(280000 / 150000, 3)
+    assert summ.dollars_for({("$professional", "00790"): 50000.0}, "anesthesia", "00790") == 50000.0
+    assert summ.volume_for({("professional", "00790"): 900}, "anesthesia", "00790") is None

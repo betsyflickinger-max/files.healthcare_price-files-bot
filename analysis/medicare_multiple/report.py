@@ -15,7 +15,7 @@ def n(v):
     return "—" if v is None else f"{int(v):,}"
 
 
-def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=()):
+def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=(), anes=()):
     name = STATE.get(state, state)
     figs = []
     for r in total_rows:
@@ -47,8 +47,9 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
             if r:
                 L.append(f"| {f} | {which} | {x(r['medicare_use_weighted'])} | {x(r['equal_weight'])} | {n(r['codes'])} | {n(r['codes_weighted'])} |")
     L += ["", "Totals leave out facility fees at places not matched to a Medicare hospital or surgery center, and codes with no "
-          "Medicare benchmark (both are counted below). The weighted total also leaves out anesthesia (Medicare counts cases, "
-          "the benchmark is per unit) and surgery centers (no Medicare surgery-center volume file was in scope).", ""]
+          "Medicare benchmark (both are counted below). The weighted total leaves out surgery centers (no Medicare surgery-center "
+          "volume file was in scope). Anesthesia is in it per unit: its conversion-factor multiple, weighted by Medicare's "
+          "allowed dollars for each anesthesia code in the state.", ""]
     # one table per bucket
     L += ["## By kind of care", ""]
     buckets = sorted({r["bucket"] for r in bucket_rows}, key=lambda b: (b.startswith("No Medicare"), b))
@@ -124,6 +125,16 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
           "- Earlier DFW snapshot: insurer-file middles near 1.0× for outpatient facility fees and 0.88× for doctor fees, counting every "
           "listed rate once. Compare the equal-weight and weighted columns, and all rates vs evidence of use, to see how much "
           "of that came from counting rates that are never used.", ""]
+    if anes:
+        L += ["## Anesthesia amounts that look like a whole case", "",
+              "Up to $200 is read as a per-unit conversion factor and compared with Medicare's; $400 and up as a whole case. "
+              "Whole-case amounts are counted here, in dollars, with no multiple: Medicare pays per unit (base units plus time), "
+              "and no public CMS source gives the typical time per code.", "",
+              "| Source | Network status | Plans | Code | Listed rates | Middle listed amount | Lowest | Highest |", "|---|---|---|---|---|---|---|---|"]
+        for a in anes[:25]:
+            L.append(f"| {a['source']} | {a['status']} | {a['program']} | {a['code']} | {n(a['listed_rates'])} | ${a['middle_listed_amount']:,.2f} | "
+                     f"${a['lowest']:,.2f} | ${a['highest']:,.2f} |")
+        L += ["", f"All {len(anes)} rows: `anesthesia_per_case.csv`.", ""]
     if methods:
         L += ["## How each rate was handled", "", "| Question | Source | Network status | Method | Listed rates | Codes |", "|---|---|---|---|---|---|"]
         for m in methods:
