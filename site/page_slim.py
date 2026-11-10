@@ -11,7 +11,8 @@ What a page's data block carried that it didn't need (measured with site/page_si
 
 slim(html) returns the slimmed page; the page code gets two small helpers (scHas, scLen) that read both the old list
 form and the new [N, bits] form. scope_sets(D) / scope_len(v) let Python readers (audit_rules.py, insurer_profiles.py)
-read either form. Used by city_page.py for areas listed in SLIM_PAGES (comma-separated, or "all").
+read either form. Used by city_page.py and orchestrate.py (DFW) on every page (SLIM_PAGES=none to turn off), and by
+site/slim_live.py to slim the pages already live in one deploy.
 
   python site/page_slim.py old.html new.html     # slim one saved page and check it says the same thing for every code
 """
@@ -74,9 +75,10 @@ def scope_sets(D):
 
 def slim(html):
     pre, D, post = split(html)
-    if pre.count(OLD_JS) + post.count(OLD_JS) != 1 or (pre + post).count('function scopeMsg(N) {') != 1:
-        raise SystemExit('STOP: page slimming: the page code around scopeMsg changed; not slimmed (update site/page_slim.py)')
-    pre, post = [x.replace(OLD_JS, NEW_JS).replace('function scopeMsg(N) {', HELPERS) for x in (pre, post)]
+    if 'function scHas(' not in pre + post:   # page code not slimmed yet (a template already slimmed keeps its helpers)
+        if pre.count(OLD_JS) + post.count(OLD_JS) != 1 or (pre + post).count('function scopeMsg(N) {') != 1:
+            raise SystemExit('STOP: page slimming: the page code around scopeMsg changed; not slimmed (update site/page_slim.py)')
+        pre, post = [x.replace(OLD_JS, NEW_JS).replace('function scopeMsg(N) {', HELPERS) for x in (pre, post)]
     D.pop('coming', None)
     order = sorted(D['codes'])
     D['scope'] = {k: (v if is_slim(v) else [len(v), bits(order, set(v))]) for k, v in (D.get('scope') or {}).items()}
@@ -99,7 +101,8 @@ def same(old, new):
 
 
 def wanted(slug):
-    v = os.environ.get('SLIM_PAGES', '').strip()
+    """Every page since Nov 10, 2026 (Betsy OK'd after the Kansas test); SLIM_PAGES=none turns it off, or lists the slugs."""
+    v = os.environ.get('SLIM_PAGES', 'all').strip() or 'all'
     return v == 'all' or slug in {x.strip() for x in v.split(',') if x.strip()}
 
 

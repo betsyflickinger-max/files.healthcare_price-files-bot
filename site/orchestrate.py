@@ -334,6 +334,10 @@ def publish(st):
         st['stage'] = 'held'
         issue(f'Website refresh {BID} held: checks failed', f'Nothing went live.\n\n```\n{chk.stdout}\n```\nNew page saved to R2 `{SP}page_new.html`.')
         return
+    import page_slim   # Nov 10, 2026: page slimming on every page (site/page_slim.py); same message for every code, checked
+    if page_slim.wanted('dfw'):
+        _o = open('/tmp/pub/new.html', encoding='utf-8').read(); _n = page_slim.slim(_o); page_slim.same(_o, _n)
+        open('/tmp/pub/new.html', 'w', encoding='utf-8').write(_n)
     # Nov 9, 2026 (Betsy): the audit's rule checks on the new DFW page and this build's per-code files (site/audit_gate.py)
     import audit_gate
     gok, gmsg, gsnap = audit_gate.check('/tmp/pub/new.html', 'dfw', '/price-finder/', {'t': TOUT + 't/', 'h': TOUT + 'h/'}, s3, B)

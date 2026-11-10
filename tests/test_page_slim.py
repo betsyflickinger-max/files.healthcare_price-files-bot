@@ -50,3 +50,13 @@ def test_same_in_browser():
         b.close()
     assert res[0] == res[1] and len(res[0]) == 27
     assert any("for 4 procedures" in x for x in res[1]) and any("no published rate" in x for x in res[1])
+
+
+def test_slim_twice_and_on_slim_template():
+    """A page built from an already-slimmed template (list-form scope from embed.json) slims again without error."""
+    once = PS.slim(page())
+    pre, D, post = PS.split(once)
+    D["scope"] = {"Aetna|Open Access": ["00100", "27447"]}   # merge_page.py puts embed.json's list form back
+    again = PS.slim(PS.join(pre, D, post))
+    assert again.count("function scHas(") == 1
+    assert PS.scope_sets(PS.split(again)[1])["Aetna|Open Access"] == {"00100", "27447"}
