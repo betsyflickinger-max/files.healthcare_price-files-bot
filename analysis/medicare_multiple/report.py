@@ -15,7 +15,7 @@ def n(v):
     return "—" if v is None else f"{int(v):,}"
 
 
-def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=(), anes=()):
+def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=(), anes=(), notes=()):
     name = STATE.get(state, state)
     figs = []
     for r in total_rows:
@@ -140,8 +140,9 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
     if methods:
         L += ["## How each rate was handled", "", "| Question | Source | Network status | Method | Listed rates | Codes |", "|---|---|---|---|---|---|"]
         for m in methods:
-            L.append(f"| {m['question']} | {m['source']} | {m['status']} | {m['method']} | {n(m['units'])} | {n(m['codes'])} |")
-        L += ["", "Same table: `methods.csv`.", ""]
+            L.append(f"| {m['question']} | {m['source']} | {m['status']} | {m['method']} | {n(m['units'])} | {n(m.get('codes'))} |")
+        L += ["", "Same table: `methods.csv`." + (" Each hospital file's match: `hospital_matches.csv`." if any(
+            m["question"].startswith("hospital file") for m in methods) else "")] + [f"- {x}" for x in notes] + [""]
     # coverage
     L += ["## What went in, and what didn't", "",
           "| Source | Network status | Plans | What | Codes | Listed rates | With evidence of use | of which: billed Medicare | Range check |",

@@ -460,3 +460,46 @@ def test_allowed_amount_file_names_its_market():
 def test_segment_methods_counted(run):
     seg = [m for m in run["methods"] if m["question"].startswith("market segment")]
     assert any(m["method"] == "not stated in file: not stated anywhere" for m in seg)
+
+
+# ---------------------------------------------------------------- fix 5: hospital files matched by their own identifiers
+import hospital_match as hm  # noqa: E402
+
+
+def test_hospital_files_matched_by_their_own_identifiers():
+    known = {"450021": "TX", "450022": "TX", "450023": "TX", "370001": "OK"}
+    npi_ccn = {"1234567890": {"450021"}, "2222222222": {"450022", "450023"}, "3333333333": {"370001"}}
+    U = "https://h.example/"
+    files = [
+        dict(key="A", state="TX", type_2_npi="1234567890", license_number="H-12345", license_state="TX", url=U + "a.json"),
+        dict(key="B", state="TX", location_name="Hospital B, CMS certification 450022", url=U + "751234567_hospital-b_standardcharges.json"),
+        dict(key="C", state="TX", license_number="h 12345", license_state="TX"),           # same license as A
+        dict(key="D", state="TX", url=U + "75-1234567_hospital-b-west_standardcharges.csv"),  # same EIN as B
+        dict(key="E", state="TX", type_2_npi="2222222222|9999999999"),                     # a system file: two hospitals
+        dict(key="F", state="TX"),                                                         # says nothing: the bot's list
+        dict(key="G", state="TX"),                                                         # says nothing, not on the list
+        dict(key="H", state="TX", type_2_npi="3333333333"),                                # its NPI is an Oklahoma hospital
+    ]
+    fb = {"A": "450021", "B": "450099", "E": "450023", "F": "450022", "H": "450021"}
+    M = hm.match_files(files, npi_ccn, known, fb)
+    assert (M["A"]["ccn"], M["A"]["method"], M["A"]["agrees_with_list"]) == ("450021", hm.M_NPI, "yes")
+    assert (M["B"]["ccn"], M["B"]["method"], M["B"]["agrees_with_list"]) == ("450022", hm.M_CCN, "no")
+    assert (M["C"]["ccn"], M["C"]["method"]) == ("450021", hm.M_LIC)
+    assert (M["D"]["ccn"], M["D"]["method"]) == ("450022", hm.M_EIN)
+    assert (M["E"]["ccn"], M["E"]["method"]) == ("450023", hm.M_NPI_LIST)
+    assert (M["F"]["ccn"], M["F"]["method"]) == ("450022", hm.M_LIST)
+    assert (M["G"]["ccn"], M["G"]["method"]) == (None, hm.M_NONE)
+    assert (M["H"]["ccn"], M["H"]["method"]) == ("450021", hm.M_LIST)
+    c = hm.counts(M)
+    assert c[hm.M_NPI] == 1 and c[hm.M_LIST] == 2 and sum(c.values()) == 8
+
+
+def test_hospital_match_rows_and_unmatched_files_stay_listed():
+    import run as runmod
+    doc = {"items": [dict(source="hospital", key="k1", name="A", state="TX", ccn="450021", match_method=hm.M_NPI, fallback_ccn="450021",
+                          agrees_with_list="yes", file_npis=["1234567890"], lane="gh", rows=0, bytes=5),
+                     dict(source="hospital-unmatched", key="k2", name="G", state="TX", ccn="", match_method=hm.M_NONE, lane="none", rows=0, bytes=0)]}
+    rows = runmod.hospital_match_rows(doc, "TX")
+    assert [r["method"] for r in rows] == [hm.M_NPI, hm.M_NONE] and rows[0]["npis_in_file"] == "1234567890"
+    est = runmod.estimate(dict(items=doc["items"] + [dict(source="insurer", lane="gh", rows=10, bytes=1)]))
+    assert est["tables"] == 2 and est["hospital_files_not_matched"] == 1

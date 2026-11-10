@@ -20,6 +20,7 @@ public repo and are always used first.
 """
 import argparse
 import csv
+import io
 import json
 import math
 import os
@@ -32,6 +33,7 @@ HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 sys.path[:0] = [str(HERE), str(ROOT / "insurers" / "pipeline"), str(ROOT / "bot")]
 import cms  # noqa: E402
+import hospital_match  # noqa: E402
 import rates  # noqa: E402
 import segments  # noqa: E402
 import summarize as summ  # noqa: E402
@@ -48,6 +50,8 @@ TABLES = {"dfw": "data/full/", **{a: f"data/{a}/" for a in AREAS}}
 NPIS = {"dfw": "data/2026-09-29/dfw_npis_all.parquet", **{a: f"data/scope/{a}_npis_all.parquet" for a in AREAS}}
 NPIS["nyhf"] = "data/scope/nyhf_npis_all.parquet"
 MED_LOCAL = "site/med_local/2026.json"
+ENROLL = "data/names/hospital_enrollments.csv"          # CMS Hospital Enrollments (CCN, NPI), already in storage
+FILE_MANIFEST = "bot/manifest/files/{state}.csv"         # the bot's per-file facts, incl. license number read from each file
 # Machines. Speed measured Nov 10, 2026 on 20 million made-up rows shaped like an insurer table (fee-schedule-like
 # amounts, 40,000 providers, 6,000 codes): 112 s on 2 cores for labels + Medicare join + counts = about 89,000 rows per
 # core-second. Assumed 85% of that per core on more cores. See docs/medicare-multiple.md "Cost".
@@ -141,14 +145,9 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
                                   network=lab, membership=k.replace("/rates/", "/membership/"),
                                   segment=sg.get("segment", ""), segment_method=sg.get("method", ""),
                                   lane="gh" if rows <= gh_max else "do"))
-    # hospital files: the newest parsed copy of each hospital's file in these states (site/hosp_every.py cache)
-    have = {k.rsplit("/", 1)[1][:-8]: n for k, n in ls(s3c, b, "data/hosp_every/rows/") if k.endswith(".parquet")}
-    for r in csv.DictReader(open(ROOT / "data" / "hospitals.csv")):
-        if ("ALL" in states or r["state"] in states) and r.get("last_sha256"):
-            sid = r["last_sha256"][:16]
-            if sid in have:
-                items.append(dict(source="hospital", area="", scope="hospital", key=f"data/hosp_every/rows/{sid}.parquet",
-                                  bytes=have[sid], rows=0, ccn=r["ccn"], state=r["state"], name=r["name"], lane="gh"))
+    # hospital files: the newest parsed copy of each hospital's file in these states (site/hosp_every.py cache), matched to its
+    # CMS number from what the file says about itself (hospital_match.py), rebuilt every run
+    items += hospital_items(con, s3c, b, states)
     # out-of-network allowed amounts: the newest month of every insurer's files
     newest = {}
     for k, n in ls(s3c, b, "raw/allowed/"):
@@ -160,6 +159,79 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
     doc = dict(run_id=run_id, states=states, made=time.strftime("%Y-%m-%d %H:%M"), items=items, segment_note=seg_note)
     s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/plan.json", Body=json.dumps(doc).encode())
     return doc
+
+
+def hospital_items(con, s3c, b, states):
+    have = {k.rsplit("/", 1)[1][:-8]: n for k, n in ls(s3c, b, "data/hosp_every/rows/") if k.endswith(".parquet")}
+    listed = list(csv.DictReader(open(ROOT / "data" / "hospitals.csv")))
+    known = {r["ccn"]: r["state"] for r in listed}                      # every CMS hospital record (CCN -> state)
+    files, fallback, meta = [], {}, {}
+    sts = {r["state"] for r in listed} if "ALL" in states else set(states)
+    lic = {}
+    for st in sorted(sts):
+        try:
+            body = s3c.get_object(Bucket=b, Key=FILE_MANIFEST.format(state=st))["Body"].read().decode("utf-8", "replace")
+            for m in csv.DictReader(io.StringIO(body)):
+                if m.get("sha256"):
+                    lic[m["sha256"][:16]] = m
+        except Exception:
+            pass
+    for r in listed:
+        if r["state"] in sts and r.get("last_sha256") and r["last_sha256"][:16] in have:
+            sid = r["last_sha256"][:16]
+            key = f"data/hosp_every/rows/{sid}.parquet"
+            try:
+                cols = {x[0] for x in con.execute(f"describe select * from read_parquet('s3://{b}/{key}')").fetchall()}
+                pick = [c for c in ("type_2_npi", "hospital_name", "location_name", "ein") if c in cols]
+                one = con.execute(f"select {', '.join(pick)} from read_parquet('s3://{b}/{key}') limit 1").fetchone() if pick else None
+                own = dict(zip(pick, one or []))
+            except Exception:
+                own = {}
+            m = lic.get(sid, {})
+            files.append(dict(key=key, state=r["state"], url=r.get("mrf_url", ""), license_number=m.get("license_number", ""),
+                              license_state=m.get("license_state", ""), **{k: str(v or "") for k, v in own.items()}))
+            fallback[key] = r["ccn"]
+            meta[key] = (have[sid], r["name"])
+    npi_ccn = {}
+    try:
+        body = s3c.get_object(Bucket=b, Key=ENROLL)["Body"].read().decode("latin-1")
+        for e in csv.DictReader(io.StringIO(body)):
+            if e.get("NPI") and e.get("CCN"):
+                npi_ccn.setdefault(e["NPI"].strip(), set()).add(e["CCN"].strip())
+    except Exception as e:
+        log("hospital enrollments not read:", repr(e)[:120])
+    try:
+        for npi, v in json.loads(s3c.get_object(Bucket=b, Key=MED_LOCAL)["Body"].read())["npi"].items():
+            if v[0] == "H" and v[2]:
+                npi_ccn.setdefault(npi, set()).add(v[2])
+    except Exception as e:
+        log("med_local not read:", repr(e)[:120])
+    matches = hospital_match.match_files(files, npi_ccn, known, fallback)
+    log("hospital files matched:", json.dumps(hospital_match.counts(matches)))
+    out = []
+    for f in files:
+        m = matches[f["key"]]
+        st = known.get(m["ccn"] or "", f["state"])
+        if not m["ccn"] or ("ALL" not in states and st not in states):
+            continue
+        out.append(dict(source="hospital", area="", scope="hospital", key=f["key"], bytes=meta[f["key"]][0], rows=0, ccn=m["ccn"],
+                        state=st, name=meta[f["key"]][1], lane="gh", match_method=m["method"], file_npis=m["npis"],
+                        fallback_ccn=m["fallback_ccn"], agrees_with_list=m["agrees_with_list"]))
+    # files not matched (or matched to another state) stay listed in the plan, never read silently away
+    for f in files:
+        m = matches[f["key"]]
+        if not m["ccn"]:
+            out.append(dict(source="hospital-unmatched", area="", scope="hospital", key=f["key"], bytes=0, rows=0, ccn="",
+                            state=f["state"], name=meta[f["key"]][1], lane="none", match_method=m["method"], file_npis=m["npis"],
+                            fallback_ccn="", agrees_with_list=""))
+    return out
+
+
+def hospital_match_rows(doc, state=None):
+    """One row per hospital file in the plan: name, CCN, how it was matched, the bot's list's CCN, agree?"""
+    return [dict(file=i["key"], hospital=i.get("name", ""), state=i.get("state", ""), ccn=i.get("ccn", ""), method=i.get("match_method", ""),
+                 bots_list_ccn=i.get("fallback_ccn", ""), agrees_with_list=i.get("agrees_with_list", ""), npis_in_file=" ".join(i.get("file_npis") or []))
+            for i in doc["items"] if i["source"].startswith("hospital") and (not state or i.get("state") == state)]
 
 
 # ------------------------------------------------------------------ estimate
@@ -191,7 +263,8 @@ def estimate(doc, storage_usd_per_gb=None, machines=DO_MACHINES):
     gbytes = sum(i["bytes"] or i["rows"] * BYTES_PER_ROW for i in items) / 1e9
     read_gb = gbytes                # each table is downloaded whole once (then read in passes from the machine's disk)
     requests_m = sum(i.get("row_groups", 1) + 10 for i in items) / 1e6   # multipart download parts + listings, generously
-    out = dict(tables=len(items), insurer_tables=sum(1 for i in items if i["source"] == "insurer"),
+    out = dict(tables=len(gh) + len(do), insurer_tables=sum(1 for i in items if i["source"] == "insurer"),
+               hospital_files_not_matched=sum(1 for i in items if i["source"] == "hospital-unmatched"),
                rows=sum(i["rows"] for i in items), stored_gb=round(gbytes, 1), read_gb=round(read_gb, 1),
                github_tables=len(gh), github_machine_hours=round(gh_h, 1), github_usd=0.0,
                rented_tables=len(do), rented_machine_hours=round(do_h, 1), rented_usd_per_hour=price,
@@ -214,19 +287,23 @@ def approved(states):
 
 # ------------------------------------------------------------------ reduce
 
-def provider_table(con, s3c, b, area, work):
+def provider_table(con, s3c, b, area, work, hosp_npis=()):
     """prov table for an area: NPI, practice ZIP (the area's NPI list), and for hospitals and surgery centers their CMS
-    number and wage index (site/med_local.py)."""
+    number and wage index (site/med_local.py). hosp_npis: (npi, ccn) the hospital files list for themselves (type 2 NPIs,
+    hospital_match.py), added as hospitals where med_local doesn't already place the NPI; wage index from the FY2026 file."""
     npis = f"{work}/{area}_npis.parquet"
     if not os.path.exists(npis):
         s3c.download_file(b, NPIS[area], npis)
     ml = json.loads(s3c.get_object(Bucket=b, Key=MED_LOCAL)["Body"].read())["npi"]
+    for npi, ccn in hosp_npis:
+        ml.setdefault(npi, ["H", None, ccn])
     con.execute("create or replace temp table ml (npi varchar, kind varchar, wage_index double, ccn varchar)")
     con.executemany("insert into ml values (?, ?, ?, ?)", [(k, v[0], v[1], v[2]) for k, v in ml.items()])
-    return f"(select cast(n.npi as varchar) npi, n.zip5, ml.kind, ml.wage_index, ml.ccn from read_parquet('{npis}') n left join ml using (npi))"
+    return (f"(select cast(n.npi as varchar) npi, n.zip5, ml.kind, coalesce(ml.wage_index, (select max(w.wage_index) from b_wi2026 w "
+            f"where w.ccn = ml.ccn)) wage_index, ml.ccn from read_parquet('{npis}') n left join ml using (npi))")
 
 
-def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="gh"):
+def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="gh", hosp_npis=()):
     """Read each item and write its part files to <work>/parts/ (and to storage when upload_pfx is given). An insurer table
     is downloaded once to this machine's disk and read in passes of PASS_ROWS rows, split by provider (rates.insurer_units).
     A finished item leaves done/<name> in storage, so a restarted machine skips it."""
@@ -241,9 +318,9 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
         con = duck(work)
         sts = states_of(area, states) if area else [s for s in (cms.STATE_NAMES if "ALL" in states else states)]
         if area:
-            rates.register_bench(con, bench, provider_table(con, s3c, b, area, work), sts)
+            rates.register_bench(con, bench, provider_table(con, s3c, b, area, work, hosp_npis), sts)
         else:   # hospital files and allowed amounts: every NPI list of these states' areas
-            provs = [provider_table(con, s3c, b, a, work) for a in areas_for(states)]
+            provs = [provider_table(con, s3c, b, a, work, hosp_npis) for a in areas_for(states)]
             rates.register_bench(con, bench, "(" + " union all ".join(provs) + ")", sts)
         sp = rate_labels.spec_from_storage(con, f"{work}/spec") if spec else None
         for it in its:
@@ -299,9 +376,10 @@ def status(doc):
     """How many planned items are finished (done markers in storage)."""
     s3c, b = s3()
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{doc['run_id']}/done/")}
-    left = [i for i in doc["items"]
+    left = [i for i in doc["items"] if i["lane"] != "none"
             if f"{i['source']}__{i.get('scope', '')}__" + rates.safe_name(i["key"].rsplit("/", 1)[1].rsplit(".", 1)[0]) not in done]
-    return dict(planned=len(doc["items"]), done=len(doc["items"]) - len(left), left=len(left),
+    planned = sum(1 for i in doc["items"] if i["lane"] != "none")
+    return dict(planned=planned, done=planned - len(left), left=len(left),
                 left_rows=sum(i["rows"] for i in left), left_sample=[i["key"] for i in left[:10]])
 
 
@@ -512,7 +590,9 @@ def main():
         shares = [[] for _ in range(a.shards)]          # biggest first, each to the least-loaded shard
         for i in its:
             min(shares, key=lambda sh: sum(x["rows"] + 1 for x in sh)).append(i)
-        reduce_items(shares[a.shard], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane)
+        hosp_npis = [(n, i["ccn"]) for i in doc["items"] if i["source"] == "hospital" for n in i.get("file_npis") or []]
+        reduce_items(shares[a.shard], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane,
+                     hosp_npis=hosp_npis)
         return
     if a.cmd == "summarize":
         st = status(doc)
@@ -529,7 +609,9 @@ def main():
                 s3c.download_file(b, k, str(p))
         con = duck(a.work)
         for x in (sorted(cms.STATE_NAMES) if "ALL" in a.states else a.states):
-            log(x, summ.summarize(con, parts, a.bench, Path(a.out) / x.lower(), x))
+            hm = hospital_match_rows(doc, x)
+            log(x, summ.summarize(con, parts, a.bench, Path(a.out) / x.lower(), x, hospital_matches=hm,
+                                  notes=[f"Market segments: {doc.get('segment_note', 'not recorded')}"]))
         if st["left"]:
             for x in (sorted(cms.STATE_NAMES) if "ALL" in a.states else a.states):
                 f = Path(a.out) / x.lower() / "summary.md"

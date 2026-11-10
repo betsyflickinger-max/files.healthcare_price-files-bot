@@ -158,7 +158,7 @@ def dollars_for(vols, view, code):
     return vols.get(("$professional", code)) or None
 
 
-def summarize(con, parts_dir, bench, out, state):
+def summarize(con, parts_dir, bench, out, state, hospital_matches=None, notes=()):
     parts_dir, out = Path(parts_dir), Path(out)
     out.mkdir(parents=True, exist_ok=True)
     pg, cg, ng = str(parts_dir / "*.part.parquet"), str(parts_dir / "*.codes.parquet"), str(parts_dir / "*.npis.parquet")
@@ -224,6 +224,16 @@ def summarize(con, parts_dir, bench, out, state):
     tails = _tails(con, pg, state)
     _write_csv(out / "tails.csv", tails)
     methods = _methods(con, pg, state)
+    if hospital_matches is not None:     # how each hospital file was matched to its CMS number (run.py plan)
+        _write_csv(out / "hospital_matches.csv", hospital_matches)
+        by = {}
+        for h in hospital_matches:
+            by[h["method"]] = by.get(h["method"], 0) + 1
+        methods += [dict(question="hospital file -> CMS number (files)", source="hospital", status="", method=k, units=v, codes=None)
+                    for k, v in sorted(by.items())]
+        dis = sum(1 for h in hospital_matches if h.get("agrees_with_list") == "no")
+        methods.append(dict(question="hospital file -> CMS number (files)", source="hospital", status="",
+                            method="matched to a different CMS number than the bot's list", units=dis, codes=None))
     _write_csv(out / "methods.csv", methods)
     anes = _anesthesia_cases(con, pg, state)
     _write_csv(out / "anesthesia_per_case.csv", anes)
@@ -237,7 +247,7 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "medicare_sources.csv", [dict(key=k, what=v.get("what"), year=v.get("year"), url=v.get("url"), sha256=v.get("sha256", ""))
                                                for k, v in srcs.items() if not k.startswith("_")])
     from report import write_md
-    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods, anes)
+    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods, anes, notes)
     return dict(codes=len(code_rows), buckets=len(bucket_rows), totals=len(total_rows))
 
 
