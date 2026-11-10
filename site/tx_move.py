@@ -21,11 +21,10 @@ import boto3, duckdb
 
 E = os.environ
 DRY = bool(E.get('DRY'))
-B = E.get('R2_BUCKET', 'upfrontdfwdata')
-s3 = boto3.client('s3', endpoint_url=(E.get('STORAGE_ENDPOINT') or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
-                  aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'],
-                  region_name=(E.get('STORAGE_REGION') or 'auto'))
 HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(HERE, '..', 'bot'))
+import store   # noqa: E402  (trims the secrets' stray whitespace, which a bare boto3 call chokes on)
+s3, B = store.r2()
 MONTH, FROM, TO = '2026-11', 'small-towns', 'killeen-temple'
 HIST = 'history/tx-move-2026-11-10/'
 W = E.get('WORK', '/tmp/txmove'); os.makedirs(W, exist_ok=True)
