@@ -181,6 +181,13 @@ class Proof:
             hn = name_of or name or ''
             if kind == 'H' and not re.search(r'\bhospital\b', hn, re.I) and NEVER_DELIVERY_NAME_ALL.search(hn) and not OB_NAME.search(hn):
                 kind = 'G'
+            # Fourth live check: "Wesley Woods Long Term Hospital" (geriatric) then topped Atlanta. Long-term care, rehab and
+            # psychiatric hospitals never deliver: caught by name, or by Medicare ID type (last 4 digits 2000-2299 long-term,
+            # 3025-3099 rehab, 4000-4499 psychiatric).
+            tail = int(ccn[2:6]) if ccn and len(ccn) == 6 and ccn[2:6].isdigit() else -1
+            if kind == 'H' and (re.search(r'long[- ]term|\bltac\b|rehab|psychiatr|behavioral', hn, re.I)
+                                or 2000 <= tail <= 2299 or 3025 <= tail <= 3099 or 4000 <= tail <= 4499):
+                return 'wrong_specialty', 'long-term care, rehab and psychiatric hospitals don\'t deliver babies'
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
@@ -195,7 +202,8 @@ class Proof:
             # and surgical-assistant groups were the highest. These stay out even when the name also says multi-specialty.
             pn = name_of or name or ''
             org = kind == 'G' or (kind == 'P' and ORG_WORD.search(pn))     # an organization filed as a clinician
-            if org and (gt.startswith('363AS') or (NEVER_DELIVERY_NAME_ALL.search(pn) and not OB_NAME.search(pn))):
+            if org and (gt.startswith('363AS') or gt.startswith('207VF0040') or re.search(r'uro[- ]?gyn', pn, re.I)
+                        or (NEVER_DELIVERY_NAME_ALL.search(pn) and not OB_NAME.search(pn))):
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
             if org and NOT_DELIVERY_NAME.search(pn) and not DELIVERY_NAME.search(pn):
                 return 'wrong_specialty', 'practice name says it doesn\'t deliver babies'
