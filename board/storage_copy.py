@@ -75,7 +75,11 @@ TICK=$!
 rclone copy /var/log "$DST/bot/migration/logs" --include 'copy-setup.log' -q || true
 MODE='{mode}'
 OPTS="$OPTS --use-server-modtime"   # Nov 9: R2 times from the listing, no per-file lookups (same comparison, much faster)
-KEEP='^(history/|raw/|research/|bot/migration/|bot/cutover-test/|migration/)'
+# Nov 9: the live website keeps writing visits, tester events and sign-ups to R2 (they stay there for good; see
+# bot/site_r2.py), so those folders aren't part of the move and can't count against "R2 quiet" or "0 missing"
+printf '%s\\n' 'logs/preview-visits/**' 'logs/preview-events/**' 'signups/**' '/control/plan.json' '/control/invites.json' > /root/site-writes.txt
+OPTS="$OPTS --exclude-from /root/site-writes.txt"
+KEEP='^(history/|raw/|research/|bot/migration/|bot/cutover-test/|migration/|logs/preview-visits/|logs/preview-events/|signups/|control/plan.json|control/invites.json)'
 if [ "$MODE" = "full" ]; then
 echo "Machine is up; copy pass 1 starting (copy only: nothing is deleted on either side)." | say
 rclone copy "$SRC" "$DST" $OPTS --log-file /var/log/copy.log; P1=$?
@@ -173,6 +177,9 @@ PY
   OK=yes
   for c in "$V1RC" "$V2RC" "$P1" "$FX" "$SF" "$M2" "$D2" "$X2" "$DR" "$DRN"; do [ "$c" = 0 ] || OK=no; done
   [ "$QUIET" = yes ] || OK=no
+  # Nov 9: the website copier (bot/site_r2.py) treats R2 as up to date for everything written before this moment
+  # (the time now, not T0: R2 is verified quiet, and files this pass copied must not look newer than R2's)
+  [ "$OK" = yes ] && {{ date +%s | tr -d '\\n' | rclone rcat "$DST/bot/migration/switched-at.txt" || OK=no; }}
   {{ echo "Final pass finished."
      echo "- Copy: exit $P1. Re-copy of missing/different: $(wc -l < /var/log/fix.txt) files, exit $FX."
      echo "- Moved $SM files that R2 no longer has to $STALE (nothing deleted); $SF could not be moved."
@@ -193,6 +200,21 @@ curl -s -X DELETE -H "Authorization: Bearer $DOT" https://api.digitalocean.com/v
 """
 
 
+def switched():
+    import boto3
+    from botocore.exceptions import ClientError
+    g = lambda k: "".join(os.environ.get(k, "").split())
+    b2 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
+                      aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+    try:
+        b2.head_object(Bucket=g("B2_BUCKET"), Key="bot/migration/switched-at.txt")
+        return True
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+            return False
+        raise
+
+
 def main():
     force = os.environ.get("FORCE") == "true"
     mode = (os.environ.get("MODE") or "full").strip()
@@ -209,6 +231,11 @@ def main():
         r.raise_for_status()
         return [d["name"] for d in r.json()["droplets"]]
     # Reviewer fix: never two copy machines at once (an old one could copy stale R2 files over new Backblaze ones)
+    # Nov 9 (reviewer): once the final pass has said yes the bot writes to Backblaze, and copying R2 over it again
+    # would put older files over newer ones. Refuse unless someone deliberately asks (AFTER_SWITCH=1).
+    if os.environ.get("AFTER_SWITCH") != "1" and switched():
+        sys.exit("refused: bot/migration/switched-at.txt exists in Backblaze, so the bot already uses it; copying R2 "
+                 "over it again could replace newer files with older ones")
     if tagged("upfront-copy"):
         sys.exit(f"a copy machine is already running: {tagged('upfront-copy')}; not starting another")
     if mode == "final" and (tagged("upfront-bot") or tagged("site-build")):

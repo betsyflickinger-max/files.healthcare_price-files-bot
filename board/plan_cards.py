@@ -22,6 +22,15 @@ LANES = ["you", "now", "next", "stuck", "auto", "someday", "done"]   # Your move
 
 def r2():
     E = os.environ
+    # Nov 9, 2026 (storage move): the control center edits plan.json on R2 itself, so it stays on R2 after the bot moves
+    # to Backblaze, and this edits it there (SITE_R2_* = the R2 keys)
+    if E.get("STORAGE_ENDPOINT"):
+        k = {n: "".join(E.get(n, "").split()) for n in ("SITE_R2_ACCESS_KEY_ID", "SITE_R2_SECRET_ACCESS_KEY", "SITE_R2_BUCKET")}
+        if not all(k.values()):
+            raise SystemExit("SITE_R2_* secrets missing: the plan lives on R2")
+        return boto3.client("s3", endpoint_url=f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com",
+                            region_name="auto", aws_access_key_id=k["SITE_R2_ACCESS_KEY_ID"],
+                            aws_secret_access_key=k["SITE_R2_SECRET_ACCESS_KEY"]), k["SITE_R2_BUCKET"]
     s3 = boto3.client("s3", endpoint_url=(E.get("STORAGE_ENDPOINT") or f"https://{''.join(E['R2_ACCOUNT_ID'].split())}.r2.cloudflarestorage.com"),
                       aws_access_key_id="".join(E["R2_ACCESS_KEY_ID"].split()), aws_secret_access_key="".join(E["R2_SECRET_ACCESS_KEY"].split()),
                       region_name=(E.get("STORAGE_REGION") or "auto"))

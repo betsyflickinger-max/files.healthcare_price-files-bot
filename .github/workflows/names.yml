@@ -63,6 +63,9 @@ jobs:
         if: env.SKIP != '1'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          SITE_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}   # Nov 9: the website's own files stay on R2 (bot/site_r2.py)
+          SITE_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          SITE_R2_BUCKET: ${{ secrets.R2_BUCKET }}
         run: |
           [ -d /tmp/site/site ] || { echo "No page changes to publish."; exit 0; }
           export CLOUDFLARE_API_TOKEN=$(echo -n "$CLOUDFLARE_API_TOKEN" | tr -d '[:space:]')

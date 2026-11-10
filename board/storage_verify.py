@@ -27,6 +27,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 import boto3
 from botocore.config import Config
 
+SITE_WRITES = ("logs/preview-visits/", "logs/preview-events/", "signups/", "control/plan.json", "control/invites.json")
 KEEP = ("history/", "raw/", "research/", "bot/migration/", "bot/cutover-test/", "migration/")
 DEPTH = int(os.environ.get("VERIFY_DEPTH", "3"))
 PROCS = int(os.environ.get("VERIFY_PROCS", str(max(4, (os.cpu_count() or 4) * 3))))
@@ -115,10 +116,12 @@ def main():
         print("? ? ? ? ? ? 1")
         sys.exit(2)
     R, Bk = files["r2"], files["b2"]
+    # Nov 9: folders the live website writes to R2 and keeps there (not part of the move; see bot/site_r2.py)
+    R = {k: v for k, v in R.items() if not k.startswith(SITE_WRITES)}
     missing = sorted(k for k in R if k not in Bk)
     differ = sorted(k for k in R if k in Bk and R[k][0] != Bk[k][0])
     extra_all = sorted(k for k in Bk if k not in R)
-    extra = [k for k in extra_all if not k.startswith(KEEP)]
+    extra = [k for k in extra_all if not k.startswith(KEEP + SITE_WRITES)]
     for name, keys in (("missing", missing), ("differ", differ), ("extra-all", extra_all), ("extra", extra)):
         with open(f"{out}/{label}-{name}.txt", "w") as f:
             f.writelines(k + "\n" for k in keys)
