@@ -199,7 +199,8 @@ def audit_area(args):
     codes = [c for c in (D['codes'] if all_codes else featured) if c in D['codes'] and (not only or c in only)]
     nets = [n.split('|', 1) for n in D['nets']]
     fac, dates, urls, labs = D['fac'], D['dates'], D['urls'], D.get('labs') or []
-    scope = {k: set(v) for k, v in (D.get('scope') or {}).items()}
+    import page_slim
+    scope = page_slim.scope_sets(D)   # Nov 9, 2026: either the list form or the slimmed [count, bits] form
     pst = store.provider_states(a, D) or {}
     npis = []
     pre = store.prefix(a, 't')

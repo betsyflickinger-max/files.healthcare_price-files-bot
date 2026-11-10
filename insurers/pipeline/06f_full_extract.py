@@ -324,7 +324,8 @@ def census(con, rates, dest, meta, label, source_file, source_url, n_rows, n_gro
     try:   # Nov 7, 2026: counts of "may never be used" labels (labels only; off until Betsy switches it on, see rate_labels.py)
         import rate_labels
         if rate_labels.IN_CENSUS:
-            out["rate_labels"] = rate_labels.counts(con, t, rate_labels.bench_from_storage(con, str(DATA / "med_all.json")))
+            out["rate_labels"] = rate_labels.counts(con, t, rate_labels.bench_from_storage(con, str(DATA / "med_all.json")),
+                                                    rate_labels.spec_from_storage(con, str(DATA / "specialty")))
     except Exception as e:
         out["rate_labels"] = {"rate_labels_skipped": f"{type(e).__name__}: {str(e)[:200]}"}
     memb = MEMB / Path(rates).name

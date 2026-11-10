@@ -22,6 +22,15 @@ Three labels (each row can carry any of them):
                          This is stricter than the site's existing "flat case rate" flag (same amount for 5+ codes), which
                          is unchanged.
 
+  d  specialty_mismatch  (Nov 9, 2026) a doctor-fee rate at an individual clinician's NPI whose specialty (NPPES primary
+                         taxonomy) almost never bills the code: at most MAX_SHARE (1 in 500) of that specialty's clinicians
+                         billed it to Medicare or Medicaid in 2024 (utilization/build_specialty.py builds the reference).
+                         Only when the specialty has MIN_TAX+ clinicians and the code MIN_CODE+ billers in those tables;
+                         organizations (hospitals, groups) and facility rates are never labeled. Medicare is mostly 65+ and
+                         Medicaid's file is partial, so a label means "unusual", never "wrong". Visit codes 99202-99499 are
+                         never labeled (hand check, Nov 9: Medicare doesn't pay preventive or consult codes, so its records
+                         undercount who bills them; reports/audit/2026-11-09/specialty-check.md).
+
 Not labeled: $0 rates (the census already counts them), percentage-of-charges rates (no dollar amount to compare).
 
 Use:
@@ -37,6 +46,8 @@ import os
 
 LOW, HIGH = 0.5, 8.0
 MANY_CODES, MANY_FAMILIES = 10, 3
+MIN_TAX, MIN_CODE, MAX_SHARE = 200, 100, 0.002   # label d; same values as utilization/build_specialty.py
+SPEC_KEY = "reference/specialty/"
 # Count the labels in every new insurer-file census (06f, on the rented machines)? On since Nov 7, 2026 (Betsy):
 # on the biggest files (UHC Choice Plus, 18 billion rows) the extra counting adds machine time. The census runs in its
 # own process, so a problem here can never cost the price tables. Switch on: set True here, or RATE_LABELS=1.
@@ -45,6 +56,7 @@ LABELS = {
     "far_from_medicare": "Below half or above 8 times Medicare's rate for the same code (may never be used; unverified)",
     "repeated_amount": "Same amount listed more than once for the same service at the same provider (copies counted once)",
     "one_amount_many_codes": f"One identical amount for {MANY_CODES}+ unrelated codes at the same provider (may never be used; unverified)",
+    "specialty_mismatch": "This kind of clinician almost never bills this code (fewer than 1 in 500 did in Medicare/Medicaid 2024; may never be used; unverified)",
 }
 
 
@@ -56,8 +68,9 @@ def _c(have, name):
     return f"coalesce(cast({name} as varchar), '')" if name in have else "''"
 
 
-def labeled_sql(t, bench=None, have=None):
-    """SELECT for table expression t with label columns added. `have` = the columns t has (from _columns)."""
+def labeled_sql(t, bench=None, have=None, spec=None):
+    """SELECT for table expression t with label columns added. `have` = the columns t has (from _columns).
+    spec: label d tables {'nt': npi_taxonomy, 'tn': taxonomy_n, 'cn': code_n, 'ct': code_taxonomy} (table expressions), or None."""
     have = have or {"npi", "tin", "billing_code", "billing_code_modifier", "billing_class", "setting", "negotiated_type", "negotiated_rate"}
     mod, cls, sett, typ = _c(have, "billing_code_modifier"), _c(have, "billing_class"), _c(have, "setting"), _c(have, "negotiated_type")
     dollar = "(v > 0 and _typ not ilike 'percent%')"          # inside the CTEs (one table in scope)
@@ -65,6 +78,17 @@ def labeled_sql(t, bench=None, have=None):
     fee = f"case when lower({cls}) = 'professional' then 'professional' else 'facility' end"
     med = (f"left join {bench} m on m.billing_code = x.billing_code and m.fee = x.fee_kind" if bench
            else "left join (select null::varchar billing_code, null::varchar fee, null::double medicare_amount, null::varchar medicare_basis) m on false")
+    if spec:
+        sj = (f"left join {spec['nt']} st on st.npi = cast(x.npi as varchar) "
+              f"left join {spec['tn']} tn on tn.taxonomy_1 = st.taxonomy_1 "
+              f"left join {spec['cn']} cn on cn.code = upper(cast(x.billing_code as varchar)) "
+              f"left join {spec['ct']} ct on ct.code = upper(cast(x.billing_code as varchar)) and ct.taxonomy_1 = st.taxonomy_1")
+        sc = (f"st.taxonomy_1 spec_taxonomy, tn.clinicians spec_clinicians, coalesce(ct.billers, 0) spec_billers, "
+              f"coalesce(x.fee_kind = 'professional' and {xdollar} and tn.clinicians >= {MIN_TAX} and cn.billers >= {MIN_CODE} "
+              f"and not regexp_matches(cast(x.billing_code as varchar), '^99[2-4][0-9][0-9]$') "
+              f"and coalesce(ct.billers, 0) <= {MAX_SHARE} * tn.clinicians, false) specialty_mismatch")
+    else:
+        sj, sc = "", "null::varchar spec_taxonomy, null::bigint spec_clinicians, null::bigint spec_billers, false specialty_mismatch"
     return f"""
 with x as (
   select *, try_cast(negotiated_rate as double) v, {mod} _mod, {cls} _cls, {sett} _set, {typ} _typ, {fee} fee_kind
@@ -82,15 +106,17 @@ select x.* exclude (_mod, _cls, _set, _typ),
        coalesce({xdollar} and m.medicare_amount > 0 and (x.v < {LOW} * m.medicare_amount or x.v > {HIGH} * m.medicare_amount), false) far_from_medicare,
        coalesce(r.repeat_count, 1) repeat_count,
        r.repeat_count is not null repeated_amount,
-       mm.v is not null one_amount_many_codes
+       mm.v is not null one_amount_many_codes,
+       {sc}
 from x
 {med}
+{sj}
 left join rep r on r.npi = x.npi and r.tin = x.tin and r.billing_code = x.billing_code and r._mod = x._mod and r._cls = x._cls
                 and r._set = x._set and r._typ = x._typ and r.v = x.v
 left join many mm on mm.npi = x.npi and mm.tin = x.tin and mm._cls = x._cls and mm._typ = x._typ and mm.v = x.v"""
 
 
-def counts(con, t, bench=None):
+def counts(con, t, bench=None, spec=None):
     """Counts of each label in one table. Rows are never dropped; 'collapsed' counts each repeated amount once."""
     have = _columns(con, t)
     need = {"npi", "tin", "billing_code", "negotiated_rate"}
@@ -100,13 +126,18 @@ def counts(con, t, bench=None):
                                count_if(medicare_amount > 0 and dollar_rate), count_if(far_from_medicare),
                                count_if(far_from_medicare and v < medicare_amount), count_if(far_from_medicare and v > medicare_amount),
                                count_if(repeated_amount), count_if(repeated_amount) - sum(case when repeated_amount then 1.0 / repeat_count else 0 end),
-                               count_if(one_amount_many_codes), count_if(far_from_medicare or repeated_amount or one_amount_many_codes)
-                        from ({labeled_sql(t, bench, have)})""").fetchone()
+                               count_if(one_amount_many_codes),
+                               count_if(far_from_medicare or repeated_amount or one_amount_many_codes or specialty_mismatch),
+                               count_if(specialty_mismatch), count_if(fee_kind = 'professional' and dollar_rate and spec_clinicians >= {MIN_TAX})
+                        from ({labeled_sql(t, bench, have, spec)})""").fetchone()
     keys = ["rows", "dollar_rows", "with_medicare_figure", "far_from_medicare", "below_half_medicare", "above_8x_medicare",
-            "repeated_amount_rows", "repeated_amount_extra_copies", "one_amount_many_codes", "any_label"]
+            "repeated_amount_rows", "repeated_amount_extra_copies", "one_amount_many_codes", "any_label",
+            "specialty_mismatch", "doctor_fee_rows_with_specialty_figure"]
     out = {k: int(round(v or 0)) for k, v in zip(keys, r)}
     out["thresholds"] = dict(low=LOW, high=HIGH, many_codes=MANY_CODES, many_families=MANY_FAMILIES)
+    out["thresholds"].update(min_tax=MIN_TAX, min_code=MIN_CODE, max_share=MAX_SHARE)
     out["medicare_figures_used"] = bool(bench)
+    out["specialty_figures_used"] = bool(spec)
     return out
 
 
@@ -156,5 +187,29 @@ def bench_from_storage(con, cache):
                               region_name=os.environ.get("STORAGE_REGION") or "auto")
             s3.download_file(g("R2_BUCKET"), "reference/site/med_all.json", cache)
         return load_bench(con, json.load(open(cache)))
+    except Exception:
+        return None
+
+
+def spec_from_storage(con, cache_dir):
+    """Label d tables on a rented machine: reference/specialty/*.parquet (built by utilization/build_specialty.py), downloaded
+    once per machine to cache_dir. None if they can't be read (label d is then skipped and the census says so)."""
+    try:
+        names = {"nt": "npi_taxonomy", "tn": "taxonomy_n", "cn": "code_n", "ct": "code_taxonomy"}
+        os.makedirs(cache_dir, exist_ok=True)
+        s3 = None
+        for n in names.values():
+            p = os.path.join(cache_dir, n + ".parquet")
+            if not os.path.exists(p):
+                if s3 is None:
+                    import boto3
+                    g = lambda k: "".join(os.environ.get(k, "").split())
+                    s3 = boto3.client("s3", endpoint_url=os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                                      aws_access_key_id=g("R2_ACCESS_KEY_ID"), aws_secret_access_key=g("R2_SECRET_ACCESS_KEY"),
+                                      region_name=os.environ.get("STORAGE_REGION") or "auto")
+                    bucket = g("R2_BUCKET")
+                s3.download_file(bucket, SPEC_KEY + n + ".parquet", p + ".part")
+                os.replace(p + ".part", p)
+        return {k: f"read_parquet('{os.path.join(cache_dir, n)}.parquet')" for k, n in names.items()}
     except Exception:
         return None
