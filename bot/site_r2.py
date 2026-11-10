@@ -39,6 +39,9 @@ from botocore.config import Config
 from botocore.exceptions import ClientError
 
 ALWAYS = ("control/data/", "site/more/")
+# Files the website itself writes (visits, tester events, sign-ups, and the control center's editable plan and invite
+# list). They live on R2 for good: never copied over from Backblaze, and the bot reads and writes them on R2 directly.
+SITE_WRITES = ("logs/preview-visits/", "logs/preview-events/", "signups/", "control/plan.json", "control/invites.json")
 TOPS = ("site/", "control/")
 NAME = re.compile(r"""['"`]((?:site|control)/[A-Za-z0-9_./=-]*)""")
 CFG = Config(retries={"max_attempts": 10, "mode": "adaptive"}, max_pool_connections=64)
@@ -87,6 +90,19 @@ def refs(functions_dir):
                 stems.add(s)
             else:
                 (folders if s.endswith("/") else files).add(s)
+        # every place the site writes must be a known SITE_WRITES name, or a copy could overwrite what the site saved
+        for m in re.finditer(r"PF\.put\(\s*([A-Za-z_]\w*|['\"`][^'\"`]*)", text):
+            a = m.group(1)
+            if a[0].isalpha() or a[0] == "_":
+                c = re.search(r"(?:const|let|var)\s+" + re.escape(a) + r"\s*=\s*['\"`]([^'\"`]*)", text)
+                a = c.group(1) if c else "?" + a
+            else:
+                a = a[1:]
+            if not a.startswith(SITE_WRITES):
+                raise RuntimeError(f"{f.name}: the website writes {a!r}, which isn't a known website-only file; "
+                                   "add it to SITE_WRITES (and keep the bot off it) before serving from R2 copies")
+    folders = {p for p in folders if not p.startswith(SITE_WRITES)}
+    files = {k for k in files if not k.startswith(SITE_WRITES)}
     pointer_dirs = {k.rsplit("/", 1)[0] + "/" for k in files if k.rsplit("/", 1)[-1].isupper()}
     unknown = sorted(st for st in stems if st not in pointer_dirs and not st.startswith(ALWAYS))
     if unknown:

@@ -27,7 +27,7 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_compl
 import boto3
 from botocore.config import Config
 
-SITE_WRITES = ("logs/preview-visits/", "logs/preview-events/", "signups/")
+SITE_WRITES = ("logs/preview-visits/", "logs/preview-events/", "signups/", "control/plan.json", "control/invites.json")
 KEEP = ("history/", "raw/", "research/", "bot/migration/", "bot/cutover-test/", "migration/")
 DEPTH = int(os.environ.get("VERIFY_DEPTH", "3"))
 PROCS = int(os.environ.get("VERIFY_PROCS", str(max(4, (os.cpu_count() or 4) * 3))))

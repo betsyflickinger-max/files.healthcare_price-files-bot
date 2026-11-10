@@ -77,9 +77,9 @@ MODE='{mode}'
 OPTS="$OPTS --use-server-modtime"   # Nov 9: R2 times from the listing, no per-file lookups (same comparison, much faster)
 # Nov 9: the live website keeps writing visits, tester events and sign-ups to R2 (they stay there for good; see
 # bot/site_r2.py), so those folders aren't part of the move and can't count against "R2 quiet" or "0 missing"
-printf '%s\\n' 'logs/preview-visits/**' 'logs/preview-events/**' 'signups/**' > /root/site-writes.txt
+printf '%s\\n' 'logs/preview-visits/**' 'logs/preview-events/**' 'signups/**' '/control/plan.json' '/control/invites.json' > /root/site-writes.txt
 OPTS="$OPTS --exclude-from /root/site-writes.txt"
-KEEP='^(history/|raw/|research/|bot/migration/|bot/cutover-test/|migration/|logs/preview-visits/|logs/preview-events/|signups/)'
+KEEP='^(history/|raw/|research/|bot/migration/|bot/cutover-test/|migration/|logs/preview-visits/|logs/preview-events/|signups/|control/plan.json|control/invites.json)'
 if [ "$MODE" = "full" ]; then
 echo "Machine is up; copy pass 1 starting (copy only: nothing is deleted on either side)." | say
 rclone copy "$SRC" "$DST" $OPTS --log-file /var/log/copy.log; P1=$?
