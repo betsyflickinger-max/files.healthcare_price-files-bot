@@ -33,6 +33,7 @@ ROOT = HERE.parents[1]
 sys.path[:0] = [str(HERE), str(ROOT / "insurers" / "pipeline"), str(ROOT / "bot")]
 import cms  # noqa: E402
 import rates  # noqa: E402
+import segments  # noqa: E402
 import summarize as summ  # noqa: E402
 
 PFX = "analysis/medicare-multiple/"
@@ -114,6 +115,9 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
     s3c, b = s3()
     con = duck(work)
     items = []
+    # market segment of each network, from the insurers' own tables of contents (segments.py); rebuilt every run
+    segs, seg_note = segments.from_storage(con, s3c, b)
+    log("market segments:", seg_note)
     for area in areas_for(states):
         labels = set()
         for scope in [area] + EXTRA.get(area, []):
@@ -132,8 +136,10 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
                 if scope == area:
                     labels.update({lab, stem})
                 rows = int(meta[0] or 0)
+                sg = segments.table_segment(stem, segs) or {}
                 items.append(dict(source="insurer", area=area, scope=scope, key=k, bytes=n, rows=rows, row_groups=int(meta[1] or 0),
                                   network=lab, membership=k.replace("/rates/", "/membership/"),
+                                  segment=sg.get("segment", ""), segment_method=sg.get("method", ""),
                                   lane="gh" if rows <= gh_max else "do"))
     # hospital files: the newest parsed copy of each hospital's file in these states (site/hosp_every.py cache)
     have = {k.rsplit("/", 1)[1][:-8]: n for k, n in ls(s3c, b, "data/hosp_every/rows/") if k.endswith(".parquet")}
@@ -151,7 +157,7 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
             newest[m.group(2)] = (m.group(1), k, n)
     for ins, (month, k, n) in sorted(newest.items()):
         items.append(dict(source="allowed", area="", scope="allowed", key=k, bytes=n, rows=0, insurer=ins, month=month, lane="gh"))
-    doc = dict(run_id=run_id, states=states, made=time.strftime("%Y-%m-%d %H:%M"), items=items)
+    doc = dict(run_id=run_id, states=states, made=time.strftime("%Y-%m-%d %H:%M"), items=items, segment_note=seg_note)
     s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/plan.json", Body=json.dumps(doc).encode())
     return doc
 
@@ -261,7 +267,8 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
                 k = max(1, math.ceil((it.get("rows") or 0) / PASS_ROWS[lane]))
                 for j in range(k):
                     out = parts / (name + (f"__p{j}" if k > 1 else ""))
-                    n = rates.reduce_table(con, rates.insurer_units(t, have, mem, sp, j, k), const, str(out))
+                    seg = (it.get("segment"), it.get("segment_method")) if it.get("segment") else None
+                    n = rates.reduce_table(con, rates.insurer_units(t, have, mem, sp, j, k, seg=seg), const, str(out))
                     outs.append(out)
                     log(f"  pass {j + 1}/{k}: {n:,} part rows, {time.time() - t0:,.0f}s")
             elif it["source"] == "hospital":
@@ -273,7 +280,7 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
                 t = _allowed_table(con, s3c, b, it, work)
                 if t is not None:
                     out = parts / name
-                    rates.reduce_table(con, rates.allowed_units(t), const, str(out))
+                    rates.reduce_table(con, rates.allowed_units(t, set(ALLOWED_COLS)), const, str(out))
                     outs.append(out)
             for p in (local, f"{work}/membership.parquet"):
                 if os.path.exists(p):
@@ -371,10 +378,14 @@ def _allowed_table(con, s3c, b, it, work):
     os.remove(p)
     if not rows:
         return None
-    cols = ["insurer", "plan", "code_type", "code", "tin", "npi", "billing_class", "modifier", "service_code", "allowed_amount"]
+    cols = ALLOWED_COLS
     con.execute("create or replace temp table allowed (" + ", ".join(f"{c} {'double' if c == 'allowed_amount' else 'varchar'}" for c in cols) + ")")
     con.executemany(f"insert into allowed values ({', '.join('?' * len(cols))})", [[r[c] for c in cols] for r in rows])
     return "allowed"
+
+
+ALLOWED_COLS = ["insurer", "plan", "code_type", "code", "tin", "npi", "billing_class", "modifier", "service_code", "allowed_amount",
+                "plan_market_type", "plan_id_type", "plan_id"]
 
 
 # ------------------------------------------------------------------ commands
@@ -391,11 +402,17 @@ def cmd_local(a):
     parts = Path(a.work) / "parts"
     parts.mkdir(parents=True, exist_ok=True)
     import glob
+    segs = {}
+    if a.xwalk:    # local plan-network crosswalk parquet(s) (tests, small samples)
+        segs = segments.network_segments(con, f"read_parquet('{a.xwalk}', union_by_name=true)",
+                                         f"read_parquet('{a.f5500}')" if a.f5500 else None)
     for p in sorted(glob.glob(a.insurer)) if a.insurer else []:
         t = f"read_parquet('{p}')"
         have = {r[0] for r in con.execute(f"describe select * from {t}").fetchall()}
         m = p.replace("/rates/", "/membership/")
-        units = rates.insurer_units(t, have, f"read_parquet('{m}')" if m != p and os.path.exists(m) else None)
+        sg = segments.table_segment(Path(p).stem, segs)
+        units = rates.insurer_units(t, have, f"read_parquet('{m}')" if m != p and os.path.exists(m) else None,
+                                    seg=(sg["segment"], sg["method"]) if sg else None)
         n = Path(p).stem
         rates.reduce_table(con, units, dict(source="insurer", scope="local", table_name=n), str(parts / f"insurer__{n}"))
     for spec_ in a.hospital or []:
@@ -406,8 +423,9 @@ def cmd_local(a):
         rates.reduce_table(con, rates.hospital_units(t, have), dict(source="hospital", scope="local", table_name=ccn),
                            str(parts / f"hospital__{ccn}"))
     if a.allowed:
-        t = f"read_csv('{a.allowed}', header=true, columns={{'insurer':'varchar','plan':'varchar','code_type':'varchar','code':'varchar','tin':'varchar','npi':'varchar','billing_class':'varchar','modifier':'varchar','service_code':'varchar','allowed_amount':'double'}})"
-        rates.reduce_table(con, rates.allowed_units(t), dict(source="allowed", scope="local", table_name="allowed"),
+        t = f"(select * replace (try_cast(allowed_amount as double) as allowed_amount) from read_csv('{a.allowed}', header=true, all_varchar=true))"
+        have = {r[0] for r in con.execute(f"describe select * from {t}").fetchall()}
+        rates.reduce_table(con, rates.allowed_units(t, have), dict(source="allowed", scope="local", table_name="allowed"),
                            str(parts / "allowed__local"))
     for st in a.states:
         print(summ.summarize(con, parts, a.bench, Path(a.out) / st.lower(), st))
@@ -446,6 +464,8 @@ def main():
     ap.add_argument("--insurer", default="")
     ap.add_argument("--hospital", action="append")
     ap.add_argument("--allowed", default="")
+    ap.add_argument("--xwalk", default="", help="local: plan-network crosswalk parquet(s) for market segments")
+    ap.add_argument("--f5500", default="", help="local: Form 5500 health plans parquet (column ein)")
     ap.add_argument("--no-spec", action="store_true", help="skip the specialty-mismatch label (needs reference/specialty in storage)")
     a = ap.parse_args()
     a.states = [x.strip().upper() for x in a.state.split(",")]

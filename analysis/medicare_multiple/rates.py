@@ -58,15 +58,19 @@ In-network vs out-of-network (never mixed): insurer in-network tables are in-net
 "Traditional" (e.g. "BCBS Traditional": an indemnity plan with no network) -> "unclear"; allowed-amount files ->
 out-of-network. Hospital files: payer/plan names saying out-of-network / non-par -> out-of-network, "Traditional" -> unclear.
 """
+import os
 import re
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # CMS place-of-service codes paid at the Physician Fee Schedule's facility rate (Claims Processing Manual ch. 12 sec. 20.4.2;
 # 02 = telehealth other than the patient's home, paid at the facility rate since 2017). site/every_code.py has the same list
 # without 02.
 FAC_POS = ("02", "19", "21", "22", "23", "24", "26", "31", "34", "41", "42", "51", "52", "53", "56", "61")
 FAC_LIST = "[" + ", ".join(f"'{p}'" for p in FAC_POS) + "]"
-PART_COLS = ["source", "scope", "table_name", "state", "insurer", "network", "status", "segment", "program", "view", "bucket", "code",
-             "code_type", "modifier", "pos", "ccn", "medicare_amount", "medicare_facility", "medicare_office", "rate_kind", "rate",
+PART_COLS = ["source", "scope", "table_name", "state", "insurer", "network", "status", "segment", "segment_method", "program", "view",
+             "bucket", "code", "code_type", "modifier", "pos", "ccn", "medicare_amount", "medicare_facility", "medicare_office", "rate_kind", "rate",
              "units", "units_keep", "units_far", "units_many", "units_spec", "units_ev", "reason"]
 # anesthesia amounts: per unit up to ANES_UNIT_MAX dollars, per case from ANES_CASE_MIN (docstring above)
 ANES_UNIT_MAX, ANES_CASE_MIN = 200, 400
@@ -85,8 +89,11 @@ STATUS_SQL = r"""case
   when regexp_matches(lower({x}), '\btraditional\b') then 'unclear'
   when regexp_matches(lower({x}), 'out[ -]of[ -]network|\boon\b|non[ -]?par(ticipating)?\b|\bnon[ -]?network\b') then 'out-of-network'
   else 'in-network' end"""
+# market segment: from the insurer's table of contents (segments.py) when the table's network is in a catalog; otherwise
+# this guess from the network's own name, labeled "network name (fallback)"
 SEGMENT_SQL = r"""case when regexp_matches(lower({x}), 'marketplace|exchange|individual|\bifp\b|ambetter|oscar|\bconnect\b|on[ -]exchange')
   then 'individual (marketplace)' else 'not stated in file' end"""
+SEGMENT_METHOD_SQL = "case when (" + SEGMENT_SQL + ") = 'not stated in file' then 'not stated anywhere' else 'network name (fallback)' end"
 PROGRAM_SQL = r"""case
   when regexp_matches(lower({x}), 'medicaid|\bchip\b|\bstar\b|star\+plus|star kids|\bdsnp\b|d-snp|dual') then 'Medicaid / dual'
   when regexp_matches(lower({x}), 'medicare|advantage|\bmapd\b|\bma\b|\bsnp\b|senior|\bpffs\b') then 'Medicare Advantage'
@@ -238,7 +245,7 @@ def _units_to_part(con, units_sql, const):
       select *, case when code_type = 'MS-DRG' then code end code_drg, case when code_type = 'MS-DRG' then p_ccn end p_ccn_drg
       from ({units_sql})""")
     con.execute(f"""create or replace temp table uv as
-      with j as (select u.p_state, u.insurer, u.network, u.status, u.segment, u.program, u.code, u.code_type, u.modifier, u.pos,
+      with j as (select u.p_state, u.insurer, u.network, u.status, u.segment, u.segment_method, u.program, u.code, u.code_type, u.modifier, u.pos,
                         case when u.rate_kind = 'dollar' and bc.is_anes and u.fee = 'professional' and an.cf is not null then
                                case when u.unit_note = 'unit' then 'dollar' when u.unit_note = 'case' then '{ANES_CASE}'
                                     when u.rate <= {ANES_UNIT_MAX} then 'dollar' when u.rate >= {ANES_CASE_MIN} then '{ANES_CASE}'
@@ -271,7 +278,7 @@ def _units_to_part(con, units_sql, const):
     c = ", ".join(f"'{v}' as {k}" for k, v in const.items())
     # insurer, status, segment and program follow from the network; bucket and code type from the code: carried, not grouped
     part = f"""select {c}, p_state state, any_value(insurer) insurer, network, any_value(status) status, any_value(segment) segment,
-        any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
+        any_value(segment_method) segment_method, any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount,
         case when rate_kind = 'dollar' then medicare_facility end medicare_facility,
         case when rate_kind = 'dollar' then medicare_office end medicare_office, rate_kind,
@@ -304,8 +311,9 @@ def _units_to_part(con, units_sql, const):
     return part, codes, buckets, hcodes
 
 
-def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
-    """Units SQL for one insurer in-network table expression t (columns `have`). Labels from rate_labels.labeled_sql
+def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1, seg=None):
+    """Units SQL for one insurer in-network table expression t (columns `have`). seg: (segment, method) for the whole table
+    from the insurer's table of contents (segments.py), or None -> the guess from the network name. Labels from rate_labels.labeled_sql
     (repeated amounts collapse to one unit; one-amount-many-codes and specialty mismatch carried as flags).
     parts > 1: only providers with hash(NPI) % parts = part_k. Every label looks at one provider (NPI + TIN) at a time,
     so splitting a big table by provider gives exactly the same labels while each pass needs a fraction of the memory."""
@@ -334,8 +342,12 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
       when l.v = 0 then 'zero'
       when l.negotiated_type in ('negotiated', 'fee schedule', 'derived') then 'dollar'
       else 'other rate type: ' || l.negotiated_type end"""
+    if seg and seg[0] and seg[0] != "not stated in file":
+        segsql = f"'{seg[0]}' segment, '{seg[1]}' segment_method"
+    else:
+        segsql = f"{SEGMENT_SQL.format(x=net)} segment, {SEGMENT_METHOD_SQL.format(x=net)} segment_method"
     return f"""select 1.0 / coalesce(l.repeat_count, 1) w, l.reporting_entity_name insurer, {net} network,
-        {STATUS_SQL.format(x=net)} status, {SEGMENT_SQL.format(x=net)} segment, 'commercial' program,
+        {STATUS_SQL.format(x=net)} status, {segsql}, 'commercial' program,
         case when l.billing_code_type in ('MS-DRG', 'DRG') then ltrim(l.billing_code, '0') else l.billing_code end code,
         case when l.billing_code_type in ('MS-DRG', 'DRG') then 'MS-DRG' when l.billing_code_type like 'CPT%' then 'CPT'
              when l.billing_code_type like 'HCPCS%' then 'HCPCS' else l.billing_code_type end code_type,
@@ -360,7 +372,8 @@ def hospital_units(t, have):
       when {q('negotiated_algorithm')} <> '' then 'formula only'
       else 'no negotiated amount' end"""
     return f"""select distinct 1.0 w, {q('hospital_name')} insurer, {q('payer_name')} || ' | ' || {q('plan_name')} network,
-        {STATUS_SQL.format(x=payer)} status, {SEGMENT_SQL.format(x=payer)} segment, {PROGRAM_SQL.format(x=payer)} program,
+        {STATUS_SQL.format(x=payer)} status, {SEGMENT_SQL.format(x=payer)} segment, {SEGMENT_METHOD_SQL.format(x=payer)} segment_method,
+        {PROGRAM_SQL.format(x=payer)} program,
         case when upper({q('code_type')}) in ('MS-DRG', 'MSDRG') then ltrim({q('code')}, '0') else upper({q('code')}) end code,
         case when upper({q('code_type')}) in ('MS-DRG', 'MSDRG') then 'MS-DRG' else upper({q('code_type')}) end code_type,
         case when lower({q('billing_class')}) = 'professional' then 'professional' else 'facility' end fee,
@@ -376,10 +389,20 @@ def hospital_units(t, have):
       left join b_hosp_zip hz on hz.ccn = h.ccn left join b_zip z on z.zip5 = hz.zip5"""
 
 
-def allowed_units(t):
+def allowed_units(t, have=None):
     """Units SQL for out-of-network allowed amounts already flattened to rows (insurer, plan, code_type, code, tin, npi,
-    billing_class, modifier, service_code, allowed_amount) by allowed_rows()."""
-    return f"""select distinct 1.0 w, r.insurer, r.plan network, 'out-of-network' status, {SEGMENT_SQL.format(x='r.plan')} segment,
+    billing_class, modifier, service_code, allowed_amount, plan_market_type, plan_id_type, plan_id) by allowed_rows(). The
+    allowed-amount file names its own plan_market_type; the network-name guess is the fallback."""
+    have = have or {"plan_market_type", "plan_id_type", "plan_id"}
+    mkt = "lower(coalesce(r.plan_market_type, ''))" if "plan_market_type" in have else "''"
+    pid = "upper(coalesce(r.plan_id, ''))" if "plan_id" in have else "''"
+    idt = "lower(coalesce(r.plan_id_type, ''))" if "plan_id_type" in have else "''"
+    import segments as sg
+    seg = f"""case when {mkt} = 'individual' then '{sg.INDIVIDUAL}' when {mkt} = 'group' then '{sg.GROUP}'
+        when {idt} = 'hios' or regexp_matches({pid}, '{sg.HIOS_RE}') then '{sg.INDIVIDUAL}' else {SEGMENT_SQL.format(x='r.plan')} end segment,
+      case when {mkt} in ('individual', 'group') then '{sg.TOC.replace("table of contents", "allowed-amount file")}'
+        when {idt} = 'hios' or regexp_matches({pid}, '{sg.HIOS_RE}') then '{sg.HIOS}' else {SEGMENT_METHOD_SQL.format(x='r.plan')} end segment_method"""
+    return f"""select distinct 1.0 w, r.insurer, r.plan network, 'out-of-network' status, {seg},
         'commercial' program,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then ltrim(r.code, '0') else upper(r.code) end code,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then 'MS-DRG' else upper(r.code_type) end code_type,
@@ -396,6 +419,7 @@ def allowed_units(t):
 def allowed_rows(doc, insurer):
     """One TiC allowed-amount file (parsed JSON) -> flat rows. Every payment amount for every NPI it lists."""
     plan = doc.get("plan_name") or doc.get("reporting_entity_name") or ""
+    mkt, idt, pid = (str(doc.get(k) or "") for k in ("plan_market_type", "plan_id_type", "plan_id"))
     for item in doc.get("out_of_network") or []:
         ct, code = item.get("billing_code_type") or "", str(item.get("billing_code") or "")
         for aa in item.get("allowed_amounts") or []:
@@ -408,7 +432,8 @@ def allowed_rows(doc, insurer):
                     for npi in pr.get("npi") or []:
                         yield dict(insurer=insurer, plan=plan, code_type=ct, code=code, tin=str(tin), npi=str(npi),
                                    billing_class=aa.get("billing_class") or "", modifier=mod, service_code=sc,
-                                   allowed_amount=float(amt) if amt is not None else None)
+                                   allowed_amount=float(amt) if amt is not None else None,
+                                   plan_market_type=mkt, plan_id_type=idt, plan_id=pid)
 
 
 OUT_SUFFIXES = (".part.parquet", ".codes.parquet", ".npis.parquet", ".hcodes.parquet")

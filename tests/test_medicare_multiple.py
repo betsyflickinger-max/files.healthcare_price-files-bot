@@ -403,3 +403,60 @@ def test_anesthesia_weighted_by_medicare_dollars():
     assert summ._weighted([office, anes]) == round(280000 / 150000, 3)
     assert summ.dollars_for({("$professional", "00790"): 50000.0}, "anesthesia", "00790") == 50000.0
     assert summ.volume_for({("professional", "00790"): 900}, "anesthesia", "00790") is None
+
+
+# ---------------------------------------------------------------- fix 4: market segment from the tables of contents
+import segments  # noqa: E402
+
+
+def test_network_segments_from_toc_hios_and_form_5500(tmp_path):
+    con = duckdb.connect()
+    con.execute("""create table xw as select * from (values
+        ('pl-2ua-hr23', '111111111', 'ein', 'group'), ('pl-2ua-hr23', '222222222', 'ein', 'group'),
+        ('ambx', '12345TX0010001', 'hios', ''), ('ambx', '67890TX0020002', '', ''),
+        ('mixed', '333333333', 'ein', 'group'), ('mixed', '12345TX0010003', 'hios', 'individual'),
+        ('selffunded', '044444444', 'ein', ''), ('nothing', 'x1', 'other', '')) t(network_key, plan_id, plan_id_type, plan_market_type)""")
+    con.execute("create table f5 as select '44444444' ein")          # the bot's Form 5500 table, EIN without its leading zero
+    S = segments.network_segments(con, "xw", "f5")
+    assert S["pl-2ua-hr23"]["segment"] == segments.GROUP and S["pl-2ua-hr23"]["method"] == segments.TOC
+    assert S["ambx"]["segment"] == segments.INDIVIDUAL and S["ambx"]["method"] == segments.HIOS
+    assert S["mixed"]["segment"] == segments.BOTH and S["mixed"]["method"] == segments.TOC
+    assert S["selffunded"]["segment"] == segments.GROUP and S["selffunded"]["method"] == segments.F5500
+    assert S["nothing"]["segment"] == segments.UNKNOWN and S["nothing"]["method"] == segments.NONE
+    # a rate table is matched to the network whose key is in its file name (longest key wins)
+    assert segments.table_segment("2026-09-05_pl-2ua-hr23_Aetna-Life-Insurance-Company", S)["segment"] == segments.GROUP
+    assert segments.table_segment("some_other_file", S) is None
+
+
+def test_segment_on_rates_with_fallback_and_method(tmp_path):
+    P = _reduce_one(tmp_path, [row(npi="1", file_label="Ambetter Marketplace")], name="a")
+    assert P[0]["segment"] == "individual (marketplace)" and P[0]["segment_method"] == segments.NAME
+    P = _reduce_one(tmp_path, [row(npi="1", file_label="Ambetter Marketplace")], name="b")
+    con = duckdb.connect()
+    rates.register_bench(con, str(tmp_path / "bench"), f"read_csv('{tmp_path / 'prov.csv'}', all_varchar=true)", ["TX"])
+    t = f"read_parquet('{tmp_path / 'b.parquet'}')"
+    have = {r[0] for r in con.execute(f"describe select * from {t}").fetchall()}
+    rates.reduce_table(con, rates.insurer_units(t, have, seg=(segments.GROUP, segments.TOC)), dict(source="insurer", scope="x", table_name="b"),
+                       str(tmp_path / "o_c"))
+    r = con.execute(f"select segment, segment_method from '{tmp_path / 'o_c'}.part.parquet'").fetchone()
+    assert r == (segments.GROUP, segments.TOC)       # the table of contents wins over the network's name
+
+
+def test_allowed_amount_file_names_its_market():
+    doc = {"plan_name": "Acme PPO", "plan_market_type": "individual", "plan_id_type": "hios", "plan_id": "12345TX0010001",
+           "out_of_network": [{"billing_code_type": "CPT", "billing_code": "99213", "allowed_amounts": [
+               {"tin": {"value": "T1"}, "billing_class": "professional", "service_code": ["11"],
+                "payments": [{"allowed_amount": 300, "providers": [{"npi": [1]}]}]}]}]}
+    r = list(rates.allowed_rows(doc, "Acme"))
+    assert r[0]["plan_market_type"] == "individual" and r[0]["plan_id"] == "12345TX0010001"
+    con = duckdb.connect()
+    con.execute("create table prov as select '1' npi, 'H' kind, 1.0 wage_index, null ccn, '04412-11' locality, '' rural, 'TX' state")
+    con.execute("create table allowed as select * from (values ('Acme', 'Acme PPO', 'CPT', '99213', 'T1', '1', 'professional', '', '11', 300.0, 'individual', 'hios', 'X')) "
+                "t(insurer, plan, code_type, code, tin, npi, billing_class, modifier, service_code, allowed_amount, plan_market_type, plan_id_type, plan_id)")
+    seg, how = con.execute(f"select segment, segment_method from ({rates.allowed_units('allowed')})").fetchone()
+    assert seg == segments.INDIVIDUAL and how.startswith("allowed-amount file")
+
+
+def test_segment_methods_counted(run):
+    seg = [m for m in run["methods"] if m["question"].startswith("market segment")]
+    assert any(m["method"] == "not stated in file: not stated anywhere" for m in seg)

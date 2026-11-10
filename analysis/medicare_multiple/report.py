@@ -70,8 +70,10 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
     segs = [r for r in seg_rows if r["bucket"] == "(all kinds of care: equal weight)"]
     if segs:
         L += ["## By market segment (insurer files, in-network)", "",
-              "The files don't carry a market segment field; a network counts as individual (marketplace) only when its own "
-              "name says so (marketplace, exchange, individual, Ambetter, Oscar...). Everything else is \"not stated in file\".", "",
+              "Each insurer's table of contents gives every plan's market (group or individual); a network is group, individual, or "
+              "both by the plans that use it (marketplace HIOS plan IDs count as individual, employer EINs that file a Form 5500 "
+              "as group). Networks not in any table of contents fall back to their own name (marketplace, exchange, Ambetter...), "
+              "labeled \"network name (fallback)\". How many rates each method decided: \"How each rate was handled\" below.", "",
               "| Segment | Rates | Middle of code middles | Codes |", "|---|---|---|---|"]
         for r in segs:
             L.append(f"| {r['segment']} | {r['rates']} | {x(r['middle_of_code_middles'])} | {n(r['codes_with_figure'])} |")

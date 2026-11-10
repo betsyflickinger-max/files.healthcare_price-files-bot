@@ -305,6 +305,10 @@ def _methods(con, pg, state):
                         else rate_kind || ': counted, no ratio' end, sum(units), count(distinct code)
             from read_parquet('{pg}', union_by_name=true)
             where state = '{state}' and view = 'anesthesia' and (rate_kind = 'dollar' or rate_kind like 'anesthesia:%') group by all
+            union all
+            select 'market segment (how it was decided; tables: ' || count(distinct table_name) || ')', source, status,
+                   coalesce(segment, '') || ': ' || coalesce(segment_method, 'not recorded'), sum(units), count(distinct code)
+            from read_parquet('{pg}', union_by_name=true) where state = '{state}' group by source, status, segment, segment_method
             order by all"""
     c = con.execute(q)
     cols = [d[0] for d in c.description]
