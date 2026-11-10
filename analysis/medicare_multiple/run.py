@@ -56,7 +56,9 @@ FILE_MANIFEST = "bot/manifest/files/{state}.csv"         # the bot's per-file fa
 # amounts, 40,000 providers, 6,000 codes): 112 s on 2 cores for labels + Medicare join + counts = about 89,000 rows per
 # core-second. Assumed 85% of that per core on more cores. See docs/medicare-multiple.md "Cost".
 GH_MAX_ROWS = 800_000_000        # a table up to this many rows is read on a free GitHub machine (4 cores, 16 GB, 14 GB disk)
-ROWS_PER_SEC = {"gh": 300_000, "do": 600_000}       # GitHub 4-core machine; DigitalOcean 8-core machine
+# Nov 10, 2026 (evidence of use, place of service, anesthesia sorting added): the same made-up table, 8 million rows on 2
+# cores, took 44.9 s instead of 36.5 s (average of two runs each) = 1.23x; the speeds below are the old ones / 1.25.
+ROWS_PER_SEC = {"gh": 240_000, "do": 480_000}       # GitHub 4-core machine; DigitalOcean 8-core machine
 PASS_ROWS = {"gh": 60_000_000, "do": 250_000_000}   # rows per pass (a big table is read in passes split by provider)
 BYTES_PER_ROW = 4.4              # stored size of insurer tables (biggest Texas table: ~38 GB for 8.6 billion rows)
 DO_SIZE = "m-8vcpu-64gb-intel"   # 64 GB memory, 400 GB disk (price read live from DigitalOcean when a token is set)
