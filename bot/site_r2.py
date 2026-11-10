@@ -94,8 +94,9 @@ def refs(functions_dir):
         for m in re.finditer(r"PF\.put\(\s*([A-Za-z_]\w*|['\"`][^'\"`]*)", text):
             a = m.group(1)
             if a[0].isalpha() or a[0] == "_":
-                c = re.search(r"(?:const|let|var)\s+" + re.escape(a) + r"\s*=\s*['\"`]([^'\"`]*)", text)
-                a = c.group(1) if c else "?" + a
+                vals = re.findall(r"(?:const|let|var)\s+" + re.escape(a) + r"\s*=\s*['\"`]([^'\"`]*)", text)
+                bad = [x for x in vals if not x.startswith(SITE_WRITES)]
+                a = (bad[0] if bad else vals[0]) if vals else "?" + a
             else:
                 a = a[1:]
             if not a.startswith(SITE_WRITES):
@@ -131,8 +132,11 @@ def _copy(k):
     if not hasattr(_tl, "c"):
         _tl.c = (src(), dst())
     (s, sb), (d, db) = _tl.c
-    body = s.get_object(Bucket=sb, Key=k)["Body"]
-    d.upload_fileobj(body, db, k)
+    r = s.get_object(Bucket=sb, Key=k)
+    extra = {n: r[n] for n in ("ContentType", "CacheControl", "ContentEncoding", "ContentDisposition") if r.get(n)}
+    if r.get("Metadata"):
+        extra["Metadata"] = r["Metadata"]
+    d.upload_fileobj(r["Body"], db, k, ExtraArgs=extra)   # same content type etc. as the bot wrote
     return k
 
 
@@ -212,7 +216,11 @@ def publish(functions_dir, dry=False, log=print):
     if errs:
         raise RuntimeError(f"site_r2: {len(errs)} of {len(todo)} copies failed, e.g. {errs[0]}")
     for k, v in pointers.items():      # last, and exactly the value read above: never a newer build not copied yet
-        d.put_object(Bucket=db, Key=k, Body=v.encode())
+        now = s.get_object(Bucket=sb, Key=k)["Body"].read().decode().strip()
+        if now != v:   # the bot moved on meanwhile; whoever published the newer value writes it (never go backwards)
+            log(f"site_r2: {k} changed to {now!r} during this run; leaving it to that publish")
+            continue
+        d.put_object(Bucket=db, Key=k, Body=v.encode(), ContentType="text/plain; charset=utf-8")
     stats["seconds"] = round(time.time() - t0)
     log(f"site_r2: copied {len(todo)} files to R2 for the website ({stats['folders']} folders, {stats['seconds']} s)")
     return stats
