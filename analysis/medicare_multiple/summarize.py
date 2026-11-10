@@ -7,7 +7,10 @@ Rules (Betsy, Nov 10, 2026):
   - Total (a), Medicare-use weighted: sum(volume x middle private amount) / sum(volume x middle Medicare amount), over
     codes with a figure and a Medicare volume in the state. Label: "weighted by Medicare's mix of care, which skews older".
   - Total (b), equal weight: the middle of all codes' middles.
-  - Every figure twice: all rates, and without rates labeled "may never be used" (docs/rate-labels.md).
+  - Every figure three ways (Nov 10, 2026, Betsy): all rates; rates at providers with evidence they do this service
+    (the main "clean" view: billed Medicare for it, or the hospital's own file lists it / counts paid claims for it); and
+    the 0.5x-8x Medicare range check (rates labeled "may never be used" left out, docs/rate-labels.md) as a secondary view.
+    Rates under 0.5x and over 8x Medicare are listed in their own table (tails.csv): high prices are never dropped.
   - In-network, out-of-network and unclear are separate figures, never pooled. Hospital files: commercial plans are the
     headline; Medicare Advantage, Medicaid and other public plans are reported on their own.
 """
@@ -19,7 +22,14 @@ from pathlib import Path
 
 MIN_PROVIDERS = 5
 PCTS = (10, 50, 90)
-WHICH = (("all rates", "units"), ("without likely-unused rates", "units_keep"))
+ALL, EVIDENCE, RANGE = "all rates", "providers with evidence they do this service", "range check: 0.5×–8× Medicare"
+WHICH = ((ALL, "all"), (EVIDENCE, "evidence"), (RANGE, "range"))
+# weight of a part row in each view. Evidence: (a) Medicare billing (units_ev, decided per rate in rates.py), else (b) the
+# hospital's own file lists the code (insurer and allowed-amount rates at a hospital), or (c) its 2026 count of allowed amounts
+# for the code is above zero (the hospital file's own rates: listing is what the file is, so (b) would be true of every row)
+HOSP_EV = "(p.ccn is not null and ((p.source = 'hospital' and hl.counted) or (p.source <> 'hospital' and hl.ccn is not null)))"
+WEIGHT = {"all": "p.units", "range": "p.units_keep",
+          "evidence": f"coalesce(p.units_ev, 0) + case when {HOSP_EV} then p.units - coalesce(p.units_ev, 0) else 0 end"}
 # views kept out of both totals (still reported per code and per bucket): no like-for-like Medicare amount
 NOT_IN_TOTALS = {"facility_unmatched": "Medicare amount is the national outpatient rate; the place isn't matched to a Medicare record",
                  "none": "no Medicare benchmark"}
@@ -47,16 +57,32 @@ def nearest_rank(vals, p):
     return vals[max(1, math.ceil(p * len(vals) / 100)) - 1]
 
 
-def code_figures(con, parts_glob, codes_glob, wcol, state, by_segment=False):
+def hospital_lists(con, hcodes_glob):
+    """hl: (ccn, code, counted) for every code a hospital file of this run lists (rates.py .hcodes.parquet)."""
+    import glob as g
+    if g.glob(hcodes_glob):
+        con.execute(f"""create or replace temp table hl as select ccn, code, bool_or(counted) counted
+                        from read_parquet('{hcodes_glob}', union_by_name=true) where ccn is not null group by all""")
+    else:
+        con.execute("create or replace temp table hl as select null::varchar ccn, null::varchar code, null::boolean counted where false")
+
+
+def parts_with_lists(parts_glob):
+    return f"read_parquet('{parts_glob}', union_by_name=true) p left join hl on hl.ccn = p.ccn and hl.code = p.code"
+
+
+def code_figures(con, parts_glob, codes_glob, kind, state, by_segment=False):
     """Per (source, status, program, view, bucket, code[, segment]): units, nearest-rank p10/p50/p90 of the ratio, middle
-    private amount and middle Medicare amount, providers (exact up to the 5-provider rule)."""
-    seg = ", segment" if by_segment else ""
+    private amount and middle Medicare amount, providers (exact up to the 5-provider rule). kind: all | evidence | range."""
+    seg = ", p.segment" if by_segment else ""
+    wexpr = WEIGHT[kind]
     con.execute(f"""create or replace temp table d as
-      select source, status, program, view, bucket, code{seg}, rate / medicare_amount r, rate, medicare_amount m, sum({wcol}) w
-      from read_parquet('{parts_glob}', union_by_name=true)
-      where state = '{state}' and rate_kind = 'dollar' and rate is not null and medicare_amount > 0 and {wcol} > 0
-      group by all""")
-    key = "source, status, program, view, bucket, code" + seg
+      select p.source, p.status, p.program, p.view, p.bucket, p.code{seg}, p.rate / p.medicare_amount r, p.rate, p.medicare_amount m,
+             sum({wexpr}) w
+      from {parts_with_lists(parts_glob)}
+      where p.state = '{state}' and p.rate_kind = 'dollar' and p.rate is not null and p.medicare_amount > 0
+      group by all having sum({wexpr}) > 0""")
+    key = "source, status, program, view, bucket, code" + (", segment" if by_segment else "")
     nkey = 7 if by_segment else 6
     q = f"""
       with t as (select {key}, sum(w) tot from d group by all),
@@ -70,15 +96,25 @@ def code_figures(con, parts_glob, codes_glob, wcol, state, by_segment=False):
       select t.*, a.p10, a.p50, a.p90, b.mid_private, c.mid_medicare from t join a using ({key}) join b using ({key}) join c using ({key})"""
     figs = {tuple(r[:nkey]): dict(zip(["units", "p10", "p50", "p90", "mid_private", "mid_medicare"], r[nkey:]))
             for r in con.execute(q).fetchall()}
-    nk = "n_npi_keep" if wcol == "units_keep" else "n_npi"
-    fk = "first5_keep" if wcol == "units_keep" else "first5"
+    sg = ", segment" if by_segment else ""
+    if kind == "evidence":
+        # providers with evidence (a), plus providers at a hospital whose own file lists the code (b) or counts claims for it (c)
+        inner = f"""with c as (select *, row_number() over () rid from read_parquet('{codes_glob}', union_by_name=true)
+                               where in_ratio and state = '{state}'),
+            e as (select rid, source, code, unnest(ccn_npi_noev) cn from c where ccn_npi_noev is not null),
+            x as (select e.rid, list(distinct split_part(e.cn, '|', 2)) xs from e
+                  join hl on hl.ccn = split_part(e.cn, '|', 1) and hl.code = e.code and (e.source <> 'hospital' or hl.counted)
+                  group by e.rid)
+            select source, table_name, status, program, view, bucket, code{sg}, sum(coalesce(n_npi_ev, 0) + coalesce(len(xs), 0)) n,
+                   list_distinct(flatten(list(list_concat(coalesce(first5_ev, []), coalesce(xs[1:5], []))))) f5
+            from c left join x using (rid) group by all"""
+    else:
+        nk, fk = ("n_npi_keep", "first5_keep") if kind == "range" else ("n_npi", "first5")
+        inner = f"""select source, table_name, status, program, view, bucket, code{sg}, sum({nk}) n, list_distinct(flatten(list({fk}))) f5
+                    from read_parquet('{codes_glob}', union_by_name=true) where in_ratio and state = '{state}' group by all"""
     # a big table is read in passes that split its providers: add the passes up per table, then take the largest table
-    for r in con.execute(f"""select source, status, program, view, bucket, code{seg}, max(n), list_distinct(flatten(list(f5)))
-                             from (select source, table_name, status, program, view, bucket, code{seg}, sum({nk}) n,
-                                          list_distinct(flatten(list({fk}))) f5
-                                   from read_parquet('{codes_glob}', union_by_name=true) where in_ratio and state = '{state}'
-                                   group by all)
-                             group by all""").fetchall():
+    for r in con.execute(f"""select source, status, program, view, bucket, code{sg}, max(n), list_distinct(flatten(list(f5)))
+                             from ({inner}) group by all""").fetchall():
         f = figs.get(tuple(r[:nkey]))
         if f is not None:
             f["providers_at_least"] = max(int(r[nkey] or 0), len(r[nkey + 1] or []))
@@ -107,10 +143,11 @@ def summarize(con, parts_dir, bench, out, state):
     parts_dir, out = Path(parts_dir), Path(out)
     out.mkdir(parents=True, exist_ok=True)
     pg, cg, ng = str(parts_dir / "*.part.parquet"), str(parts_dir / "*.codes.parquet"), str(parts_dir / "*.npis.parquet")
+    hospital_lists(con, str(parts_dir / "*.hcodes.parquet"))
     vols = load_volumes(bench, state)
     code_rows, bucket_rows, total_rows = [], [], []
-    for which, wcol in WHICH:
-        figs = code_figures(con, pg, cg, wcol, state)
+    for which, kind in WHICH:
+        figs = code_figures(con, pg, cg, kind, state)
         for k, f in figs.items():
             src, status, program, view, bucket, code = k
             ok = f.get("enough_providers", False)
@@ -148,8 +185,8 @@ def summarize(con, parts_dir, bench, out, state):
                                        equal_weight=nearest_rank([r["middle"] for r in ok if r["view"] in views], 50),
                                        medicare_use_weighted=_weighted(sub), units=sum(r["units"] for r in sub), subtotal=name))
     seg_rows = []
-    for which, wcol in WHICH:   # by market segment, as far as the file's own network name says (insurer files, in-network)
-        figs = code_figures(con, pg, cg, wcol, state, by_segment=True)
+    for which, kind in WHICH:   # by market segment (insurer files, in-network)
+        figs = code_figures(con, pg, cg, kind, state, by_segment=True)
         by = {}
         for k, f in figs.items():
             src, status, program, view, bucket, code, segment = k
@@ -163,6 +200,8 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "buckets_by_segment.csv", seg_rows)
     providers = _providers(con, ng, state)
     coverage = _coverage(con, pg, state)
+    tails = _tails(con, pg, state)
+    _write_csv(out / "tails.csv", tails)
     _write_csv(out / "codes.csv", code_rows)
     _write_csv(out / "buckets.csv", bucket_rows)
     _write_csv(out / "totals.csv", total_rows)
@@ -173,7 +212,7 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "medicare_sources.csv", [dict(key=k, what=v.get("what"), year=v.get("year"), url=v.get("url"), sha256=v.get("sha256", ""))
                                                for k, v in srcs.items() if not k.startswith("_")])
     from report import write_md
-    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows)
+    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails)
     return dict(codes=len(code_rows), buckets=len(bucket_rows), totals=len(total_rows))
 
 
@@ -188,13 +227,18 @@ def _weighted(rows):
 
 
 def _providers(con, ng, state):
-    q = f"""select source, status, program, bucket, count(distinct npi) filter (where in_ratio) providers,
-                   count(distinct npi) filter (where in_ratio and any_keep) providers_keep
-            from read_parquet('{ng}', union_by_name=true) where state = '{state}' group by all
+    q = f"""with n as (select *, row_number() over () rid from read_parquet('{ng}', union_by_name=true) where state = '{state}'),
+            y as (select rid, source, ccn, unnest(codes_noev) code from n where not coalesce(any_ev, false) and ccn is not null),
+            x as (select distinct rid from y join hl on hl.ccn = y.ccn and hl.code = y.code and (y.source <> 'hospital' or hl.counted)),
+            m as (select n.*, coalesce(any_ev, false) or x.rid is not null ev from n left join x using (rid))
+            select source, status, program, bucket, count(distinct npi) filter (where in_ratio) providers,
+                   count(distinct npi) filter (where in_ratio and ev) providers_evidence,
+                   count(distinct npi) filter (where in_ratio and any_keep) providers_range_check
+            from m group by all
             union all
             select source, status, program, '(all buckets in the totals)', count(distinct npi) filter (where in_ratio),
-                   count(distinct npi) filter (where in_ratio and any_keep)
-            from read_parquet('{ng}', union_by_name=true) where state = '{state}' and view not in ('facility_unmatched', 'none') group by all
+                   count(distinct npi) filter (where in_ratio and ev), count(distinct npi) filter (where in_ratio and any_keep)
+            from m where view not in ('facility_unmatched', 'none') group by all
             order by all"""
     c = con.execute(q)
     cols = [d[0] for d in c.description]
@@ -203,14 +247,32 @@ def _providers(con, ng, state):
 
 def _coverage(con, pg, state):
     """Every unit, by source/status/program and why it is or isn't in a ratio. Nothing is dropped silently."""
-    q = f"""select source, status, program,
-              case when rate_kind <> 'dollar' then 'kept out of the ratio: ' || rate_kind
-                   when view = 'none' then 'kept out: no Medicare benchmark'
-                   when view = 'facility_unmatched' then 'in its own figure, not in the totals: facility not matched'
+    q = f"""select p.source, p.status, p.program,
+              case when p.rate_kind <> 'dollar' then 'kept out of the ratio: ' || p.rate_kind
+                   when p.view = 'none' then 'kept out: no Medicare benchmark'
+                   when p.view = 'facility_unmatched' then 'in its own figure, not in the totals: facility not matched'
                    else 'in the ratio' end as what,
-              count(distinct code) codes, sum(units) units, sum(units_keep) units_keep, sum(units_far) far_from_medicare,
-              sum(units_many) one_amount_many_codes, sum(units_spec) specialty_mismatch
-            from read_parquet('{pg}', union_by_name=true) where state = '{state}' group by all order by all"""
+              count(distinct p.code) codes, sum(p.units) units, sum({WEIGHT['evidence']}) units_with_evidence,
+              sum(coalesce(p.units_ev, 0)) evidence_medicare_billing, sum(p.units_keep) units_range_check,
+              sum(p.units_far) far_from_medicare, sum(p.units_many) one_amount_many_codes, sum(p.units_spec) specialty_mismatch
+            from {parts_with_lists(pg)} where p.state = '{state}' group by all order by all"""
+    c = con.execute(q)
+    cols = [d[0] for d in c.description]
+    return [dict(zip(cols, r)) for r in c.fetchall()]
+
+
+def _tails(con, pg, state):
+    """Rates under 0.5x or over 8x Medicare, in their own table (never dropped): per code, how many, how many at providers with
+    evidence they do the service, and the most extreme multiple and listed amount."""
+    q = f"""select p.source, p.status, p.program, p.view, p.bucket, p.code,
+              case when p.rate < 0.5 * p.medicare_amount then 'under 0.5×' else 'over 8×' end side,
+              sum(p.units) units, sum({WEIGHT['evidence']}) units_with_evidence,
+              round(max(p.rate / p.medicare_amount), 2) highest_multiple, round(min(p.rate / p.medicare_amount), 3) lowest_multiple,
+              max(p.rate) highest_listed_amount, min(p.rate) lowest_listed_amount
+            from {parts_with_lists(pg)}
+            where p.state = '{state}' and p.rate_kind = 'dollar' and p.medicare_amount > 0 and p.rate is not null
+              and (p.rate < 0.5 * p.medicare_amount or p.rate > 8 * p.medicare_amount)
+            group by all order by side, units desc"""
     c = con.execute(q)
     cols = [d[0] for d in c.description]
     return [dict(zip(cols, r)) for r in c.fetchall()]

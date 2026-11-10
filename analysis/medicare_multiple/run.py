@@ -281,8 +281,9 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
             log(f"{it['source']} {it['key']}: {len(outs)} part(s), {time.time() - t0:,.0f}s")
             if upload_pfx:
                 for out in outs:
-                    for suf in (".part.parquet", ".codes.parquet", ".npis.parquet"):
-                        s3c.upload_file(str(out) + suf, b, f"{upload_pfx}parts/{out.name}{suf}")
+                    for suf in rates.OUT_SUFFIXES:
+                        if os.path.exists(str(out) + suf):
+                            s3c.upload_file(str(out) + suf, b, f"{upload_pfx}parts/{out.name}{suf}")
                 s3c.put_object(Bucket=b, Key=f"{upload_pfx}done/{name}", Body=b"1")
         con.close()
 
@@ -379,7 +380,7 @@ def _allowed_table(con, s3c, b, it, work):
 # ------------------------------------------------------------------ commands
 
 def cmd_bench(a):
-    cms.fetch(a.cache)
+    cms.fetch(a.cache, a.states)
     cms.build(a.cache, a.bench, a.states)
 
 

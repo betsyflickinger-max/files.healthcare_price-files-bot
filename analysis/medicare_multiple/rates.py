@@ -35,6 +35,15 @@ Views (which Medicare schedule applies), first match wins:
 Kept out of the ratio and counted separately (never dropped): percent-of-charges rates, per-day rates (per diem, by type or
 by the insurer's own note), $0 rates, capitation and bundle arrangements, rates with no Medicare amount.
 
+Evidence that the provider does the service (Nov 10, 2026; the main "clean" view, docs/medicare-multiple.md):
+  (a) the provider billed Medicare for the code in 2024: doctor fees by NPI, or by another NPI under the same TIN (practice)
+      (Physician & Other Practitioners by Provider and Service); hospital outpatient facility fees by CCN and the code's APC
+      (Outpatient Hospitals by Provider and Service has APCs, not codes); hospital stays by CCN and MS-DRG (Inpatient).
+  (b) the hospital lists the code in its own price file, and (c) the hospital file's 2026 count of allowed amounts for the
+      code is above zero: these need every hospital file of the run, so each part keeps the hospital's CCN (rates at an NPI
+      matched to a hospital) and summarize.py adds them from the hospital files' code lists (.hcodes.parquet).
+  units_ev counts the units with evidence (a); summarize adds (b)/(c).
+
 In-network vs out-of-network (never mixed): insurer in-network tables are in-network, except a network whose name says
 "Traditional" (e.g. "BCBS Traditional": an indemnity plan with no network) -> "unclear"; allowed-amount files ->
 out-of-network. Hospital files: payer/plan names saying out-of-network / non-par -> out-of-network, "Traditional" -> unclear.
@@ -44,8 +53,8 @@ import re
 FAC_POS = ("19", "21", "22", "23", "24", "26", "31", "34", "41", "42", "51", "52", "53", "56", "61")   # = site/every_code.py
 FAC_LIST = "[" + ", ".join(f"'{p}'" for p in FAC_POS) + "]"
 PART_COLS = ["source", "scope", "table_name", "state", "insurer", "network", "status", "segment", "program", "view", "bucket", "code",
-             "code_type", "modifier", "pos", "medicare_amount", "rate_kind", "rate", "units", "units_keep", "units_far",
-             "units_many", "units_spec", "reason"]
+             "code_type", "modifier", "pos", "ccn", "medicare_amount", "rate_kind", "rate", "units", "units_keep", "units_far",
+             "units_many", "units_spec", "units_ev", "reason"]
 
 STATUS_SQL = r"""case
   when regexp_matches(lower({x}), '\btraditional\b') then 'unclear'
@@ -80,6 +89,13 @@ def register_bench(con, bench_dir, prov=None, states=None):
     provider outside the run's states belongs to that state's run, not this one."""
     for n in ("pfs", "opps", "asc", "clfs", "asp", "dme", "amb", "anes", "drg", "ipps", "zip", "rbcs", "wi2026", "hosp_zip"):
         con.execute(f"create or replace table b_{n} as select * from read_csv('{bench_dir}/{n}.csv', header=true, all_varchar=true)")
+    # evidence that a provider does a service (who billed Medicare for what, 2024). Missing file -> empty table (no evidence).
+    import os
+    for n, cols in (("ev_prof", ("npi", "code")), ("ev_out", ("ccn", "apc")), ("ev_inp", ("ccn", "drg"))):
+        f = f"{bench_dir}/{n}.csv"
+        src = (f"select distinct {', '.join(cols)} from read_csv('{f}', header=true, all_varchar=true)" if os.path.exists(f)
+               else "select " + ", ".join(f"null::varchar {c}" for c in cols) + " where false")
+        con.execute(f"create or replace table b_{n} as {src}")
     for t, cols in (("pfs", ["nonfacility", "facility"]), ("opps", ["rate"]), ("asc", ["rate"]), ("clfs", ["rate"]),
                     ("asp", ["rate"]), ("dme", ["nonrural", "rural"]), ("amb", ["urban", "rural", "super_rural"]),
                     ("anes", ["cf"]), ("drg", ["weight"]), ("ipps", ["wage_index", "op_per_weight", "cap_per_weight", "ucp_per_claim"]),
@@ -111,6 +127,7 @@ def build_code_bench(con):
       with codes as (select code from b_asp union select code from b_clfs union select code from b_opps union select code from b_asc
                      union select code from b_amb union select code from b_dme union select code from b_pfs union select code from b_rbcs)
       select c.code, sp.rate asp_rate, cl.rate clfs_rate, op.si opps_si, op.rate opps_rate, op.wage_adj opps_wage_adj,
+             case when coalesce(op.apc, '') <> '' then lpad(ltrim(op.apc, '0'), 4, '0') end opps_apc,
              ac.rate asc_rate, ac.wage_adj asc_wage_adj, c.code in (select code from b_amb) is_amb,
              c.code in (select code from b_dme) is_dme, dd.mod dme_default_mod, rb.cat_desc,
              regexp_matches(c.code, '^0[01][0-9]{3}$') and c.code between '00100' and '01999' is_anes
@@ -167,7 +184,10 @@ def medicare_sql(u):
       left join b_amb am on am.code = {u}.code and am.locality = {u}.p_loc
       left join b_dme dm on dm.code = {u}.code and dm.state = {u}.p_state and dm.mod = coalesce(nullif({u}.modifier, ''), bc.dme_default_mod)
       left join b_anes an on an.locality = {u}.p_loc
-      left join b_pfs pf on pf.code = {u}.code and pf.mod = {u}.modifier and pf.locality = {u}.p_loc"""
+      left join b_pfs pf on pf.code = {u}.code and pf.mod = {u}.modifier and pf.locality = {u}.p_loc
+      left join b_ev_prof ep on ep.npi = {u}.npi and ep.code = {u}.code
+      left join b_ev_inp ei on ei.ccn = {u}.p_ccn_drg and ei.drg = {u}.code_drg
+      left join b_ev_out eo on eo.ccn = {u}.p_ccn and eo.apc = bc.opps_apc and {u}.fee = 'facility'"""
     return view, amount, reason, joins
 
 
@@ -177,14 +197,16 @@ OPPS_LABOR, ASC_LABOR = 0.60, 0.50
 def _units_to_part(con, units_sql, const):
     """units_sql: one row per listed rate with columns insurer, network, status, segment, program, code, code_type, fee,
     modifier, pos, rate_kind, rate (double), w (1 / number of exact copies, so copies add up to one unit), p_kind, p_wi,
-    p_ccn, p_loc, p_rural, p_state, npi, labeled_many, labeled_spec. Returns the SQL of the three outputs."""
+    p_ccn, p_loc, p_rural, p_state, npi, tin, counted, labeled_many, labeled_spec. Returns the SQL of the outputs."""
     view, amount, reason, joins = medicare_sql("u")
     con.execute(f"""create or replace temp view units as
       select *, case when code_type = 'MS-DRG' then code end code_drg, case when code_type = 'MS-DRG' then p_ccn end p_ccn_drg
       from ({units_sql})""")
     con.execute(f"""create or replace temp table uv as
       with j as (select u.p_state, u.insurer, u.network, u.status, u.segment, u.program, u.code, u.code_type, u.modifier, u.pos,
-                        u.rate_kind, u.rate, u.w, u.npi, u.labeled_many, u.labeled_spec, bc.cat_desc,
+                        u.rate_kind, u.rate, u.w, u.npi, u.tin, u.labeled_many, u.labeled_spec, bc.cat_desc,
+                        case when u.p_kind = 'H' then u.p_ccn end ccn,
+                        ep.npi is not null ev_npi, (ei.ccn is not null or eo.ccn is not null) ev_fac,
                         {view} as view, {amount} as medicare_amount, {reason} as reason0
                  from units u {joins})
       select * exclude (reason0, cat_desc), case when view = 'none' then reason0 end reason,
@@ -192,30 +214,41 @@ def _units_to_part(con, units_sql, const):
              rate_kind = 'dollar' and view <> 'none' and medicare_amount > 0
                and (rate < 0.5 * medicare_amount or rate > 8 * medicare_amount) far
       from j""")
+    # evidence (a) at the practice: another NPI under the same TIN billed Medicare for the code
+    con.execute("""create or replace temp table te as select distinct tin, code from uv where ev_npi and coalesce(tin, '') <> ''""")
+    con.execute("""create or replace temp view uve as
+      select uv.*, (uv.ev_npi or uv.ev_fac or te.tin is not null) ev from uv left join te on te.tin = uv.tin and te.code = uv.code""")
     c = ", ".join(f"'{v}' as {k}" for k, v in const.items())
     # insurer, status, segment and program follow from the network; bucket and code type from the code: carried, not grouped
     part = f"""select {c}, p_state state, any_value(insurer) insurer, network, any_value(status) status, any_value(segment) segment,
-        any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos,
+        any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount, rate_kind,
         case when rate_kind = 'dollar' and view <> 'none' then rate end rate,
         round(sum(w))::bigint units, round(coalesce(sum(w) filter (where not (far or labeled_many or labeled_spec)), 0))::bigint units_keep,
         round(coalesce(sum(w) filter (where far), 0))::bigint units_far, round(coalesce(sum(w) filter (where labeled_many), 0))::bigint units_many,
-        round(coalesce(sum(w) filter (where labeled_spec), 0))::bigint units_spec, any_value(reason) reason
-      from uv group by p_state, network, view, code, modifier, pos, rate_kind,
+        round(coalesce(sum(w) filter (where labeled_spec), 0))::bigint units_spec,
+        round(coalesce(sum(w) filter (where ev), 0))::bigint units_ev, any_value(reason) reason
+      from uve group by p_state, network, view, code, modifier, pos, ccn, rate_kind,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end,
         case when rate_kind = 'dollar' and view <> 'none' then rate end"""
     # providers: per code, how many (and the first five, so "at least 5 providers" can be checked exactly across tables);
-    # per bucket, every provider (to count providers behind a bucket or a total without double counting)
+    # per bucket, every provider (to count providers behind a bucket or a total without double counting). A provider at a
+    # hospital without evidence (a) keeps its hospital's CCN, so summarize can add evidence (b)/(c) from the hospital files.
     con.execute("""create or replace temp table pn as
       select p_state state, status, segment, program, view, bucket, code, npi, rate_kind = 'dollar' and view <> 'none' as in_ratio,
-             bool_or(not (far or labeled_many or labeled_spec)) any_keep
-      from uv group by all""")
+             bool_or(not (far or labeled_many or labeled_spec)) any_keep, bool_or(ev) any_ev, any_value(ccn) ccn
+      from uve group by all""")
     codes = f"""select {c}, state, status, segment, program, view, bucket, code, in_ratio, count(*) n_npi,
-        count(*) filter (where any_keep) n_npi_keep, list(npi order by npi)[1:5] first5,
-        list(npi order by npi) filter (where any_keep)[1:5] first5_keep
+        count(*) filter (where any_keep) n_npi_keep, count(*) filter (where any_ev) n_npi_ev, list(npi order by npi)[1:5] first5,
+        list(npi order by npi) filter (where any_keep)[1:5] first5_keep, list(npi order by npi) filter (where any_ev)[1:5] first5_ev,
+        list(ccn || '|' || npi) filter (where not any_ev and ccn is not null) ccn_npi_noev
       from pn group by all"""
-    buckets = f"""select distinct {c}, state, status, segment, program, view, bucket, npi, in_ratio, any_keep from pn"""
-    return part, codes, buckets
+    buckets = f"""select {c}, state, status, segment, program, view, bucket, npi, in_ratio, bool_or(any_keep) any_keep,
+        bool_or(any_ev) any_ev, any_value(ccn) ccn, list(code) filter (where not any_ev and ccn is not null) codes_noev
+      from pn group by all"""
+    # the codes a hospital's own file lists, and whether its 2026 count of allowed amounts is above zero (hospital files only)
+    hcodes = f"""select {c}, p_ccn ccn, code, bool_or(counted) counted from units where p_ccn is not null group by all"""
+    return part, codes, buckets, hcodes
 
 
 def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
@@ -258,7 +291,7 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
         l.billing_code_modifier modifier,
         case when l.billing_class not like 'inst%' and l.service_code <> ''
               and list_has_all({FAC_LIST}, {sc}) then 'facility' else 'office or not stated' end pos,
-        {kind} rate_kind, l.v rate, l.npi,
+        {kind} rate_kind, l.v rate, l.npi, l.tin, false counted,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,
         l.one_amount_many_codes labeled_many, l.specialty_mismatch labeled_spec
       from ({lab}) l join prov p on p.npi = l.npi {mj}"""
@@ -284,6 +317,7 @@ def hospital_units(t, have):
         case when lower({q('billing_class')}) = 'professional' then 'facility' else '' end pos,
         {kind} rate_kind, try_cast(replace(replace({q('negotiated_dollar')}, '$', ''), ',', '') as double) rate,
         h.ccn npi, '' tin, lower({q('setting')}) setting,
+        {q('allowed_count')} not in ('', '0') counted,
         'H' p_kind, coalesce(w.wage_index, 1.0) p_wi, h.ccn p_ccn, z.locality p_loc, coalesce(z.rural, '') p_rural,
         coalesce(hz.state, h.state) p_state, false labeled_many, false labeled_spec
       from {t} r cross join hosp h left join b_wi2026 w on w.ccn = h.ccn
@@ -303,7 +337,7 @@ def allowed_units(t):
         case when lower(r.billing_class) not like 'inst%' and coalesce(r.service_code, '') <> ''
               and list_has_all({FAC_LIST}, {sc}) then 'facility' else 'office or not stated' end pos,
         case when r.allowed_amount > 0 then 'dollar' when r.allowed_amount = 0 then 'zero' else 'not a number' end rate_kind,
-        r.allowed_amount rate, cast(r.npi as varchar) npi, cast(r.tin as varchar) tin, '' setting,
+        r.allowed_amount rate, cast(r.npi as varchar) npi, cast(r.tin as varchar) tin, '' setting, false counted,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,
         false labeled_many, false labeled_spec
       from {t} r join prov p on p.npi = cast(r.npi as varchar)"""
@@ -327,15 +361,20 @@ def allowed_rows(doc, insurer):
                                    allowed_amount=float(amt) if amt is not None else None)
 
 
+OUT_SUFFIXES = (".part.parquet", ".codes.parquet", ".npis.parquet", ".hcodes.parquet")
+
+
 def reduce_table(con, units_sql, const, out_prefix):
     """Write <out_prefix>.part.parquet (amount counts), .codes.parquet (providers per code), .npis.parquet (providers
-    per bucket). Returns the number of part rows."""
-    part, codes, buckets = _units_to_part(con, units_sql, const)
+    per bucket) and, for a hospital file, .hcodes.parquet (the codes it lists). Returns the number of part rows."""
+    part, codes, buckets, hcodes = _units_to_part(con, units_sql, const)
     con.execute(f"copy ({part}) to '{out_prefix}.part.parquet' (format parquet, compression zstd)")
     con.execute(f"copy ({codes}) to '{out_prefix}.codes.parquet' (format parquet, compression zstd)")
     con.execute(f"copy ({buckets}) to '{out_prefix}.npis.parquet' (format parquet, compression zstd)")
+    if const.get("source") == "hospital":
+        con.execute(f"copy ({hcodes}) to '{out_prefix}.hcodes.parquet' (format parquet, compression zstd)")
     n = con.execute(f"select count(*) from '{out_prefix}.part.parquet'").fetchone()[0]
-    con.execute("drop table if exists uv; drop table if exists pn")
+    con.execute("drop view if exists uve; drop table if exists te; drop table if exists uv; drop table if exists pn")
     return n
 
 

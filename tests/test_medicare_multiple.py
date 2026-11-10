@@ -46,6 +46,10 @@ def make_bench(d):
     _csv(d / "hosp_zip.csv", ["ccn", "zip5", "state"], [["450021", "75201", "TX"]])
     _csv(d / "volumes.csv", ["state", "kind", "code", "place", "volume", "source"],
          [["TX", "professional", "99213", "O", 1000, "x"], ["TX", "outpatient", "70551", "", 100, "x"], ["TX", "inpatient", "470", "", 10, "x"]])
+    # evidence of use: providers 1-4 and 7 billed Medicare for 99213; hospital 450021 billed some other DRG (not 470)
+    _csv(d / "ev_prof.csv", ["npi", "code"], [[n, "99213"] for n in ("1", "2", "3", "4", "7")])
+    _csv(d / "ev_out.csv", ["ccn", "apc"], [["450099", "5523"]])
+    _csv(d / "ev_inp.csv", ["ccn", "drg"], [["450021", "999"]])
     (d / "sources.json").write_text(json.dumps({"pfs": {"what": "x", "year": "2026", "url": "u"}}))
     return d
 
@@ -62,10 +66,12 @@ def make_insurer(path, rows):
 
 def row(**k):
     base = dict(reporting_entity_name="Acme Health", file_label="Acme PPO", billing_code_type="CPT", billing_code="99213",
-                npi="1", tin="T1", negotiated_type="negotiated", negotiated_rate="100", billing_class="professional",
+                npi="1", tin=None, negotiated_type="negotiated", negotiated_rate="100", billing_class="professional",
                 setting="outpatient", billing_code_modifier="", service_code="11", negotiation_arrangement="ffs",
                 additional_information="")
     base.update(k)
+    if base["tin"] is None:
+        base["tin"] = "T" + base["npi"]      # each provider its own practice unless the test says otherwise
     return base
 
 
@@ -82,7 +88,8 @@ def run(tmp_path):
     for i, v in enumerate([110, 120, 130, 140, 150, 160], 1):
         R.append(row(npi=str(i), negotiated_rate=str(v)))
     R.append(row(npi="7", negotiated_rate="1000"))
-    R += [row(npi="8", negotiated_rate="125"), row(npi="8", negotiated_rate="125")]           # a repeated copy: one unit
+    R += [row(npi="8", tin="T1", negotiated_rate="125"), row(npi="8", tin="T1", negotiated_rate="125")]   # a repeated copy: one unit;
+    # provider 8 never billed Medicare for 99213 but works in provider 1's practice (same TIN), which did
     R.append(row(npi="1", negotiated_rate="50", negotiated_type="percentage"))                 # percent of charges
     R.append(row(npi="2", negotiated_rate="0"))                                                # $0
     R.append(row(npi="3", billing_code_type="CDT", billing_code="D0120", negotiated_rate="45"))  # dental: no benchmark
@@ -97,10 +104,11 @@ def run(tmp_path):
     # hospital file rows: commercial and Medicare Advantage plans
     hosp = tmp_path / "hosp.csv"
     _csv(hosp, ["code", "code_type", "setting", "billing_class", "payer_name", "plan_name", "negotiated_dollar",
-                "negotiated_percentage", "negotiated_algorithm", "methodology", "modifiers", "hospital_name"],
-         [["470", "MS-DRG", "inpatient", "facility", "Acme", "PPO", "40000", "", "", "case rate", "", "Hospital A"],
-          ["470", "MS-DRG", "inpatient", "facility", "Acme", "Medicare Advantage HMO", "17000", "", "", "case rate", "", "Hospital A"],
-          ["470", "MS-DRG", "inpatient", "facility", "Acme", "PPO", "", "45", "", "percent of total billed charges", "", "Hospital A"]])
+                "negotiated_percentage", "negotiated_algorithm", "methodology", "modifiers", "hospital_name", "allowed_count"],
+         [["470", "MS-DRG", "inpatient", "facility", "Acme", "PPO", "40000", "", "", "case rate", "", "Hospital A", "1 through 10"],
+          ["470", "MS-DRG", "inpatient", "facility", "Acme", "Medicare Advantage HMO", "17000", "", "", "case rate", "", "Hospital A", "0"],
+          ["470", "MS-DRG", "inpatient", "facility", "Acme", "PPO", "", "45", "", "percent of total billed charges", "", "Hospital A", ""],
+          ["70551", "CPT", "outpatient", "facility", "Acme", "PPO", "900", "", "", "fee schedule", "", "Hospital A", "0"]])
     allowed = tmp_path / "allowed.csv"
     _csv(allowed, ["insurer", "plan", "code_type", "code", "tin", "npi", "billing_class", "modifier", "service_code", "allowed_amount"],
          [["Acme", "Acme PPO", "CPT", "99213", "T1", str(i), "professional", "", "11", 300 + i] for i in range(1, 7)])
@@ -113,7 +121,8 @@ def run(tmp_path):
     runmod.main()
     rd = lambda n: list(csv.DictReader(open(out / "tx" / n)))
     return dict(codes=rd("codes.csv"), buckets=rd("buckets.csv"), totals=rd("totals.csv"), coverage=rd("coverage.csv"),
-                nobench=rd("no_benchmark_codes.csv"), md=(out / "tx" / "summary.md").read_text())
+                nobench=rd("no_benchmark_codes.csv"), tails=rd("tails.csv"), providers=rd("providers.csv"),
+                md=(out / "tx" / "summary.md").read_text())
 
 
 def pick(rows, **k):
@@ -142,7 +151,7 @@ def test_office_visit_percentiles_and_labels(run):
     assert a["figure"] == "yes"
     assert float(a["middle"]) == 1.3 and float(a["p10"]) == 1.1 and float(a["p90"]) == 10.0
     assert a["units"] == "8"                       # the repeated copy at provider 8 counts once; $0 and percent are out
-    k = pick(run["codes"], rates="without likely-unused rates", source="insurer", status="in-network", code="99213")[0]
+    k = pick(run["codes"], rates=summ.RANGE, source="insurer", status="in-network", code="99213")[0]
     assert float(k["p90"]) == 1.6 and k["units"] == "7"   # the 10x rate is labeled "far from Medicare", left out here only
 
 
@@ -233,3 +242,70 @@ def test_split_by_provider_gives_identical_counts(tmp_path):
     assert totals[0] == totals[1]
     assert sum(v[2] for v in totals[0].values()) == 12          # the 12 one-amount rates are labeled in both
     assert totals[0][("99213", 96.0)][0] == 1 and totals[0][("99213", 555.0)][0] == 1
+
+
+# ---------------------------------------------------------------- fix 1: evidence that the provider does the service
+
+def test_evidence_view_keeps_high_prices_and_uses_practice(run):
+    e = pick(run["codes"], rates=summ.EVIDENCE, source="insurer", status="in-network", code="99213")[0]
+    # evidence: providers 1-4 and 7 billed Medicare; 8 through its practice (same TIN as provider 1); 5 and 6 have none
+    # units 1.1 1.2 1.3 1.4 10.0 1.25 -> sorted 1.1 1.2 1.25 1.3 1.4 10.0: middle = 3rd of 6, 90th = the 10x rate (kept)
+    assert e["units"] == "6" and e["providers_at_least"] == "6" and e["figure"] == "yes"
+    assert float(e["middle"]) == 1.25 and float(e["p90"]) == 10.0
+
+
+def test_hospital_file_listing_is_evidence_for_insurer_rates(run):
+    # hospital 450021 never billed Medicare for DRG 470 or APC 5523, but its own file lists 470 and 70551 -> evidence (b)
+    for code in ("470", "70551"):
+        e = pick(run["codes"], rates=summ.EVIDENCE, source="insurer", code=code)
+        assert e and e[0]["units"] == "1", code
+
+
+def test_hospital_count_of_allowed_amounts_is_evidence_for_its_own_rates(run):
+    # (c) is per code: the file counts "1 through 10" paid claims for DRG 470 (PPO row), so every 470 rate in the file has
+    # evidence, the Medicare Advantage row too. For 70551 the only count is "0": listed, but no evidence for its own rate.
+    for prog in ("commercial", "Medicare Advantage"):
+        assert pick(run["codes"], rates=summ.EVIDENCE, source="hospital", code="470", program=prog)[0]["units"] == "1"
+    assert pick(run["codes"], rates=summ.ALL, source="hospital", code="70551")[0]["units"] == "1"
+    assert not pick(run["codes"], rates=summ.EVIDENCE, source="hospital", code="70551")
+
+
+def test_tails_table_lists_far_rates_with_evidence(run):
+    t = pick(run["tails"], source="insurer", status="in-network", code="99213")
+    assert len(t) == 1 and t[0]["side"] == "over 8×" and t[0]["units"] == "1" and t[0]["units_with_evidence"] == "1"
+    assert float(t[0]["highest_listed_amount"]) == 1000.0
+    assert "Rates under 0.5× or over 8× Medicare" in run["md"]
+
+
+def test_three_views_in_totals_and_coverage(run):
+    views = {r["rates"] for r in pick(run["totals"], figure="Insurer files, in-network", subtotal="")}
+    assert views == {summ.ALL, summ.EVIDENCE, summ.RANGE}
+    c = pick(run["coverage"], source="insurer", status="in-network", what="in the ratio")[0]
+    # 99213: 8 units, 6 with evidence (5 billed Medicare + 1 by practice); DRG 470 and MRI at the hospital: (b) evidence
+    assert c["units"] == "10" and c["units_with_evidence"] == "8" and c["evidence_medicare_billing"] == "6"
+    p = pick(run["providers"], source="insurer", status="in-network", bucket="(all buckets in the totals)")[0]
+    assert p["providers"] == "9" and p["providers_evidence"] == "7"
+
+
+def test_evidence_builders(tmp_path):
+    _csv(tmp_path / "phy.csv", ["Rndrng_NPI", "Rndrng_Prvdr_State_Abrvtn", "HCPCS_Cd", "Place_Of_Srvc", "Tot_Srvcs"],
+         [["111", "TX", "99213", "O", "20"], ["111", "TX", "99213", "F", "12"], ["222", "OK", "99213", "O", "15"]])
+    assert cms.ev_prof_rows(tmp_path / "phy.csv", {"TX"}) == [("111", "99213")]
+    _csv(tmp_path / "out.csv", ["Rndrng_Prvdr_CCN", "Rndrng_Prvdr_State_Abrvtn", "APC_Cd"], [["450021", "TX", "5523"], ["010001", "AL", "5072"]])
+    assert cms.ev_out_rows(tmp_path / "out.csv", {"TX"}) == [("450021", "5523")]
+    _csv(tmp_path / "inp.csv", ["Rndrng_Prvdr_CCN", "Rndrng_Prvdr_State_Abrvtn", "DRG_Cd"], [["450021", "TX", "003"], ["450021", "TX", "470"]])
+    assert cms.ev_inp_rows(tmp_path / "inp.csv", {"TX"}) == [("450021", "3"), ("450021", "470")]
+
+
+def test_fetch_api_pages_by_state(tmp_path, monkeypatch):
+    seen = []
+
+    def fake_get(url):
+        seen.append(url)
+        off = int(url.split("offset=")[1].split("&")[0])
+        rows = [{"Rndrng_NPI": str(i), "HCPCS_Cd": "99213"} for i in range(off, min(off + 2, 5))]
+        return json.dumps(rows).encode()
+    monkeypatch.setattr(cms, "_get", fake_get)
+    n = cms.fetch_api("https://x/data", tmp_path / "o.csv", ["TX"], "Rndrng_Prvdr_State_Abrvtn", "Rndrng_NPI,HCPCS_Cd", page=2)
+    assert n == 5 and len(list(csv.DictReader(open(tmp_path / "o.csv")))) == 5
+    assert all("filter%5BRndrng_Prvdr_State_Abrvtn%5D=TX" in u for u in seen)

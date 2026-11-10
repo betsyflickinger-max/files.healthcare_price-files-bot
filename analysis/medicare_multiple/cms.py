@@ -24,6 +24,10 @@ OUT gets small CSVs (each row says which CMS file and year it came from, in sour
   hosp_zip.csv  ccn, zip5, state                   hospital ZIP (Hospital General Information) for hospital-file doctor fees
   volumes.csv   state, kind, code, place, volume   Medicare use by state (2024): professional (by place O/F),
                                                    outpatient (HCPCS), inpatient (MS-DRG discharges), dme
+  ev_prof.csv   npi, code                          this NPI billed Medicare for this code (2024, Physician & Other Practitioners
+                                                   by Provider and Service; the run's states only)
+  ev_out.csv    ccn, apc                           this hospital billed Medicare for this outpatient payment group (APC)
+  ev_inp.csv    ccn, drg                           this hospital billed Medicare for this MS-DRG
   sources.json  every file: what, year, url, sha256, downloaded
 """
 import argparse
@@ -34,6 +38,8 @@ import json
 import os
 import re
 import sys
+import time
+import urllib.parse
 import urllib.request
 import zipfile
 from datetime import date
@@ -74,11 +80,62 @@ def num(x):
 
 # ------------------------------------------------------------------ download
 
-def fetch(cache):
+def states_tag(states):
+    states = list(states or ["ALL"])
+    return "all" if "ALL" in states else "-".join(sorted(x.lower() for x in states))
+
+
+def _get(url, tries=5):
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "files.healthcare research bot"})
+            with urllib.request.urlopen(req, timeout=300) as r:
+                return r.read()
+        except Exception:
+            if i == tries - 1:
+                raise
+            time.sleep(5 * (i + 1))
+
+
+def fetch_api(url, path, states, state_field, columns, page=5000):
+    """A CMS data API dataset, only the given states' rows and columns, page by page, into one CSV (no big download)."""
+    w, n = None, 0
+    with open(str(path) + ".part", "w", newline="") as f:
+        for st in ([None] if "ALL" in states else sorted(states)):
+            off = 0
+            while True:
+                q = {"size": page, "offset": off, "column": columns}
+                if st:
+                    q[f"filter[{state_field}]"] = st
+                data = json.loads(_get(url + "?" + urllib.parse.urlencode(q)))
+                if not data:
+                    break
+                if w is None:
+                    w = csv.DictWriter(f, list(data[0].keys()), extrasaction="ignore")
+                    w.writeheader()
+                w.writerows(data)
+                off += len(data)
+                n += len(data)
+                if len(data) < page:
+                    break
+    os.replace(str(path) + ".part", path)
+    return n
+
+
+def fetch(cache, states=("TX",)):
     cache = Path(cache)
     cache.mkdir(parents=True, exist_ok=True)
+    states = list(states or ["ALL"])
     man = {}
     for k, s in CMS.items():
+        if s.get("api"):    # read through CMS's data API, only the run's states
+            p = cache / f"{k}_{states_tag(states)}.csv"
+            if not p.exists():
+                fetch_api(s["url"], p, states, s["api"]["state_field"], s["api"]["columns"])
+            man[k] = dict(s, file=p.name, sha256=hashlib.sha256(p.read_bytes()).hexdigest(), downloaded=date.today().isoformat(),
+                          query=f"states {','.join(states)}; columns {s['api']['columns']}")
+            print(f"  {k}: {p.stat().st_size / 1e6:,.1f} MB", flush=True)
+            continue
         p = cache / (k + (".csv" if s["url"].lower().endswith(".csv") else ".zip"))
         if not p.exists():
             req = urllib.request.Request(s["url"], headers={"User-Agent": "files.healthcare research bot"})
@@ -335,6 +392,32 @@ def volume_rows(phy, out_, inp, dme, states):
     return [(s_, k, c, p, v, src) for (s_, k, c, p, src), v in sorted(agg.items())]
 
 
+def _stream(path):
+    with open(path, encoding="latin-1", newline="") as f:
+        yield from csv.DictReader(f)
+
+
+def ev_prof_rows(path, states):
+    """(npi, code): this NPI billed Medicare for this HCPCS code (any place of service)"""
+    out = set()
+    for r in _stream(path):
+        if r.get("Rndrng_Prvdr_State_Abrvtn", "") in states or "ALL" in states:
+            out.add((r["Rndrng_NPI"].strip(), r["HCPCS_Cd"].strip().upper()))
+    return sorted(out)
+
+
+def ev_out_rows(path, states):
+    """(ccn, apc): this hospital billed Medicare for this outpatient payment group"""
+    return sorted({(r["Rndrng_Prvdr_CCN"].strip(), r["APC_Cd"].strip().lstrip("0").zfill(4)) for r in _stream(path)
+                   if r["Rndrng_Prvdr_State_Abrvtn"] in states or "ALL" in states})
+
+
+def ev_inp_rows(path, states):
+    """(ccn, drg): this hospital billed Medicare for this MS-DRG"""
+    return sorted({(r["Rndrng_Prvdr_CCN"].strip(), r["DRG_Cd"].strip().lstrip("0") or "0") for r in _stream(path)
+                   if r["Rndrng_Prvdr_State_Abrvtn"] in states or "ALL" in states})
+
+
 # ------------------------------------------------------------------ build
 
 def write(path, header, rows):
@@ -349,6 +432,7 @@ def build(cache, out, states=("TX",)):
     """Benchmark tables for one or more states (two-letter codes, or ALL). Locality key = carrier-locality."""
     cache, out = Path(cache), Path(out)
     out.mkdir(parents=True, exist_ok=True)
+    tag = states_tag(states)
     states = set(STATE_NAMES) if "ALL" in states else set(states)
     z = lambda k, pat: _zip_member(cache / f"{k}.zip", pat)
     t = lambda k: (cache / f"{k}.csv").read_text(encoding="latin-1")
@@ -379,6 +463,9 @@ def build(cache, out, states=("TX",)):
     n["hosp_zip"] = write(out / "hosp_zip.csv", ["ccn", "zip5", "state"], hgi_rows(t("hgi"), states))
     n["volumes"] = write(out / "volumes.csv", ["state", "kind", "code", "place", "volume", "source"],
                          volume_rows(t("vol_physician"), t("vol_outpatient"), t("vol_inpatient"), t("vol_dme"), states))
+    n["ev_prof"] = write(out / "ev_prof.csv", ["npi", "code"], ev_prof_rows(cache / f"ev_physician_{tag}.csv", states | ({"ALL"} if tag == "all" else set())))
+    n["ev_out"] = write(out / "ev_out.csv", ["ccn", "apc"], ev_out_rows(cache / "ev_outpatient.csv", states))
+    n["ev_inp"] = write(out / "ev_inp.csv", ["ccn", "drg"], ev_inp_rows(cache / "ev_inpatient.csv", states))
     man = json.loads((cache / "sources.json").read_text()) if (cache / "sources.json").exists() else {k: dict(v) for k, v in CMS.items()}
     man["_built"] = dict(states=sorted(states), on=date.today().isoformat(), rows=n,
                          ipps_rates=dict(zip(["labor_wi_over_1", "nonlabor_wi_over_1", "labor_wi_1_or_less", "nonlabor_wi_1_or_less", "capital"], rates)))
@@ -394,10 +481,11 @@ def main():
     ap.add_argument("out", nargs="?")
     ap.add_argument("--state", default="TX", help="two-letter code(s), comma-separated, or ALL")
     a = ap.parse_args()
+    st = [x.strip().upper() for x in a.state.split(",")]
     if a.cmd == "fetch":
-        fetch(a.cache)
+        fetch(a.cache, st)
     else:
-        build(a.cache, a.out, [x.strip().upper() for x in a.state.split(",")])
+        build(a.cache, a.out, st)
 
 
 if __name__ == "__main__":

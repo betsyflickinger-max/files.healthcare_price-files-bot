@@ -89,6 +89,22 @@ CMS = {
         what="Medicare Durable Medical Equipment, Devices & Supplies - by Geography and Service (state rows, by referring provider's state)",
         year="2024 services (release RY2026)",
         url="https://data.cms.gov/sites/default/files/2026-07/d264f6fd-f327-4e54-9ab7-9132f1395b6b/mup_dme_ry26_p05_v10_dy24_geor.csv"),
+    # ---------- evidence that a provider does a service (the "may be used" view): who billed Medicare for what
+    "ev_physician": dict(
+        what="Medicare Physician & Other Practitioners - by Provider and Service: which NPI billed Medicare for which HCPCS code "
+             "(only the run's states, read page by page through CMS's data API; cells under 11 beneficiaries are left out by CMS)",
+        year="2024 services (release RY2026)",
+        url="https://data.cms.gov/data-api/v1/dataset/92396110-2aed-4d63-a6a2-5d6207d46a29/data",
+        api=dict(state_field="Rndrng_Prvdr_State_Abrvtn", columns="Rndrng_NPI,Rndrng_Prvdr_State_Abrvtn,HCPCS_Cd,Place_Of_Srvc,Tot_Srvcs")),
+    "ev_outpatient": dict(
+        what="Medicare Outpatient Hospitals - by Provider and Service: which hospital (CCN) billed Medicare for which APC (payment group; "
+             "the file has no HCPCS column, so a code counts when the hospital billed the APC CMS pays it in)",
+        year="2024 services (release RY2026)",
+        url="https://data.cms.gov/sites/default/files/2026-06/794975f5-e335-4cbf-8e87-982c834a9639/MUP_OUT_RY26_P04_V10_DY24_Prov_Svc.csv"),
+    "ev_inpatient": dict(
+        what="Medicare Inpatient Hospitals - by Provider and Service: which hospital (CCN) billed Medicare for which MS-DRG",
+        year="2024 discharges (release RY2026)",
+        url="https://data.cms.gov/sites/default/files/2026-04/828defb5-c9e6-4442-8c1b-f27bc0799daf/MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV"),
 }
 
 # Published benchmarks for the sanity check (report only; never used in a calculation)
