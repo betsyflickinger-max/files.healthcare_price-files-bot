@@ -35,3 +35,13 @@ for slug, html in pages.items():
     for tag, body in re.findall(r'<(script|style)[^>]*>(.*?)</\1>', html, re.S):
         if len(body) > 200000 and body != m.group(1) and not body.startswith('{'):
             print(f'  inline <{tag}> {len(body) / 2**20:.2f} MiB: {body[:80]!r}')
+
+# the page code without its data (for reading how the page uses each block): /tmp/shell/<slug>.html
+os.makedirs('/tmp/shell', exist_ok=True)
+for slug, html in pages.items():
+    a = html.index('id="data">') + len('id="data">'); b = html.index('</script>', a)
+    D = json.loads(html[a:b])
+    keys = {k: (f'list[{len(v)}]' if isinstance(v, list) else f'dict[{len(v)}]' if isinstance(v, dict) else repr(v)[:40]) for k, v in D.items()}
+    open(f'/tmp/shell/{slug}.html', 'w').write(html[:a] + json.dumps(keys) + html[b:])
+    sample = {k: (v[:3] if isinstance(v, list) else dict(list(v.items())[:3]) if isinstance(v, dict) else v) for k, v in D.items()}
+    json.dump(sample, open(f'/tmp/shell/{slug}.sample.json', 'w'), indent=1, default=str)
