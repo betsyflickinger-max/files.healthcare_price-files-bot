@@ -1,6 +1,11 @@
 zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
+73301,48453,Travis County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+73344,48453,Travis County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+73960,48421,Sherman County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75401,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75402,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75403,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75404,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75407,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75409,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75410,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -17,6 +22,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75422,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75423,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75424,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75425,48277,Lamar County,37580,"Paris, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75426,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75428,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75429,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -32,6 +38,8 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75440,48379,Rains County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75441,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75442,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75443,48147,Fannin County,14300,"Bonham, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75444,48499,Wood County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75446,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75447,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75448,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -42,9 +50,12 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75453,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75454,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75455,48449,Titus County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75456,48449,Titus County,34420,"Mount Pleasant, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75457,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75458,48231,Hunt County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75459,48181,Grayson County,43300,"Sherman-Denison, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75460,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75461,48277,Lamar County,37580,"Paris, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75462,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75468,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75469,48119,Delta County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -61,6 +72,8 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75480,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75481,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75482,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75483,48223,Hopkins County,44860,"Sulphur Springs, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75485,48085,Collin County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75486,48277,Lamar County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75487,48159,Franklin County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75488,48147,Fannin County,14300,"Bonham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -75,6 +88,9 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75497,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75501,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75503,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75504,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75505,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75507,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75550,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75551,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75554,48387,Red River County,37580,"Paris, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -97,14 +113,21 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75572,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75573,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75574,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75599,48037,Bowie County,45500,"Texarkana, TX-AR",texarkana,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75601,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75602,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75603,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75604,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75605,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75606,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75607,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75608,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75615,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75630,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75631,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75633,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75636,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75637,48365,Panola County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75638,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75639,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75640,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -117,13 +140,17 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75650,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75651,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75652,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75653,48401,Rusk County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75654,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75656,48067,Cass County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75657,48315,Marion County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75658,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75659,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75660,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75661,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75662,48183,Gregg County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75663,48183,Gregg County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75666,48401,Rusk County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75667,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75668,48343,Morris County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75669,48365,Panola County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -135,8 +162,10 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75682,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75683,48459,Upshur County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75684,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75685,48365,Panola County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75686,48063,Camp County,34420,"Mount Pleasant, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75687,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75688,48203,Harrison County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75689,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75691,48401,Rusk County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75692,48203,Harrison County,30980,"Longview, TX",longview,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -151,7 +180,10 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75707,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75708,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75709,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75710,48423,Smith County,46340,"Tyler, TX",tyler,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75711,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75712,48423,Smith County,46340,"Tyler, TX",tyler,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75713,48423,Smith County,46340,"Tyler, TX",tyler,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75750,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75751,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75752,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -169,6 +201,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75766,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75770,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75771,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75772,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75773,48499,Wood County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75778,48213,Henderson County,11980,"Athens, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75779,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -182,10 +215,16 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75790,48467,Van Zandt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75791,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75792,48423,Smith County,46340,"Tyler, TX",tyler,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75797,48459,Upshur County,30980,"Longview, TX",longview,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75798,48423,Smith County,46340,"Tyler, TX",tyler,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75799,48423,Smith County,46340,"Tyler, TX",tyler,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75801,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75802,48001,Anderson County,37300,"Palestine, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75803,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75831,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75832,48001,Anderson County,37300,"Palestine, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75833,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75834,48455,Trinity County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75835,48225,Houston County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75838,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75839,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -208,11 +247,15 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75861,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75862,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75865,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75880,48001,Anderson County,37300,"Palestine, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+75882,48001,Anderson County,37300,"Palestine, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75884,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75886,48001,Anderson County,37300,"Palestine, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75901,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75902,48005,Angelina County,31260,"Lufkin, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75903,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75904,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75915,48005,Angelina County,31260,"Lufkin, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75925,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75926,48455,Trinity County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75928,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -237,10 +280,12 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75951,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75954,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75956,48241,Jasper County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75958,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75959,48403,Sabine County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75960,48373,Polk County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75961,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75962,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75963,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75964,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75965,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75966,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -252,17 +297,21 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 75975,48419,Shelby County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75976,48073,Cherokee County,27380,"Jacksonville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75977,48351,Newton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75978,48347,Nacogdoches County,34860,"Nacogdoches, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 75979,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 75980,48005,Angelina County,31260,"Lufkin, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+75990,48457,Tyler County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76301,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76302,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76305,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76306,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76307,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76308,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76309,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76310,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76311,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76351,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76352,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76354,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76357,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76360,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -271,6 +320,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76365,48077,Clay County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76366,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76367,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76369,48485,Wichita County,48660,"Wichita Falls, TX",wichita-falls,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76370,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76371,48275,Knox County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76372,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -280,6 +330,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76379,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76380,48023,Baylor County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76384,48487,Wilbarger County,46900,"Vernon, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76385,48487,Wilbarger County,46900,"Vernon, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76388,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76389,48009,Archer County,48660,"Wichita Falls, TX",wichita-falls,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76401,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -312,10 +363,14 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76458,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76459,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76460,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76461,48143,Erath County,44500,"Stephenville, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76462,48221,Hood County,24180,"Granbury, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76463,48143,Erath County,44500,"Stephenville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76464,48417,Shackelford County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76465,48143,Erath County,44500,"Stephenville, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76466,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76467,48221,Hood County,24180,"Granbury, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76468,48093,Comanche County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76469,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76470,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76471,48133,Eastland County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -326,13 +381,16 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76481,48503,Young County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76483,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76484,48363,Palo Pinto County,33420,"Mineral Wells, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76485,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76486,48237,Jack County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76487,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76490,48367,Parker County,19100,"Dallas-Fort Worth-Arlington, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76491,48447,Throckmorton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76501,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76502,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76503,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76504,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76508,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76511,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76513,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76518,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -342,26 +400,32 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76523,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76524,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76525,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76526,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76527,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76528,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76530,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76531,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76533,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76534,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76537,48491,Williamson County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76538,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76539,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76540,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76541,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76542,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76543,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76544,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76547,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76548,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76549,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76550,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76554,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76556,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76557,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76558,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76559,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76561,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76564,48027,Bell County,28660,"Killeen-Temple, TX",killeen-temple,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76565,48193,Hamilton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76566,48099,Coryell County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76567,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -399,6 +463,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76641,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76642,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76643,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76644,48035,Bosque County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76645,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76648,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76649,48035,Bosque County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -425,6 +490,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76680,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76681,48349,Navarro County,18620,"Corsicana, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76682,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76684,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76685,48145,Falls County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76686,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76687,48293,Limestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -434,6 +500,8 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76692,48217,Hill County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76693,48161,Freestone County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76701,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76702,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76703,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76704,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76705,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76706,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -442,9 +510,16 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76710,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76711,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76712,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76714,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76715,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76716,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76797,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76798,48309,McLennan County,47380,"Waco, TX",waco,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76799,48309,McLennan County,47380,"Waco, TX",waco,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76801,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76802,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76803,48049,Brown County,15220,"Brownwood, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+76804,48049,Brown County,15220,"Brownwood, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76820,48319,Mason County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76821,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76823,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -466,6 +541,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76852,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76853,48281,Lampasas County,28660,"Killeen-Temple, TX",killeen-temple,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76854,48267,Kimble County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76855,48095,Concho County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76856,48319,Mason County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76857,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76858,48095,Concho County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -486,8 +562,10 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76878,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76880,48333,Mills County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76882,48399,Runnels County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76883,48137,Edwards County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76884,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76885,48299,Llano County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76886,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76887,48307,McCulloch County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76888,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76890,48049,Brown County,15220,"Brownwood, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -496,6 +574,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76903,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76904,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76905,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76906,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76908,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76909,48451,Tom Green County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76930,48235,Irion County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -510,6 +589,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 76941,48235,Irion County,41660,"San Angelo, TX",san-angelo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76943,48105,Crockett County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76945,48081,Coke County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+76949,48081,Coke County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 76950,48435,Sutton County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76951,48431,Sterling County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 76953,48081,Coke County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -528,12 +608,17 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77623,48167,Galveston County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77624,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77625,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77626,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77627,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77629,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77630,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77631,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77632,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77639,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77640,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77641,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77642,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77643,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77650,48167,Galveston County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77651,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77655,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -546,28 +631,42 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77663,48199,Hardin County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77664,48457,Tyler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77665,48071,Chambers County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77670,48361,Orange County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77701,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77702,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77703,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77704,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77705,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77706,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77707,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77708,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77710,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77713,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77720,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+77725,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+77726,48245,Jefferson County,13140,"Beaumont-Port Arthur, TX",beaumont-port-arthur,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77801,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77802,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77803,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77805,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+77806,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77807,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77808,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77830,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77831,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77833,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77834,48477,Washington County,14780,"Brenham, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77835,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77836,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77837,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77838,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77840,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77841,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+77842,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77843,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77844,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77845,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77850,48289,Leon County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77852,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77853,48287,Lee County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77855,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -575,12 +674,14 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77857,48331,Milam County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77859,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77861,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77862,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77863,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77864,48313,Madison County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77865,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77866,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77867,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77868,48185,Grimes County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77870,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77871,48289,Leon County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77872,48313,Madison County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77873,48339,Montgomery County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -589,8 +690,11 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77878,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77879,48051,Burleson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77880,48477,Washington County,14780,"Brenham, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77881,48041,Brazos County,17780,"College Station-Bryan, TX",college-station-bryan,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77882,48395,Robertson County,17780,"College Station-Bryan, TX",college-station-bryan,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77901,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77902,48469,Victoria County,47020,"Victoria, TX",victoria,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+77903,48469,Victoria County,47020,"Victoria, TX",victoria,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77904,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77905,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77950,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -602,6 +706,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77962,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77963,48175,Goliad County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77964,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77967,48123,DeWitt County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77968,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77969,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77970,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -619,6 +724,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77986,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77987,48285,Lavaca County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77988,48469,Victoria County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
+77989,48123,DeWitt County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 77990,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77991,48239,Jackson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 77993,48175,Goliad County,47020,"Victoria, TX",victoria,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -626,6 +732,8 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 77995,48123,DeWitt County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78330,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78332,48249,Jim Wells County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78333,48249,Jim Wells County,10860,"Alice, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78335,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78336,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78338,48261,Kenedy County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78339,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -636,6 +744,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78344,48479,Webb County,29700,"Laredo, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78347,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78349,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78350,48297,Live Oak County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78351,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78352,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78353,48047,Brooks County,10860,"Alice, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -647,6 +756,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78361,48247,Jim Hogg County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78362,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78363,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78364,48273,Kleberg County,28780,"Kingsville, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78368,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78369,48479,Webb County,29700,"Laredo, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78370,48409,San Patricio County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -659,6 +769,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78377,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78379,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78380,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78381,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78382,48007,Aransas County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78383,48297,Live Oak County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78384,48131,Duval County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -670,6 +781,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78393,48391,Refugio County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78401,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78402,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78403,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78404,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78405,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78406,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -686,12 +798,27 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78417,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78418,48273,Kleberg County,28780,"Kingsville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78419,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78426,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78427,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78460,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78463,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78465,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78466,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78467,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78468,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78469,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78472,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78480,48355,Nueces County,18580,"Corpus Christi, TX",corpus-christi,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78501,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78502,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78503,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78504,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78505,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78516,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78520,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78521,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78522,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78523,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78526,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78535,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78536,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -707,7 +834,9 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78548,48427,Starr County,40100,"Rio Grande City-Roma, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78549,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78550,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78551,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78552,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78553,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78557,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78558,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78559,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -719,6 +848,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78565,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78566,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78567,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78568,48061,Cameron County,15180,"Brownsville-Harlingen, TX",brownsville-harlingen,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78569,48489,Willacy County,39700,"Raymondville, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78570,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78572,48215,Hidalgo County,32580,"McAllen-Edinburg-Mission, TX",mcallen,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -764,9 +894,11 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78841,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78842,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78843,48465,Val Verde County,19620,"Del Rio, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78847,48465,Val Verde County,19620,"Del Rio, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78850,48325,Medina County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78851,48443,Terrell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78852,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78853,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78860,48323,Maverick County,20580,"Eagle Pass, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78861,48325,Medina County,41700,"San Antonio-New Braunfels, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78870,48463,Uvalde County,46620,"Uvalde, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -799,11 +931,14 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 78949,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78950,48015,Austin County,26420,"Houston-Pasadena-The Woodlands, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78951,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78952,48149,Fayette County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78953,48021,Bastrop County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78954,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78956,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78957,48021,Bastrop County,12420,"Austin-Round Rock-San Marcos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78959,48177,Gonzales County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+78960,48149,Fayette County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+78961,48149,Fayette County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 78962,48089,Colorado County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 78963,48149,Fayette County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79001,48359,Oldham County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -860,6 +995,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79070,48357,Ochiltree County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79072,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79073,48189,Hale County,38380,"Plainview, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79077,48087,Collingsworth County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79078,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79079,48483,Wheeler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79080,48233,Hutchinson County,14420,"Borger, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -883,18 +1019,32 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79102,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79103,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79104,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79105,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79106,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79107,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79108,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79109,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79110,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79111,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79114,48381,Randall County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79116,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79117,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79118,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79119,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79120,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79121,48381,Randall County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79124,48375,Potter County,11100,"Amarillo, TX",amarillo,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79159,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79166,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79168,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79172,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79174,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79178,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79185,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79189,48375,Potter County,11100,"Amarillo, TX",amarillo,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79201,48075,Childress County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79220,48125,Dickens County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79221,48153,Floyd County,38380,"Plainview, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79223,48101,Cottle County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79225,48197,Hardeman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79226,48129,Donley County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -938,6 +1088,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79330,48169,Garza County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79331,48115,Dawson County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79336,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79338,48219,Hockley County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79339,48279,Lamb County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79342,48165,Gaines County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79343,48107,Crosby County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -977,6 +1128,8 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79404,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79406,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79407,48219,Hockley County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79408,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79409,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79410,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79411,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79412,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -986,6 +1139,15 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79416,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79423,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79424,48303,Lubbock County,31180,"Lubbock, TX",lubbock,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79430,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79452,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79453,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79457,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79464,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79490,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79491,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79493,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79499,48303,Lubbock County,31180,"Lubbock, TX",lubbock,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79501,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79502,48433,Stonewall County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79503,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -996,6 +1158,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79510,48059,Callahan County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79511,48227,Howard County,13700,"Big Spring, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79512,48335,Mitchell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79516,48415,Scurry County,43660,"Snyder, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79517,48033,Borden County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79518,48263,Kent County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79519,48083,Coleman County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -1024,6 +1187,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79547,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79548,48207,Haskell County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79549,48415,Scurry County,43660,"Snyder, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79550,48415,Scurry County,43660,"Snyder, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79553,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79556,48353,Nolan County,45020,"Sweetwater, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79560,48151,Fisher County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -1036,15 +1200,25 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79601,48253,Jones County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79602,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79603,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79604,48441,Taylor County,10180,"Abilene, TX",abilene,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79605,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79606,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79607,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79608,48441,Taylor County,10180,"Abilene, TX",abilene,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79697,48441,Taylor County,10180,"Abilene, TX",abilene,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79698,48441,Taylor County,10180,"Abilene, TX",abilene,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79699,48441,Taylor County,10180,"Abilene, TX",abilene,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79701,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79702,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79703,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79704,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79705,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79706,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79707,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79708,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79710,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79711,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+79712,48329,Midland County,33260,"Midland, TX",midland,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79713,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79714,48003,Andrews County,11380,"Andrews, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79718,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -1058,6 +1232,7 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79735,48371,Pecos County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79738,48033,Borden County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79739,48173,Glasscock County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79740,48371,Pecos County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79741,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79742,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79743,48371,Pecos County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -1071,12 +1246,14 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79756,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79758,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79759,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79760,48135,Ector County,36220,"Odessa, TX",odessa,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79761,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79762,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79763,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79764,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79765,48329,Midland County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79766,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79768,48135,Ector County,36220,"Odessa, TX",odessa,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79769,48135,Ector County,36220,"Odessa, TX",odessa,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79770,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79772,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
@@ -1088,5 +1265,82 @@ zip5,county_fips,county_name,cbsa_code,cbsa_name,slug,source
 79782,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79783,48317,Martin County,33260,"Midland, TX",midland,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79785,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+79786,48389,Reeves County,45880,"Town of Pecos, TX",small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
 79788,48475,Ward County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
 79789,48495,Winkler County,,,small-towns,Census 2020 ZCTA-county (most land) + CBSA July 2023
+88510,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88511,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88512,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88513,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88514,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88515,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88517,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88518,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88519,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88520,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88521,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88523,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88524,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88525,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88526,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88527,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88528,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88529,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88530,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88531,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88532,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88533,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88534,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88535,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88536,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88538,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88539,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88540,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88541,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88542,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88543,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88544,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88545,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88546,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88547,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88548,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88549,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88550,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88553,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88554,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88555,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88556,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88557,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88558,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88559,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88560,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88561,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88562,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88563,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88565,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88566,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88567,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88568,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88569,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88570,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88571,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88572,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88573,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88574,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88575,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88576,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88577,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88578,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88579,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88580,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88581,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88582,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88583,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88584,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88585,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88586,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88587,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88588,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88589,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88590,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
+88595,48141,El Paso County,,,small-towns,GeoNames postal codes (county) + county page in this table; ZIP not a Census ZIP area
