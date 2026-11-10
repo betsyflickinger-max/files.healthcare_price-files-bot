@@ -17,10 +17,12 @@ Steps (DRY=1 prints only):
      these two (the others keep their embed.json) and republishes just these two.
 """
 import csv, io, json, os, sys, time
+from concurrent.futures import ThreadPoolExecutor
 import boto3, duckdb
 
 E = os.environ
 DRY = bool(E.get('DRY'))
+START = int(E.get('START') or 1)   # START=3 resumes after steps 1-2 finished (re-running them would overwrite the backups)
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'bot'))
 import store   # noqa: E402  (trims the secrets' stray whitespace, which a bare boto3 call chokes on)
@@ -72,7 +74,7 @@ c.execute('create table dr(npi varchar)'); c.executemany('insert into dr values 
 
 # 1. tables
 tot = dict(added=0, removed=0, tables=0)
-for sub in ('rates', 'membership'):
+for sub in (('rates', 'membership') if START <= 1 else ()):
     for k in ls(f'data/tx/metro/{FROM}/{sub}/'):
         if not k.endswith('.parquet'): continue
         t = k.rsplit('/', 1)[1]
@@ -103,7 +105,7 @@ for sub in ('rates', 'membership'):
 log('tables:', tot)
 
 # 2. provider lists
-for m in (FROM, TO):
+for m in ((FROM, TO) if START <= 2 else ()):
     keep = sorted(n for n in now if m in now[n])
     c.execute('create or replace table kp(npi varchar)'); c.executemany('insert into kp values (?)', [(str(n),) for n in keep])
     c.execute(f"copy (select * from read_parquet('{W}/npis.parquet') where cast(npi as varchar) in (select npi from kp)) to '{W}/np_{m}.parquet' (format parquet, compression zstd)")
@@ -114,7 +116,7 @@ for m in (FROM, TO):
 # 3. November results and work folders
 for m in (FROM, TO):
     res = ls(f'site/every-tx/{m}/{MONTH}/')
-    for k in res: copy(k, HIST + k)
+    with ThreadPoolExecutor(64) as ex: list(ex.map(lambda k: copy(k, HIST + k), res))   # 64 at a time: one by one took hours
     delete_all(res)
     work = ls(f"work/every-tx/{m}/v{MONTH.replace('-', '')}/") + ls(f'work/every-tx/{m}/Acache/')
     delete_all(work)

@@ -8,6 +8,9 @@ on:
         description: "Only print what it would do"
         type: boolean
         default: true
+      start:
+        description: "Step to start at (3 = after the tables are moved)"
+        default: "1"
 permissions:
   contents: read
 concurrency:
@@ -25,6 +28,7 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ secrets.R2_BUCKET }}
       DRY: ${{ inputs.dry && '1' || '' }}
+      START: ${{ inputs.start }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
