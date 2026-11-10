@@ -49,7 +49,8 @@ GB_PER_MACHINE, AREA_MAX = 20, 3              # metro-area machines: one per 20 
 # Oct 12, 2026 (Betsy): small towns was the last page left, alone on one machine for hours. Put up to 15 machines on it so
 # the build ends and the waiting Cigna file can start. Extra machines claim unread tables in stage A and skip finished
 # buckets in stage B; any that don't fit the account's machine limit are simply not started.
-BOOST = {'small-towns': 15}
+FAST_AREAS = {'small-towns', 'killeen-temple'}   # Nov 10, 2026: the two biggest area pages use the fast setup (batches in pieces)
+BOOST = {'small-towns': 15, 'killeen-temple': 12}   # Nov 10, 2026: Killeen-Temple gained Baylor Scott & White Temple (+831M rows, tx_move.py)
 GEO = os.path.join(O.HERE, '..', 'reference', 'geo', 'tx_zip_metro.csv')
 CITY_PAGES = ['el-paso', 'austin', 'san-antonio', 'houston']
 RUN_SPLIT = "for t in 1 2 3; do /root/v/bin/python /root/h/tx_split.py >> /root/run.log 2>&1 && break; sleep 5; done"
@@ -73,7 +74,7 @@ def sizes(prefix):
 
 def metros():
     """(metro, machines, stage B settings) built this month; metro-area machine counts are set after the split"""
-    return ([] if EARLY else BIG) + [(m, None, AREA_W) for m in AREAS]
+    return ([] if EARLY else BIG) + [(m, None, FAST if m in FAST_AREAS else AREA_W) for m in AREAS]
 
 
 def retire_stale():
