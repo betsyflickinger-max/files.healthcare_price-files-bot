@@ -7,6 +7,8 @@ Rules (Betsy, Nov 10, 2026):
   - Total (a), Medicare-use weighted: sum(volume x middle private amount) / sum(volume x middle Medicare amount), over
     codes with a figure and a Medicare volume in the state. Label: "weighted by Medicare's mix of care, which skews older".
   - Total (b), equal weight: the middle of all codes' middles.
+  - Total (c), "weighted to how privately insured people under 65 use care (MEPS)": kinds of care weighted by MEPS 2024
+    spending shares for people under 65 with private insurance, codes inside each kind weighted as in (a) (meps.py).
   - Every figure three ways (Nov 10, 2026, Betsy): all rates; rates at providers with evidence they do this service
     (the main "clean" view: billed Medicare for it, or the hospital's own file lists it / counts paid claims for it); and
     the 0.5x-8x Medicare range check (rates labeled "may never be used" left out, docs/rate-labels.md) as a secondary view.
@@ -19,6 +21,8 @@ import json
 import math
 from datetime import date
 from pathlib import Path
+
+import meps
 
 MIN_PROVIDERS = 5
 PCTS = (10, 50, 90)
@@ -164,7 +168,7 @@ def summarize(con, parts_dir, bench, out, state, hospital_matches=None, notes=()
     pg, cg, ng = str(parts_dir / "*.part.parquet"), str(parts_dir / "*.codes.parquet"), str(parts_dir / "*.npis.parquet")
     hospital_lists(con, str(parts_dir / "*.hcodes.parquet"))
     vols = load_volumes(bench, state)
-    code_rows, bucket_rows, total_rows = [], [], []
+    code_rows, bucket_rows, total_rows, meps_rows = [], [], [], []
     for which, kind in WHICH:
         figs = code_figures(con, pg, cg, kind, state)
         for k, f in figs.items():
@@ -194,9 +198,11 @@ def summarize(con, parts_dir, bench, out, state, hospital_matches=None, notes=()
                                         medicare_use_weighted=_weighted(wv), codes_with_volume=len(wv)))
             ok = [r for r in rs if r["figure"] == "yes" and r["view"] not in NOT_IN_TOTALS]
             wv = [r for r in ok if r["medicare_volume_2024"] or r.get("medicare_dollars_2024")]
+            mt, mparts = meps.meps_total(wv, _weighted)
+            meps_rows += [dict(figure=label, rates=which, **mp) for mp in mparts]
             total_rows.append(dict(figure=label, rates=which, codes=len(ok), codes_weighted=len(wv),
                                    equal_weight=nearest_rank([r["middle"] for r in ok], 50), medicare_use_weighted=_weighted(wv),
-                                   units=sum(r["units"] for r in ok)))
+                                   meps_weighted=mt, units=sum(r["units"] for r in ok)))
             for name, views in (("Doctor and clinician fees (all RBCS categories)", {"professional"}),
                                 ("Hospital outpatient facility fees", {"outpatient_hospital"}),
                                 ("Hospital stays (inpatient)", {"inpatient"}),
@@ -240,14 +246,16 @@ def summarize(con, parts_dir, bench, out, state, hospital_matches=None, notes=()
     _write_csv(out / "codes.csv", code_rows)
     _write_csv(out / "buckets.csv", bucket_rows)
     _write_csv(out / "totals.csv", total_rows)
+    _write_csv(out / "meps_weights.csv", meps_rows)
     _write_csv(out / "coverage.csv", coverage)
     _write_csv(out / "providers.csv", providers)
     _write_csv(out / "no_benchmark_codes.csv", _no_bench(con, pg, state))
     srcs = json.loads((Path(bench) / "sources.json").read_text())
+    from sources import MEPS
     _write_csv(out / "medicare_sources.csv", [dict(key=k, what=v.get("what"), year=v.get("year"), url=v.get("url"), sha256=v.get("sha256", ""))
-                                               for k, v in srcs.items() if not k.startswith("_")])
+                                               for k, v in srcs.items() if not k.startswith("_")] + [dict(key="meps", **MEPS)])
     from report import write_md
-    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods, anes, notes)
+    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods, anes, notes, meps_rows)
     return dict(codes=len(code_rows), buckets=len(bucket_rows), totals=len(total_rows))
 
 

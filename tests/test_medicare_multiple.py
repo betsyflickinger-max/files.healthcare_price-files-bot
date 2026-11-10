@@ -503,3 +503,40 @@ def test_hospital_match_rows_and_unmatched_files_stay_listed():
     assert [r["method"] for r in rows] == [hm.M_NPI, hm.M_NONE] and rows[0]["npis_in_file"] == "1234567890"
     est = runmod.estimate(dict(items=doc["items"] + [dict(source="insurer", lane="gh", rows=10, bytes=1)]))
     assert est["tables"] == 2 and est["hospital_files_not_matched"] == 1
+
+
+# ---------------------------------------------------------------- fix 6: third total weighted by MEPS (under 65, private)
+import meps  # noqa: E402
+
+
+def test_meps_shares_from_public_use_file_columns():
+    pd = pytest.importorskip("pandas")
+    cols = {f"{stem}24": [10.0, 30.0, 999.0, 50.0] for stem, _, _ in meps.EVENTS}
+    d = pd.DataFrame(dict(AGELAST=[30, 40, 70, 50], INSCOV24=[1, 1, 1, 2], PERWT24F=[1.0, 2.0, 5.0, 9.0], **cols))
+    d["TOTEXP24"] = sum(d[f"{stem}24"] for stem, _, _ in meps.EVENTS)
+    rows, people = meps.shares_from_frame(d)
+    assert people == 2                      # the 70-year-old and the publicly insured person are out
+    ob = next(r for r in rows if r["variable"] == "OBVEXP24")
+    assert ob["dollars"] == 70 and ob["share"] == round(1 / len(meps.EVENTS), 5)
+
+
+def test_meps_total_weights_groups_by_spending(tmp_path):
+    f = tmp_path / "m.csv"
+    _csv(f, ["year", "variable", "event_type", "group", "dollars", "share"],
+         [[2024, "OBVEXP24", "Office", "Doctor and clinician fees", 30, 0.3], [2024, "IPFEXP24", "Inpatient", "Hospital stays", 15, 0.15],
+          [2024, "RXEXP24", "Rx", "", 25, 0.25], [2024, "TOTEXP24", "All", "(total)", 100, 1.0]])
+    rows = [dict(view="professional", medicare_volume_2024=100, middle_private_amount=150.0, middle_medicare_amount=100.0),
+            dict(view="inpatient", medicare_volume_2024=1, middle_private_amount=30000.0, middle_medicare_amount=10000.0)]
+    t, parts = meps.meps_total(rows, summ._weighted, f)
+    # (0.30 x 1.5 + 0.15 x 3.0) / 0.45 = 2.0; prescriptions have no kind of care here and are left out
+    assert t == 2.0
+    assert {p["group"]: p["multiple"] for p in parts}["Hospital stays"] == 3.0
+
+
+def test_meps_committed_shares_and_total_in_report(run):
+    g, rows = meps.load_shares()
+    assert abs(sum(float(r["share"]) for r in rows if r["group"] != "(total)") - 1.0) < 0.001
+    assert set(g) == set(meps.GROUP_VIEWS)
+    t = pick(run["totals"], figure="Insurer files, in-network", rates=summ.ALL, subtotal="")[0]
+    assert float(t["meps_weighted"]) == 1.3          # only doctor fees have a figure in the made-up data
+    assert "under 65" in run["md"] and "HC-256" in run["md"]

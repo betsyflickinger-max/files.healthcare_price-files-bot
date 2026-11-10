@@ -2,6 +2,7 @@
 from datetime import date
 
 from sources import PUBLISHED
+import meps
 from summarize import ALL, EVIDENCE, RANGE
 
 STATE = {"TX": "Texas"}
@@ -15,7 +16,7 @@ def n(v):
     return "—" if v is None else f"{int(v):,}"
 
 
-def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=(), anes=(), notes=()):
+def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=(), anes=(), notes=(), meps_rows=()):
     name = STATE.get(state, state)
     figs = []
     for r in total_rows:
@@ -38,14 +39,29 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
          "- Medicare billing data under-represents children's and pregnancy care (few Medicare patients), so for those the hospital's "
          "own file is the evidence that counts; doctor fees for them can look \"without evidence\" when they are real.",
          "- In-network, out-of-network and unclear plans are never mixed.", ""]
-    L += ["## The two totals", "",
-          "| Figure | Rates | (a) Weighted by Medicare's mix of care, which skews older | (b) Equal weight: middle of all codes' middles | Codes (b) | Codes with a Medicare volume (a) |",
-          "|---|---|---|---|---|---|"]
+    L += ["## The three totals", "",
+          f"| Figure | Rates | (a) Weighted by Medicare's mix of care, which skews older | (b) Equal weight: middle of all codes' middles | (c) {meps.LABEL[0].upper() + meps.LABEL[1:]} | Codes (b) | Codes with a Medicare volume (a, c) |",
+          "|---|---|---|---|---|---|---|"]
     for f in figs:
         for which in (ALL, EVIDENCE, RANGE):
             r = T.get((f, which, ""))
             if r:
-                L.append(f"| {f} | {which} | {x(r['medicare_use_weighted'])} | {x(r['equal_weight'])} | {n(r['codes'])} | {n(r['codes_weighted'])} |")
+                L.append(f"| {f} | {which} | {x(r['medicare_use_weighted'])} | {x(r['equal_weight'])} | {x(r.get('meps_weighted'))} | "
+                         f"{n(r['codes'])} | {n(r['codes_weighted'])} |")
+    _, mrows = meps.load_shares()
+    cov = sum(float(m["share"]) for m in mrows if m["group"] and m["group"] != "(total)")
+    L += ["", f"(c) weights each kind of care by its share of 2024 spending for people under 65 with private insurance "
+          f"({meps.TABLE}); inside each kind, codes are weighted by Medicare's volumes as in (a). The kinds of care here cover "
+          f"{cov:.0%} of that spending; prescribed medicines, dental, home health and glasses are not in these files and are left out of (c):", "",
+          "| MEPS event type | Share of spending | Our kind of care |", "|---|---|---|"]
+    for m in mrows:
+        if m["group"] != "(total)":
+            L.append(f"| {m['event_type']} | {float(m['share']):.1%} | {m['group'] or 'not in these files: left out'} |")
+    mp = [m for m in meps_rows if m["figure"] == "Insurer files, in-network"]
+    if mp:
+        L += ["", "Insurer files, in-network, by group:", "", "| Rates | Group | MEPS share | Group multiple (Medicare-use weighted) | Codes |", "|---|---|---|---|---|"]
+        for m in mp:
+            L.append(f"| {m['rates']} | {m['group']} | {m['meps_share']:.1%} | {x(m['multiple'])} | {n(m['codes'])} |")
     L += ["", "Totals leave out facility fees at places not matched to a Medicare hospital or surgery center, and codes with no "
           "Medicare benchmark (both are counted below). The weighted total leaves out surgery centers (no Medicare surgery-center "
           "volume file was in scope). Anesthesia is in it per unit: its conversion-factor multiple, weighted by Medicare's "

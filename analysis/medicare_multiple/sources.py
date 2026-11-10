@@ -107,6 +107,15 @@ CMS = {
         url="https://data.cms.gov/sites/default/files/2026-04/828defb5-c9e6-4442-8c1b-f27bc0799daf/MUP_INP_RY26_P03_V10_DY24_PrvSvc.CSV"),
 }
 
+# Third total (c): how privately insured people under 65 spend on care. Shares computed once from this public use file by
+# meps.py and committed (meps_2024_under65_private.csv, with this file's SHA-256), so a run downloads nothing from AHRQ.
+MEPS = dict(
+    what="AHRQ Medical Expenditure Panel Survey, Household Component: 2024 Full Year Consolidated Data File (HC-256); "
+         "total expenditures by event type, people under 65 with any private insurance (MEPS-HC summary table measure)",
+    year="2024 (newest year in the MEPS-HC summary tables, Nov 2026)",
+    url="https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip",
+    sha256="653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40")
+
 # Published benchmarks for the sanity check (report only; never used in a calculation)
 PUBLISHED = [
     dict(name="KFF literature review (2020): physician services", multiple=1.43, kind="professional",
