@@ -29,6 +29,7 @@ import re
 import sys
 import tarfile
 import tempfile
+import threading
 import time
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -39,7 +40,7 @@ from botocore.exceptions import ClientError
 
 ALWAYS = ("control/data/", "site/more/")
 TOPS = ("site/", "control/")
-LIT = re.compile(r"""['"`]((?:site|control)/[A-Za-z0-9_./=-]*)['"`]""")
+NAME = re.compile(r"""['"`]((?:site|control)/[A-Za-z0-9_./=-]*)""")
 CFG = Config(retries={"max_attempts": 10, "mode": "adaptive"}, max_pool_connections=64)
 g = lambda k: "".join(os.environ.get(k, "").split())
 
@@ -69,26 +70,30 @@ def dst():
 
 
 def refs(functions_dir):
-    """(folders, files) the site's Functions name."""
+    """(folders, files) the site's Functions name.
+
+    A name that is completed at run time (followed by + or ${...}) is a stem. The only stem this can follow is the
+    folder of a pointer file (site/every/ with site/every/CURRENT) or one copied whole (ALWAYS); any other refuses, so
+    the site is never left reading files R2 doesn't have."""
     folders, files, stems = set(ALWAYS), set(), set()
     for f in Path(functions_dir).rglob("*"):
         if f.suffix not in (".js", ".mjs", ".ts") or not f.is_file():
             continue
-        for m in LIT.finditer(f.read_text(errors="replace")):
-            s = m.group(1)
-            if s.endswith("/") and s.count("/") < 3 and s not in ALWAYS:
-                stems.add(s)      # e.g. 'site/every/' + <something>: only safe when a pointer file says what
+        text = f.read_text(errors="replace")
+        for m in NAME.finditer(text):
+            s, rest = m.group(1), text[m.end(1):m.end(1) + 20]
+            closed = rest[:1] == m.group(0)[0] and not re.match(r"['\"`]\s*\+", rest)
+            if not closed or rest.startswith("${"):
+                stems.add(s)
             else:
                 (folders if s.endswith("/") else files).add(s)
-    # A short folder name is a stem the code adds to at run time. The only kind this can follow is a pointer file in
-    # it (site/every/ + site/every/CURRENT). Anything else would leave the site reading files R2 doesn't have.
-    unknown = sorted(st for st in stems if not any(k.startswith(st) and k.rsplit("/", 1)[-1].isupper() for k in files))
+    pointer_dirs = {k.rsplit("/", 1)[0] + "/" for k in files if k.rsplit("/", 1)[-1].isupper()}
+    unknown = sorted(st for st in stems if st not in pointer_dirs and not st.startswith(ALWAYS))
     if unknown:
         raise RuntimeError(f"the website builds file names from {unknown} at run time; site_r2 can't tell which files "
                            "that means, so it must be taught before the site can be served from R2 copies")
-    # a folder that sits inside another listed folder is covered by it
     fl = sorted(folders)
-    folders = [p for i, p in enumerate(fl) if not any(p != q and p.startswith(q) for q in fl)]
+    folders = [p for p in fl if not any(p != q and p.startswith(q) for q in fl)]
     files = sorted(k for k in files if not any(k.startswith(q) for q in folders))
     return folders, files
 
@@ -102,12 +107,16 @@ def _list(side, prefix):
     return out
 
 
+_tl = threading.local()
+
+
 def _copy(k):
-    (s, sb), (d, db) = src(), dst()
-    with tempfile.SpooledTemporaryFile(max_size=64 << 20) as f:
-        s.download_fileobj(sb, k, f)
-        f.seek(0)
-        d.upload_fileobj(f, db, k)
+    """Stream one file Backblaze -> R2 (no temp file: the map tiles file alone is 18.8 GB). One client pair per thread."""
+    if not hasattr(_tl, "c"):
+        _tl.c = (src(), dst())
+    (s, sb), (d, db) = _tl.c
+    body = s.get_object(Bucket=sb, Key=k)["Body"]
+    d.upload_fileobj(body, db, k)
     return k
 
 
@@ -142,14 +151,14 @@ def publish(functions_dir, dry=False, log=print):
     folders, files = refs(functions_dir)
     (s, sb), (d, db) = src(), dst()
     # pointer files (e.g. site/every/CURRENT): copy the folder they name first, then the pointer
-    pointers = []
+    pointers = {}
     for k in files:
         if k.rsplit("/", 1)[-1].isupper():
             v = s.get_object(Bucket=sb, Key=k)["Body"].read().decode().strip()
             if not re.fullmatch(r"[A-Za-z0-9._-]+", v):
                 raise RuntimeError(f"{k} holds an unexpected value: {v[:60]!r}")
             folders.append(k.rsplit("/", 1)[0] + "/" + v + "/")
-            pointers.append(k)
+            pointers[k] = v
     plain = [k for k in files if k not in pointers]
     since = switched_at(s, sb)
     todo, errs = [], []
@@ -167,9 +176,11 @@ def publish(functions_dir, dry=False, log=print):
         todo += [k for k, (sz, t) in a.items() if k not in b or b[k][0] != sz or (t > since and t > b[k][1])]
     for k in plain:
         a, b = _head(s, sb, k), _head(d, db, k)
-        if a and (not b or b[0] != a[0] or (a[1] > since and a[1] > b[1])):
+        if not a:
+            raise RuntimeError(f"the website reads {k}, but the bot's storage doesn't have it")
+        if (not b or b[0] != a[0] or (a[1] > since and a[1] > b[1])):
             todo.append(k)
-    stats = {"folders": len(folders), "files_named": len(files), "to_copy": len(todo), "pointers": pointers,
+    stats = {"folders": len(folders), "files_named": len(files), "to_copy": len(todo), "pointers": sorted(pointers),
              "src_files": sum(len(got[("src", p)]) for p in folders)}
     if dry:
         stats["sample"] = todo[:10]
@@ -184,10 +195,8 @@ def publish(functions_dir, dry=False, log=print):
                 errs.append(repr(e)[:200])
     if errs:
         raise RuntimeError(f"site_r2: {len(errs)} of {len(todo)} copies failed, e.g. {errs[0]}")
-    for k in pointers:      # last: only now may the site point at the new folders
-        a, b = _head(s, sb, k), _head(d, db, k)
-        if not b or a[0] != b[0] or (a[1] > since and a[1] > b[1]):
-            _copy(k)
+    for k, v in pointers.items():      # last, and exactly the value read above: never a newer build not copied yet
+        d.put_object(Bucket=db, Key=k, Body=v.encode())
     stats["seconds"] = round(time.time() - t0)
     log(f"site_r2: copied {len(todo)} files to R2 for the website ({stats['folders']} folders, {stats['seconds']} s)")
     return stats

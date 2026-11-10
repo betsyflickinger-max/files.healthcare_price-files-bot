@@ -59,20 +59,6 @@ def count(site):
     return sum(len(fs) for _, _, fs in os.walk(site))
 
 
-def _site_r2():
-    if "site_r2" in sys.modules:
-        return sys.modules["site_r2"]
-    import importlib.util
-    bot = os.path.normpath(os.path.join(HERE, "..", "bot"))
-    if bot not in sys.path:
-        sys.path.append(bot)          # appended, not first: bot/ must not shadow other modules; worker processes import it
-    spec = importlib.util.spec_from_file_location("site_r2", os.path.join(bot, "site_r2.py"))
-    m = importlib.util.module_from_spec(spec)
-    sys.modules["site_r2"] = m
-    spec.loader.exec_module(m)
-    return m
-
-
 @contextmanager
 def offload(d):
     site, hold = os.path.join(d, "site"), os.path.join(d, ".spilled")
@@ -101,7 +87,8 @@ def offload(d):
     # Nov 9, 2026 (storage move, Betsy chose "keep the website's files on R2"): once the bot writes to Backblaze, copy
     # every file this deploy's Functions read to R2 first. Does nothing while the bot still writes to R2. A failure
     # stops the deploy (better than a live site pointing at files R2 doesn't have).
-    _site_r2().publish(os.path.join(d, "functions"))
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "bot", "site_r2.py"), "publish", os.path.join(d, "functions")],
+                   check=True)
     moved = []
     try:
         for rel in files:
