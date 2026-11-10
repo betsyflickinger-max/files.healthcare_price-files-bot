@@ -175,6 +175,12 @@ class Proof:
             # none. With no taxonomy, no Medicare hospital ID and no "hospital" in its name, it's checked as a practice too.
             if kind == 'H' and not gt and not ccn and not re.search(r'\bhospital\b', name_of or '', re.I):
                 kind = 'G'
+            # Third live check: "Emory Children's Center" stayed after both rules above, so the insurer file ties it to an NPI with a
+            # hospital ID or hospital taxonomy. A "hospital" whose own name is a children's or other never-delivers place and doesn't
+            # say "hospital" is checked as a practice whatever its NPI says. "Children's Hospital Medical Center" is kept.
+            hn = name_of or name or ''
+            if kind == 'H' and not re.search(r'\bhospital\b', hn, re.I) and NEVER_DELIVERY_NAME_ALL.search(hn) and not OB_NAME.search(hn):
+                kind = 'G'
             # ambulatory centers (261Q: endoscopy, surgery, imaging, dialysis...) don't deliver babies; birthing centers do
             if (kind == 'P' and is_non_delivery(t_)) or (kind == 'G' and (gt.startswith(GROUP_NOT_DELIVERY) or (gt.startswith('261Q') and not gt.startswith('261QB0400')))):
                 return 'wrong_specialty', 'listed specialty doesn\'t deliver babies'
