@@ -383,10 +383,69 @@ def status(doc):
                 left_rows=sum(i["rows"] for i in left), left_sample=[i["key"] for i in left[:10]])
 
 
-def launch(doc, ref, machines=DO_MACHINES):
+RESERVE_SLOTS = 2               # machine slots always left free for the other builds (machine_shares.py)
+CENTRAL = "America/Chicago"
+POLL_MINUTES = 10
+
+
+def free_slots(droplets, machines, big):
+    """How many machines this run may rent now: never more than asked, than there are big tables, or than the free slots
+    minus the RESERVE_SLOTS kept for other builds."""
+    return min(machines, len(big), max(0, droplets.room() - RESERVE_SLOTS))
+
+
+def wait_for_slots(droplets, machines, big, wait_minutes, sleep=time.sleep, poll=POLL_MINUTES):
+    """Free slots for this run, checking every `poll` minutes for up to `wait_minutes`. 0 = still none (the caller queues)."""
+    waited = 0
+    while True:
+        n = free_slots(droplets, machines, big)
+        if n > 0 or waited + poll > wait_minutes:
+            return n
+        log(f"no free machine slots (keeping {RESERVE_SLOTS} for other builds); checking again in {poll} minutes")
+        sleep(poll * 60)
+        waited += poll
+
+
+def central_now():
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    return datetime.now(ZoneInfo(CENTRAL))
+
+
+def start_time(hhmm, now=None):
+    """The next time it is HH:MM in Central time (today if it hasn't passed, else now). None/'' = now."""
+    now = now or central_now()
+    if not hhmm:
+        return now
+    h, m = (int(x) for x in hhmm.strip().split(":"))
+    t = now.replace(hour=h, minute=m, second=0, microsecond=0)
+    return t if t > now else now
+
+
+def queue(s3c, b, run_id, why, args, not_before=None):
+    """Leave the run queued in storage: the nightly run (step 'resume') starts it. Nothing is ever deleted: a started run
+    gets launched.json next to its queued.json."""
+    doc = dict(run_id=run_id, why=why, queued_at=central_now().isoformat(timespec="minutes"),
+               not_before=(not_before or central_now()).isoformat(timespec="minutes"), args=args)
+    s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/queued.json", Body=json.dumps(doc, indent=1).encode())
+    log(f"queued {run_id}: {why}. The nightly run (or step 'resume') starts it after {doc['not_before']} Central.")
+    return doc
+
+
+def gh_output(**kv):
+    """Tell the workflow whether the free GitHub lane should run now, and for which state and run id."""
+    f = os.environ.get("GITHUB_OUTPUT")
+    if f:
+        with open(f, "a") as o:
+            for k, v in kv.items():
+                o.write(f"{k}={v}\n")
+
+
+def launch(doc, ref, machines=DO_MACHINES, wait_minutes=0, sleep=time.sleep):
     """Rent up to DO_MACHINES DigitalOcean machines for the big tables. Each one clones this repo at `ref` (public, no
     key), reads its share of the tables, uploads the parts and deletes itself. Respects Betsy's monthly card cap and the
-    machine-share rules (never more than the free slots, never all of them)."""
+    machine-share rules (never more than the free slots, never all of them). With no free slot it waits up to
+    `wait_minutes` (checking every 10 minutes) and then returns None, so the caller can queue the run."""
     sys.path.insert(0, str(ROOT / "insurers"))
     import droplets
     big = [i for i in doc["items"] if i["lane"] == "do"]
@@ -394,9 +453,9 @@ def launch(doc, ref, machines=DO_MACHINES):
         return []
     if droplets.over_cap():
         sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
-    n = min(machines, len(big), max(0, droplets.room() - 2))
+    n = wait_for_slots(droplets, machines, big, wait_minutes, sleep)
     if n <= 0:
-        sys.exit("no free machine slots right now (the November builds have them): run 'start' again later")
+        return None
     keys = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "STORAGE_ENDPOINT", "STORAGE_REGION", "DIGITALOCEAN_TOKEN"]
     env = "\n".join(f"export {k}='{''.join(os.environ.get(k, '').split())}'" for k in keys)
     made = []
@@ -509,6 +568,75 @@ def cmd_local(a):
         print(summ.summarize(con, parts, a.bench, Path(a.out) / st.lower(), st))
 
 
+def vars_for_queue(a):
+    return dict(state=a.state, run=a.run, ref=a.ref, machines=a.machines, gh_max_rows=a.gh_max_rows)
+
+
+def cmd_start(a, s3c, b, run_id, pk, resumed=False):
+    """plan/estimate/start. start: the $40 guard first (unchanged), then the Medicare tables, then rented machines (waiting
+    for free slots, else queued for the nightly run). The free GitHub lane is told to go once the benchmark is in storage."""
+    if a.cmd == "plan" or not _exists(s3c, b, pk):
+        doc = plan(a.states, run_id, a.work, a.gh_max_rows)
+    else:
+        doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
+    est = estimate(doc, machines=a.machines)
+    key, ok_usd = approved(a.states)
+    limit = ok_usd or MM_LIMIT_USD
+    est.update(run_id=run_id, limit_usd=limit, approval_key=key,
+               verdict="ok" if est["total_usd"] <= limit else "over the limit: needs Betsy's OK")
+    s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/estimate.json", Body=json.dumps(est, indent=1).encode())
+    json.dump(est, open(f"{a.work}/estimate.json", "w"), indent=1)
+    print(json.dumps(est, indent=1), flush=True)
+    if a.cmd != "start":
+        return
+    if est["verdict"] != "ok":
+        gh_output(gh_go="false")
+        sys.exit(f"stopped before reading anything: estimate ${est['total_usd']} > ${limit} "
+                 f"(Betsy: add \"{key}\": {{\"usd\": N}} to build_approvals.json to allow more)")
+    if not _exists(s3c, b, f"{PFX}{run_id}/bench/sources.json"):
+        cmd_bench(a)
+        _bench_to_storage(s3c, b, a.bench, run_id)
+    # the free GitHub lane: every manual start (it skips tables already done), and a resumed run only if it never ran
+    if not resumed or not _exists(s3c, b, f"{PFX}{run_id}/gh_started.json"):
+        s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/gh_started.json", Body=central_now().isoformat().encode())
+        gh_output(gh_go="true", state=",".join(a.states), run=run_id)
+    else:
+        gh_output(gh_go="false")
+    if _exists(s3c, b, f"{PFX}{run_id}/launched.json"):
+        log("rented machines were already started for this run")
+        return
+    made = launch(doc, a.ref, a.machines, wait_minutes=a.wait_minutes)
+    if made is None:
+        queue(s3c, b, run_id, "no free machine slots", vars_for_queue(a))
+        return
+    s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/launched.json",
+                   Body=json.dumps(dict(at=central_now().isoformat(timespec="minutes"), machines=made, resumed=resumed)).encode())
+
+
+def cmd_resume(a, s3c, b):
+    """Nightly (and on demand): start the oldest queued run whose start time has come and that has no machines yet."""
+    queued = []
+    for k, _ in ls(s3c, b, PFX):
+        if k.endswith("/queued.json"):
+            rid = k[len(PFX):].split("/")[0]
+            if not _exists(s3c, b, f"{PFX}{rid}/launched.json"):
+                queued.append(json.loads(s3c.get_object(Bucket=b, Key=k)["Body"].read()))
+    from datetime import datetime
+    now = central_now()
+    ready = sorted([q for q in queued if datetime.fromisoformat(q["not_before"]) <= now], key=lambda q: q["queued_at"])
+    if not ready:
+        log(f"nothing to start ({len(queued)} queued, none due)")
+        gh_output(gh_go="false")
+        return
+    q = ready[0]
+    for k, v in q["args"].items():
+        setattr(a, k, v)
+    a.states = [x.strip().upper() for x in a.state.split(",")]
+    a.cmd = "start"
+    log(f"resuming {q['run_id']} (queued {q['queued_at']}: {q['why']})")
+    return cmd_start(a, s3c, b, q["run_id"], f"{PFX}{q['run_id']}/plan.json", resumed=True)
+
+
 def _bench_to_storage(s3c, b, bench, run_id):
     for f in Path(bench).glob("*"):
         s3c.upload_file(str(f), b, f"{PFX}{run_id}/bench/{f.name}")
@@ -522,7 +650,7 @@ def _bench_from_storage(s3c, b, bench, run_id):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "reduce", "status", "summarize", "local"])
+    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "resume", "reduce", "status", "summarize", "local"])
     ap.add_argument("--state", default="TX", help="two-letter code(s), comma-separated, or ALL")
     ap.add_argument("--run", default="", help="run id (default: <state>-<yyyy-mm>)")
     ap.add_argument("--cache", default="/tmp/mm/cms")
@@ -536,6 +664,9 @@ def main():
     ap.add_argument("--machines", type=int, default=DO_MACHINES, help="start: most rented machines at once")
     ap.add_argument("--gh-max-rows", type=int, default=GH_MAX_ROWS,
                     help="plan: tables up to this many rows go to GitHub's free machines (0 = every insurer table on rented machines)")
+    ap.add_argument("--start-after", default="", help="start: HH:MM Central time; later than --wait-minutes away -> queued for the nightly run")
+    ap.add_argument("--wait-minutes", type=int, default=0,
+                    help="start/resume: how long to wait (inside this job) for the start time or for free machine slots before queuing")
     ap.add_argument("--from-storage", action="store_true", help="reduce: read the run's plan and benchmark from storage")
     ap.add_argument("--force", action="store_true", help="summarize even if some planned tables aren't done (they are listed)")
     ap.add_argument("--prov", default="")
@@ -555,27 +686,21 @@ def main():
         return cmd_bench(a)
     s3c, b = s3()
     pk = f"{PFX}{run_id}/plan.json"
+    if a.cmd == "resume":
+        return cmd_resume(a, s3c, b)
     if a.cmd in ("plan", "estimate", "start"):
-        if a.cmd == "plan" or not _exists(s3c, b, pk):
-            doc = plan(a.states, run_id, a.work, a.gh_max_rows)
-        else:
-            doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
-        est = estimate(doc, machines=a.machines)
-        key, ok_usd = approved(a.states)
-        limit = ok_usd or MM_LIMIT_USD
-        est.update(run_id=run_id, limit_usd=limit, approval_key=key,
-                   verdict="ok" if est["total_usd"] <= limit else "over the limit: needs Betsy's OK")
-        s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/estimate.json", Body=json.dumps(est, indent=1).encode())
-        json.dump(est, open(f"{a.work}/estimate.json", "w"), indent=1)
-        print(json.dumps(est, indent=1), flush=True)
-        if a.cmd == "start":
-            if est["verdict"] != "ok":
-                sys.exit(f"stopped before reading anything: estimate ${est['total_usd']} > ${limit} "
-                         f"(Betsy: add \"{key}\": {{\"usd\": N}} to build_approvals.json to allow more)")
-            cmd_bench(a)
-            _bench_to_storage(s3c, b, a.bench, run_id)
-            launch(doc, a.ref, a.machines)
-        return
+        if a.cmd == "start" and a.start_after:
+            t = start_time(a.start_after)
+            secs = (t - central_now()).total_seconds()
+            if secs > a.wait_minutes * 60:      # too long to wait inside this job: the nightly run starts it
+                queue(s3c, b, run_id, f"asked to start after {a.start_after} Central", vars_for_queue(a), not_before=t)
+                gh_output(gh_go="false")
+                return
+            if secs > 0:
+                log(f"waiting until {a.start_after} Central ({secs / 60:.0f} minutes)")
+                time.sleep(secs)
+                a.wait_minutes = max(0, a.wait_minutes - int(secs // 60))   # one waiting budget for the whole job
+        return cmd_start(a, s3c, b, run_id, pk)
     doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
     if a.cmd == "status":
         print(json.dumps(status(doc), indent=1))

@@ -540,3 +540,89 @@ def test_meps_committed_shares_and_total_in_report(run):
     t = pick(run["totals"], figure="Insurer files, in-network", rates=summ.ALL, subtotal="")[0]
     assert float(t["meps_weighted"]) == 1.3          # only doctor fees have a figure in the made-up data
     assert "under 65" in run["md"] and "HC-256" in run["md"]
+
+
+# ---------------------------------------------------------------- fix 7: wait or queue for free machine slots
+class FakeS3:
+    def __init__(self):
+        self.o = {}
+
+    def put_object(self, Bucket, Key, Body):
+        self.o[Key] = Body if isinstance(Body, bytes) else Body.encode()
+
+    def get_object(self, Bucket, Key):
+        import io
+        return {"Body": io.BytesIO(self.o[Key])}
+
+    def head_object(self, Bucket, Key):
+        if Key not in self.o:
+            raise KeyError(Key)
+
+    def get_paginator(self, _):
+        o = self.o
+
+        class P:
+            def paginate(self, Bucket, Prefix):
+                return [{"Contents": [{"Key": k, "Size": len(v)} for k, v in sorted(o.items()) if k.startswith(Prefix)]}]
+        return P()
+
+
+class FakeDroplets:
+    def __init__(self, rooms):
+        self.rooms = list(rooms)
+
+    def room(self):
+        return self.rooms.pop(0) if len(self.rooms) > 1 else self.rooms[0]
+
+
+def test_wait_for_slots_keeps_two_free_and_waits():
+    import run as runmod
+    big = [1, 2, 3, 4, 5]
+    slept = []
+    # 2 free slots = the reserve: none for us; an hour later 5 free -> 3 for us (never the last 2)
+    n = runmod.wait_for_slots(FakeDroplets([2, 2, 5]), 4, big, wait_minutes=60, sleep=slept.append)
+    assert n == 3 and slept == [600, 600]
+    slept.clear()
+    assert runmod.wait_for_slots(FakeDroplets([1]), 4, big, wait_minutes=30, sleep=slept.append) == 0 and len(slept) == 3
+    assert runmod.wait_for_slots(FakeDroplets([9]), 4, big, wait_minutes=0, sleep=slept.append) == 4
+
+
+def test_start_after_central_time():
+    import run as runmod
+    from datetime import datetime
+    from zoneinfo import ZoneInfo
+    now = datetime(2026, 11, 10, 15, 30, tzinfo=ZoneInfo("America/Chicago"))
+    assert runmod.start_time("22:00", now) == now.replace(hour=22, minute=0)
+    assert runmod.start_time("09:00", now) == now           # already past today: start now
+    assert runmod.start_time("", now) == now
+
+
+def test_no_slots_queues_and_nightly_resume_picks_the_due_run(monkeypatch, tmp_path):
+    import types
+    import run as runmod
+    s3c = FakeS3()
+    monkeypatch.setitem(sys.modules, "droplets", types.SimpleNamespace(over_cap=lambda: False, room=lambda: 2))
+    doc = {"items": [dict(lane="do", rows=1)], "states": ["TX"], "run_id": "tx-2026-11"}
+    assert runmod.launch(doc, "main", 4, wait_minutes=0) is None          # only the 2 reserved slots are free
+    from datetime import timedelta
+    later = runmod.central_now() + timedelta(hours=5)
+    runmod.queue(s3c, "b", "tx-2026-11", "no free machine slots", dict(state="TX", run="tx-2026-11", ref="main", machines=4, gh_max_rows=1))
+    runmod.queue(s3c, "b", "tx-2026-12", "asked to start after 23:00 Central", dict(state="TX", run="tx-2026-12", ref="main", machines=4,
+                                                                                    gh_max_rows=1), not_before=later)
+    s3c.put_object("b", runmod.PFX + "old-run/queued.json", s3c.o[runmod.PFX + "tx-2026-11/queued.json"])
+    s3c.put_object("b", runmod.PFX + "old-run/launched.json", b"{}")     # already started: never picked again
+    got = []
+    monkeypatch.setattr(runmod, "cmd_start", lambda a, s3c_, b, rid, pk, resumed=False: got.append((rid, a.cmd, a.states, resumed)))
+    out = tmp_path / "gh_out"
+    monkeypatch.setenv("GITHUB_OUTPUT", str(out))
+    import argparse
+    runmod.cmd_resume(argparse.Namespace(wait_minutes=0), s3c, "b")
+    assert got == [("tx-2026-11", "start", ["TX"], True)]                 # the due one; the 23:00 one waits
+    assert not any(k.endswith("/queued.json") and k not in s3c.o for k in list(s3c.o))   # nothing deleted
+
+
+def test_gh_output_for_the_workflow(tmp_path, monkeypatch):
+    import run as runmod
+    monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "o"))
+    runmod.gh_output(gh_go="true", state="TX", run="tx-2026-11")
+    assert (tmp_path / "o").read_text() == "gh_go=true\nstate=TX\nrun=tx-2026-11\n"

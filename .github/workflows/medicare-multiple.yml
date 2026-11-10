@@ -7,13 +7,18 @@ name: Private price vs Medicare (research, reads big tables)
 #   start      estimate again; if it is at or under the limit ($40, or build_approvals.json "mm-<state>"), builds the Medicare
 #              benchmark from CMS's public files, rents up to 4 DigitalOcean machines for the biggest tables (they delete
 #              themselves when done; Betsy's monthly card cap is checked first) and reads the rest on GitHub's free machines.
+#              Nov 10: with no free machine slot (2 are always kept for other builds) it waits up to "wait_minutes", then
+#              leaves the run queued; "start_after" (HH:MM Central) waits for that time, or queues it if it is further away.
+#   resume     runs every night by itself: starts the oldest queued run whose time has come (same $40 check first).
 #   summarize  when every table is done ("status" shows it), writes the report and commits it to this branch.
 # It never writes to the site and never deletes anything.
 on:
+  schedule:
+    - cron: "17 8 * * *"      # 2:17 am Central (3:17 in summer): step "resume"; does nothing when no run is queued
   workflow_dispatch:
     inputs:
       step:
-        description: "estimate, start, status or summarize"
+        description: "estimate, start, resume, status or summarize"
         default: "estimate"
       state:
         description: "Two-letter state code(s), comma separated, or ALL"
@@ -27,12 +32,18 @@ on:
       gh_max_rows:
         description: "Tables up to this many rows read on GitHub's free machines (estimate/start; use 0 for ALL)"
         default: "800000000"
+      start_after:
+        description: "start: wait until this time, HH:MM Central (blank = now). Further away than wait_minutes = queued for the nightly run"
+        default: ""
+      wait_minutes:
+        description: "start/resume: minutes to wait in this job for the start time or for free machine slots before queuing"
+        default: "240"
 
 permissions:
   contents: write
 
 concurrency:
-  group: medicare-multiple-${{ inputs.state }}
+  group: medicare-multiple-${{ inputs.state || 'nightly' }}
   cancel-in-progress: false
 
 env:
@@ -43,13 +54,18 @@ env:
   R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
   R2_BUCKET: ${{ secrets.R2_BUCKET }}
   RUN_ARG: ${{ inputs.run != '' && format('--run {0}', inputs.run) || '' }}
+  STEP: ${{ inputs.step || 'resume' }}
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 355        # start/resume may wait for free machine slots (wait_minutes) before queuing
     env:
       DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+    outputs:                    # set by run.py: whether the free GitHub lane should read now, and which run
+      gh_go: ${{ steps.go.outputs.gh_go }}
+      state: ${{ steps.go.outputs.state }}
+      run: ${{ steps.go.outputs.run }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -57,20 +73,27 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 duckdb==1.5.6 requests==2.33.0
       - run: sudo mkdir -p /mnt/mm && sudo chown $USER /mnt/mm
-      - name: ${{ inputs.step }}
+      - name: ${{ env.STEP }}
+        id: go
         run: |
-          case "${{ inputs.step }}" in
-            estimate|start|status) python analysis/medicare_multiple/run.py "${{ inputs.step }}" --state "${{ inputs.state }}" $RUN_ARG \
-                                     --ref "${GITHUB_REF_NAME}" --machines "${{ inputs.machines }}" --gh-max-rows "${{ inputs.gh_max_rows }}" --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
+          set -o pipefail
+          case "$STEP" in
+            estimate|start|status) python analysis/medicare_multiple/run.py "$STEP" --state "${{ inputs.state }}" $RUN_ARG \
+                                     --ref "${GITHUB_REF_NAME}" --machines "${{ inputs.machines }}" --gh-max-rows "${{ inputs.gh_max_rows }}" \
+                                     --start-after "${{ inputs.start_after }}" --wait-minutes "${{ inputs.wait_minutes }}" \
+                                     --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
+            resume) python analysis/medicare_multiple/run.py resume --wait-minutes "${{ inputs.wait_minutes || '240' }}" \
+                                     --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
             summarize) echo "summarize runs in its own job" ;;
-            *) echo "step must be estimate, start, status or summarize"; exit 1 ;;
+            *) echo "step must be estimate, start, resume, status or summarize"; exit 1 ;;
           esac
 
   read-on-github:
     # the smaller tables, hospital files and out-of-network files, on GitHub's free machines (4 at a time, so the insurer
-    # reader's own GitHub lane keeps its machines)
+    # reader's own GitHub lane keeps its machines). Runs once per run id, as soon as start/resume has put the benchmark in
+    # storage, even while the rented machines are still queued.
     needs: prepare
-    if: ${{ inputs.step == 'start' }}
+    if: ${{ needs.prepare.outputs.gh_go == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 350
     strategy:
@@ -85,7 +108,7 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 duckdb==1.5.6
       - run: sudo mkdir -p /mnt/mm && sudo chown $USER /mnt/mm
-      - run: python analysis/medicare_multiple/run.py reduce --state "${{ inputs.state }}" $RUN_ARG --lane gh --shard ${{ matrix.shard }} --shards 8 --from-storage --work /mnt/mm/work --bench /mnt/mm/bench
+      - run: python analysis/medicare_multiple/run.py reduce --state "${{ needs.prepare.outputs.state }}" --run "${{ needs.prepare.outputs.run }}" --lane gh --shard ${{ matrix.shard }} --shards 8 --from-storage --work /mnt/mm/work --bench /mnt/mm/bench
 
   summarize:
     if: ${{ inputs.step == 'summarize' }}
