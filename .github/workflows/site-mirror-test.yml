@@ -38,6 +38,20 @@ jobs:
                   p = Path("fn") / nm; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(t.extractfile(m).read()); n += 1
           print(n, "function files")
           PY
+      - name: Every storage call in the live Functions (by hand check)
+        run: |
+          python3 - <<'PY'
+          import re, collections
+          from pathlib import Path
+          c = collections.Counter()
+          for f in Path("fn").rglob("*.js"):
+              t = f.read_text(errors="replace")
+              for m in re.finditer(r"PF\.(\w+)\(([^;\n]{0,120})", t):
+                  arg = re.sub(r"\b20\d\d-\d\d\w*", "<MONTH>", m.group(2))
+                  arg = re.sub(r"(every-st|every-tx|every-st-test)/[a-z0-9-]+/", r"\1/<AREA>/", arg)
+                  c[(m.group(1), arg)] += 1
+          for (op, arg), n in sorted(c.items()): print(f"{n:5d}  PF.{op}({arg}")
+          PY
       - name: What the site reads
         run: |
           python3 -c "
