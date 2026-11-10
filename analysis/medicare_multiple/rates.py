@@ -27,8 +27,13 @@ Views (which Medicare schedule applies), first match wins:
   asc                  facility fee at a surgery center (matched): ASC national x (0.50 x wage index + 0.50)
   facility_unmatched   facility fee where the NPI isn't matched to a Medicare hospital or surgery center: OPPS national,
                        no wage adjustment (reported on its own, never in the hospital outpatient figures)
-  professional         doctor fee: Physician Fee Schedule for the provider's locality; facility rate when every place-of-
-                       service code on the rate is a hospital/facility place, else the office (non-facility) rate.
+  professional         doctor fee: Physician Fee Schedule for the provider's locality. Place of service (Nov 10, 2026): the
+                       rate's own TiC service_code (CMS place-of-service codes): every code on CMS's facility list ->
+                       facility rate; none on it -> office (non-facility) rate; both kinds, or no service_code -> a blend,
+                       share_facility x facility + (1 - share) x office, with Medicare's own place-of-service mix for that
+                       code in the state (Physician & Other Practitioners by Geography and Service; national mix when the
+                       state has none; office rate when neither has the code). Each rate's method is in `pos`, and the
+                       facility and office amounts are both kept (medicare_facility, medicare_office) for the low-high range.
                        Modifier 26 -> the professional-component row, TC -> technical component; other modifiers: none
   none                 no Medicare benchmark (dental, codes Medicare doesn't pay, packaged codes, unmatched hospitals, ...)
 
@@ -50,11 +55,20 @@ out-of-network. Hospital files: payer/plan names saying out-of-network / non-par
 """
 import re
 
-FAC_POS = ("19", "21", "22", "23", "24", "26", "31", "34", "41", "42", "51", "52", "53", "56", "61")   # = site/every_code.py
+# CMS place-of-service codes paid at the Physician Fee Schedule's facility rate (Claims Processing Manual ch. 12 sec. 20.4.2;
+# 02 = telehealth other than the patient's home, paid at the facility rate since 2017). site/every_code.py has the same list
+# without 02.
+FAC_POS = ("02", "19", "21", "22", "23", "24", "26", "31", "34", "41", "42", "51", "52", "53", "56", "61")
 FAC_LIST = "[" + ", ".join(f"'{p}'" for p in FAC_POS) + "]"
 PART_COLS = ["source", "scope", "table_name", "state", "insurer", "network", "status", "segment", "program", "view", "bucket", "code",
-             "code_type", "modifier", "pos", "ccn", "medicare_amount", "rate_kind", "rate", "units", "units_keep", "units_far",
-             "units_many", "units_spec", "units_ev", "reason"]
+             "code_type", "modifier", "pos", "ccn", "medicare_amount", "medicare_facility", "medicare_office", "rate_kind", "rate",
+             "units", "units_keep", "units_far", "units_many", "units_spec", "units_ev", "reason"]
+# a rate's place of service from its TiC service_code list (SQL over a varchar column x)
+POS_SQL = """case when {cls} then ''
+  when regexp_replace(coalesce({x}, ''), '[\\[\\]" ]', '', 'g') = '' then 'not stated'
+  when list_has_all({fac}, string_split(regexp_replace({x}, '[\\[\\]" ]', '', 'g'), ',')) then 'facility'
+  when not list_has_any({fac}, string_split(regexp_replace({x}, '[\\[\\]" ]', '', 'g'), ',')) then 'office'
+  else 'both kinds of place' end"""
 
 STATUS_SQL = r"""case
   when regexp_matches(lower({x}), '\btraditional\b') then 'unclear'
@@ -91,7 +105,8 @@ def register_bench(con, bench_dir, prov=None, states=None):
         con.execute(f"create or replace table b_{n} as select * from read_csv('{bench_dir}/{n}.csv', header=true, all_varchar=true)")
     # evidence that a provider does a service (who billed Medicare for what, 2024). Missing file -> empty table (no evidence).
     import os
-    for n, cols in (("ev_prof", ("npi", "code")), ("ev_out", ("ccn", "apc")), ("ev_inp", ("ccn", "drg"))):
+    for n, cols in (("ev_prof", ("npi", "code")), ("ev_out", ("ccn", "apc")), ("ev_inp", ("ccn", "drg")),
+                    ("posmix", ("state", "code", "share_facility"))):
         f = f"{bench_dir}/{n}.csv"
         src = (f"select distinct {', '.join(cols)} from read_csv('{f}', header=true, all_varchar=true)" if os.path.exists(f)
                else "select " + ", ".join(f"null::varchar {c}" for c in cols) + " where false")
@@ -102,6 +117,7 @@ def register_bench(con, bench_dir, prov=None, states=None):
                     ("wi2026", ["wage_index"])):
         rep = ", ".join(f"try_cast({c} as double) as {c}" for c in cols)
         con.execute(f"create or replace table b_{t} as select * replace ({rep}) from b_{t}")
+    con.execute("create or replace table b_posmix as select * replace (try_cast(share_facility as double) as share_facility) from b_posmix")
     # empty text cells read as NULL: modifiers and the rural flag must be '' to match
     for t, c in (("pfs", "mod"), ("dme", "mod"), ("zip", "rural")):
         con.execute(f"create or replace table b_{t} as select * replace (coalesce({c}, '') as {c}) from b_{t}")
@@ -137,10 +153,16 @@ def build_code_bench(con):
 
 def medicare_sql(u):
     """SQL fragments (view, medicare_amount, reason, joins) for a relation alias u with columns code, code_type, fee
-    ('facility' | 'professional'), modifier, pos ('facility' | 'office or not stated'), and provider columns p_kind, p_wi,
-    p_ccn, p_loc, p_rural, p_state (any may be NULL). All joins are plain equality joins on small tables."""
+    ('facility' | 'professional'), modifier, pos ('facility' | 'office' | 'both kinds of place' | 'not stated' | ''), and
+    provider columns p_kind, p_wi, p_ccn, p_loc, p_rural, p_state (any may be NULL). All joins are plain equality joins on
+    small tables."""
     is_drg = f"{u}.code_type = 'MS-DRG'"
-    pfs_amt = f"case when {u}.pos = 'facility' then coalesce(pf.facility, pf.nonfacility) else coalesce(pf.nonfacility, pf.facility) end"
+    share = "coalesce(pm.share_facility, pmn.share_facility)"
+    pfs_amt = f"""case when {u}.pos in ('facility', 'hospital-based') then coalesce(pf.facility, pf.nonfacility)
+      when {u}.pos = 'office' then coalesce(pf.nonfacility, pf.facility)
+      when pf.facility is not null and pf.nonfacility is not null and {share} is not null
+        then round({share} * pf.facility + (1 - {share}) * pf.nonfacility, 2)
+      else coalesce(pf.nonfacility, pf.facility) end"""
     opps_ok = f"{u}.modifier = '' and bc.opps_rate is not null and bc.opps_si <> 'N'"
     view = f"""case
       when {is_drg} then case when {u}.fee = 'facility' and ip.ccn is not null and dr.weight is not null then 'inpatient' else 'none' end
@@ -185,6 +207,8 @@ def medicare_sql(u):
       left join b_dme dm on dm.code = {u}.code and dm.state = {u}.p_state and dm.mod = coalesce(nullif({u}.modifier, ''), bc.dme_default_mod)
       left join b_anes an on an.locality = {u}.p_loc
       left join b_pfs pf on pf.code = {u}.code and pf.mod = {u}.modifier and pf.locality = {u}.p_loc
+      left join b_posmix pm on pm.code = {u}.code and pm.state = {u}.p_state
+      left join b_posmix pmn on pmn.code = {u}.code and pmn.state = 'US'
       left join b_ev_prof ep on ep.npi = {u}.npi and ep.code = {u}.code
       left join b_ev_inp ei on ei.ccn = {u}.p_ccn_drg and ei.drg = {u}.code_drg
       left join b_ev_out eo on eo.ccn = {u}.p_ccn and eo.apc = bc.opps_apc and {u}.fee = 'facility'"""
@@ -207,9 +231,19 @@ def _units_to_part(con, units_sql, const):
                         u.rate_kind, u.rate, u.w, u.npi, u.tin, u.labeled_many, u.labeled_spec, bc.cat_desc,
                         case when u.p_kind = 'H' then u.p_ccn end ccn,
                         ep.npi is not null ev_npi, (ei.ccn is not null or eo.ccn is not null) ev_fac,
+                        pf.facility pf_fac, pf.nonfacility pf_off, pm.share_facility sh_state, pmn.share_facility sh_us,
                         {view} as view, {amount} as medicare_amount, {reason} as reason0
                  from units u {joins})
-      select * exclude (reason0, cat_desc), case when view = 'none' then reason0 end reason,
+      select * exclude (reason0, cat_desc, pos, pf_fac, pf_off, sh_state, sh_us), case when view = 'none' then reason0 end reason,
+             case when view <> 'professional' then ''
+                  when pos in ('facility', 'office') then 'service code: ' || pos
+                  when pos = 'hospital-based' then 'hospital file: facility rate'
+                  when pf_fac is null or pf_off is null then pos || ': the only Medicare rate for this code'
+                  when sh_state is not null then pos || ': blended by Medicare''s state site mix'
+                  when sh_us is not null then pos || ': blended by Medicare''s national site mix'
+                  else pos || ': office rate (no Medicare site mix)' end pos,
+             case when view = 'professional' then pf_fac end medicare_facility,
+             case when view = 'professional' then pf_off end medicare_office,
              {BUCKET_SQL.replace('rb.cat_desc', 'cat_desc')} bucket,
              rate_kind = 'dollar' and view <> 'none' and medicare_amount > 0
                and (rate < 0.5 * medicare_amount or rate > 8 * medicare_amount) far
@@ -222,7 +256,9 @@ def _units_to_part(con, units_sql, const):
     # insurer, status, segment and program follow from the network; bucket and code type from the code: carried, not grouped
     part = f"""select {c}, p_state state, any_value(insurer) insurer, network, any_value(status) status, any_value(segment) segment,
         any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
-        case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount, rate_kind,
+        case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount,
+        case when rate_kind = 'dollar' then medicare_facility end medicare_facility,
+        case when rate_kind = 'dollar' then medicare_office end medicare_office, rate_kind,
         case when rate_kind = 'dollar' and view <> 'none' then rate end rate,
         round(sum(w))::bigint units, round(coalesce(sum(w) filter (where not (far or labeled_many or labeled_spec)), 0))::bigint units_keep,
         round(coalesce(sum(w) filter (where far), 0))::bigint units_far, round(coalesce(sum(w) filter (where labeled_many), 0))::bigint units_many,
@@ -230,6 +266,7 @@ def _units_to_part(con, units_sql, const):
         round(coalesce(sum(w) filter (where ev), 0))::bigint units_ev, any_value(reason) reason
       from uve group by p_state, network, view, code, modifier, pos, ccn, rate_kind,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end,
+        case when rate_kind = 'dollar' then medicare_facility end, case when rate_kind = 'dollar' then medicare_office end,
         case when rate_kind = 'dollar' and view <> 'none' then rate end"""
     # providers: per code, how many (and the first five, so "at least 5 providers" can be checked exactly across tables);
     # per bucket, every provider (to count providers behind a bucket or a total without double counting). A provider at a
@@ -274,7 +311,6 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
     net = "coalesce(nullif(m.network_name, ''), l.file_label)" if membership else "l.file_label"
     mj = (f"left join (select cast(npi as varchar) npi, cast(tin as varchar) tin, string_agg(distinct cast(network_name as varchar), '|') network_name "
           f"from {membership} group by all) m on m.npi = l.npi and m.tin = l.tin") if membership else ""
-    sc = "string_split(replace(l.service_code, ' ', ''), ',')"
     kind = r"""case when l.arrangement in ('capitation', 'bundle') then l.arrangement
       when l.negotiated_type like 'percent%' then 'percent of charges'
       when l.negotiated_type like '%per diem%' or (l.addl <> '' and regexp_matches(l.addl, '\bper[ -]?(diem|day)\b|/ ?day\b|\bdaily rate')) then 'per day'
@@ -289,8 +325,7 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1):
              when l.billing_code_type like 'HCPCS%' then 'HCPCS' else l.billing_code_type end code_type,
         case when l.billing_class like 'inst%' then 'facility' else 'professional' end fee,
         l.billing_code_modifier modifier,
-        case when l.billing_class not like 'inst%' and l.service_code <> ''
-              and list_has_all({FAC_LIST}, {sc}) then 'facility' else 'office or not stated' end pos,
+        {POS_SQL.format(cls="l.billing_class like 'inst%'", x="l.service_code", fac=FAC_LIST)} pos,
         {kind} rate_kind, l.v rate, l.npi, l.tin, false counted,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,
         l.one_amount_many_codes labeled_many, l.specialty_mismatch labeled_spec
@@ -314,7 +349,7 @@ def hospital_units(t, have):
         case when upper({q('code_type')}) in ('MS-DRG', 'MSDRG') then 'MS-DRG' else upper({q('code_type')}) end code_type,
         case when lower({q('billing_class')}) = 'professional' then 'professional' else 'facility' end fee,
         upper(split_part(replace({q('modifiers')}, ' ', ''), '|', 1)) modifier,
-        case when lower({q('billing_class')}) = 'professional' then 'facility' else '' end pos,
+        case when lower({q('billing_class')}) = 'professional' then 'hospital-based' else '' end pos,
         {kind} rate_kind, try_cast(replace(replace({q('negotiated_dollar')}, '$', ''), ',', '') as double) rate,
         h.ccn npi, '' tin, lower({q('setting')}) setting,
         {q('allowed_count')} not in ('', '0') counted,
@@ -327,15 +362,13 @@ def hospital_units(t, have):
 def allowed_units(t):
     """Units SQL for out-of-network allowed amounts already flattened to rows (insurer, plan, code_type, code, tin, npi,
     billing_class, modifier, service_code, allowed_amount) by allowed_rows()."""
-    sc = "string_split(replace(coalesce(r.service_code, ''), ' ', ''), ',')"
     return f"""select distinct 1.0 w, r.insurer, r.plan network, 'out-of-network' status, {SEGMENT_SQL.format(x='r.plan')} segment,
         'commercial' program,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then ltrim(r.code, '0') else upper(r.code) end code,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then 'MS-DRG' else upper(r.code_type) end code_type,
         case when lower(r.billing_class) like 'inst%' then 'facility' else 'professional' end fee,
         upper(coalesce(r.modifier, '')) modifier,
-        case when lower(r.billing_class) not like 'inst%' and coalesce(r.service_code, '') <> ''
-              and list_has_all({FAC_LIST}, {sc}) then 'facility' else 'office or not stated' end pos,
+        {POS_SQL.format(cls="lower(r.billing_class) like 'inst%'", x="r.service_code", fac=FAC_LIST)} pos,
         case when r.allowed_amount > 0 then 'dollar' when r.allowed_amount = 0 then 'zero' else 'not a number' end rate_kind,
         r.allowed_amount rate, cast(r.npi as varchar) npi, cast(r.tin as varchar) tin, '' setting, false counted,
         p.kind p_kind, coalesce(p.wage_index, 1.0) p_wi, p.ccn p_ccn, p.locality p_loc, p.rural p_rural, p.state p_state,

@@ -22,8 +22,13 @@ OUT gets small CSVs (each row says which CMS file and year it came from, in sour
                 (see ipps_rows for the formula; outlier payments are left out)
   wi2026.csv    ccn, wage_index                    FY2026 wage index (used by CY2026 OPPS) for hospital-file outpatient rows
   hosp_zip.csv  ccn, zip5, state                   hospital ZIP (Hospital General Information) for hospital-file doctor fees
-  volumes.csv   state, kind, code, place, volume   Medicare use by state (2024): professional (by place O/F),
-                                                   outpatient (HCPCS), inpatient (MS-DRG discharges), dme
+  volumes.csv   state, kind, code, place, volume, source, allowed
+                                                   Medicare use by state (2024): professional (by place O/F),
+                                                   outpatient (HCPCS), inpatient (MS-DRG discharges), dme; allowed = Medicare
+                                                   allowed dollars (services x average allowed), doctor fees only
+  posmix.csv    state, code, facility_services, office_services, share_facility
+                                                   Medicare's own place-of-service mix per doctor-fee code (2024), state rows
+                                                   and national rows (state = US) as the fallback
   ev_prof.csv   npi, code                          this NPI billed Medicare for this code (2024, Physician & Other Practitioners
                                                    by Provider and Service; the run's states only)
   ev_out.csv    ccn, apc                           this hospital billed Medicare for this outpatient payment group (APC)
@@ -367,19 +372,24 @@ def hgi_rows(text, states):
 
 
 def volume_rows(phy, out_, inp, dme, states):
-    """[(state, kind, code, place, volume, source)] Medicare use by state (2024). Office (O) and facility (F) kept apart
-    for doctor fees. CMS leaves out cells under 11; those are absent here too, never filled in."""
+    """[(state, kind, code, place, volume, source, allowed)] Medicare use by state (2024). Office (O) and facility (F) kept
+    apart for doctor fees. CMS leaves out cells under 11; those are absent here too, never filled in. allowed = services x
+    average Medicare allowed amount (doctor fees only; used to weight anesthesia, whose benchmark is per unit)."""
     by_name = {STATE_NAMES[s]: s for s in states}
     st = lambda d: by_name.get(d) or (d if d in states else None)
     agg = {}
 
-    def add(s_, kind, code, place, v, src):
+    def add(s_, kind, code, place, v, src, allowed=0.0):
         if s_ and v:
             k = (s_, kind, code, place, src)
-            agg[k] = agg.get(k, 0) + v
+            a = agg.setdefault(k, [0, 0.0])
+            a[0] += v
+            a[1] += allowed or 0.0
     for r in csv.DictReader(io.StringIO(phy)):
         if r["Rndrng_Prvdr_Geo_Lvl"] == "State":
-            add(st(r["Rndrng_Prvdr_Geo_Desc"]), "professional", r["HCPCS_Cd"].strip().upper(), r["Place_Of_Srvc"], num(r["Tot_Srvcs"]), "vol_physician")
+            v = num(r["Tot_Srvcs"])
+            add(st(r["Rndrng_Prvdr_Geo_Desc"]), "professional", r["HCPCS_Cd"].strip().upper(), r["Place_Of_Srvc"], v, "vol_physician",
+                (v or 0) * (num(r.get("Avg_Mdcr_Alowd_Amt")) or 0))
     for r in csv.DictReader(io.StringIO(out_)):   # a HCPCS appears under each APC it was paid in: added up per code
         if r["Rndrng_Prvdr_Geo_Lvl"] == "State" and r["HCPCS_Cd"]:
             add(st(r["Rndrng_Prvdr_Geo_Desc"]), "outpatient", r["HCPCS_Cd"].strip().upper(), "", num(r["CAPC_Srvcs"]), "vol_outpatient")
@@ -389,7 +399,23 @@ def volume_rows(phy, out_, inp, dme, states):
     for r in csv.DictReader(io.StringIO(dme)):
         if r["Rfrg_Prvdr_Geo_Lvl"] == "State" and r["HCPCS_Cd"]:
             add(st(r["Rfrg_Prvdr_Geo_Desc"]), "dme", r["HCPCS_Cd"].strip().upper(), r.get("Suplr_Rentl_Ind", ""), num(r["Tot_Suplr_Srvcs"]), "vol_dme")
-    return [(s_, k, c, p, v, src) for (s_, k, c, p, src), v in sorted(agg.items())]
+    return [(s_, k, c, p, v, src, round(al, 2) if al else "") for (s_, k, c, p, src), (v, al) in sorted(agg.items())]
+
+
+def posmix_rows(phy, states):
+    """[(state, code, facility services, office services, facility share)] Medicare's own place-of-service mix for each
+    doctor-fee code: the state's rows, and the national rows (state 'US') for codes the state's rows don't have."""
+    by_name = {STATE_NAMES[s]: s for s in states}
+    agg = {}
+    for r in csv.DictReader(io.StringIO(phy)):
+        lvl = r["Rndrng_Prvdr_Geo_Lvl"]
+        s_ = "US" if lvl == "National" else (by_name.get(r["Rndrng_Prvdr_Geo_Desc"]) if lvl == "State" else None)
+        v = num(r["Tot_Srvcs"]) or 0
+        if not s_ or not v or r["Place_Of_Srvc"] not in ("F", "O"):
+            continue
+        a = agg.setdefault((s_, r["HCPCS_Cd"].strip().upper()), [0.0, 0.0])
+        a[0 if r["Place_Of_Srvc"] == "F" else 1] += v
+    return [(s_, c, f, o, round(f / (f + o), 4)) for (s_, c), (f, o) in sorted(agg.items()) if f + o > 0]
 
 
 def _stream(path):
@@ -461,8 +487,10 @@ def build(cache, out, states=("TX",)):
                       ipps_rows(z("ipps_impact", r"Impact File - Correction Notice\.txt$"), rates))
     n["wi2026"] = write(out / "wi2026.csv", ["ccn", "wage_index"], wi_rows(z("ipps_impact_2026", r"Impact File\.txt$")))
     n["hosp_zip"] = write(out / "hosp_zip.csv", ["ccn", "zip5", "state"], hgi_rows(t("hgi"), states))
-    n["volumes"] = write(out / "volumes.csv", ["state", "kind", "code", "place", "volume", "source"],
-                         volume_rows(t("vol_physician"), t("vol_outpatient"), t("vol_inpatient"), t("vol_dme"), states))
+    phy = t("vol_physician")
+    n["volumes"] = write(out / "volumes.csv", ["state", "kind", "code", "place", "volume", "source", "allowed"],
+                         volume_rows(phy, t("vol_outpatient"), t("vol_inpatient"), t("vol_dme"), states))
+    n["posmix"] = write(out / "posmix.csv", ["state", "code", "facility_services", "office_services", "share_facility"], posmix_rows(phy, states))
     n["ev_prof"] = write(out / "ev_prof.csv", ["npi", "code"], ev_prof_rows(cache / f"ev_physician_{tag}.csv", states | ({"ALL"} if tag == "all" else set())))
     n["ev_out"] = write(out / "ev_out.csv", ["ccn", "apc"], ev_out_rows(cache / "ev_outpatient.csv", states))
     n["ev_inp"] = write(out / "ev_inp.csv", ["ccn", "drg"], ev_inp_rows(cache / "ev_inpatient.csv", states))

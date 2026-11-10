@@ -78,7 +78,7 @@ def code_figures(con, parts_glob, codes_glob, kind, state, by_segment=False):
     wexpr = WEIGHT[kind]
     con.execute(f"""create or replace temp table d as
       select p.source, p.status, p.program, p.view, p.bucket, p.code{seg}, p.rate / p.medicare_amount r, p.rate, p.medicare_amount m,
-             sum({wexpr}) w
+             p.rate / p.medicare_facility rf, p.rate / p.medicare_office ro, sum({wexpr}) w
       from {parts_with_lists(parts_glob)}
       where p.state = '{state}' and p.rate_kind = 'dollar' and p.rate is not null and p.medicare_amount > 0
       group by all having sum({wexpr}) > 0""")
@@ -92,9 +92,17 @@ def code_figures(con, parts_glob, codes_glob, kind, state, by_segment=False):
       a as (select {key}, {", ".join(f"min(r) filter (where cum >= ceil({p / 100} * tot)) p{p}" for p in PCTS)}
             from cr join t using ({key}) group by all),
       b as (select {key}, min(rate) filter (where cum >= ceil(0.5 * tot)) mid_private from cp join t using ({key}) group by all),
-      c as (select {key}, min(m) filter (where cum >= ceil(0.5 * tot)) mid_medicare from cm join t using ({key}) group by all)
-      select t.*, a.p10, a.p50, a.p90, b.mid_private, c.mid_medicare from t join a using ({key}) join b using ({key}) join c using ({key})"""
-    figs = {tuple(r[:nkey]): dict(zip(["units", "p10", "p50", "p90", "mid_private", "mid_medicare"], r[nkey:]))
+      c as (select {key}, min(m) filter (where cum >= ceil(0.5 * tot)) mid_medicare from cm join t using ({key}) group by all),
+      -- doctor fees: the same middle if every rate were compared with Medicare's facility rate, or with its office rate
+      ff as (select {key}, rf, sum(w) over (partition by {key} order by rf rows unbounded preceding) cum,
+                    sum(w) over (partition by {key}) tt from d where rf is not null),
+      fo as (select {key}, ro, sum(w) over (partition by {key} order by ro rows unbounded preceding) cum,
+                    sum(w) over (partition by {key}) tt from d where ro is not null),
+      f as (select {key}, min(rf) filter (where cum >= ceil(0.5 * tt)) mid_fac from ff group by all),
+      o as (select {key}, min(ro) filter (where cum >= ceil(0.5 * tt)) mid_off from fo group by all)
+      select t.*, a.p10, a.p50, a.p90, b.mid_private, c.mid_medicare, f.mid_fac, o.mid_off
+      from t join a using ({key}) join b using ({key}) join c using ({key}) left join f using ({key}) left join o using ({key})"""
+    figs = {tuple(r[:nkey]): dict(zip(["units", "p10", "p50", "p90", "mid_private", "mid_medicare", "mid_fac", "mid_off"], r[nkey:]))
             for r in con.execute(q).fetchall()}
     sg = ", segment" if by_segment else ""
     if kind == "evidence":
@@ -157,6 +165,7 @@ def summarize(con, parts_dir, bench, out, state):
                                   figure="yes" if ok else f"no: fewer than {MIN_PROVIDERS} providers",
                                   p10=_r(f["p10"]) if ok else None, middle=_r(f["p50"]) if ok else None, p90=_r(f["p90"]) if ok else None,
                                   middle_private_amount=f["mid_private"] if ok else None, middle_medicare_amount=f["mid_medicare"] if ok else None,
+                                  middle_vs_facility_rate=_r(f["mid_fac"]) if ok else None, middle_vs_office_rate=_r(f["mid_off"]) if ok else None,
                                   medicare_volume_2024=vol))
     # buckets and totals, per figure
     for label, src, status, program in FIGURES:
@@ -202,6 +211,8 @@ def summarize(con, parts_dir, bench, out, state):
     coverage = _coverage(con, pg, state)
     tails = _tails(con, pg, state)
     _write_csv(out / "tails.csv", tails)
+    methods = _methods(con, pg, state)
+    _write_csv(out / "methods.csv", methods)
     _write_csv(out / "codes.csv", code_rows)
     _write_csv(out / "buckets.csv", bucket_rows)
     _write_csv(out / "totals.csv", total_rows)
@@ -212,7 +223,7 @@ def summarize(con, parts_dir, bench, out, state):
     _write_csv(out / "medicare_sources.csv", [dict(key=k, what=v.get("what"), year=v.get("year"), url=v.get("url"), sha256=v.get("sha256", ""))
                                                for k, v in srcs.items() if not k.startswith("_")])
     from report import write_md
-    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails)
+    write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows, tails, methods)
     return dict(codes=len(code_rows), buckets=len(bucket_rows), totals=len(total_rows))
 
 
@@ -256,6 +267,17 @@ def _coverage(con, pg, state):
               sum(coalesce(p.units_ev, 0)) evidence_medicare_billing, sum(p.units_keep) units_range_check,
               sum(p.units_far) far_from_medicare, sum(p.units_many) one_amount_many_codes, sum(p.units_spec) specialty_mismatch
             from {parts_with_lists(pg)} where p.state = '{state}' group by all order by all"""
+    c = con.execute(q)
+    cols = [d[0] for d in c.description]
+    return [dict(zip(cols, r)) for r in c.fetchall()]
+
+
+def _methods(con, pg, state):
+    """How many listed rates used each method: place of service for doctor fees (and later: market segment, anesthesia)."""
+    q = f"""select 'place of service (doctor fees)' question, source, status, pos method, sum(units) units, count(distinct code) codes
+            from read_parquet('{pg}', union_by_name=true)
+            where state = '{state}' and view = 'professional' and rate_kind = 'dollar' group by all
+            order by all"""
     c = con.execute(q)
     cols = [d[0] for d in c.description]
     return [dict(zip(cols, r)) for r in c.fetchall()]

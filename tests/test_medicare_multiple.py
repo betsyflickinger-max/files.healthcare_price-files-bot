@@ -122,7 +122,7 @@ def run(tmp_path):
     rd = lambda n: list(csv.DictReader(open(out / "tx" / n)))
     return dict(codes=rd("codes.csv"), buckets=rd("buckets.csv"), totals=rd("totals.csv"), coverage=rd("coverage.csv"),
                 nobench=rd("no_benchmark_codes.csv"), tails=rd("tails.csv"), providers=rd("providers.csv"),
-                md=(out / "tx" / "summary.md").read_text())
+                methods=rd("methods.csv"), md=(out / "tx" / "summary.md").read_text())
 
 
 def pick(rows, **k):
@@ -309,3 +309,72 @@ def test_fetch_api_pages_by_state(tmp_path, monkeypatch):
     n = cms.fetch_api("https://x/data", tmp_path / "o.csv", ["TX"], "Rndrng_Prvdr_State_Abrvtn", "Rndrng_NPI,HCPCS_Cd", page=2)
     assert n == 5 and len(list(csv.DictReader(open(tmp_path / "o.csv")))) == 5
     assert all("filter%5BRndrng_Prvdr_State_Abrvtn%5D=TX" in u for u in seen)
+
+
+# ---------------------------------------------------------------- fix 2: place of service for doctor fees
+
+def _reduce_one(tmp_path, R, name="t", prov_rows=None, extra=None):
+    """Reduce one made-up insurer table with the test benchmark; returns the part rows as dicts."""
+    bench = make_bench(tmp_path / "bench")
+    if extra:
+        extra(bench)
+    _csv(tmp_path / "prov.csv", ["npi", "zip5", "kind", "wage_index", "ccn"], prov_rows or [[str(i), "75201", "", "", ""] for i in range(1, 30)])
+    make_insurer(tmp_path / f"{name}.parquet", R)
+    con = duckdb.connect()
+    rates.register_bench(con, str(bench), f"read_csv('{tmp_path / 'prov.csv'}', all_varchar=true)", ["TX"])
+    t = f"read_parquet('{tmp_path / name}.parquet')"
+    have = {r[0] for r in con.execute(f"describe select * from {t}").fetchall()}
+    rates.reduce_table(con, rates.insurer_units(t, have), dict(source="insurer", scope="x", table_name=name), str(tmp_path / f"o_{name}"))
+    c = con.execute(f"select * from '{tmp_path / f'o_{name}'}.part.parquet' order by rate")
+    cols = [d[0] for d in c.description]
+    return [dict(zip(cols, r)) for r in c.fetchall()]
+
+
+def test_place_of_service_methods_and_blend(tmp_path):
+    def mix(b):   # Medicare sees 99213 25% at facilities in Texas; 70551 only nationally (60%)
+        _csv(b / "posmix.csv", ["state", "code", "facility_services", "office_services", "share_facility"],
+             [["TX", "99213", 25, 75, 0.25], ["US", "70551", 60, 40, 0.6]])
+    R = [row(npi="1", service_code="22", negotiated_rate="101"),            # facility place -> facility rate 60
+         row(npi="2", service_code="11", negotiated_rate="102"),            # office -> office rate 100
+         row(npi="3", service_code="11,22", negotiated_rate="103"),         # both kinds -> blend 0.25 x 60 + 0.75 x 100 = 90
+         row(npi="4", service_code="", negotiated_rate="104"),              # not stated -> blend 90
+         row(npi="5", service_code='["02"]', negotiated_rate="105"),        # telehealth POS 02 -> facility rate
+         row(npi="6", service_code="", billing_code="45378", negotiated_rate="106")]   # no fee-schedule row -> no benchmark
+    P = {r["rate"]: r for r in _reduce_one(tmp_path, R, extra=mix)}
+    assert P[101.0]["medicare_amount"] == 60.0 and P[101.0]["pos"] == "service code: facility"
+    assert P[102.0]["medicare_amount"] == 100.0 and P[102.0]["pos"] == "service code: office"
+    assert P[103.0]["medicare_amount"] == 90.0 and P[103.0]["pos"] == "both kinds of place: blended by Medicare's state site mix"
+    assert P[104.0]["medicare_amount"] == 90.0 and P[104.0]["pos"] == "not stated: blended by Medicare's state site mix"
+    assert P[105.0]["medicare_amount"] == 60.0
+    assert (P[104.0]["medicare_facility"], P[104.0]["medicare_office"]) == (60.0, 100.0)
+
+
+def test_place_of_service_fallbacks(tmp_path):
+    # 70551: no Texas mix -> national; only an office (non-facility) rate exists for the global code -> that one
+    def mix(b):
+        _csv(b / "posmix.csv", ["state", "code", "facility_services", "office_services", "share_facility"], [["US", "99213", 60, 40, 0.6]])
+    R = [row(npi="1", service_code="", negotiated_rate="111"), row(npi="2", service_code="", billing_code="70551", negotiated_rate="300")]
+    P = {r["code"]: r for r in _reduce_one(tmp_path, R, extra=mix)}
+    assert P["99213"]["medicare_amount"] == 76.0 and P["99213"]["pos"] == "not stated: blended by Medicare's national site mix"
+    assert P["70551"]["medicare_amount"] == 200.0 and P["70551"]["pos"] == "not stated: the only Medicare rate for this code"
+
+
+def test_place_of_service_counts_and_low_high_range(run):
+    office = pick(run["methods"], question="place of service (doctor fees)", source="insurer", status="in-network", method="service code: office")
+    assert office and office[0]["units"] == "8"
+    a = pick(run["codes"], rates=summ.ALL, source="insurer", status="in-network", code="99213")[0]
+    # every rate here is an office rate (100); against the facility rate (60) the same middle would be 130 / 60
+    assert float(a["middle_vs_office_rate"]) == 1.3 and float(a["middle_vs_facility_rate"]) == round(130 / 60, 3)
+    assert "How each rate was handled" in run["md"]
+
+
+def test_posmix_and_allowed_dollars_from_geography_file():
+    hdr = "Rndrng_Prvdr_Geo_Lvl,Rndrng_Prvdr_Geo_Desc,HCPCS_Cd,Place_Of_Srvc,Tot_Srvcs,Avg_Mdcr_Alowd_Amt\n"
+    phy = hdr + "\n".join(["National,National,99213,F,600,50", "National,National,99213,O,400,80",
+                           "State,Texas,99213,F,30,50", "State,Texas,99213,O,90,80", "State,Oklahoma,99213,O,5,70"])
+    mix = cms.posmix_rows(phy, {"TX"})
+    assert ("TX", "99213", 30.0, 90.0, 0.25) in mix and ("US", "99213", 600.0, 400.0, 0.6) in mix and len(mix) == 2
+    empty = "Rndrng_Prvdr_Geo_Lvl,Rndrng_Prvdr_Geo_Desc,HCPCS_Cd,CAPC_Srvcs\n"
+    vol = cms.volume_rows(phy, empty, "Rndrng_Prvdr_Geo_Lvl,Rndrng_Prvdr_Geo_Desc,DRG_Cd,Tot_Dschrgs\n",
+                          "Rfrg_Prvdr_Geo_Lvl,Rfrg_Prvdr_Geo_Desc,HCPCS_Cd,Tot_Suplr_Srvcs\n", {"TX"})
+    assert ("TX", "professional", "99213", "F", 30.0, "vol_physician", 1500.0) in vol

@@ -15,7 +15,7 @@ def n(v):
     return "—" if v is None else f"{int(v):,}"
 
 
-def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=()):
+def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers, seg_rows=(), tails=(), methods=()):
     name = STATE.get(state, state)
     figs = []
     for r in total_rows:
@@ -118,11 +118,17 @@ def write_md(out, state, code_rows, bucket_rows, total_rows, coverage, providers
           "- RAND and KFF compare whole hospital stays and visits, including outlier payments and everything billed on the claim. "
           "We compare one code at a time and leave out Medicare's outlier payments.",
           "- Different years (RAND: 2022 claims; KFF: studies from 2010s-2020) and different places (most published figures are national).",
-          "- Doctor fees: a rate whose place of service isn't stated is compared with Medicare's office rate (the higher one), which "
-          "makes our doctor figure lower than a study that knows where each visit happened.",
+          "- Doctor fees: where the insurer's file doesn't say where the service happens, Medicare's amount is a blend of its "
+          "facility and office rates in the proportions Medicare itself sees for that code in this state; `codes.csv` shows "
+          "each code's middle against the facility rate and against the office rate (the low-high range).",
           "- Earlier DFW snapshot: insurer-file middles near 1.0× for outpatient facility fees and 0.88× for doctor fees, counting every "
           "listed rate once. Compare the equal-weight and weighted columns, and all rates vs evidence of use, to see how much "
           "of that came from counting rates that are never used.", ""]
+    if methods:
+        L += ["## How each rate was handled", "", "| Question | Source | Network status | Method | Listed rates | Codes |", "|---|---|---|---|---|---|"]
+        for m in methods:
+            L.append(f"| {m['question']} | {m['source']} | {m['status']} | {m['method']} | {n(m['units'])} | {n(m['codes'])} |")
+        L += ["", "Same table: `methods.csv`.", ""]
     # coverage
     L += ["## What went in, and what didn't", "",
           "| Source | Network status | Plans | What | Codes | Listed rates | With evidence of use | of which: billed Medicare | Range check |",
