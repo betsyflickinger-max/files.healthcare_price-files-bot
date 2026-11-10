@@ -45,3 +45,6 @@ for slug, html in pages.items():
     open(f'/tmp/shell/{slug}.html', 'w').write(html[:a] + json.dumps(keys) + html[b:])
     sample = {k: (v[:3] if isinstance(v, list) else dict(list(v.items())[:3]) if isinstance(v, dict) else v) for k, v in D.items()}
     json.dump(sample, open(f'/tmp/shell/{slug}.sample.json', 'w'), indent=1, default=str)
+if os.environ.get('FULL_PAGES'):   # whole pages too (for checking a page change offline)
+    for slug, html in pages.items():
+        open(f'/tmp/shell/{slug}.full.html', 'w').write(html)

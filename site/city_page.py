@@ -523,6 +523,11 @@ def main():
         page = f'{A.out}/page.html'; s3.download_file(B, f'site/deploy/cities/{A.city}/price-finder.html', page)
     else: page = build(A.city, f['template'], f['embed'], f['rvu'], f['med'], f['t5'], A.out, hidx, f'{A.out}/arb_tx.json', f'{A.out}/npis.parquet')
     if not A.map_only: practice_and_list_price(page, s3, B, A.out)
+    import page_slim
+    if page_slim.wanted(A.city) and not A.map_only:   # Nov 9, 2026: page slimming, one state first (site/page_slim.py)
+        old = open(page, encoding='utf-8').read(); new = page_slim.slim(old); page_slim.same(old, new)
+        open(page, 'w', encoding='utf-8').write(new)
+        print(f'page slimmed: {len(old.encode()) / 2**20:.1f} -> {len(new.encode()) / 2**20:.1f} MiB (same message for every code)', flush=True)
     if A.check: print('check only: page built in', page, f'({os.path.getsize(page) / 2**20:.1f} MiB; not saved, not deployed)'); return
     if os.path.getsize(page) > PAGE_MAX:   # Oct 31, 2026: say why instead of failing inside the deploy
         sys.exit(f'STOP: the {name} page is {os.path.getsize(page) / 2**20:.1f} MiB; the website host takes files up to 25 MiB. '

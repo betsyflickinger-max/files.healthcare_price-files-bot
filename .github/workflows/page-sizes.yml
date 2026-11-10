@@ -19,6 +19,6 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: "3.12"}
       - run: pip install -r requirements.txt 2>/dev/null || pip install boto3 duckdb
-      - run: python -u site/page_sizes.py "${{ inputs.areas }}"
+      - run: FULL_PAGES=1 python -u site/page_sizes.py "${{ inputs.areas }}"
       - uses: actions/upload-artifact@v4
         with: {name: page-shells, path: /tmp/shell/}

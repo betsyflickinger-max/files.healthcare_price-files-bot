@@ -26,6 +26,7 @@ sys.path.insert(0, str(ROOT / "site"))
 sys.path.insert(0, str(ROOT / "bot"))
 import insurers_page  # noqa: E402
 import page_meta  # noqa: E402  (canonical, share tags, site-info links)
+import page_slim  # noqa: E402  (Nov 9, 2026: scope counts in either page form)
 
 E = html.escape
 
@@ -114,7 +115,7 @@ def load(site):
     for n in D["nets"]:
         k, label = n.split("|", 1)
         if k in PF_PARENT:
-            nets[PF_PARENT[k]].append((k, label, len(D["scope"].get(n, []))))
+            nets[PF_PARENT[k]].append((k, label, page_slim.scope_len(D["scope"].get(n, []))))
     fdates = collections.defaultdict(set)
     for r in csv.DictReader(open(ROOT / "insurers/networks.csv")):
         if r["last_updated_on"]:
