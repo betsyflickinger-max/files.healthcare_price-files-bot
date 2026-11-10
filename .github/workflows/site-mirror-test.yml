@@ -1,0 +1,52 @@
+name: site-mirror-test (dry run, read only)
+on:
+  push:
+    branches: [site-mirror-test]
+permissions:
+  contents: read
+jobs:
+  t:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      SITE_SRC_ENDPOINT: https://s3.us-east-005.backblazeb2.com
+      SITE_SRC_REGION: us-east-005
+      R2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ secrets.B2_BUCKET }}
+      SITE_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      SITE_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      SITE_R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      SITE_R2_FORCE: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip -q install boto3
+      - name: Functions of the live deploy (from R2)
+        run: |
+          python3 - <<'PY'
+          import os, io, tarfile, boto3
+          from pathlib import Path
+          g = lambda k: "".join(os.environ[k].split())
+          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com", region_name="auto",
+                            aws_access_key_id=g("SITE_R2_ACCESS_KEY_ID"), aws_secret_access_key=g("SITE_R2_SECRET_ACCESS_KEY"))
+          t = tarfile.open(fileobj=io.BytesIO(s3.get_object(Bucket=g("SITE_R2_BUCKET"), Key="site/deploy/current.tgz")["Body"].read()))
+          n = 0
+          for m in t.getmembers():
+              nm = m.name.lstrip("./")
+              if m.isfile() and "functions/" in nm and nm.endswith((".js", ".mjs", ".ts")) and ".." not in nm:
+                  p = Path("fn") / nm; p.parent.mkdir(parents=True, exist_ok=True); p.write_bytes(t.extractfile(m).read()); n += 1
+          print(n, "function files")
+          PY
+      - name: What the site reads
+        run: |
+          python3 -c "
+          import sys; sys.path.insert(0, 'bot'); import site_r2
+          f, k = site_r2.refs('fn')
+          print(len(f), 'folders,', len(k), 'single files')
+          import collections
+          c = collections.Counter('/'.join(p.split('/')[:2]) + '/ .../' + p.split('/')[3] if p.count('/') > 3 else p for p in f)
+          for x, n in c.most_common(): print(f'{n:5d}  {x}')
+          print('files:', k[:20])"
+      - name: Dry run (Backblaze -> R2, nothing copied)
+        run: SITE_R2_SINCE=$(date +%s) python3 bot/site_r2.py publish fn --dry
