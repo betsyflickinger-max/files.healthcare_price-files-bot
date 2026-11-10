@@ -81,3 +81,29 @@ def test_bench_rows():
     assert ("70551", "facility", 450.0, "Medicare hospital outpatient rate (national), CY2026") in rows
     assert ("70551", "professional", 95.5, "Medicare doctor fee, Dallas, 2026") in rows
     assert ("80053", "facility", 10.56, "Medicare lab fee schedule, 2026") in rows
+
+
+def test_specialty_mismatch():
+    """Label d: an eye doctor's knee-replacement fee is labeled; a surgeon's is not; organizations, facility rates and
+    thin data never are. Every row kept."""
+    con = duckdb.connect()
+    rows = [("1001", "T1", "27447", "", "professional", "", "negotiated", 1500.0, "22"),    # eye doctor, knee replacement: d
+            ("1002", "T2", "27447", "", "professional", "", "negotiated", 1500.0, "22"),    # orthopedic surgeon: no
+            ("1001", "T1", "27447", "", "institutional", "", "negotiated", 9000.0, "22"),   # facility rate: no
+            ("2001", "T3", "27447", "", "professional", "", "negotiated", 1500.0, "22"),    # organization (not in npi list): no
+            ("1003", "T4", "27447", "", "professional", "", "negotiated", 1500.0, "22"),    # rare specialty (50 clinicians): no
+            ("1001", "T1", "99999", "", "professional", "", "negotiated", 50.0, "11"),      # code few people bill: no
+            ("1001", "T1", "66984", "", "professional", "", "negotiated", 700.0, "22")]     # eye doctor, cataract: no
+    t = table(con, rows)
+    con.execute("create table nt as select * from (values ('1001', '207W00000X'), ('1002', '207X00000X'), ('1003', 'RARE')) v(npi, taxonomy_1)")
+    con.execute("create table tn as select * from (values ('207W00000X', 5000), ('207X00000X', 8000), ('RARE', 50)) v(taxonomy_1, clinicians)")
+    con.execute("create table cn as select * from (values ('27447', 6000), ('66984', 4000), ('99999', 30)) v(code, billers)")
+    con.execute("create table ct as select * from (values ('27447', '207X00000X', 5900), ('27447', '207W00000X', 3), ('66984', '207W00000X', 3900)) v(code, taxonomy_1, billers)")
+    spec = dict(nt="nt", tn="tn", cn="cn", ct="ct")
+    out = con.execute(f"select npi, billing_code, billing_class, specialty_mismatch from ({RL.labeled_sql(t, None, RL._columns(con, t), spec)})").fetchall()
+    assert len(out) == len(rows)
+    hit = [(n, c, k) for n, c, k, d in out if d]
+    assert hit == [("1001", "27447", "professional")], out
+    c = RL.counts(con, t, None, spec)
+    assert c["specialty_mismatch"] == 1 and c["specialty_figures_used"] is True and c["any_label"] >= 1
+    assert RL.counts(con, t)["specialty_mismatch"] == 0
