@@ -165,7 +165,7 @@ Also listed, may not offer this procedure: 0
 
 ## Vaginal delivery (global) (59400)
 
-Providers on the page by kind and proof: surgery center wrong_specialty: 160; practice, clinic, lab or imaging center not_covered: 1859; practice, clinic, lab or imaging center wrong_specialty: 17276; hospital not_covered: 386; hospital wrong_specialty: 196
+Providers on the page by kind and proof: surgery center wrong_specialty: 160; practice, clinic, lab or imaging center not_covered: 1856; practice, clinic, lab or imaging center wrong_specialty: 17279; hospital not_covered: 378; hospital wrong_specialty: 204
 
 Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); providers with rates 19877; left out as out of state 3; ranked providers 16623; kind doc; states seen {'IL': 147243, 'MO': 7, 'IN': 3, 'KS': 2}
 
@@ -182,7 +182,7 @@ Check: per-code insurer file found (site/every-st/illinois/2026-11/t/); provider
 | 9 | Forefront Dermatology, S.C. $1,128 | Chicago Headache Center and Research Institute LLC $1,523 |  |
 | 10 | Forefront Dermatology, S.C. $1,128 | Community Home Physicians, LLC $1,523 |  |
 
-Left out of the figures (clinicians whose specialty doesn't perform this code): 17629; lowest before $810, after $1,289
+Left out of the figures (clinicians whose specialty doesn't perform this code): 17640; lowest before $810, after $1,289
 
 Also listed, may not offer this procedure: 0
 
@@ -214,8 +214,8 @@ Also listed, may not offer this procedure: 0
 | Kind | Proved | Ranked as before (no file covers them) | Held out (no record) |
 |---|---|---|---|
 | surgery center | 162 | 1118 | 0 |
-| practice, clinic, lab or imaging center | 579 | 168166 | 0 |
-| hospital | 3 | 4838 | 0 |
+| practice, clinic, lab or imaging center | 579 | 168163 | 0 |
+| hospital | 3 | 4830 | 0 |
 
 ## Areas and the state the page code gives them
 
