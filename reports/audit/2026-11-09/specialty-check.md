@@ -357,3 +357,16 @@ For each line: would this clinician really do this procedure? Fill specialty_che
 - NPI Registry: MATTHEW GILLINGS MD; practice: WACO, TX 76712; Ophthalmology
 - Taxonomy 207W00000X: 0 of 14,708 clinicians with this specialty billed 22551 (code billed by 1,236 clinicians in all)
 - Rate: $1,629.53 doctor fee, Curative / Curative Network; file date 2026-10-05
+
+## First-pass review (Claude, Nov 9, 2026; for Betsy to spot-check)
+
+Filled in specialty_check.csv: **39 of 50 labels right** (the specialty doesn't do the procedure: counselors with
+colonoscopy or hip-replacement rates, an optometrist with spine surgery, a dermatologist with an upper endoscopy),
+**4 wrong**, 7 can't tell (rare but possible, e.g. CRNAs or NPs giving epidural injections for pain).
+
+3 of the 4 wrong labels have one cause: Medicare doesn't pay preventive-visit codes (99381-99397) or consultation codes
+(99241-99255), so its records undercount who bills them. Fix made: label d now skips office/hospital visit codes
+(99202-99499), where a specialty mismatch means little anyway. The 4th: a nurse practitioner with a psychotherapy rate;
+the generic NP taxonomy hides psychiatric NPs.
+
+Still census-only and not on any page. Wording if it ever goes on a page: "may never be used; unverified".

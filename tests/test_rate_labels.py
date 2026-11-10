@@ -107,3 +107,12 @@ def test_specialty_mismatch():
     c = RL.counts(con, t, None, spec)
     assert c["specialty_mismatch"] == 1 and c["specialty_figures_used"] is True and c["any_label"] >= 1
     assert RL.counts(con, t)["specialty_mismatch"] == 0
+
+
+def test_visit_codes_never_specialty_labeled():
+    con = duckdb.connect()
+    t = table(con, [("1001", "T1", "99386", "", "professional", "", "negotiated", 150.0, "11")])
+    for q in ["create table nt as select '1001' npi, '207W00000X' taxonomy_1", "create table tn as select '207W00000X' taxonomy_1, 5000 clinicians",
+              "create table cn as select '99386' code, 1000 billers", "create table ct as select '99386' code, '207W00000X' taxonomy_1, 0 billers"]:
+        con.execute(q)
+    assert RL.counts(con, t, None, dict(nt="nt", tn="tn", cn="cn", ct="ct"))["specialty_mismatch"] == 0

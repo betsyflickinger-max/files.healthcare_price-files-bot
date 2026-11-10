@@ -42,7 +42,8 @@ def main():
     rows = con.execute(f"""
         select s.i, st.taxonomy_1, tn.clinicians, cn.billers, coalesce(ct.billers, 0),
                tn.clinicians >= {MIN_TAX} and cn.billers >= {MIN_CODE} figure,
-               tn.clinicians >= {MIN_TAX} and cn.billers >= {MIN_CODE} and coalesce(ct.billers, 0) <= {MAX_SHARE} * tn.clinicians d
+               tn.clinicians >= {MIN_TAX} and cn.billers >= {MIN_CODE} and coalesce(ct.billers, 0) <= {MAX_SHARE} * tn.clinicians
+                   and not regexp_matches(s.code, '^99[2-4][0-9][0-9]$') d
         from s left join read_parquet('{W}/npi_taxonomy.parquet') st on st.npi = s.npi
         left join read_parquet('{W}/taxonomy_n.parquet') tn on tn.taxonomy_1 = st.taxonomy_1
         left join read_parquet('{W}/code_n.parquet') cn on cn.code = s.code

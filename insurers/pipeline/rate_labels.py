@@ -27,7 +27,9 @@ Three labels (each row can carry any of them):
                          billed it to Medicare or Medicaid in 2024 (utilization/build_specialty.py builds the reference).
                          Only when the specialty has MIN_TAX+ clinicians and the code MIN_CODE+ billers in those tables;
                          organizations (hospitals, groups) and facility rates are never labeled. Medicare is mostly 65+ and
-                         Medicaid's file is partial, so a label means "unusual", never "wrong".
+                         Medicaid's file is partial, so a label means "unusual", never "wrong". Visit codes 99202-99499 are
+                         never labeled (hand check, Nov 9: Medicare doesn't pay preventive or consult codes, so its records
+                         undercount who bills them; reports/audit/2026-11-09/specialty-check.md).
 
 Not labeled: $0 rates (the census already counts them), percentage-of-charges rates (no dollar amount to compare).
 
@@ -83,6 +85,7 @@ def labeled_sql(t, bench=None, have=None, spec=None):
               f"left join {spec['ct']} ct on ct.code = upper(cast(x.billing_code as varchar)) and ct.taxonomy_1 = st.taxonomy_1")
         sc = (f"st.taxonomy_1 spec_taxonomy, tn.clinicians spec_clinicians, coalesce(ct.billers, 0) spec_billers, "
               f"coalesce(x.fee_kind = 'professional' and {xdollar} and tn.clinicians >= {MIN_TAX} and cn.billers >= {MIN_CODE} "
+              f"and not regexp_matches(cast(x.billing_code as varchar), '^99[2-4][0-9][0-9]$') "
               f"and coalesce(ct.billers, 0) <= {MAX_SHARE} * tn.clinicians, false) specialty_mismatch")
     else:
         sj, sc = "", "null::varchar spec_taxonomy, null::bigint spec_clinicians, null::bigint spec_billers, false specialty_mismatch"
