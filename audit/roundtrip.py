@@ -102,12 +102,17 @@ def prefixes(files, slug):
 
 
 def money_in(text, v):
-    for x in NUM.findall(text or ''):
-        try:
-            if abs(float(x.replace(',', '')) - v) < 0.006:
-                return True
-        except ValueError:
-            pass
+    """Nov 9, 2026: a CSV line is split into its fields first. Reading the whole line at once glued neighbors together
+    ("249,174.3" read as 249,174.3), which made 23 good lines look wrong in the first round trip."""
+    s = (text or '').lstrip()
+    parts = [text or ''] if s[:1] in ('{', '[') else next(csv.reader([text or '']), [])
+    for p in parts:
+        for x in NUM.findall(p):
+            try:
+                if abs(float(x.replace(',', '')) - v) < 0.006:
+                    return True
+            except ValueError:
+                pass
     return False
 
 
@@ -193,39 +198,40 @@ def check_insurer(ins, max_gb, minutes=120):
     for x in ins:
         by_table[stem(x['url'])].append(x)
     order = sorted(by_table, key=lambda st: sum(s for _, s in idx.get(st, [])))   # smallest tables first
-    for st in order:
+    def one(st):   # Nov 9, 2026: tables are read 4 at a time (the first run traced only 139 of 1,272 lines in 2 hours)
+        cur = con.cursor()
         xs = by_table[st]
         keys = idx.get(st, [])
         if time.time() > stop:
             for x in xs:
                 x.update(verdict='not checked (time budget used up)', detail='')
-            continue
+            return
         if not keys:
             for x in xs:
                 x.update(verdict='source table not found', detail=f'no table named {st}')
-            continue
+            return
         gb = sum(s for _, s in keys) / 1e9
         if gb > max_gb:
             for x in xs:
                 x.update(verdict='not checked (table too big for this run)', detail=f'{gb:.0f} GB')
-            continue
+            return
         codes = sorted({x['code'] for x in xs})
         npis = sorted({x['npi'] for x in xs if x['npi']})
         if not npis:
             for x in xs:
                 x.update(verdict='not checked (no NPI on page)', detail='')
-            continue
+            return
         lst = '[' + ','.join(f"'s3://{B}/{k}'" for k, _ in keys) + ']'
         q = f"""select billing_code, npi, billing_class, negotiated_type, negotiated_rate, billing_code_modifier, negotiation_arrangement,
                        expiration_date, reporting_entity_name, last_updated_on
                 from read_parquet({lst}, union_by_name=true)
                 where billing_code in ({','.join(repr(c) for c in codes)}) and npi in ({','.join(repr(n) for n in npis)})"""
         try:
-            rows = con.execute(q).fetchall()
+            rows = cur.execute(q).fetchall()
         except Exception as e:
             for x in xs:
                 x.update(verdict='not checked (read error)', detail=f'{type(e).__name__}: {str(e)[:150]}')
-            continue
+            return
         print(f"  table {st}: {len(xs)} sampled lines, {len(rows)} source rows ({gb:.1f} GB)", flush=True)
         src = collections.defaultdict(list)
         for r in rows:
@@ -276,6 +282,9 @@ def check_insurer(ins, max_gb, minutes=120):
             if rs and not entity_ok(label, ent):
                 x['entity_flag'] = f"page says {x['net'].split('|')[0]}, file says {x['source_entity']}"
 
+    with ThreadPoolExecutor(4) as ex:
+        list(ex.map(one, order))
+
 
 FAMILY = [r'blue|bcbs|anthem|wellpoint|elevance|highmark|regence|premera|carefirst|excellus|independence|horizon|florida blue',
           r'united|uhc|optum|umr|golden rule|all savers', r'centene|ambetter|superior|wellcare|celtic|health net|peach state|meridian|buckeye|sunshine',
@@ -305,11 +314,18 @@ def raw_index():
 
 
 def stream_lines(key):
+    """The archived original as text. Nov 9, 2026: what's inside is decided by its first bytes, not its name: many hospitals
+    serve gzip or zip under a .csv or .ashx name, and reading those as text gave garbage ("code not on cited line", "file
+    ended before the cited line"). A zip's data file is its largest file."""
     import zstandard
-    if '.zip' in key.lower():   # a zipped original: unpack the zip to a temp file, read its first data file
+    body = s3.get_object(Bucket=B, Key=key)['Body']
+    src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
+    src = io.BufferedReader(src, 1 << 20)
+    head = src.peek(4)[:4]
+    if head[:2] == b'\x1f\x8b':
+        return io.TextIOWrapper(io.BufferedReader(gzip.GzipFile(fileobj=src), 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+    if head == b'PK\x03\x04' or '.zip' in key.lower():
         tmp = tempfile.NamedTemporaryFile(suffix='.zip', delete=False)
-        body = s3.get_object(Bucket=B, Key=key)['Body']
-        src = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
         while True:
             b = src.read(1 << 22)
             if not b:
@@ -317,11 +333,9 @@ def stream_lines(key):
             tmp.write(b)
         tmp.close()
         z = zipfile.ZipFile(tmp.name)
-        name = next(n for n in z.namelist() if not n.endswith('/') and not n.startswith('__MACOSX'))
-        return io.TextIOWrapper(z.open(name), encoding='utf-8-sig', errors='replace', newline='')
-    body = s3.get_object(Bucket=B, Key=key)['Body']
-    rd = zstandard.ZstdDecompressor(max_window_size=2 ** 31).stream_reader(body, read_across_frames=True) if key.endswith('.zst') else body
-    return io.TextIOWrapper(io.BufferedReader(rd, 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+        inner = max((i for i in z.infolist() if not i.is_dir() and not i.filename.startswith('__MACOSX')), key=lambda i: i.file_size)
+        return io.TextIOWrapper(io.BufferedReader(z.open(inner), 1 << 20), encoding='utf-8-sig', errors='replace', newline='')
+    return io.TextIOWrapper(src, encoding='utf-8-sig', errors='replace', newline='')
 
 
 def check_hospital_file(key, xs):
@@ -353,12 +367,27 @@ def check_hospital_file(key, xs):
                     break
         else:
             f = stream_lines(key)
+            rec, inq, at = [], False, 0   # Nov 9, 2026: a cited record whose quoted note spans lines is read to its end
             for n, line in enumerate(f, 1):
-                if n in want:
-                    for x in want[n]:
-                        judge(x, line)
-                if n >= last:
+                if rec:
+                    rec.append(line)
+                    inq = still_open(line, inq)
+                    if not inq:
+                        for x in want[at]:
+                            judge(x, ''.join(rec))
+                        rec = []
+                elif n in want:
+                    inq = still_open(line, False)
+                    if inq:
+                        rec, at = [line], n
+                    else:
+                        for x in want[n]:
+                            judge(x, line)
+                if n >= last and not rec:
                     break
+            if rec:
+                for x in want[at]:
+                    judge(x, ''.join(rec))
     except Exception as e:
         for x in xs:
             if 'verdict' not in x:
@@ -407,6 +436,27 @@ def locate(key, miss):
             x['verdict'] = 'found on another line'
         else:
             x['detail'] = f"code and amount not anywhere in this file ({total:,} {'items' if is_json else 'lines'}) | " + x['detail'][:120]
+
+
+def still_open(line, inq):
+    """Is a quoted CSV field still open at the end of this physical line? Quotes count only where the csv module counts them:
+    one that starts a field opens it, "" inside is a literal quote, and a stray quote mid-field (12" ruler) is just text."""
+    if '"' not in line:
+        return inq
+    i, n, start = 0, len(line), not inq
+    while i < n:
+        c = line[i]
+        if inq:
+            if c == '"':
+                if i + 1 < n and line[i + 1] == '"':
+                    i += 2; continue
+                inq = False
+        else:
+            if c == '"' and start:
+                inq = True
+            start = c == ','
+        i += 1
+    return inq
 
 
 def judge(x, text):

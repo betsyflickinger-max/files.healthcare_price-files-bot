@@ -120,13 +120,20 @@ def parse_csv(path):
                 return row[i].strip()
         return ""
 
+    # Nov 9, 2026: cite a record's FIRST line. A quoted note can span several lines, and the csv module hands a record over
+    # after its last line, so pages cited the last one and the round trip found only notes text there. When every line
+    # passes (hosp_every), a record starts on the line after the previous record ended.
+    every = LINE_RE.pattern == ""
+    pos["prev"] = pos["n"]
     for row in rdr:
+        pos["start"] = pos["prev"] + 1 if every else pos["n"]
+        pos["prev"] = pos["n"]
         codes = [(row[ci] if ci < len(row) else "", row[ti] if ti is not None and ti < len(row) else "")
                  for ci, ti in code_cols]
         m = match(codes)
         if not m:
             continue
-        common = dict(base, source_row=pos["n"], description=col(row, "description"), code=m[0], code_type=m[1],
+        common = dict(base, source_row=pos["start"], description=col(row, "description"), code=m[0], code_type=m[1],
                       all_codes=";".join(f"{t}:{c}" for c, t in codes if c), modifiers=col(row, "modifiers"),
                       setting=col(row, "setting"), billing_class=col(row, "billing_class"),
                       gross_charge=col(row, "standard_charge|gross"),

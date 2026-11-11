@@ -1,0 +1,15 @@
+year,variable,event_type,group,dollars,share,source_file,source_sha256,sample_people
+2024,OBVEXP24,Office-based visits,Doctor and clinician fees,399791242228,0.29011,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,OPDEXP24,Hospital outpatient: doctor,Doctor and clinician fees,24502838320,0.01778,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,ERDEXP24,Emergency room: doctor,Doctor and clinician fees,9657752644,0.00701,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,IPDEXP24,Inpatient stays: doctor,Doctor and clinician fees,28773793861,0.02088,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,OPFEXP24,Hospital outpatient: facility,Hospital outpatient and ER facility fees,153774706279,0.11159,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,ERFEXP24,Emergency room: facility,Hospital outpatient and ER facility fees,49721394485,0.03608,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,IPFEXP24,Inpatient stays: facility,Hospital stays,206025331312,0.1495,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,OTHEXP24,Other medical equipment and services,"Equipment, supplies and ambulance",37335174036,0.02709,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,RXEXP24,Prescribed medicines,,311353383458,0.22594,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,DVTEXP24,Dental visits,,99674703944,0.07233,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,HHAEXP24,Home health: agency,,37326115798,0.02709,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,HHNEXP24,Home health: non-agency,,1550446270,0.00113,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,VISEXP24,Glasses and contact lenses,,18579206841,0.01348,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889
+2024,TOTEXP24,All care,(total),1378064958860,1.0,https://meps.ahrq.gov/data_files/pufs/h256/h256dta.zip,653891861ec18574b07f576915e6f9e423263fc947610dc34e1bd176feff7b40,8889

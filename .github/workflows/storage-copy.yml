@@ -8,6 +8,11 @@ on:
         description: "Start again even if a copy was already started"
         type: boolean
         default: false
+      mode:
+        description: "full = original 2-pass copy; topup = one pass while the bot runs; final = during the pause (two-way check, stale files moved to migration/, never deleted)"
+        type: choice
+        options: [full, topup, final]
+        default: full
 permissions:
   contents: read
   issues: write
@@ -30,6 +35,7 @@ jobs:
       BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
       GITHUB_TOKEN: ${{ github.token }}
       FORCE: ${{ inputs.force }}
+      MODE: ${{ inputs.mode }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

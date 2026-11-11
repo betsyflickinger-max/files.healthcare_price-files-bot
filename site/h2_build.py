@@ -200,6 +200,7 @@ def part(k):
     s3 = boto3.client('s3', endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"), aws_access_key_id=E['R2_ACCESS_KEY_ID'],
                       aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto')) if E.get('UPLOAD') else None
     pool = ThreadPoolExecutor(8)
+    futs = []   # Nov 9, 2026: every upload is checked; failures used to vanish, leaving older per-code files in place
     cash_by, xc = defaultdict(list), defaultdict(dict)
     for row in c2.execute(f"SELECT code, s, st, cash, gross, rw, fee, dsc, k, n FROM cout WHERE hash(code)%{NP}={k} ORDER BY code, cash").fetchall():
         if row[8] <= CAPC: cash_by[row[0]].append(row[1:8])
@@ -216,7 +217,7 @@ def part(k):
         if xr or xc.get(code): o['x'] = {'r': xr, 'c': xc.get(code, {})}
         b = base64.b64encode(gzip.compress(json.dumps(o, separators=(',', ':')).encode(), 9))
         open(f'{out}/h/{code}.txt', 'wb').write(b)
-        if s3: pool.submit(s3.put_object, Bucket='upfrontdfwdata', Key=E['HKEY'] + code + '.txt', Body=b, ContentType='text/plain')
+        if s3: futs.append(pool.submit(s3.put_object, Bucket=E.get('R2_BUCKET', '').strip() or 'upfrontdfwdata', Key=E['HKEY'] + code + '.txt', Body=b, ContentType='text/plain'))
     cur = c2.execute(f"""SELECT code, s, ins, prod, plabel, fee, pct, val, rw, st, fl, k, n FROM rout WHERE hash(code)%{NP}={k}
       AND k<={CAPR + 1} ORDER BY code, s, k""")
     n, prev, buf, xr = 0, None, [], {}
@@ -235,6 +236,9 @@ def part(k):
     for code, c in list(cash_by.items()):
         write(code, c, [], {}); n += 1
     pool.shutdown(wait=True)
+    bad = [f.exception() for f in futs if f.exception()]
+    if bad:
+        raise RuntimeError(f'{len(bad)} of {len(futs)} per-code uploads failed, first: {bad[0]!r}')
     return n
 
 from multiprocessing import Pool

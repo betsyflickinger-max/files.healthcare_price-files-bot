@@ -84,6 +84,11 @@ def offload(d):
             todo.append((key, body, TYPES[rel.rsplit(".", 1)[1]]))
     with ThreadPoolExecutor(32) as ex:   # an error here stops the deploy: nothing goes out without its procedure pages
         list(ex.map(lambda t: s3.put_object(Bucket=b, Key=t[0], Body=t[1], ContentType=t[2]), todo))
+    # Nov 9, 2026 (storage move, Betsy chose "keep the website's files on R2"): once the bot writes to Backblaze, copy
+    # every file this deploy's Functions read to R2 first. Does nothing while the bot still writes to R2. A failure
+    # stops the deploy (better than a live site pointing at files R2 doesn't have).
+    subprocess.run([sys.executable, os.path.join(HERE, "..", "bot", "site_r2.py"), "publish", os.path.join(d, "functions")],
+                   check=True)
     moved = []
     try:
         for rel in files:

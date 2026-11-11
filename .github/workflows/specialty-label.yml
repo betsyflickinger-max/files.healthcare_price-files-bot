@@ -1,0 +1,47 @@
+name: Specialty-mismatch label (reference + hand-check sample)
+
+# Nov 9, 2026 (Betsy OK'd): utilization/build_specialty.py builds reference/specialty/ (who bills each code, by specialty)
+# for rate label d; audit/specialty_check.py then draws 50 labeled doctor-fee lines from the live pages for a hand check.
+# Re-run by hand when the yearly Medicare/Medicaid volume tables are refreshed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      rebuild:
+        description: "rebuild the reference first (yes/no)"
+        default: "yes"
+
+concurrency:
+  group: specialty-label
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  specialty:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install boto3==1.35.36 duckdb==1.1.3 zstandard==0.23.0 ijson==3.3.0 requests==2.33.0
+      - name: Reference
+        if: inputs.rebuild != 'no'
+        run: python -u utilization/build_specialty.py --work /tmp/spec
+      - name: Hand-check sample
+        run: python -u audit/specialty_check.py
+      - name: Commit
+        if: always()
+        run: |
+          git config user.name "price-files-bot"; git config user.email "price-files-bot@users.noreply.github.com"
+          git add reports/audit && git commit -m "Specialty-mismatch hand-check sample $(TZ=America/Chicago date +%F)" && for i in 1 2 3 4 5; do git pull --rebase -X theirs -q origin ${{ github.ref_name }} && git push origin HEAD:${{ github.ref_name }} && break; sleep $((i*20)); done || echo "nothing to commit"

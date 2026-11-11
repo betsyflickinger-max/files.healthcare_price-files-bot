@@ -12,3 +12,9 @@ Sources, downloaded Oct 12, 2026:
 - U.S. Census Bureau, CBSA delineation file, list 1, July 2023 (OMB Bulletin 23-01), from
   https://www.census.gov/geographies/reference-files/time-series/demo/metro-micro/delineation-files.html :
   https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list1_2023.xlsx
+
+Nov 10, 2026: `tx_zip_metro_extra.py` adds 254 Texas ZIP codes that are not Census ZIP areas (single-building and PO-box ZIPs,
+e.g. 76508, Baylor Scott & White Medical Center - Temple), each placed by its county from the GeoNames US postal code file
+(https://download.geonames.org/export/zip/US.zip, CC BY 4.0; copy in `sources/`). Before, these fell onto the Small towns page.
+Their rows carry source "GeoNames postal codes (county) ...". Found by the Texas patient-flow check (Project:
+claude/tx-patient-flow/). Re-run it after rebuilding the table with `tx_zip_metro.py`.
