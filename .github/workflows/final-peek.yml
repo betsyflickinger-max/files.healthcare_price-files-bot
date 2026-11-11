@@ -1,0 +1,23 @@
+name: final-peek (read only)
+on:
+  push:
+    branches: [final-peek]
+permissions:
+  contents: read
+jobs:
+  peek:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Look (read only)
+        env:
+          B2K: ${{ secrets.B2_ACCESS_KEY_ID }}
+          B2S: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+          B2B: ${{ secrets.B2_BUCKET }}
+          R2K: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2S: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2B: ${{ secrets.R2_BUCKET }}
+          R2A: ${{ secrets.R2_ACCOUNT_ID }}
+        run: |
+          pip -q install boto3
+          python3 board/peek/final_peek.py
