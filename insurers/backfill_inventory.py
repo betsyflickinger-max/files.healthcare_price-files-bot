@@ -21,6 +21,20 @@ import duckdb
 sys.path.insert(0, str(Path(__file__).resolve().parent / "pipeline"))
 import inventory  # noqa: E402
 
+
+def _duck_store(con, key_id, secret, acct):
+    """Nov 9, 2026 (storage move): DuckDB reads Backblaze when STORAGE_ENDPOINT is set, else Cloudflare R2.
+    Returns the URL scheme to use ('s3' or 'r2')."""
+    ep = "".join(os.environ.get("STORAGE_ENDPOINT", "").split())
+    if ep:
+        host = ep.split("://")[-1].rstrip("/")
+        reg = "".join(os.environ.get("STORAGE_REGION", "").split()) or "auto"
+        con.execute(f"create or replace secret store (type s3, key_id '{key_id}', secret '{secret}', endpoint '{host}', "
+                    f"region '{reg}', url_style 'path')")
+        return "s3"
+    con.execute(f"create or replace secret store (type r2, key_id '{key_id}', secret '{secret}', account_id '{acct}')")
+    return "r2"
+
 OUTS = {"dfw": "data/full/", "tx": "data/tx/", "s7": "data/s7/", "nc": "data/nc/", "ct": "data/ct/", "il": "data/il/", "n5": "data/n5/", "ar": "data/ar/", "b1": "data/b1/", "la": "data/la/", "b4": "data/b4/", "az": "data/az/", "c1": "data/c1/", "c2": "data/c2/", "c3": "data/c3/"}
 E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
 B = E["R2_BUCKET"] or "upfrontdfwdata"
@@ -61,27 +75,26 @@ def main():
     con = duckdb.connect()
     tmp = Path("/tmp/duck"); tmp.mkdir(exist_ok=True)
     con.execute(f"set temp_directory='{tmp}'; set preserve_insertion_order=false; set memory_limit='5GB'")
-    con.execute(f"""create secret r2 (type r2, key_id '{E["R2_ACCESS_KEY_ID"]}', secret '{E["R2_SECRET_ACCESS_KEY"]}',
-                    account_id '{E["R2_ACCOUNT_ID"]}')""")
+    SCH = _duck_store(con, E["R2_ACCESS_KEY_ID"], E["R2_SECRET_ACCESS_KEY"], E["R2_ACCOUNT_ID"])
     ok = failed = 0
     for size, tab in todo:
         if (time.time() - t0) / 60 > a.minutes:
             print(f"time budget reached; {len(todo) - ok - failed} tables left for the next run", flush=True)
             break
         t1 = time.time()
-        t = f"read_parquet('r2://{B}/{out}rates/{tab}.parquet')"
+        t = f"read_parquet('{SCH}://{B}/{out}rates/{tab}.parquet')"
         try:
             meta = con.execute(f"select any_value(reporting_entity_name), any_value(last_updated_on), any_value(file_label), "
                                f"any_value(source_file), any_value(source_url) from (select * from {t} limit 1)").fetchone()
             try:
-                mem = con.execute(f"select count(*), count(distinct npi) from read_parquet('r2://{B}/{out}membership/{tab}.parquet')").fetchone()
+                mem = con.execute(f"select count(*), count(distinct npi) from read_parquet('{SCH}://{B}/{out}membership/{tab}.parquet')").fetchone()
             except Exception:
                 mem = (None, None)
             base = {"source_file": meta[3] or tab, "source_url": meta[4] or "", "network": meta[2] or "", "checked_on": date.today().isoformat(),
                     "header": {"reporting_entity_name": meta[0] or "", "last_updated_on": meta[1] or ""},
                     "roster_rows_in_scope": mem[0], "roster_npis_in_scope": mem[1], "inventory_from": "existing table (backfill)"}
             cen = inventory.census(con, t, base)
-            cen.update(inventory.roster(con, f"read_parquet('r2://{B}/{out}membership/{tab}.parquet')"))
+            cen.update(inventory.roster(con, f"read_parquet('{SCH}://{B}/{out}membership/{tab}.parquet')"))
             s3.put_object(Bucket=B, Key=f"bot/insurers/census/{MONTH}/{out.strip('/').replace('/', '_')}/{tab}.json",
                           Body=json.dumps(cen, indent=1, default=str).encode())
             local = tmp / f"{tab}.ends.parquet"

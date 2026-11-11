@@ -27,6 +27,20 @@ from pathlib import Path
 import boto3
 import duckdb
 
+
+def _duck_store(con, key_id, secret, acct):
+    """Nov 9, 2026 (storage move): DuckDB reads Backblaze when STORAGE_ENDPOINT is set, else Cloudflare R2.
+    Returns the URL scheme to use ('s3' or 'r2')."""
+    ep = "".join(os.environ.get("STORAGE_ENDPOINT", "").split())
+    if ep:
+        host = ep.split("://")[-1].rstrip("/")
+        reg = "".join(os.environ.get("STORAGE_REGION", "").split()) or "auto"
+        con.execute(f"create or replace secret store (type s3, key_id '{key_id}', secret '{secret}', endpoint '{host}', "
+                    f"region '{reg}', url_style 'path')")
+        return "s3"
+    con.execute(f"create or replace secret store (type r2, key_id '{key_id}', secret '{secret}', account_id '{acct}')")
+    return "r2"
+
 HERE = Path(__file__).resolve().parent
 E = {k: "".join(os.environ.get(k, "").split()) for k in ("R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET")}
 B = E["R2_BUCKET"] or "upfrontdfwdata"
@@ -74,7 +88,7 @@ def main():
     con = duckdb.connect()
     Path("/tmp/duck").mkdir(exist_ok=True)
     con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='10GB'")
-    con.execute(f"""create secret r2 (type r2, key_id '{E["R2_ACCESS_KEY_ID"]}', secret '{E["R2_SECRET_ACCESS_KEY"]}', account_id '{E["R2_ACCOUNT_ID"]}')""")
+    SCH = _duck_store(con, E["R2_ACCESS_KEY_ID"], E["R2_SECRET_ACCESS_KEY"], E["R2_ACCOUNT_ID"])
     lst = ", ".join(f"'{c}'" for c in codes)
     raw = f"data/packages/{MONTH}/{a.area}_rows.parquet"   # the matching price rows, saved so a re-run needn't re-read every table
     con.execute("""create table r (billing_code varchar, billing_class varchar, npi varchar, rate double, network varchar, insurer varchar,
@@ -89,8 +103,8 @@ def main():
         except Exception as e:
             print(f"no saved rows ({e}); reading every table", flush=True)
     for i, k in enumerate(sorted(tables), 1):
-        t = f"read_parquet('r2://{B}/{k}')"
-        m = f"read_parquet('r2://{B}/{k.replace('/rates/', '/membership/')}')"
+        t = f"read_parquet('{SCH}://{B}/{k}')"
+        m = f"read_parquet('{SCH}://{B}/{k.replace('/rates/', '/membership/')}')"
         try:  # same network naming as the Price Finder: the roster's network name, else the file's label
             con.execute(f"""insert into r select x.billing_code, lower(x.billing_class), x.npi, try_cast(x.negotiated_rate as double),
                               coalesce(mm.network_name, x.file_label), x.reporting_entity_name, x.source_url, x.last_updated_on

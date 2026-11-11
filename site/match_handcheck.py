@@ -14,6 +14,20 @@ Env: R2_*; [DIR=reports/match-pilot/<YYYY-MM>/handcheck]."""
 import csv, io, json, os, re, sys, time
 import boto3, duckdb
 
+
+def _duck_store(con, key_id, secret, acct):
+    """Nov 9, 2026 (storage move): DuckDB reads Backblaze when STORAGE_ENDPOINT is set, else Cloudflare R2.
+    Returns the URL scheme to use ('s3' or 'r2')."""
+    ep = "".join(os.environ.get("STORAGE_ENDPOINT", "").split())
+    if ep:
+        host = ep.split("://")[-1].rstrip("/")
+        reg = "".join(os.environ.get("STORAGE_REGION", "").split()) or "auto"
+        con.execute(f"create or replace secret store (type s3, key_id '{key_id}', secret '{secret}', endpoint '{host}', "
+                    f"region '{reg}', url_style 'path')")
+        return "s3"
+    con.execute(f"create or replace secret store (type r2, key_id '{key_id}', secret '{secret}', account_id '{acct}')")
+    return "r2"
+
 E = os.environ
 HERE = os.path.dirname(os.path.abspath(__file__))
 g = lambda k: ''.join(E[k].split())
@@ -35,8 +49,9 @@ def stem(name):
 
 con = duckdb.connect()
 con.execute("INSTALL httpfs; LOAD httpfs;")
-con.execute(f"CREATE SECRET r2 (TYPE R2, KEY_ID '{g('R2_ACCESS_KEY_ID')}', SECRET '{g('R2_SECRET_ACCESS_KEY')}', ACCOUNT_ID '{g('R2_ACCOUNT_ID')}')")
+SCH = _duck_store(con, g('R2_ACCESS_KEY_ID'), g('R2_SECRET_ACCESS_KEY'), g('R2_ACCOUNT_ID'))
 from boto3.s3.transfer import TransferConfig
+
 TC = TransferConfig(max_concurrency=16, multipart_chunksize=64 * 1024 * 1024)
 _have = {}
 def local(key):

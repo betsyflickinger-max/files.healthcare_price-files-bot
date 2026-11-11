@@ -139,25 +139,42 @@ def put_job(s3, b, job):
     s3.put_object(Bucket=b, Key=Q + job["id"] + ".json", Body=json.dumps(job).encode())
 
 
+def _cond_writes():
+    """Nov 9, 2026: Backblaze B2 doesn't support "create only if new" (If-None-Match); it drops the connection
+    (b2-cutover test). On B2 every create-only write uses the write, wait and check path instead."""
+    return "backblaze" not in "".join(_os.environ.get("STORAGE_ENDPOINT", "").split()).lower()
+
+
+def create_only(s3, b, key, body, owner):
+    """Create key with body; True only for the one writer that ends up owning it. owner(content) -> bool says
+    whether the stored content is ours. Uses If-None-Match where the storage supports it; otherwise checks
+    the key is free, writes, waits 3 s and re-reads (storage is strongly consistent, so the last writer wins
+    and every other writer sees someone else's content and backs off)."""
+    if _cond_writes():
+        try:
+            s3.put_object(Bucket=b, Key=key, Body=body, IfNoneMatch="*")
+            c = _get(s3, b, key)
+            return bool(c) and owner(c)
+        except ClientError as e:
+            code = e.response.get("Error", {}).get("Code", "")
+            status = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+            if code in ("PreconditionFailed", "ConditionalRequestConflict") or status in (409, 412):
+                return False
+            if code not in ("NotImplemented",) and status != 501:
+                raise
+    if _get(s3, b, key):
+        return False
+    s3.put_object(Bucket=b, Key=key, Body=body)
+    time.sleep(3)
+    c = _get(s3, b, key)
+    return bool(c) and owner(c)
+
+
 def claim(s3, b, jid, me):
     """Take a job. True only for the one machine whose write created the claim."""
     body = json.dumps(dict(me, claimed_at=iso(), heartbeat=iso())).encode()
-    try:
-        s3.put_object(Bucket=b, Key=C + jid + ".json", Body=body, IfNoneMatch="*")
-    except ClientError as e:
-        code = e.response.get("Error", {}).get("Code", "")
-        status = e.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-        if code in ("PreconditionFailed", "ConditionalRequestConflict") or status in (409, 412):
-            return False
-        if code not in ("NotImplemented",) and status != 501:
-            raise
-        # storage without "create only if new": write, wait, and check we are still the owner
-        if _get(s3, b, C + jid + ".json"):
-            return False
-        s3.put_object(Bucket=b, Key=C + jid + ".json", Body=body)
-        time.sleep(3)
-    c = _get(s3, b, C + jid + ".json")
-    return bool(c) and str(c.get("droplet_id")) == str(me.get("droplet_id")) and c.get("name") == me.get("name")
+    return create_only(s3, b, C + jid + ".json", body,
+                       lambda c: str(c.get("droplet_id")) == str(me.get("droplet_id")) and c.get("name") == me.get("name"))
 
 
 def heartbeat(s3, b, jid, me, claimed_at):

@@ -368,8 +368,10 @@ def _yield_token(key, who):
     """True for the one machine whose write created this token (same create-only write as a queue claim, kept apart
     from bot/fleet/claims/ so it never counts as a file being read)."""
     try:
-        s3.put_object(Bucket=B, Key=key, Body=json.dumps(dict(who, at=time.time())).encode(), IfNoneMatch="*")
-        return True
+        import fleet   # create_only: If-None-Match where supported, write/wait/check on Backblaze (Nov 9, 2026)
+        tok = dict(who, at=time.time())
+        return fleet.create_only(s3, B, key, json.dumps(tok).encode(),
+                                 lambda c: c.get("name") == who.get("name") and c.get("at") == tok["at"])
     except Exception:
         return False
 

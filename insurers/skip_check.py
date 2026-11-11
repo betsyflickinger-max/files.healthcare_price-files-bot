@@ -31,6 +31,20 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import catalog  # noqa: E402
 
+
+def _duck_store(con, key_id, secret, acct):
+    """Nov 9, 2026 (storage move): DuckDB reads Backblaze when STORAGE_ENDPOINT is set, else Cloudflare R2.
+    Returns the URL scheme to use ('s3' or 'r2')."""
+    ep = "".join(os.environ.get("STORAGE_ENDPOINT", "").split())
+    if ep:
+        host = ep.split("://")[-1].rstrip("/")
+        reg = "".join(os.environ.get("STORAGE_REGION", "").split()) or "auto"
+        con.execute(f"create or replace secret store (type s3, key_id '{key_id}', secret '{secret}', endpoint '{host}', "
+                    f"region '{reg}', url_style 'path')")
+        return "s3"
+    con.execute(f"create or replace secret store (type r2, key_id '{key_id}', secret '{secret}', account_id '{acct}')")
+    return "r2"
+
 # Left out on purpose, like the pick lists: ancillary and special-purpose networks (chiropractic, acupuncture, speech,
 # behavioral, therapy, transplant, pharmacy, vision, dental, hearing, lab, equipment).
 ANCILLARY = re.compile(r"chiro|acupunct|speech|behavior|optum|ohph|therap|transplant|pharm|vision|dental|hearing|\blab\b|\bdme\b|\beap\b", re.I)
@@ -139,7 +153,7 @@ def compare(a):
     # columns. Each row is now one 64-bit key (provider + tax ID + code + price type/class/setting/modifier) plus its
     # price, with a memory cap so DuckDB spills to disk instead of starving the runner.
     con.execute("set temp_directory='/tmp/duck'; set preserve_insertion_order=false; set memory_limit='9GB'; set threads=8")
-    con.execute(f"create secret r2 (type r2, key_id '{E['R2_ACCESS_KEY_ID']}', secret '{E['R2_SECRET_ACCESS_KEY']}', account_id '{E['R2_ACCOUNT_ID']}')")
+    SCH = _duck_store(con, E['R2_ACCESS_KEY_ID'], E['R2_SECRET_ACCESS_KEY'], E['R2_ACCOUNT_ID'])
     out_k, out_s = f"data/{a.area}/", f"data/{skip}/"
     con.execute("set http_retries=8; set http_retry_wait_ms=2000; set http_retry_backoff=2")
 
@@ -158,7 +172,7 @@ def compare(a):
         return (f"select hash(npi, coalesce(tin,''), lower(coalesce(billing_code_type,'')), billing_code, "
                 f"lower(coalesce(negotiated_type,'')), lower(coalesce(billing_class,'')), lower(coalesce(setting,'')), "
                 f"coalesce(cast(billing_code_modifier as varchar),'')) k, npi, round(try_cast(negotiated_rate as double), 2) rate "
-                f"from read_parquet('r2://{E['R2_BUCKET']}/{key}') where billing_code in ({lst}) and try_cast(negotiated_rate as double) > 0")
+                f"from read_parquet('{SCH}://{E['R2_BUCKET']}/{key}') where billing_code in ({lst}) and try_cast(negotiated_rate as double) > 0")
 
     def table_of(row, man):
         m = man.get(row["slot"]) or {}
