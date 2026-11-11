@@ -1,0 +1,75 @@
+name: Hospital rows rebuild (2026 fields)
+
+# Nov 11, 2026: re-parse hospital price files so every row also keeps the 2026 allowed-amount fields (10th/90th percentile
+# and the count of allowed amounts) and the file's CMS template version. Guide: docs/hospital-rows-v2.md. Code:
+# site/hosp_rebuild.py (steps) and site/hosp_every.py (the parsing, on rented machines).
+# By hand only, three steps:
+#   estimate  files, GB, machine-hours and dollars for the scope. Reads storage listings only. Rents nothing.
+#   start     needs confirm = yes. Estimates again and stops if it's over the approved amount ($25, or build_approvals.json
+#             "hosp-v2-<scope>") or over what is left under this month's card cap (_card_cap). Rents machines only in free
+#             slots (machine shares; 2 slots always left for other work). Rows go to the NEW v2 folder in site/hosp_rows.json;
+#             the live site's rows are never touched, and nothing reads the v2 rows until Betsy switches the setting.
+#   status    files done / left / failed, machines still on, and a sample check of finished files against their old rows.
+# Every step refuses to run while the bot is paused for maintenance (the open "Bot paused for maintenance" issue, or the
+# hospital queue's hold file). Never deletes anything.
+on:
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "estimate, start or status"
+        type: choice
+        options: [estimate, start, status]
+        default: estimate
+      scope:
+        description: "dfw (the DFW page's hospitals), tx (every Texas hospital), all (every state; later)"
+        type: choice
+        options: [tx, dfw, all]
+        default: tx
+      confirm:
+        description: "start only: type yes"
+        default: ""
+      machines:
+        description: "start: most rented machines at once"
+        default: "4"
+      wait_minutes:
+        description: "start: minutes to wait for a free machine slot before giving up (nothing is rented then)"
+        default: "60"
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: hosp-rows-v2
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+      DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q boto3==1.35.36 requests==2.33.0 duckdb==1.1.3
+      - name: ${{ inputs.step }} (${{ inputs.scope }})
+        env:                    # inputs go in as variables, never pasted into the script
+          STEP: ${{ inputs.step }}
+          SCOPE: ${{ inputs.scope }}
+          CONFIRM: ${{ inputs.confirm }}
+          MACHINES: ${{ inputs.machines }}
+          WAIT: ${{ inputs.wait_minutes }}
+        run: |
+          set -o pipefail
+          python site/hosp_rebuild.py "$STEP" --scope "$SCOPE" --confirm "$CONFIRM" --machines "$MACHINES" \
+            --wait-minutes "$WAIT" --ref "$GITHUB_REF_NAME" | tee -a "$GITHUB_STEP_SUMMARY"
