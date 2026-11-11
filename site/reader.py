@@ -7,6 +7,12 @@ Every kept row carries raw_key (the R2 archive), source_url, sha256 and source_r
 the original CSV, or item number in JSON) so it traces to one line of one fingerprinted file.
 Safe to re-run: finished archives are listed in out/done.txt and skipped.
 
+Nov 11, 2026 (hospital rows v2, docs/hospital-rows-v2.md): rows also carry the 2026 allowed-amount fields, handled exactly as
+bot/reader.py does since PR #414 (CY2026 OPPS rule, CMS template v3.x): p10_amount, p90_amount and allowed_count (median_amount
+was already kept), plus file_version, the CMS template version the file states about itself. They are extra keys only:
+FIELDS is unchanged, so anything written with FIELDS (the live site's rows) comes out exactly as before. FIELDS_V2 adds the new
+columns at the end. Older files leave them blank (never zero).
+
 Run: python extract_codes.py <codes.csv> <manifest.csv> <out_dir>
 """
 import csv, gzip, io, json, os, re, sys, time, zipfile
@@ -27,6 +33,9 @@ FIELDS = ["raw_key", "source_url", "sha256", "source_row", "hospital_name", "loc
           "billing_class", "gross_charge", "discounted_cash", "min_charge", "max_charge", "payer_name", "plan_name",
           "negotiated_dollar", "negotiated_percentage", "negotiated_algorithm", "methodology", "median_amount",
           "notes", "payer_notes"]
+# Nov 11, 2026: the 2026 fields (same names as bot/reader.py, PR #414) and the file's CMS template version, at the end
+NEW_FIELDS = ["p10_amount", "p90_amount", "allowed_count", "file_version"]
+FIELDS_V2 = FIELDS + NEW_FIELDS
 
 
 def match(codes):
@@ -101,7 +110,7 @@ def parse_csv(path):
     idx = {"|".join(p): i for i, p in enumerate(parts)}
     base = dict(hospital_name=meta.get("hospital_name", ""), location_name=meta.get("location_name", ""),
                 last_updated_on=meta.get("last_updated_on", ""), type_2_npi=meta.get("type_2_npi", ""),
-                hospital_address=meta.get("hospital_address", ""))
+                hospital_address=meta.get("hospital_address", ""), file_version=meta.get("version", ""))
     code_cols = [(i, idx.get("|".join(p + ["type"]))) for i, p in enumerate(parts) if len(p) == 2 and p[0] == "code"]
     tall = "payer_name" in idx
     payer_cols = {}
@@ -110,7 +119,8 @@ def parse_csv(path):
             raw = header[i].split("|")
             if len(p) == 4 and p[0] == "standard_charge":
                 payer_cols.setdefault((raw[1].strip(), raw[2].strip()), {})[p[3]] = i
-            elif len(p) == 3 and p[0] in ("median_amount", "estimated_amount", "additional_payer_notes"):
+            elif len(p) == 3 and p[0] in ("median_amount", "estimated_amount", "additional_payer_notes",
+                                             "10th_percentile", "90th_percentile", "count"):   # Nov 11: 2026 fields (#414)
                 payer_cols.setdefault((raw[1].strip(), raw[2].strip()), {})[p[0]] = i
 
     def col(row, *names):
@@ -146,14 +156,16 @@ def parse_csv(path):
                        negotiated_percentage=col(row, "standard_charge|negotiated_percentage"),
                        negotiated_algorithm=col(row, "standard_charge|negotiated_algorithm"),
                        methodology=col(row, "standard_charge|methodology"), median_amount=col(row, "median_amount"),
-                       payer_notes=col(row, "additional_payer_notes"))
+                       payer_notes=col(row, "additional_payer_notes"), p10_amount=col(row, "10th_percentile"),
+                       p90_amount=col(row, "90th_percentile"), allowed_count=col(row, "count"))
         else:
             emitted = False
             for (payer, plan), c in payer_cols.items():
                 g = lambda k: row[c[k]].strip() if k in c and c[k] < len(row) else ""
                 vals = dict(negotiated_dollar=g("negotiated_dollar"), negotiated_percentage=g("negotiated_percentage"),
                             negotiated_algorithm=g("negotiated_algorithm"), methodology=g("methodology"),
-                            median_amount=g("median_amount"), payer_notes=g("additional_payer_notes"))
+                            median_amount=g("median_amount"), payer_notes=g("additional_payer_notes"),
+                            p10_amount=g("10th_percentile"), p90_amount=g("90th_percentile"), allowed_count=g("count"))
                 if any(vals[k] for k in ("negotiated_dollar", "negotiated_percentage", "negotiated_algorithm")):
                     emitted = True
                     yield dict(common, payer_name=payer.replace("_", " "), plan_name=plan.replace("_", " "), **vals)
@@ -165,7 +177,7 @@ def parse_json(path):
     meta = {}
     with _NoBOM(sniff_open(path)) as fb:
         for prefix, event, value in ijson.parse(fb):
-            if prefix in ("hospital_name", "last_updated_on") and event in ("string", "number"):
+            if prefix in ("hospital_name", "last_updated_on", "version") and event in ("string", "number"):
                 meta[prefix] = str(value)
             elif prefix in ("type_2_npi.item", "hospital_address.item", "location_name.item"):
                 meta.setdefault(prefix.split(".")[0], []).append(str(value))
@@ -176,7 +188,7 @@ def parse_json(path):
     j = lambda k: " | ".join(meta.get(k, []))
     base = dict(hospital_name=meta.get("hospital_name", ""), location_name=j("location_name"),
                 last_updated_on=meta.get("last_updated_on", ""), type_2_npi=j("type_2_npi"),
-                hospital_address=j("hospital_address"))
+                hospital_address=j("hospital_address"), file_version=meta.get("version", ""))
     with _NoBOM(sniff_open(path)) as fb:
         for n, item in enumerate(ijson.items(fb, "standard_charge_information.item", use_float=True), 1):
             codes = [(c.get("code", ""), c.get("type", "")) for c in item.get("code_information", [])]
@@ -199,7 +211,15 @@ def parse_json(path):
                                negotiated_percentage=p.get("standard_charge_percentage", ""),
                                negotiated_algorithm=p.get("standard_charge_algorithm", ""),
                                methodology=p.get("methodology", ""), median_amount=p.get("median_amount", ""),
-                               payer_notes=p.get("additional_payer_notes", ""))
+                               payer_notes=p.get("additional_payer_notes", ""), p10_amount=p.get("10th_percentile", ""),
+                               p90_amount=p.get("90th_percentile", ""), allowed_count=_count(p.get("count", "")))
+
+
+def _count(v):
+    """Count of allowed amounts as written (bot/reader.py, PR #414). JSON numbers come back as 12 or 12.0; keep them whole."""
+    if isinstance(v, float) and v.is_integer():
+        return str(int(v))
+    return str(v).strip() if v not in (None, "") else ""
 
 
 def main():
