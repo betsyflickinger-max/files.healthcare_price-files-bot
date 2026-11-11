@@ -1,4 +1,4 @@
-name: copy-peek2 top-up status (read only)
+name: copy-peek2 storage inventory (read only)
 on:
   push:
     branches: [copy-peek2]
@@ -8,32 +8,43 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Look (read only)
+      - name: Inventory (read only)
         env:
-          DOT: ${{ secrets.DIGITALOCEAN_TOKEN }}
-          B2K: ${{ secrets.B2_ACCESS_KEY_ID }}
-          B2S: ${{ secrets.B2_SECRET_ACCESS_KEY }}
-          B2B: ${{ secrets.B2_BUCKET }}
+          R2A: ${{ secrets.R2_ACCOUNT_ID }}
+          R2K: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2S: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2B: ${{ secrets.R2_BUCKET }}
         run: |
           pip -q install boto3
-          echo "== copy machines"
-          curl -s -H "Authorization: Bearer $DOT" "https://api.digitalocean.com/v2/droplets?tag_name=upfront-copy" | python3 -c "
-          import json,sys
-          for d in json.load(sys.stdin).get('droplets',[]): print(d['name'], d['status'], d['created_at'])"
-          python3 - <<'PY'
-          import os, boto3, re
-          s3 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
-                            aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"])
-          B = os.environ["B2B"]
-          objs = []
-          for p in s3.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="bot/migration/logs/"):
-              objs += p.get("Contents", [])
-          new = [o for o in objs if o["LastModified"].strftime("%Y-%m-%d") >= "2026-11-09" and "topup" in o["Key"] or o["Key"].endswith(("copy.log", "probe1.log"))]
-          for o in sorted(new, key=lambda o: o["LastModified"])[-30:]:
-              print(o["LastModified"], o["Size"], o["Key"])
-          for o in objs:
-              k = o["Key"]
-              if (k.endswith("summary.json") and "topup" in k) or k.endswith("bot/migration/logs/copy.log"):
-                  t = s3.get_object(Bucket=B, Key=k)["Body"].read().decode("utf-8", "replace")
-                  print("==", k); print("\n".join(l for l in t.splitlines()[-8:] if not re.search(r"(?i)secret|token", l)))
+          cat > s.py <<'PY'
+          import os, boto3, re, collections
+          from concurrent.futures import ProcessPoolExecutor
+          g = lambda k: "".join(os.environ[k].split())
+          def c():
+              return boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
+                                  aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
+          def subs(p):
+              s3, out = c(), []
+              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p, Delimiter="/"):
+                  out += [x["Prefix"] for x in pg.get("CommonPrefixes", [])]
+              return out
+          def total(p):
+              s3, n, b, names = c(), 0, 0, collections.Counter()
+              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p):
+                  for o in pg.get("Contents", []):
+                      n += 1; b += o["Size"]
+                      if p.startswith("data/") and o["Key"].endswith(".parquet"):
+                          stem = re.sub(r"\d{4}-\d{2}(-\d{2})?_?|_?part-?\d+|_\d+", "", o["Key"][len(p):].split("/")[0])
+                          names[stem[:60]] += 1
+              return p, n, b, names.most_common(6)
+          if __name__ == "__main__":
+              top = subs("")
+              with ProcessPoolExecutor(16) as ex:
+                  lv = [s for t in top for s in (subs(t) if t in ("data/", "site/", "control/", "bot/", "work/") else [t])]
+                  lv2 = []
+                  for s in lv:
+                      lv2 += [s] if not s.startswith("data/") else (subs(s) or [s])
+                  for p, n, b, names in sorted(ex.map(total, lv2), key=lambda x: x[0]):
+                      print(f"{b/1e9:9.1f} GB {n:>9,}  {p}" + ("   e.g. " + "; ".join(f"{k}({v})" for k, v in names) if names else ""))
           PY
+          python3 s.py
