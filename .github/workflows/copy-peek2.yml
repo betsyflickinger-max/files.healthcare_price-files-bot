@@ -1,4 +1,4 @@
-name: copy-peek2 storage inventory (read only)
+name: copy-peek2 small-folder file names (read only)
 on:
   push:
     branches: [copy-peek2]
@@ -8,7 +8,7 @@ jobs:
   peek:
     runs-on: ubuntu-latest
     steps:
-      - name: Inventory (read only)
+      - name: Names (read only)
         env:
           R2A: ${{ secrets.R2_ACCOUNT_ID }}
           R2K: ${{ secrets.R2_ACCESS_KEY_ID }}
@@ -16,35 +16,20 @@ jobs:
           R2B: ${{ secrets.R2_BUCKET }}
         run: |
           pip -q install boto3
-          cat > s.py <<'PY'
+          python3 - <<'PY'
           import os, boto3, re, collections
-          from concurrent.futures import ProcessPoolExecutor
           g = lambda k: "".join(os.environ[k].split())
-          def c():
-              return boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
-                                  aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
-          def subs(p):
-              s3, out = c(), []
-              for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p, Delimiter="/"):
-                  out += [x["Prefix"] for x in pg.get("CommonPrefixes", [])]
-              return out
-          def total(p):
-              s3, n, b, names = c(), 0, 0, collections.Counter()
+          s3 = boto3.client("s3", endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com", region_name="auto",
+                            aws_access_key_id=g("R2K"), aws_secret_access_key=g("R2S"))
+          for p in ("control/data/", "reference/", "bot/dashboard/", "bot/employers/", "bot/catalog/", "data/utilization/2024/", "pipeline/", "data/names/", "data/2026-09-28/", "data/2026-10-05/nat/"):
+              c = collections.Counter()
               for pg in s3.get_paginator("list_objects_v2").paginate(Bucket=g("R2B"), Prefix=p):
                   for o in pg.get("Contents", []):
-                      n += 1; b += o["Size"]
-                      if p.startswith("data/") and o["Key"].endswith(".parquet"):
-                          stem = re.sub(r"\d{4}-\d{2}(-\d{2})?_?|_?part-?\d+|_\d+", "", o["Key"][len(p):].split("/")[0])
-                          names[stem[:60]] += 1
-              return p, n, b, names.most_common(6)
-          if __name__ == "__main__":
-              top = subs("")
-              with ProcessPoolExecutor(16) as ex:
-                  lv = [s for t in top for s in (subs(t) if t in ("data/", "site/", "control/", "bot/", "work/") else [t])]
-                  lv2 = []
-                  for s in lv:
-                      lv2 += [s] if not s.startswith("data/") else (subs(s) or [s])
-                  for p, n, b, names in sorted(ex.map(total, lv2), key=lambda x: x[0]):
-                      print(f"{b/1e9:9.1f} GB {n:>9,}  {p}" + ("   e.g. " + "; ".join(f"{k}({v})" for k, v in names) if names else ""))
+                      k = o["Key"][len(p):]
+                      k = re.sub(r"\d{4}-\d{2}(-\d{2})?", "<D>", k)
+                      k = re.sub(r"(by_state/)[^/]+", r"\1<ST>", k)
+                      k = re.sub(r"/[^/]+$", "/…", k) if k.count("/") > 1 else k
+                      c[k] += 1
+              print("==", p, len(c), "names")
+              print("; ".join(f"{k}" + (f"×{n}" if n > 1 else "") for k, n in sorted(c.items()))[:3500])
           PY
-          python3 s.py
