@@ -2,9 +2,9 @@
 import os, json, collections, boto3
 b2 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
                   aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"])
-r2 = boto3.client("s3", endpoint_url=f"https://{os.environ['R2A']}.r2.cloudflarestorage.com", region_name="auto",
+r2 = boto3.client("s3", endpoint_url=f"https://{os.environ['R2A'].strip()}.r2.cloudflarestorage.com", region_name="auto",
                   aws_access_key_id=os.environ["R2K"], aws_secret_access_key=os.environ["R2S"])
-B, R = os.environ["B2B"], os.environ["R2B"]
+B, R = os.environ["B2B"].strip(), os.environ["R2B"].strip()
 objs = []
 for p in b2.get_paginator("list_objects_v2").paginate(Bucket=B, Prefix="bot/migration/logs/final-"):
     objs += p.get("Contents", [])
