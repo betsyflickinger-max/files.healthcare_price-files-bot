@@ -183,8 +183,8 @@ evidence-of-use view are the corrections; the report shows how far each one move
 - Evidence of use (a) comes from 2024 Medicare billing; CMS leaves out pairs with fewer than 11 patients.
 - Outpatient evidence is by payment group (APC), not by code: CMS's by-hospital outpatient file has no code column.
 - Evidence (c) needs the 2026 "count of allowed amounts" in the parsed hospital rows. The bot's hospital reader keeps it since
-  PR #414, but the shared parsed-row cache (`site/hosp_every.py`, built with `site/reader.py`) doesn't keep that column yet, so
-  until that cache is rebuilt with the newer reader, (c) finds nothing and hospital files' own rates show evidence only through (a).
+  PR #414; the shared parsed rows keep it from the v2 rebuild on (docs/hospital-rows-v2.md). Until that rebuild has run and
+  `site/hosp_rows.json` says `"use": "v2"`, (c) finds nothing and hospital files' own rates show evidence only through (a).
 - Anesthesia whole-case amounts have no multiple (no public typical-time source).
 - DME rates without a modifier are compared with the fee schedule's no-modifier row, else its purchase-new (NU) row.
 - Device-intensive surgery-center codes (J8) are wage-adjusted on the whole rate; CMS adjusts only the non-device part.

@@ -75,9 +75,12 @@ def h2(areas):
         a = plan[area]
         d = f'/d/{area}'; os.makedirs(f'{d}/rows', exist_ok=True)
         have = 0
+        sys.path.insert(0, HERE); import hosp_rows   # Nov 11, 2026: v2 rows first after the switch, else v1 (site/hosp_rows.json)
         for j in a['jobs']:
-            try: s3.download_file(B, 'data/hosp_every/rows/' + j['id'] + '.parquet', f"{d}/rows/{j['id']}.parquet"); have += 1
-            except Exception: print(area, 'no parsed rows for', j['name'], flush=True)
+            for p in hosp_rows.read_prefixes():
+                try: s3.download_file(B, p + 'rows/' + j['id'] + '.parquet', f"{d}/rows/{j['id']}.parquet"); have += 1; break
+                except Exception: pass
+            else: print(area, 'no parsed rows for', j['name'], flush=True)
         if not have:   # no hospital files left (Oct 15: e.g. its only file was another hospital's): drop the old index too
             try: s3.delete_object(Bucket=B, Key=a['prefix'] + 'hosp/hosp_index.json')
             except Exception: pass
@@ -204,7 +207,7 @@ def run():
     if st['stage'] == 'plan':
         areas = plan_areas(O)
         O.putj(SP + 'areas.json', areas)
-        cached = {k.rsplit('/', 1)[1][:-8] for k in O.ls(O.HPFX + 'rows/')}
+        cached = {k.rsplit('/', 1)[1][:-8] for p in O.HPFX_READ for k in O.ls(p + 'rows/')}
         todo, seen = [], set()
         for a in areas.values():
             for j in a['jobs']:

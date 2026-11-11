@@ -2,7 +2,8 @@
 
 Three sources, one output shape (a "part" Parquet per source table, see PART_COLS):
   insurer   an insurer in-network table (R2 data/<scope>/rates/<file>.parquet, written by 06f_full_extract.py)
-  hospital  a hospital price file's parsed rows (R2 data/hosp_every/rows/<sha16>.parquet, written by site/hosp_every.py)
+  hospital  a hospital price file's parsed rows (<prefix>rows/<sha16>.parquet, written by site/hosp_every.py; the prefix is
+            site/hosp_rows.json's: data/hosp_every/ until the v2 rows, with the count of allowed amounts, are switched on)
   allowed   an insurer's out-of-network allowed-amount files (R2 raw/allowed/<yyyy-mm>/<insurer>.tar, plans/allowed_amounts.py)
 
 A UNIT is one listed dollar amount for one provider and one service in one file: insurer side (NPI + TIN, code, modifier,

@@ -37,7 +37,9 @@ if not E.get('BUILD'):
     except Exception: REBUILD = {}
 SP = f'site/builds/{BID}/'
 TOUT = f'site/every/{BID}/'
-HPFX = 'data/hosp_every/'
+import hosp_rows  # noqa: E402  (Nov 11, 2026: which copy of the parsed hospital rows, site/hosp_rows.json; default v1)
+HPFX = hosp_rows.write_prefix()        # 'data/hosp_every/' until Betsy switches to the v2 rows (docs/hospital-rows-v2.md)
+HPFX_READ = hosp_rows.read_prefixes()  # where a file's rows are looked up, preferred first; just [HPFX] while v1 is in use
 RESERVE = 1
 SIZE_INS, SIZE_HOSP, SIZE_H2 = 'm-8vcpu-64gb-intel', 's-4vcpu-8gb-intel', 's-8vcpu-16gb-amd'   # Nov 8, 2026: insurer part 16 -> 32 -> 64 GB (see build1)
 N_INS = 18   # Nov 8, 2026: insurer machines (was 2); launched as slots are free. 18 (Betsy: use all the machines) leaves ~6 of the ~25 for Texas's next steps
@@ -149,7 +151,13 @@ E = os.environ
 s3 = boto3.client('s3', endpoint_url=(os.environ.get('STORAGE_ENDPOINT') or 'https://' + E['R2_ACCOUNT_ID'] + '.r2.cloudflarestorage.com'), aws_access_key_id=E['R2_ACCESS_KEY_ID'], aws_secret_access_key=E['R2_SECRET_ACCESS_KEY'], region_name=(os.environ.get('STORAGE_REGION') or 'auto'))
 jobs = json.loads(s3.get_object(Bucket=E['R2_BUCKET'], Key=E['JOBS_KEY'])['Body'].read())
 os.makedirs('/root/rows', exist_ok=True)
-with ThreadPoolExecutor(16) as P: list(P.map(lambda j: s3.download_file(E['R2_BUCKET'], E['HPFX'] + 'rows/' + j['id'] + '.parquet', '/root/rows/' + j['id'] + '.parquet'), jobs))
+RP = (E.get('HPFX_READ') or E['HPFX']).split(',')   # Nov 11, 2026: v2 rows first after the switch, else v1 (site/hosp_rows.py)
+def get(j):
+    for i, p in enumerate(RP):
+        try: return s3.download_file(E['R2_BUCKET'], p + 'rows/' + j['id'] + '.parquet', '/root/rows/' + j['id'] + '.parquet')
+        except Exception:
+            if i == len(RP) - 1: raise
+with ThreadPoolExecutor(16) as P: list(P.map(get, jobs))
 s3.download_file(E['R2_BUCKET'], E['PAGE_KEY'], '/root/page.html')
 PY
 /root/v/bin/python /root/h/h2_build.py '/root/rows/*.parquet' /root/h/payer_name_mapping.csv /root/page.html /d >> /root/run.log 2>&1
@@ -170,7 +178,7 @@ def hospital_jobs():
     for j in base:
         r = latest.get(j['url'])
         jobs.append(dict(j, id=r['sha256'][:16], key=r['r2_key'], size=int(r.get('size') or 0)) if r else j)
-    cached = {k.rsplit('/', 1)[1][:-8] for k in ls(HPFX + 'rows/')}
+    cached = {k.rsplit('/', 1)[1][:-8] for p in HPFX_READ for k in ls(p + 'rows/')}
     todo = [j for j in jobs if j['id'] not in cached]
     return jobs, todo
 
@@ -186,6 +194,7 @@ def bundle():
         t.add(os.path.join(HERE, '..', 'data', 'medicare_areas_zip.csv'), arcname='medicare_areas_zip.csv')
         t.add(os.path.join(HERE, '..', 'data', 'zip_county_all.csv'), arcname='zip_county_all.csv')   # Nov 8: regions.py, one-Medicare-area states (Colorado)
         t.add(os.path.join(HERE, '..', 'data', 'hospital_zip_extra.csv'), arcname='hospital_zip_extra.csv')   # Oct 31: regions.py (California split)   # Texas metro areas (tx_split.py)
+        t.add(os.path.join(HERE, '..', 'bot', 'store.py'), arcname='store.py')   # Nov 11, 2026: hosp_every.py reads and writes through it
     s3.upload_file(p, B, SP + 'bundle.tgz')
 
 
@@ -276,7 +285,7 @@ def main():
         if ins_done and not left: st['stage'] = 'build2'
     if st['stage'] == 'build2':
         done = exists(SP + 'hosp_index.json')
-        ensure(st, 'h2', SIZE_H2, RUN_H2, dict(JOBS_KEY=SP + 'hosp_jobs.json', HPFX=HPFX, PAGE_KEY=SP + 'page_before.html', SP=SP,
+        ensure(st, 'h2', SIZE_H2, RUN_H2, dict(JOBS_KEY=SP + 'hosp_jobs.json', HPFX=HPFX, HPFX_READ=','.join(HPFX_READ), PAGE_KEY=SP + 'page_before.html', SP=SP,
                                                 UPLOAD='1', HKEY=TOUT + 'h/', NP='8', MEM='11GB'), done)
         if done: st['stage'] = 'publish'
     if st['stage'] == 'publish':

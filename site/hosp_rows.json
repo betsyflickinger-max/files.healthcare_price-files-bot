@@ -1,0 +1,6 @@
+{
+ "_about": "Which copy of the parsed hospital rows the site build and analysis/medicare_multiple read (site/hosp_rows.py; docs/hospital-rows-v2.md). v1 = the rows the live site has always used. v2 = the Nov 2026 rebuild that also keeps the 2026 allowed-amount fields (10th/90th percentile, count of allowed amounts) and the file's CMS template version. Betsy flips 'use' to v2 only after she has checked a sample of the rebuild. Nothing is ever deleted from either folder.",
+ "use": "v1",
+ "v1": "data/hosp_every/",
+ "v2": "data/2026-11-11/hosp_every_v2/"
+}

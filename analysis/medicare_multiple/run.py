@@ -164,7 +164,12 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
 
 
 def hospital_items(con, s3c, b, states):
-    have = {k.rsplit("/", 1)[1][:-8]: n for k, n in ls(s3c, b, "data/hosp_every/rows/") if k.endswith(".parquet")}
+    # Nov 11, 2026: the parsed rows the setting site/hosp_rows.json points at (v1 data/hosp_every/ until Betsy switches to the
+    # v2 rebuild, which also carries the count of allowed amounts that evidence (c) needs; docs/hospital-rows-v2.md)
+    sys.path.insert(0, str(ROOT / "site"))
+    import hosp_rows
+    rows = hosp_rows.rows_keys(lambda p: ls(s3c, b, p))
+    have = {sid: n for sid, (_, n) in rows.items()}
     listed = list(csv.DictReader(open(ROOT / "data" / "hospitals.csv")))
     known = {r["ccn"]: r["state"] for r in listed}                      # every CMS hospital record (CCN -> state)
     files, fallback, meta = [], {}, {}
@@ -181,7 +186,7 @@ def hospital_items(con, s3c, b, states):
     for r in listed:
         if r["state"] in sts and r.get("last_sha256") and r["last_sha256"][:16] in have:
             sid = r["last_sha256"][:16]
-            key = f"data/hosp_every/rows/{sid}.parquet"
+            key = rows[sid][0]
             try:
                 cols = {x[0] for x in con.execute(f"describe select * from read_parquet('s3://{b}/{key}')").fetchall()}
                 pick = [c for c in ("type_2_npi", "hospital_name", "location_name", "ein") if c in cols]
