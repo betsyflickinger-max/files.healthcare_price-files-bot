@@ -122,7 +122,7 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
     con = duck(work)
     items = []
     # market segment of each network, from the insurers' own tables of contents (segments.py); rebuilt every run
-    segs, seg_note = segments.from_storage(con, s3c, b)
+    segs, seg_note = segments.from_storage(con, s3c, b, work=work)
     log("market segments:", seg_note)
     for area in areas_for(states):
         labels = set()

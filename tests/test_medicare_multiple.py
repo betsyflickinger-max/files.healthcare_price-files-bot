@@ -626,3 +626,42 @@ def test_gh_output_for_the_workflow(tmp_path, monkeypatch):
     monkeypatch.setenv("GITHUB_OUTPUT", str(tmp_path / "o"))
     runmod.gh_output(gh_go="true", state="TX", run="tx-2026-11")
     assert (tmp_path / "o").read_text() == "gh_go=true\nstate=TX\nrun=tx-2026-11\n"
+
+
+def test_segments_from_storage_downloads_once_then_reuses_saved_result(tmp_path):
+    import json
+    src = tmp_path / "src"
+    src.mkdir()
+    duckdb.connect().execute(f"""copy (select * from (values ('ambx', '12345TX0010001', 'hios', ''))
+        t(network_key, plan_id, plan_id_type, plan_market_type)) to '{src}/x.parquet'""")
+
+    class FakeS3:
+        def __init__(self):
+            self.store, self.downloads = {}, 0
+
+        def get_paginator(self, _):
+            class P:
+                def paginate(_, **kw):
+                    return [{"Contents": [{"Key": "bot/xwalk/plan_network/anthem/2026-11.parquet", "ETag": "e1"}]}]
+            return P()
+
+        def head_object(self, **kw):
+            raise KeyError("no 5500 table")
+
+        def download_file(self, b, k, dst):
+            self.downloads += 1
+            open(dst, "wb").write(open(src / "x.parquet", "rb").read())
+
+        def get_object(self, Bucket, Key):
+            import io
+            return {"Body": io.BytesIO(self.store[Key])}
+
+        def put_object(self, Bucket, Key, Body):
+            self.store[Key] = Body
+
+    s3c = FakeS3()
+    S, note = segments.from_storage(duckdb.connect(), s3c, "b", work=str(tmp_path))
+    assert S["ambx"]["segment"] == segments.INDIVIDUAL and s3c.downloads == 1
+    assert json.loads(s3c.store[segments.CACHE_KEY])["segments"]["ambx"]["method"] == segments.HIOS
+    S2, note2 = segments.from_storage(duckdb.connect(), s3c, "b", work=str(tmp_path))
+    assert S2 == S and s3c.downloads == 1 and "reused" in note2
