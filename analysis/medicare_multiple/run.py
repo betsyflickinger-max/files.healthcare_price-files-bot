@@ -128,12 +128,17 @@ def plan(states, run_id, work, gh_max=GH_MAX_ROWS):
         labels = set()
         for scope in [area] + EXTRA.get(area, []):
             rates_ = [(k, n) for k, n in ls(s3c, b, TABLES[scope] + "rates/") if k.endswith(".parquet")]
-            for k, n in rates_:
+            log(f"{scope}: {len(rates_)} insurer tables, {sum(n for _, n in rates_) / 1e9:,.1f} GB")
+            for j, (k, n) in enumerate(rates_, 1):
+                if j % 50 == 0:
+                    log(f"  {scope}: sized {j} of {len(rates_)}")
                 meta = con.execute(f"select sum(num_rows), count(*) from (select distinct row_group_id, row_group_num_rows num_rows "
                                    f"from parquet_metadata('s3://{b}/{k}'))").fetchone()
                 lab = ""
                 try:
-                    lab = con.execute(f"select any_value(file_label) from read_parquet('s3://{b}/{k}') limit 1").fetchone()[0] or ""
+                    # Nov 12, 2026: a plain first row, not any_value(), which read the whole column of every table and
+                    # kept the Texas estimate busy for 3 hours; this reads one row group
+                    lab = (con.execute(f"select file_label from read_parquet('s3://{b}/{k}') limit 1").fetchone() or [""])[0] or ""
                 except Exception:
                     pass
                 stem = k.rsplit("/", 1)[1]
