@@ -64,23 +64,63 @@ def table_segment(table_stem, segs):
     return segs[max(hits, key=len)]
 
 
-def from_storage(con, s3c, bucket, prefix="bot/xwalk/plan_network/", f5500_key="bot/employers/f5500/health_plans.parquet"):
-    """network_segments() over the newest crosswalk month of every insurer in storage (reads only the four columns it needs).
-    Returns ({} , note) when the crosswalk hasn't been built yet."""
+CACHE_KEY = "bot/xwalk/plan_network_segments.json"
+
+
+def from_storage(con, s3c, bucket, prefix="bot/xwalk/plan_network/", f5500_key="bot/employers/f5500/health_plans.parquet",
+                 work=None):
+    """network_segments() over the newest crosswalk month of every insurer in storage.
+    Returns ({} , note) when the crosswalk hasn't been built yet.
+
+    Nov 12, 2026: the Anthem crosswalk alone is 42 million rows. Querying it in place over HTTP took 2.5 hours of ranged
+    reads and used up the storage account's daily download cap (Backblaze answers 403 "cap exceeded"). Now: the result
+    (one small row per network) is saved to CACHE_KEY with the ETags of the files it came from and reused while they are
+    unchanged; when it has to be rebuilt, each file is downloaded once to local disk and queried there."""
+    import json
+    import os
+    import tempfile
     newest = {}
     for pg in s3c.get_paginator("list_objects_v2").paginate(Bucket=bucket, Prefix=prefix):
         for o in pg.get("Contents", []):
             m = re.match(re.escape(prefix) + r"([^/]+)/(\d{4}-\d{2})\.parquet$", o["Key"])
             if m and m.group(2) > newest.get(m.group(1), ("",))[0]:
-                newest[m.group(1)] = (m.group(2), o["Key"])
+                newest[m.group(1)] = (m.group(2), o["Key"], o.get("ETag", ""))
     if not newest:
         return {}, "plan-network crosswalk not built yet (Actions -> Plan to network crosswalk): every table falls back to its network name"
-    files = ", ".join(f"'s3://{bucket}/{k}'" for _, k in newest.values())
-    xw = f"(select {', '.join(XWALK_COLS)} from read_parquet([{files}], union_by_name=true))"
     try:
-        s3c.head_object(Bucket=bucket, Key=f5500_key)
-        f5 = f"read_parquet('s3://{bucket}/{f5500_key}')"
+        f5_tag = s3c.head_object(Bucket=bucket, Key=f5500_key).get("ETag", "")
     except Exception:
-        f5 = None
+        f5_tag = None
+    fp = sorted([k, t] for _, k, t in newest.values()) + [[f5500_key, f5_tag]]
+    note = (f"crosswalk months: {', '.join(f'{i} {m}' for i, (m, _, _) in sorted(newest.items()))}; "
+            f"Form 5500 EINs: {'yes' if f5_tag is not None else 'not built'}")
+    try:
+        cached = json.loads(s3c.get_object(Bucket=bucket, Key=CACHE_KEY)["Body"].read())
+        if cached.get("fingerprint") == fp:
+            return cached["segments"], note + " (saved result reused)"
+    except Exception:
+        pass
+    d = tempfile.mkdtemp(prefix="xwalk_", dir=work)
+    local = []
+    for ins, (_, k, _) in sorted(newest.items()):
+        dst = os.path.join(d, f"{ins}.parquet")
+        s3c.download_file(bucket, k, dst)
+        local.append(dst)
+    files = ", ".join(f"'{x}'" for x in local)
+    xw = f"(select {', '.join(XWALK_COLS)} from read_parquet([{files}], union_by_name=true))"
+    f5 = None
+    if f5_tag is not None:
+        dst = os.path.join(d, "f5500.parquet")
+        s3c.download_file(bucket, f5500_key, dst)
+        f5 = f"read_parquet('{dst}')"
     segs = network_segments(con, xw, f5)
-    return segs, f"crosswalk months: {', '.join(f'{i} {m}' for i, (m, _) in sorted(newest.items()))}; Form 5500 EINs: {'yes' if f5 else 'not built'}"
+    for x in local + ([os.path.join(d, "f5500.parquet")] if f5 else []):
+        try:
+            os.remove(x)
+        except OSError:
+            pass
+    try:
+        s3c.put_object(Bucket=bucket, Key=CACHE_KEY, Body=json.dumps(dict(fingerprint=fp, segments=segs)).encode())
+    except Exception:
+        pass
+    return segs, note
