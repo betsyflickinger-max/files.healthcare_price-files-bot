@@ -1,11 +1,21 @@
-import os, boto3, collections
-b2 = boto3.client("s3", endpoint_url="https://s3.us-east-005.backblazeb2.com", region_name="us-east-005",
-                  aws_access_key_id=os.environ["B2K"], aws_secret_access_key=os.environ["B2S"])
-B = os.environ["B2B"].strip(); D = "bot/migration/logs/final-20261111-2002/"
-def lines(n): return [l for l in b2.get_object(Bucket=B, Key=D+n)["Body"].read().decode(errors="replace").splitlines() if l.strip()]
-dif = lines("v2-differ.txt")
-dry = [l.split("NOTICE: ",1)[1].rsplit(": Skipped copy",1)[0] for l in lines("final-dryrun.log") if "Skipped copy as --dry-run" in l]
-for name, ks in (("differ", dif), ("dry-run", dry)):
-    c = collections.Counter(k.split("/")[0] + "/" + (k.split("/")[1] if "/" in k else "") for k in ks)
-    print(name, len(ks), dict(c))
-    print("  not site/:", [k for k in ks if not k.startswith("site/")][:20])
+# read only: has anything in the website's R2 files changed since the final pass started (20:10Z Nov 11)?
+import os, boto3, datetime as dt
+g=lambda k: os.environ[k].strip()
+r2=boto3.client('s3',endpoint_url=f"https://{g('R2A')}.r2.cloudflarestorage.com",aws_access_key_id=g('R2K'),aws_secret_access_key=g('R2S'),region_name='auto')
+b2=boto3.client('s3',endpoint_url='https://s3.us-east-005.backblazeb2.com',aws_access_key_id=g('B2K'),aws_secret_access_key=g('B2S'),region_name='us-east-005')
+R,B=g('R2B'),g('B2B')
+cut=dt.datetime(2026,11,11,20,10,tzinfo=dt.timezone.utc)
+for k in ['site/deploy/current.tgz','site/deploy/LOCK.json']:
+    for n,c,bk in [('R2',r2,R),('B2',b2,B)]:
+        try: h=c.head_object(Bucket=bk,Key=k); print(n,k,h['ContentLength'],h['LastModified'].isoformat(),h['ETag'])
+        except Exception as e: print(n,k,'none',type(e).__name__)
+newer=[];total=0
+for p in ['site/','control/','signups/','logs/']:
+    for pg in r2.get_paginator('list_objects_v2').paginate(Bucket=R,Prefix=p):
+        for o in pg.get('Contents',[]):
+            total+=1
+            if o['LastModified']>cut: newer.append((o['LastModified'].isoformat(),o['Key']))
+newer.sort()
+print('R2 objects listed under site/ control/ signups/ logs/:',total)
+print('changed after 20:10Z:',len(newer))
+for t,k in newer[-40:]: print(t,k)
