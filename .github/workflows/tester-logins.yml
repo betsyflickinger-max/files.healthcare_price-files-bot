@@ -1,0 +1,62 @@
+name: Tester logins (add, change or remove)
+
+# Nov 12, 2026: the safe way to change who can log in to the preview site after the storage move. Replaces editing
+# functions/_middleware.js by hand from a laptop, which wrote straight to R2 and is now blocked (site/pages_spill.py).
+# Give only the SHA-256 of "name:password" (Claude makes it in chat). The password itself never goes into GitHub.
+# Holds the deploy lock from download to save, deploys, then checks the saved site shows the change (site/testers.py).
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "add, change (new password) or remove"
+        type: choice
+        options: [add, change, remove]
+        default: add
+      name:
+        description: "Tester's username, one word, e.g. sarah"
+        required: true
+      login_hash:
+        description: "SHA-256 of name:password (Claude makes it; leave blank to remove)"
+        default: ""
+
+concurrency:
+  group: site-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  logins:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330   # may wait up to 300 minutes for another site deploy to finish
+    env:
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      STORAGE_ENDPOINT: ${{ vars.STORAGE_ENDPOINT }}
+      STORAGE_REGION: ${{ vars.STORAGE_REGION }}
+      R2_ACCESS_KEY_ID: ${{ vars.STORAGE_ENDPOINT && secrets.B2_ACCESS_KEY_ID || secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      SITE_R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}   # the website's own files stay on R2 (bot/site_r2.py)
+      SITE_R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      SITE_R2_BUCKET: ${{ secrets.R2_BUCKET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pip install boto3==1.35.36 pillow==10.4.0 pyarrow==26.0.0
+      - env:
+          A: ${{ inputs.action }}
+          N: ${{ inputs.name }}
+          H: ${{ inputs.login_hash }}
+        run: python site/testers.py run "$A" "$N" "$H"
+      - name: The site still answers (asks for a password)
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://files.healthcare/)
+          echo "files.healthcare answered $code"
+          test "$code" = 401
