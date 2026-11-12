@@ -17,6 +17,11 @@ not stated in file, with the method(s) that decided it. Tables whose network isn
 catalog, or hospital files) keep the old guess from the network's name, labeled "network name (fallback)".
 """
 import re
+import time
+
+
+def _log(*a):
+    print(time.strftime("%H:%M:%S"), "segments:", *a, flush=True)
 
 GROUP, INDIVIDUAL, BOTH, UNKNOWN = "group (employer)", "individual (marketplace)", "group and individual", "not stated in file"
 TOC, HIOS, F5500, NAME, NONE = ("table of contents plan_market_type", "HIOS plan ID", "Form 5500 EIN", "network name (fallback)",
@@ -85,6 +90,7 @@ def from_storage(con, s3c, bucket, prefix="bot/xwalk/plan_network/", f5500_key="
             m = re.match(re.escape(prefix) + r"([^/]+)/(\d{4}-\d{2})\.parquet$", o["Key"])
             if m and m.group(2) > newest.get(m.group(1), ("",))[0]:
                 newest[m.group(1)] = (m.group(2), o["Key"], o.get("ETag", ""))
+    _log(f"listed crosswalk files: {', '.join(f'{i} {m}' for i, (m, _, _) in sorted(newest.items()))}")
     if not newest:
         return {}, "plan-network crosswalk not built yet (Actions -> Plan to network crosswalk): every table falls back to its network name"
     try:
@@ -96,6 +102,7 @@ def from_storage(con, s3c, bucket, prefix="bot/xwalk/plan_network/", f5500_key="
             f"Form 5500 EINs: {'yes' if f5_tag is not None else 'not built'}")
     try:
         cached = json.loads(s3c.get_object(Bucket=bucket, Key=CACHE_KEY)["Body"].read())
+        _log("saved result found; same files:", cached.get("fingerprint") == fp)
         if cached.get("fingerprint") == fp:
             return cached["segments"], note + " (saved result reused)"
     except Exception:
@@ -104,16 +111,25 @@ def from_storage(con, s3c, bucket, prefix="bot/xwalk/plan_network/", f5500_key="
     local = []
     for ins, (_, k, _) in sorted(newest.items()):
         dst = os.path.join(d, f"{ins}.parquet")
+        t0 = time.time()
+        _log(f"downloading {k}")
         s3c.download_file(bucket, k, dst)
+        _log(f"  {os.path.getsize(dst) / 1e6:,.0f} MB in {time.time() - t0:,.0f} s")
         local.append(dst)
     files = ", ".join(f"'{x}'" for x in local)
     xw = f"(select {', '.join(XWALK_COLS)} from read_parquet([{files}], union_by_name=true))"
     f5 = None
     if f5_tag is not None:
         dst = os.path.join(d, "f5500.parquet")
+        t0 = time.time()
+        _log(f"downloading {f5500_key}")
         s3c.download_file(bucket, f5500_key, dst)
+        _log(f"  {os.path.getsize(dst) / 1e6:,.0f} MB in {time.time() - t0:,.0f} s")
         f5 = f"read_parquet('{dst}')"
+    t0 = time.time()
+    _log("classifying networks")
     segs = network_segments(con, xw, f5)
+    _log(f"  {len(segs):,} networks in {time.time() - t0:,.0f} s")
     for x in local + ([os.path.join(d, "f5500.parquet")] if f5 else []):
         try:
             os.remove(x)
