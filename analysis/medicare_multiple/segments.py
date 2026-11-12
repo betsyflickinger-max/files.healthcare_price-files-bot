@@ -35,12 +35,15 @@ def network_segments(con, xwalk, f5500=None):
     f5500: table expression with an `ein` column (Form 5500 health plan sponsors), or None.
     Returns {network_key (lower case): dict(segment, method, plans_group, plans_individual, plans_unknown)}."""
     ein = (f"left join (select distinct lpad(regexp_replace(cast(ein as varchar), '[^0-9]', '', 'g'), 9, '0') ein from {f5500}) f "
-           f"on f.ein = lpad(regexp_replace(x.plan_id, '[^0-9]', '', 'g'), 9, '0') and x.idt = 'ein'") if f5500 else ""
+           f"on f.ein = x.ek") if f5500 else ""
     has5500 = "f.ein is not null" if f5500 else "false"
     q = f"""
       with x as (select lower(cast(network_key as varchar)) nk, upper(trim(coalesce(cast(plan_id as varchar), ''))) plan_id,
                         lower(trim(coalesce(cast(plan_id_type as varchar), ''))) idt, lower(trim(coalesce(cast(plan_market_type as varchar), ''))) mkt
                  from {xwalk} where coalesce(network_key, '') <> ''),
+      -- the EIN join key as its own column (NULL unless the ID is an EIN): a plain equality join. Nov 12, 2026: with
+      -- "and x.idt = 'ein'" in the ON clause DuckDB 1.5.6 planned a nested-loop join, and 42 million Anthem rows ran for hours
+      xe as (select *, case when idt = 'ein' then lpad(regexp_replace(plan_id, '[^0-9]', '', 'g'), 9, '0') end ek from x),
       c as (select distinct x.nk, x.plan_id, x.idt,
               case when x.mkt = 'individual' then 'I' when x.mkt = 'group' then 'G'
                    when x.idt = 'hios' or regexp_matches(x.plan_id, '{HIOS_RE}') then 'I'
@@ -48,7 +51,7 @@ def network_segments(con, xwalk, f5500=None):
               case when x.mkt in ('individual', 'group') then '{TOC}'
                    when x.idt = 'hios' or regexp_matches(x.plan_id, '{HIOS_RE}') then '{HIOS}'
                    when {has5500} then '{F5500}' else '' end how
-            from x {ein})
+            from xe x {ein})
       select nk, count(*) filter (where seg = 'G'), count(*) filter (where seg = 'I'), count(*) filter (where seg = ''),
              list(distinct how) filter (where how <> '')
       from c group by nk"""
