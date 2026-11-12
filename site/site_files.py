@@ -23,6 +23,7 @@ B, KEY = E["R2_BUCKET"], "site/deploy/current.tgz"
 
 
 def pull(d):
+    pages_spill.refuse_if_moved(s3, B)
     os.makedirs(d, exist_ok=True)
     s3.download_file(B, KEY, f"{d}/site.tgz")
     with tarfile.open(f"{d}/site.tgz") as t:
@@ -33,6 +34,7 @@ def pull(d):
 
 
 def push(d):
+    pages_spill.refuse_if_moved(s3, B)   # Nov 11, 2026: no hand publishes to R2 after the storage move
     import deploy_lock   # Nov 8, 2026: one site deploy at a time (site/deploy_lock.py)
     deploy_lock.acquire(s3, B, 'site push (' + os.environ.get('GITHUB_WORKFLOW', 'by hand') + ')')
     if s3.head_object(Bucket=B, Key=KEY)["ETag"] != open(f"{d}/.etag").read():

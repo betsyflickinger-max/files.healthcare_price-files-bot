@@ -38,7 +38,28 @@ def _s3():
     s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
                       aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
                       region_name=(os.environ.get("STORAGE_REGION") or "auto"))
+    refuse_if_moved(s3, E["R2_BUCKET"])
     return s3, E["R2_BUCKET"]
+
+
+MOVED = "site/deploy/MOVED.txt"   # Nov 11, 2026: written to R2 by bot/site_r2.py once the bot runs on Backblaze
+
+
+def refuse_if_moved(s3, b):
+    """Stop a hand publish that still points at R2 after the storage move (e.g. a chat holding r2.env.txt).
+    The bot's own jobs set STORAGE_ENDPOINT, so they never hit this. Publishing to R2 directly would be undone:
+    the bot rebuilds from Backblaze's copy and the 30-minute mirror overwrites site/more/ in R2."""
+    if os.environ.get("STORAGE_ENDPOINT", "").strip():
+        return
+    from botocore.exceptions import ClientError
+    try:
+        s3.head_object(Bucket=b, Key=MOVED)
+    except ClientError as e:
+        if e.response.get("Error", {}).get("Code") in ("404", "NoSuchKey", "NotFound"):
+            return
+        raise
+    sys.exit("STOP: the bot's storage moved to Backblaze (Nov 2026). Publishing straight to R2 would be undone and "
+             "could wipe recent changes. Nothing was changed. Use the bot's publish job (e.g. 'Tester logins') instead.")
 
 
 def _etags(s3, b):

@@ -162,12 +162,23 @@ def switched_at(s, sb):
                            "website files changed after the switch, so not deploying") from e
 
 
+def mark_moved(dry=False):
+    """Tell hand publishes (site/site_files.py, site/pages_spill.py without STORAGE_ENDPOINT) that R2 is no longer
+    the bot's storage, so they stop instead of publishing changes the bot would undo. Nov 11, 2026."""
+    d, db = dst()
+    if dry or _head(d, db, "site/deploy/MOVED.txt"):
+        return
+    d.put_object(Bucket=db, Key="site/deploy/MOVED.txt", ContentType="text/plain; charset=utf-8",
+                 Body=b"The bot moved to Backblaze. Publish the website through the bot's jobs, not straight to R2.\n")
+
+
 def publish(functions_dir, dry=False, log=print):
     """Copy everything the Functions in functions_dir read. Raises on any failure (callers must not deploy)."""
     if not enabled():
         log("site_r2: the bot still uses R2 directly; nothing to copy")
         return {"skipped": True}
     t0 = time.time()
+    mark_moved(dry)
     folders, files = refs(functions_dir)
     (s, sb), (d, db) = src(), dst()
     # pointer files (e.g. site/every/CURRENT): copy the folder they name first, then the pointer
