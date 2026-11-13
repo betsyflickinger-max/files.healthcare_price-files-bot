@@ -731,6 +731,10 @@ def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
     import droplets
     if droplets.over_cap():
         sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
+    try:        # Nov 13: Betsy asked how many machines are free; the log says, every time
+        log(f"machine slots: {droplets.limit()} on the account, {droplets.room()} free now, {RESERVE_SLOTS} kept for other builds")
+    except Exception as e:
+        log("couldn't read the machine slots:", e)
     k = wait_for_slots(droplets, cap, need, a.wait_minutes, sleep)
     if k <= 0:
         log(f"no free machine slots after {a.wait_minutes} minutes (keeping {RESERVE_SLOTS} for other builds): nothing added")
