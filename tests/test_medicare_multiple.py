@@ -722,3 +722,19 @@ def test_add_rents_helpers_only_for_lists_with_work_left(monkeypatch):
     assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == [100]  # a later run helps list 0
     assert rented == [(0, 2, True)]
     assert json.loads(s3c.o[runmod.PFX + rid + "/helpers.json"])["lists"] == [1, 0]
+
+
+def test_allowed_rows_survives_odd_shapes():
+    import rates
+    good = dict(billing_code_type="CPT", billing_code="99213", allowed_amounts=[dict(
+        tin={"type": "ein", "value": "12"}, billing_class="professional", service_code=["11"],
+        payments=[dict(allowed_amount=80, providers=[dict(npi=[1234567890])])])])
+    odd = dict(billing_code_type="CPT", billing_code="99214", allowed_amounts=dict(          # one object, not a list
+        tin="34", billing_class="professional", service_code="22",
+        payments=[dict(allowed_amount="x", billing_code_modifier="26", providers=dict(npi=1111111111))]))
+    doc = dict(plan_name="P", out_of_network=["stray text", good, odd, 7])
+    rows = list(rates.allowed_rows(doc, "ins"))
+    assert [(r["code"], r["npi"], r["tin"], r["allowed_amount"], r["service_code"], r["modifier"]) for r in rows] == [
+        ("99213", "1234567890", "12", 80.0, "11", ""), ("99214", "1111111111", "34", None, "22", "26")]
+    assert list(rates.allowed_rows("not a doc", "ins")) == []
+    assert list(rates.allowed_rows(dict(out_of_network="text"), "ins")) == []

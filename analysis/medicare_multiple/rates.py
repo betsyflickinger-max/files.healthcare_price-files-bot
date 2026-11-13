@@ -417,24 +417,46 @@ def allowed_units(t, have=None):
       from {t} r join prov p on p.npi = cast(r.npi as varchar)"""
 
 
+def _objs(x):
+    """A TiC list that some insurers write as one object, or with stray strings in it: only the objects (Nov 13, 2026:
+    an out-of-network file with a string where an item belongs crashed two free machines)."""
+    if isinstance(x, dict):
+        return [x]
+    return [i for i in x if isinstance(i, dict)] if isinstance(x, list) else []
+
+
+def _strs(x):
+    """A TiC list of strings/numbers that some insurers write as one value."""
+    if x is None or x == "":
+        return []
+    return [str(i) for i in x] if isinstance(x, list) else [str(x)]
+
+
 def allowed_rows(doc, insurer):
-    """One TiC allowed-amount file (parsed JSON) -> flat rows. Every payment amount for every NPI it lists."""
+    """One TiC allowed-amount file (parsed JSON) -> flat rows. Every payment amount for every NPI it lists. Items that
+    aren't objects are skipped, and single values where the schema says list are read as a list of one."""
+    if not isinstance(doc, dict):
+        return
     plan = doc.get("plan_name") or doc.get("reporting_entity_name") or ""
     mkt, idt, pid = (str(doc.get(k) or "") for k in ("plan_market_type", "plan_id_type", "plan_id"))
-    for item in doc.get("out_of_network") or []:
+    for item in _objs(doc.get("out_of_network")):
         ct, code = item.get("billing_code_type") or "", str(item.get("billing_code") or "")
-        for aa in item.get("allowed_amounts") or []:
-            tin = (aa.get("tin") or {}).get("value") or ""
-            sc = ",".join(aa.get("service_code") or [])
-            for pay in aa.get("payments") or []:
+        for aa in _objs(item.get("allowed_amounts")):
+            tin = aa.get("tin")
+            tin = (tin.get("value") or "") if isinstance(tin, dict) else (tin or "")
+            sc = ",".join(_strs(aa.get("service_code")))
+            for pay in _objs(aa.get("payments")):
                 amt = pay.get("allowed_amount")
-                mod = ",".join(pay.get("billing_code_modifier") or [])
-                for pr in pay.get("providers") or []:
-                    for npi in pr.get("npi") or []:
-                        yield dict(insurer=insurer, plan=plan, code_type=ct, code=code, tin=str(tin), npi=str(npi),
+                try:
+                    amt = float(amt) if amt is not None else None
+                except (TypeError, ValueError):
+                    amt = None
+                mod = ",".join(_strs(pay.get("billing_code_modifier")))
+                for pr in _objs(pay.get("providers")):
+                    for npi in _strs(pr.get("npi")):
+                        yield dict(insurer=insurer, plan=plan, code_type=ct, code=code, tin=str(tin), npi=npi,
                                    billing_class=aa.get("billing_class") or "", modifier=mod, service_code=sc,
-                                   allowed_amount=float(amt) if amt is not None else None,
-                                   plan_market_type=mkt, plan_id_type=idt, plan_id=pid)
+                                   allowed_amount=amt, plan_market_type=mkt, plan_id_type=idt, plan_id=pid)
 
 
 OUT_SUFFIXES = (".part.parquet", ".codes.parquet", ".npis.parquet", ".hcodes.parquet")
