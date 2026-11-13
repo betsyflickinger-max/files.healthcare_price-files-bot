@@ -46,8 +46,8 @@ permissions:
   contents: write
 
 concurrency:
-  # 'add' gets its own group: it must not wait behind the run whose machines it helps (Nov 13)
-  group: medicare-multiple-${{ inputs.step == 'add' && 'add-' || '' }}${{ inputs.state || 'nightly' }}
+  # 'add' and 'status' get their own groups: it must not wait behind the run whose machines it helps (Nov 13)
+  group: medicare-multiple-${{ (inputs.step == 'add' || inputs.step == 'status') && format('{0}-', inputs.step) || '' }}${{ inputs.state || 'nightly' }}
   cancel-in-progress: false
 
 env:
