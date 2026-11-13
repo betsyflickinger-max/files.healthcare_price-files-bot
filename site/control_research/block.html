@@ -1,0 +1,66 @@
+<!-- Control center: "Research" tab (Nov 13, 2026; Research Desk v1, story 1.1). Added by site/control_research.py. Reads
+     /control/api/data/research_index (storage control/data/research_index.json, written by the research build, story 2.3).
+     Private: the whole control center sits behind its login. -->
+<style>
+#rd-card .rd-intro{max-width:46rem}
+#rd-card .rd-built{font-size:12px;color:var(--color-fg-muted,#666);margin:4px 0 12px}
+#rd-card .rd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
+#rd-card .rd-empty{border:1px dashed var(--color-border,#ccc);border-radius:8px;padding:18px;color:var(--color-fg-muted,#666)}
+#rd-card .rd-tile{border:1px solid var(--color-border,#ddd);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
+#rd-card .rd-tile .lab{font-size:12px;color:var(--color-fg-muted,#666);text-transform:uppercase;letter-spacing:.06em}
+#rd-card .rd-tile h4{margin:0;font-size:16px;line-height:1.3}
+#rd-card .rd-tile .sub{font-size:12px;color:var(--color-fg-muted,#666)}
+#rd-card .rd-stale{display:inline-block;font-size:11px;padding:0 6px;border-radius:9px;border:1px solid var(--color-bad,#b42318);color:var(--color-bad,#b42318)}
+</style>
+<script>
+(() => {
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const day = (d) => { const t = d ? new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T12:00:00Z' : d) : null; return t && !isNaN(t) ? t.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : ''; };
+
+  function render(card, d) {
+    const built = card.querySelector('.rd-built'), grid = card.querySelector('.rd-grid');
+    built.textContent = ''; grid.textContent = '';
+    const tiles = d && Array.isArray(d.tiles) ? d.tiles : [];
+    built.textContent = d && d.built_at ? 'Research data built ' + day(d.built_at) + '.' : 'No research build yet.';
+    if (!tiles.length) {
+      grid.appendChild(el('p', 'rd-empty', 'No research tiles yet. The research build fills them in after its first run: market power, where patients go, and Price File Watch counts, each with its source and date.'));
+      return;
+    }
+    tiles.forEach((t) => {   // the full tile frame (source, limits, drill-down, CSV, citation) comes with story 1.3
+      const box = el('article', 'rd-tile');
+      box.appendChild(el('span', 'lab', t.label || ''));
+      box.appendChild(el('h4', '', t.title || t.id || ''));
+      const sub = el('span', 'sub', t.as_of ? 'As of ' + day(t.as_of) : 'No date');
+      if (t.stale) { sub.appendChild(document.createTextNode(' ')); sub.appendChild(el('span', 'rd-stale', 'stale')); }
+      box.appendChild(sub);
+      grid.appendChild(box);
+    });
+  }
+
+  let built = false;
+  function build() {
+    const pg = document.getElementById('pg-research'); if (!pg) return;
+    const sec = el('section'); sec.id = 'research';
+    const card = el('div', 'card'); card.id = 'rd-card';
+    const head = el('div', 'head'), h = el('div');
+    h.appendChild(el('h3', '', 'Research'));
+    h.appendChild(el('p', 'muted rd-intro', 'Figures for your writing, each with its source, its date and what it leaves out. Built by the bot from public data; nothing here is estimated. Private to this login.'));
+    head.appendChild(h); card.appendChild(head);
+    card.appendChild(el('p', 'rd-built'));
+    card.appendChild(el('div', 'rd-grid'));
+    sec.appendChild(card); pg.appendChild(sec); built = true;
+  }
+  function load() {
+    const card = document.getElementById('rd-card'); if (!card) return;
+    card.querySelector('.rd-built').textContent = 'Loading…';
+    fetch('/control/api/data/research_index', {cache: 'no-store', credentials: 'same-origin'})
+      .then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => render(card, d));
+  }
+  window.RDTAB = {show() { if (!built) build(); load(); }};
+  if (location.hash === '#research') {   // opened from a link: switch to the tab once the page is ready
+    const go = () => { const b = document.querySelector('[role="tab"][data-tab="research"]'); if (b) b.click(); };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(go, 300)); else setTimeout(go, 300);
+  }
+})();
+</script>
+<!-- /research tab -->
