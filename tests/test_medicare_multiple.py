@@ -714,4 +714,11 @@ def test_add_rents_helpers_only_for_lists_with_work_left(monkeypatch):
     monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n, helper=False: rented.append((i, n, helper)) or 100 + i)
     made = runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json")
     assert rented == [(1, 2, True)] and made == [101]
-    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == []     # once per run
+    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == []     # list 1 has its helper
+    s3c.put_object("b", runmod.PFX + rid + "/helpers.json", json.dumps(dict(machines=[], lists=[])).encode())
+    s3c.o.pop(runmod.PFX + rid + "/done/" + runmod.item_name(shares[0][1]))           # list 0 now has 2 left
+    s3c.put_object("b", runmod.PFX + rid + "/helpers.json", json.dumps(dict(machines=[101], lists=[1])).encode())
+    rented.clear()
+    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == [100]  # a later run helps list 0
+    assert rented == [(0, 2, True)]
+    assert json.loads(s3c.o[runmod.PFX + rid + "/helpers.json"])["lists"] == [1, 0]
