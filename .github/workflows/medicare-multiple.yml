@@ -10,6 +10,9 @@ name: Private price vs Medicare (research, reads big tables)
 #              Nov 10: with no free machine slot (2 are always kept for other builds) it waits up to "wait_minutes", then
 #              leaves the run queued; "start_after" (HH:MM Central) waits for that time, or queues it if it is further away.
 #   resume     runs every night by itself: starts the oldest queued run whose time has come (same $40 check first).
+#   add        (Nov 13) while the rented machines are reading: rents up to (machines - already rented) more, each reading one
+#              busy machine's list from the smallest table backward, so the two meet in the middle. Same $ estimate, same
+#              2 reserved slots and card cap; waits up to wait_minutes for free slots, then gives up. Once per run.
 #   summarize  when every table is done ("status" shows it), writes the report and commits it to this branch.
 # It never writes to the site and never deletes anything.
 on:
@@ -18,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: "estimate, start, resume, status or summarize"
+        description: "estimate, start, resume, add, status or summarize"
         default: "estimate"
       state:
         description: "Two-letter state code(s), comma separated, or ALL"
@@ -78,14 +81,14 @@ jobs:
         run: |
           set -o pipefail
           case "$STEP" in
-            estimate|start|status) python analysis/medicare_multiple/run.py "$STEP" --state "${{ inputs.state }}" $RUN_ARG \
+            estimate|start|status|add) python analysis/medicare_multiple/run.py "$STEP" --state "${{ inputs.state }}" $RUN_ARG \
                                      --ref "${GITHUB_REF_NAME}" --machines "${{ inputs.machines }}" --gh-max-rows "${{ inputs.gh_max_rows }}" \
                                      --start-after "${{ inputs.start_after }}" --wait-minutes "${{ inputs.wait_minutes }}" \
                                      --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
             resume) python analysis/medicare_multiple/run.py resume --wait-minutes "${{ inputs.wait_minutes || '240' }}" \
                                      --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
             summarize) echo "summarize runs in its own job" ;;
-            *) echo "step must be estimate, start, resume, status or summarize"; exit 1 ;;
+            *) echo "step must be estimate, start, resume, add, status or summarize"; exit 1 ;;
           esac
 
   read-on-github:
