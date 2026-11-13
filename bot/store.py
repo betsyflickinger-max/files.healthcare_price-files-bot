@@ -4,6 +4,7 @@ import io
 import os
 
 import boto3
+from botocore.config import Config
 from botocore.exceptions import ClientError
 
 R2_PREFIX = "bot/"  # everything the bot writes besides originals lives under bot/
@@ -17,7 +18,10 @@ def env(name):
 def r2():
     s3 = boto3.client("s3", endpoint_url=(os.environ.get("STORAGE_ENDPOINT") or f"https://{env('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"),
                       aws_access_key_id=env("R2_ACCESS_KEY_ID"),
-                      aws_secret_access_key=env("R2_SECRET_ACCESS_KEY"), region_name=(os.environ.get("STORAGE_REGION") or "auto"))
+                      aws_secret_access_key=env("R2_SECRET_ACCESS_KEY"), region_name=(os.environ.get("STORAGE_REGION") or "auto"),
+                      # Nov 13, 2026: when Backblaze's daily cap lifted, every job retried at once and got "SlowDown";
+                      # the default 4 quick retries gave up. Adaptive mode backs off and paces itself.
+                      config=Config(retries={"max_attempts": 12, "mode": "adaptive"}))
     return s3, env("R2_BUCKET")
 
 
