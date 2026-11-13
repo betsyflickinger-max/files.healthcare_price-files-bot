@@ -705,27 +705,29 @@ def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
     one busy machine's list from the smallest table backward and stops before the table that machine is on, so the two
     meet in the middle. Never more than --machines rented machines in all for the run, never the 2 reserved slots, never
     past the card cap, and the run's approved estimate already counts --machines machines. Waits up to --wait-minutes
-    for free slots, then gives up (nothing is queued). Once per run (helpers.json)."""
+    for free slots, then gives up (nothing is queued). One helper per list (helpers.json); run it again later to help a
+    list that got none because no slot was free."""
     lk, hk = f"{PFX}{run_id}/launched.json", f"{PFX}{run_id}/helpers.json"
     if not _exists(s3c, b, lk):
         sys.exit("no rented machines are reading this run yet: use step start (or resume) first")
-    if _exists(s3c, b, hk):
-        log("helpers were already added to this run:", s3c.get_object(Bucket=b, Key=hk)["Body"].read().decode())
-        return []
+    had = json.loads(s3c.get_object(Bucket=b, Key=hk)["Body"].read()) if _exists(s3c, b, hk) else dict(machines=[], lists=[])
+    if had["lists"]:
+        log("lists that already have a helper:", had["lists"])
     doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
     n = len(json.loads(s3c.get_object(Bucket=b, Key=lk)["Body"].read())["machines"])
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
     need = []
     for i, sh in enumerate(lane_shares(doc, "do", n)):
         left = [x for x in sh if item_name(x) not in done]
-        if len(left) >= 2:          # with one table left, the first machine is already on it
+        if len(left) >= 2 and i not in had["lists"]:     # with one table left, the first machine is already on it
             need.append((sum(x["rows"] for x in left[1:]), i, len(left)))
     need.sort(reverse=True)
     for rows, i, k in need:
         log(f"machine {i}: {k} tables not done ({rows:,} rows past the one it is on)")
-    cap = max(0, a.machines - n)
+    cap = max(0, a.machines - n - len(had["lists"]))
     if not need or not cap:
-        log("nothing to add:", "no list has more than one table left" if not need else f"already {n} machines (the most is {a.machines})")
+        log("nothing to add:", "no list without a helper has more than one table left" if not need
+            else f"already {n + len(had['lists'])} machines (the most is {a.machines})")
         return []
     sys.path.insert(0, str(ROOT / "insurers"))
     import droplets
@@ -740,8 +742,9 @@ def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
         log(f"no free machine slots after {a.wait_minutes} minutes (keeping {RESERVE_SLOTS} for other builds): nothing added")
         return []
     made = [_rent(droplets, doc, a.ref, i, n, helper=True) for _, i, _ in need[:k]]
-    s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(dict(at=central_now().isoformat(timespec="minutes"), machines=made,
-                                                         lists=[i for _, i, _ in need[:k]])).encode())
+    s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(dict(at=central_now().isoformat(timespec="minutes"),
+                                                         machines=had["machines"] + made,
+                                                         lists=had["lists"] + [i for _, i, _ in need[:k]])).encode())
     return made
 
 
