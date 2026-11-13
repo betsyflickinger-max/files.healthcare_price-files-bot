@@ -218,10 +218,23 @@ def publish(functions_dir, dry=False, log=print):
         stats["seconds"] = round(time.time() - t0)
         log(f"site_r2 (dry run): {stats}")
         return stats
+    failed = []
     with ThreadPoolExecutor(32) as ex:
-        for f in as_completed([ex.submit(_copy, k) for k in todo]):
+        futs = {ex.submit(_copy, k): k for k in todo}
+        for f in as_completed(futs):
             try:
                 f.result()
+            except Exception:
+                failed.append(futs[f])
+    # Nov 13, 2026: R2 refuses writes to one file faster than about once a second ("Reduce your concurrent request rate
+    # for the same object"), e.g. when the site mirror copies the same file at the same moment. One failed file out of
+    # 3,213 stopped a whole procedure-pages publish. Try the failed ones again, one at a time, after a pause.
+    if failed:
+        log(f"site_r2: {len(failed)} copies failed; trying them again one at a time")
+        time.sleep(30)
+        for k in failed:
+            try:
+                _copy(k)
             except Exception as e:
                 errs.append(repr(e)[:200])
     if errs:
