@@ -701,50 +701,56 @@ def cmd_resume(a, s3c, b):
 
 
 def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
-    """Nov 13, 2026 (step 'add'): more rented machines for a run whose machines are already reading. Each helper takes
-    one busy machine's list from the smallest table backward and stops before the table that machine is on, so the two
-    meet in the middle. Never more than --machines rented machines in all for the run, never the 2 reserved slots, never
-    past the card cap, and the run's approved estimate already counts --machines machines. Waits up to --wait-minutes
-    for free slots, then gives up (nothing is queued). One helper per list (helpers.json); run it again later to help a
-    list that got none because no slot was free."""
-    lk, hk = f"{PFX}{run_id}/launched.json", f"{PFX}{run_id}/helpers.json"
+    """Nov 13, 2026 (step 'add'): fill a running run up to --machines rented machines. Each list of big tables can have
+    two machines: the first reads it biggest table first; a helper reads it from the smallest table backward and stops
+    before the table the first machine is on, so the two meet in the middle. Looks at which of the run's machines still
+    exist (a machine deletes itself when it finishes or crashes, e.g. when storage's daily cap stops downloads) and
+    rents what is missing: first machines for lists that have none (a helper alone would leave the table in front of
+    it), then helpers. Never more than --machines in all, never the 2 reserved slots, never past the card cap; the
+    approved estimate already counts --machines machines. Waits up to --wait-minutes for free slots, then gives up."""
+    lk = f"{PFX}{run_id}/launched.json"
     if not _exists(s3c, b, lk):
         sys.exit("no rented machines are reading this run yet: use step start (or resume) first")
-    had = json.loads(s3c.get_object(Bucket=b, Key=hk)["Body"].read()) if _exists(s3c, b, hk) else dict(machines=[], lists=[])
-    if had["lists"]:
-        log("lists that already have a helper:", had["lists"])
     doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
     n = len(json.loads(s3c.get_object(Bucket=b, Key=lk)["Body"].read())["machines"])
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
-    need = []
-    for i, sh in enumerate(lane_shares(doc, "do", n)):
-        left = [x for x in sh if item_name(x) not in done]
-        if len(left) >= 2 and i not in had["lists"]:     # with one table left, the first machine is already on it
-            need.append((sum(x["rows"] for x in left[1:]), i, len(left)))
-    need.sort(reverse=True)
-    for rows, i, k in need:
-        log(f"machine {i}: {k} tables not done ({rows:,} rows past the one it is on)")
-    cap = max(0, a.machines - n - len(had["lists"]))
-    if not need or not cap:
-        log("nothing to add:", "no list without a helper has more than one table left" if not need
-            else f"already {n + len(had['lists'])} machines (the most is {a.machines})")
-        return []
     sys.path.insert(0, str(ROOT / "insurers"))
     import droplets
+    live = {name for _, name, _ in droplets.mine()}
+    tag = f"upfront-mm-{run_id}-"
+    want = []           # (priority, rows, list, helper)
+    for i, sh in enumerate(lane_shares(doc, "do", n)):
+        left = [x for x in sh if item_name(x) not in done]
+        first, helper = f"{tag}{i}" in live, f"{tag}h{i}" in live
+        log(f"list {i}: {len(left)} tables not done; first machine {'reading' if first else 'gone'}, "
+            f"helper {'reading' if helper else 'none'}")
+        if left and not first:
+            want.append((0, sum(x["rows"] for x in left), i, False))
+        if len(left) >= 2 and not helper:      # with one table left, the first machine is on it (or will be)
+            want.append((1, -sum(x["rows"] for x in left[1:]), i, True))
+    want.sort(key=lambda w: (w[0], -abs(w[1])))
+    running = sum(1 for nm in live if nm.startswith(tag))
+    cap = max(0, a.machines - running)
+    if not want or not cap:
+        log("nothing to add:", "every list that has work left has its machines" if not want
+            else f"already {running} machines (the most is {a.machines})")
+        return []
     if droplets.over_cap():
         sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
     try:        # Nov 13: Betsy asked how many machines are free; the log says, every time
         log(f"machine slots: {droplets.limit()} on the account, {droplets.room()} free now, {RESERVE_SLOTS} kept for other builds")
     except Exception as e:
         log("couldn't read the machine slots:", e)
-    k = wait_for_slots(droplets, cap, need, a.wait_minutes, sleep)
+    k = wait_for_slots(droplets, cap, want, a.wait_minutes, sleep)
     if k <= 0:
         log(f"no free machine slots after {a.wait_minutes} minutes (keeping {RESERVE_SLOTS} for other builds): nothing added")
         return []
-    made = [_rent(droplets, doc, a.ref, i, n, helper=True) for _, i, _ in need[:k]]
-    s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(dict(at=central_now().isoformat(timespec="minutes"),
-                                                         machines=had["machines"] + made,
-                                                         lists=had["lists"] + [i for _, i, _ in need[:k]])).encode())
+    made = [_rent(droplets, doc, a.ref, i, n, helper=h) for _, _, i, h in want[:k]]
+    hk = f"{PFX}{run_id}/helpers.json"
+    had = json.loads(s3c.get_object(Bucket=b, Key=hk)["Body"].read()) if _exists(s3c, b, hk) else dict(rented=[])
+    had.setdefault("rented", []).append(dict(at=central_now().isoformat(timespec="minutes"), machines=made,
+                                             lists=[[i, "helper" if h else "first"] for _, _, i, h in want[:k]]))
+    s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(had).encode())
     return made
 
 

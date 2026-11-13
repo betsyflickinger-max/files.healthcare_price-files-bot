@@ -693,7 +693,7 @@ def test_lane_shares_unchanged_by_the_refactor():
     assert got == [[9, 5, 3], [8, 7, 1]]
 
 
-def test_add_rents_helpers_only_for_lists_with_work_left(monkeypatch):
+def test_add_rents_what_is_missing(monkeypatch):
     import argparse
     import types
     import run as runmod
@@ -701,27 +701,31 @@ def test_add_rents_helpers_only_for_lists_with_work_left(monkeypatch):
     rid = "tx-2026-11"
     its = [dict(source="insurer", scope="tx", key=f"k/t{j}.parquet", rows=r, area="dfw", lane="do") for j, r in enumerate([90, 80, 50, 40, 10, 5])]
     doc = {"items": its, "states": ["TX"], "run_id": rid}
-    s3c.put_object("b", runmod.PFX + rid + "/plan.json", json.dumps(doc).encode())
+    pk = runmod.PFX + rid + "/plan.json"
+    s3c.put_object("b", pk, json.dumps(doc).encode())
     a = argparse.Namespace(machines=4, wait_minutes=0, ref="main")
+    live = []
+    monkeypatch.setitem(sys.modules, "droplets", types.SimpleNamespace(
+        over_cap=lambda: False, room=lambda: 9, limit=lambda: 25, mine=lambda: [(1, nm, "") for nm in live]))
     with pytest.raises(SystemExit):                     # nothing launched yet: use start
-        runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json")
+        runmod.cmd_add(a, s3c, "b", rid, pk)
     s3c.put_object("b", runmod.PFX + rid + "/launched.json", json.dumps(dict(machines=[11, 12])).encode())
     shares = runmod.lane_shares(doc, "do", 2)           # [90, 40, 10] and [80, 50, 5]
     for x in shares[0][:2]:                             # list 0 has one table left: no helper for it
         s3c.put_object("b", runmod.PFX + rid + "/done/" + runmod.item_name(x), b"1")
     rented = []
-    monkeypatch.setitem(sys.modules, "droplets", types.SimpleNamespace(over_cap=lambda: False, room=lambda: 9))
-    monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n, helper=False: rented.append((i, n, helper)) or 100 + i)
-    made = runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json")
-    assert rented == [(1, 2, True)] and made == [101]
-    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == []     # list 1 has its helper
-    s3c.put_object("b", runmod.PFX + rid + "/helpers.json", json.dumps(dict(machines=[], lists=[])).encode())
-    s3c.o.pop(runmod.PFX + rid + "/done/" + runmod.item_name(shares[0][1]))           # list 0 now has 2 left
-    s3c.put_object("b", runmod.PFX + rid + "/helpers.json", json.dumps(dict(machines=[101], lists=[1])).encode())
+    monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n, helper=False: rented.append((i, helper)) or len(rented))
+    live[:] = ["upfront-mm-tx-2026-11-0", "upfront-mm-tx-2026-11-1", "other-job"]
+    runmod.cmd_add(a, s3c, "b", rid, pk)
+    assert rented == [(1, True)]                        # both first machines alive: a helper for list 1 only
     rented.clear()
-    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == [100]  # a later run helps list 0
-    assert rented == [(0, 2, True)]
-    assert json.loads(s3c.o[runmod.PFX + rid + "/helpers.json"])["lists"] == [1, 0]
+    live[:] = ["upfront-mm-tx-2026-11-h1"]             # storage cap: both first machines crashed and deleted themselves
+    runmod.cmd_add(a, s3c, "b", rid, pk)
+    assert rented == [(1, False), (0, False)]           # first machines back (biggest list first); list 0 needs no helper
+    rented.clear()
+    live[:] = ["upfront-mm-tx-2026-11-0", "upfront-mm-tx-2026-11-1", "upfront-mm-tx-2026-11-h1"]
+    assert runmod.cmd_add(a, s3c, "b", rid, pk) == [] and rented == []
+    assert len(json.loads(s3c.o[runmod.PFX + rid + "/helpers.json"])["rented"]) == 2
 
 
 def test_allowed_rows_survives_odd_shapes():
