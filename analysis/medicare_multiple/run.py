@@ -315,10 +315,11 @@ def provider_table(con, s3c, b, area, work, hosp_npis=()):
             f"where w.ccn = ml.ccn)) wage_index, ml.ccn from read_parquet('{npis}') n left join ml using (npi))")
 
 
-def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="gh", hosp_npis=()):
+def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="gh", hosp_npis=(), stop=None):
     """Read each item and write its part files to <work>/parts/ (and to storage when upload_pfx is given). An insurer table
     is downloaded once to this machine's disk and read in passes of PASS_ROWS rows, split by provider (rates.insurer_units).
-    A finished item leaves done/<name> in storage, so a restarted machine skips it."""
+    A finished item leaves done/<name> in storage, so a restarted machine skips it. `stop(name)` (helper machines, step
+    'add'): checked before each item; True = leave the rest to the machine already reading this list."""
     s3c, b = s3()
     parts = Path(work) / "parts"
     parts.mkdir(parents=True, exist_ok=True)
@@ -340,6 +341,10 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
             if upload_pfx and _exists(s3c, b, f"{upload_pfx}done/{name}"):
                 log("already done:", it["key"])
                 continue
+            if stop and stop(name):
+                log("helper: the first machine is on", it["key"], "- leaving it and the rest of its list to that machine")
+                con.close()
+                return
             t0 = time.time()
             const = dict(source=it["source"], scope=it.get("scope", ""), table_name=name)
             local = f"{work}/table.parquet"
@@ -384,11 +389,41 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
         con.close()
 
 
+def item_name(it):
+    """The done-marker / part-file name of one planned item."""
+    return f"{it['source']}__{it.get('scope', '')}__" + rates.safe_name(it["key"].rsplit("/", 1)[1].rsplit(".", 1)[0])
+
+
+def lane_shares(doc, lane, shards):
+    """Each machine's list for one lane: biggest table first, each to the least-loaded machine."""
+    its = sorted([i for i in doc["items"] if i["lane"] == lane], key=lambda i: -i["rows"])
+    shares = [[] for _ in range(shards)]
+    for i in its:
+        min(shares, key=lambda sh: sum(x["rows"] + 1 for x in sh)).append(i)
+    return shares
+
+
+def area_order(items):
+    """The order reduce_items actually reads a list in: grouped by area (first area seen first), then as listed."""
+    by = {}
+    for it in items:
+        by.setdefault(it.get("area") or "", []).append(it)
+    return [it for its in by.values() for it in its]
+
+
+def helper_stop(order, done_now):
+    """Nov 13, 2026 (step 'add'): a helper machine reads another machine's list from the far end. It stops before the
+    first table that machine has not finished, because that is the one the machine is reading (or about to)."""
+    def stop(name):
+        left = [item_name(x) for x in order if item_name(x) not in done_now()]
+        return not left or left[0] == name
+    return stop
+
+
 def _gh_left(s3c, b, doc, run_id):
     """How many GitHub-lane tables of this run have no done marker yet."""
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
-    return sum(1 for i in doc["items"] if i["lane"] == "gh"
-               and f"{i['source']}__{i.get('scope', '')}__" + rates.safe_name(i["key"].rsplit("/", 1)[1].rsplit(".", 1)[0]) not in done)
+    return sum(1 for i in doc["items"] if i["lane"] == "gh" and item_name(i) not in done)
 
 
 def status(doc):
@@ -475,11 +510,19 @@ def launch(doc, ref, machines=DO_MACHINES, wait_minutes=0, sleep=time.sleep):
     n = wait_for_slots(droplets, machines, big, wait_minutes, sleep)
     if n <= 0:
         return None
-    keys = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "STORAGE_ENDPOINT", "STORAGE_REGION", "DIGITALOCEAN_TOKEN"]
-    env = "\n".join(f"export {k}='{''.join(os.environ.get(k, '').split())}'" for k in keys)
     made = []
     for i in range(n):
-        ud = f"""#!/bin/bash
+        made.append(_rent(droplets, doc, ref, i, n))
+    return made
+
+
+def _rent(droplets, doc, ref, i, n, helper=False):
+    """Rent one machine that clones this repo at `ref`, reads machine i's list (of n), uploads the parts and deletes
+    itself. helper=True: a second machine on list i, reading it from the far end (step 'add')."""
+    keys = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "STORAGE_ENDPOINT", "STORAGE_REGION", "DIGITALOCEAN_TOKEN"]
+    env = "\n".join(f"export {k}='{''.join(os.environ.get(k, '').split())}'" for k in keys)
+    tag = f"h{i}" if helper else f"{i}"
+    ud = f"""#!/bin/bash
 exec > /root/boot.log 2>&1
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y && apt-get install -y python3-venv git
@@ -491,17 +534,16 @@ ENV
 git clone --depth 1 -b {ref} https://github.com/betsyflickinger-max/files.healthcare_price-files-bot.git /root/r
 cd /root/r
 /root/v/bin/python analysis/medicare_multiple/run.py reduce --state {",".join(doc["states"])} --run {doc["run_id"]} \\
-  --lane do --shard {i} --shards {n} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
+  --lane do --shard {i} --shards {n}{" --helper" if helper else ""} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
 /root/v/bin/python -c "
 import sys; sys.path.insert(0, 'bot'); import store; s3, b = store.r2()
-s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{i}.log'); s3.upload_file('/root/boot.log', b, '{PFX}{doc["run_id"]}/logs/do-{i}-boot.log')"
+s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}.log'); s3.upload_file('/root/boot.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}-boot.log')"
 ID=$(curl -s http://169.254.169.254/metadata/v1/id)
 curl -s -X DELETE -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" https://api.digitalocean.com/v2/droplets/$ID
 """
-        d = droplets.create(f"upfront-mm-{doc['run_id']}-{i}", ud, size=DO_SIZE)
-        made.append(d["id"])
-        log("rented machine", d["id"], f"upfront-mm-{doc['run_id']}-{i}")
-    return made
+    d = droplets.create(f"upfront-mm-{doc['run_id']}-{tag}", ud, size=DO_SIZE)
+    log("rented machine", d["id"], f"upfront-mm-{doc['run_id']}-{tag}")
+    return d["id"]
 
 
 def _exists(s3c, b, key):
@@ -658,6 +700,47 @@ def cmd_resume(a, s3c, b):
     return cmd_start(a, s3c, b, q["run_id"], f"{PFX}{q['run_id']}/plan.json", resumed=True)
 
 
+def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
+    """Nov 13, 2026 (step 'add'): more rented machines for a run whose machines are already reading. Each helper takes
+    one busy machine's list from the smallest table backward and stops before the table that machine is on, so the two
+    meet in the middle. Never more than --machines rented machines in all for the run, never the 2 reserved slots, never
+    past the card cap, and the run's approved estimate already counts --machines machines. Waits up to --wait-minutes
+    for free slots, then gives up (nothing is queued). Once per run (helpers.json)."""
+    lk, hk = f"{PFX}{run_id}/launched.json", f"{PFX}{run_id}/helpers.json"
+    if not _exists(s3c, b, lk):
+        sys.exit("no rented machines are reading this run yet: use step start (or resume) first")
+    if _exists(s3c, b, hk):
+        log("helpers were already added to this run:", s3c.get_object(Bucket=b, Key=hk)["Body"].read().decode())
+        return []
+    doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
+    n = len(json.loads(s3c.get_object(Bucket=b, Key=lk)["Body"].read())["machines"])
+    done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
+    need = []
+    for i, sh in enumerate(lane_shares(doc, "do", n)):
+        left = [x for x in sh if item_name(x) not in done]
+        if len(left) >= 2:          # with one table left, the first machine is already on it
+            need.append((sum(x["rows"] for x in left[1:]), i, len(left)))
+    need.sort(reverse=True)
+    for rows, i, k in need:
+        log(f"machine {i}: {k} tables not done ({rows:,} rows past the one it is on)")
+    cap = max(0, a.machines - n)
+    if not need or not cap:
+        log("nothing to add:", "no list has more than one table left" if not need else f"already {n} machines (the most is {a.machines})")
+        return []
+    sys.path.insert(0, str(ROOT / "insurers"))
+    import droplets
+    if droplets.over_cap():
+        sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
+    k = wait_for_slots(droplets, cap, need, a.wait_minutes, sleep)
+    if k <= 0:
+        log(f"no free machine slots after {a.wait_minutes} minutes (keeping {RESERVE_SLOTS} for other builds): nothing added")
+        return []
+    made = [_rent(droplets, doc, a.ref, i, n, helper=True) for _, i, _ in need[:k]]
+    s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(dict(at=central_now().isoformat(timespec="minutes"), machines=made,
+                                                         lists=[i for _, i, _ in need[:k]])).encode())
+    return made
+
+
 def _bench_to_storage(s3c, b, bench, run_id):
     for f in Path(bench).glob("*"):
         s3c.upload_file(str(f), b, f"{PFX}{run_id}/bench/{f.name}")
@@ -671,7 +754,7 @@ def _bench_from_storage(s3c, b, bench, run_id):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "resume", "reduce", "status", "summarize", "local"])
+    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "resume", "add", "reduce", "status", "summarize", "local"])
     ap.add_argument("--state", default="TX", help="two-letter code(s), comma-separated, or ALL")
     ap.add_argument("--run", default="", help="run id (default: <state>-<yyyy-mm>)")
     ap.add_argument("--cache", default="/tmp/mm/cms")
@@ -689,6 +772,7 @@ def main():
     ap.add_argument("--wait-minutes", type=int, default=0,
                     help="start/resume: how long to wait (inside this job) for the start time or for free machine slots before queuing")
     ap.add_argument("--from-storage", action="store_true", help="reduce: read the run's plan and benchmark from storage")
+    ap.add_argument("--helper", action="store_true", help="reduce: a second machine on this list, from the far end (step add)")
     ap.add_argument("--force", action="store_true", help="summarize even if some planned tables aren't done (they are listed)")
     ap.add_argument("--prov", default="")
     ap.add_argument("--insurer", default="")
@@ -709,6 +793,8 @@ def main():
     pk = f"{PFX}{run_id}/plan.json"
     if a.cmd == "resume":
         return cmd_resume(a, s3c, b)
+    if a.cmd == "add":
+        return cmd_add(a, s3c, b, run_id, pk)
     if a.cmd in ("plan", "estimate", "start"):
         if a.cmd == "start" and a.start_after:
             t = start_time(a.start_after)
@@ -732,13 +818,14 @@ def main():
             sys.exit(f"not reading: estimate ${est['total_usd']} is over ${est['limit_usd']}")
         if a.from_storage or not Path(a.bench, "pfs.csv").exists():
             _bench_from_storage(s3c, b, a.bench, run_id)
-        its = sorted([i for i in doc["items"] if i["lane"] == a.lane], key=lambda i: -i["rows"])
-        shares = [[] for _ in range(a.shards)]          # biggest first, each to the least-loaded shard
-        for i in its:
-            min(shares, key=lambda sh: sum(x["rows"] + 1 for x in sh)).append(i)
+        mine, stop = lane_shares(doc, a.lane, a.shards)[a.shard], None
+        if a.helper:            # step 'add': the same list from the far end, stopping where the first machine is
+            order = area_order(mine)
+            mine = order[::-1]
+            stop = helper_stop(order, lambda: {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")})
         hosp_npis = [(n, i["ccn"]) for i in doc["items"] if i["source"] == "hospital" for n in i.get("file_npis") or []]
-        reduce_items(shares[a.shard], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane,
-                     hosp_npis=hosp_npis)
+        reduce_items(mine, doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane,
+                     hosp_npis=hosp_npis, stop=stop)
         return
     if a.cmd == "summarize":
         st = status(doc)

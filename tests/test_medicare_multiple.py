@@ -665,3 +665,53 @@ def test_segments_from_storage_downloads_once_then_reuses_saved_result(tmp_path)
     assert json.loads(s3c.store[segments.CACHE_KEY])["segments"]["ambx"]["method"] == segments.HIOS
     S2, note2 = segments.from_storage(duckdb.connect(), s3c, "b", work=str(tmp_path))
     assert S2 == S and s3c.downloads == 1 and "reused" in note2
+
+
+def test_helper_reads_the_far_end_and_stops_where_the_first_machine_is():
+    import run as runmod
+    its = [dict(source="insurer", scope="tx", key=f"k/t{j}.parquet", rows=r, area=a, lane="do")
+           for j, (r, a) in enumerate([(90, "dfw"), (80, "hou"), (50, "dfw"), (40, "hou"), (10, "dfw")])]
+    doc = {"items": its}
+    one = runmod.lane_shares(doc, "do", 1)[0]
+    order = runmod.area_order(one)                      # what the first machine reads: dfw tables, then hou tables
+    assert [x["key"] for x in order] == ["k/t0.parquet", "k/t2.parquet", "k/t4.parquet", "k/t1.parquet", "k/t3.parquet"]
+    done = set()
+    stop = runmod.helper_stop(order, lambda: done)
+    names = [runmod.item_name(x) for x in order]
+    # the helper goes t3, t1, t4, t2 ... and must never take the first table not done (the first machine is on it)
+    assert not stop(names[4]) and not stop(names[3])
+    done.update(names[:2])                              # first machine finished t0 and t2: now on t4
+    assert stop(names[2])                               # helper reaches t4 -> stops, leaves it to the first machine
+    done.update(names)
+    assert stop(names[2])                               # nothing left at all -> stop
+
+
+def test_lane_shares_unchanged_by_the_refactor():
+    import run as runmod
+    its = [dict(source="insurer", key=f"k/t{j}.parquet", rows=r, lane="do") for j, r in enumerate([5, 9, 1, 7, 3, 8])]
+    got = [[x["rows"] for x in sh] for sh in runmod.lane_shares({"items": its}, "do", 2)]
+    assert got == [[9, 5, 3], [8, 7, 1]]
+
+
+def test_add_rents_helpers_only_for_lists_with_work_left(monkeypatch):
+    import argparse
+    import types
+    import run as runmod
+    s3c = FakeS3()
+    rid = "tx-2026-11"
+    its = [dict(source="insurer", scope="tx", key=f"k/t{j}.parquet", rows=r, area="dfw", lane="do") for j, r in enumerate([90, 80, 50, 40, 10, 5])]
+    doc = {"items": its, "states": ["TX"], "run_id": rid}
+    s3c.put_object("b", runmod.PFX + rid + "/plan.json", json.dumps(doc).encode())
+    a = argparse.Namespace(machines=4, wait_minutes=0, ref="main")
+    with pytest.raises(SystemExit):                     # nothing launched yet: use start
+        runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json")
+    s3c.put_object("b", runmod.PFX + rid + "/launched.json", json.dumps(dict(machines=[11, 12])).encode())
+    shares = runmod.lane_shares(doc, "do", 2)           # [90, 40, 10] and [80, 50, 5]
+    for x in shares[0][:2]:                             # list 0 has one table left: no helper for it
+        s3c.put_object("b", runmod.PFX + rid + "/done/" + runmod.item_name(x), b"1")
+    rented = []
+    monkeypatch.setitem(sys.modules, "droplets", types.SimpleNamespace(over_cap=lambda: False, room=lambda: 9))
+    monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n, helper=False: rented.append((i, n, helper)) or 100 + i)
+    made = runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json")
+    assert rented == [(1, 2, True)] and made == [101]
+    assert runmod.cmd_add(a, s3c, "b", rid, runmod.PFX + rid + "/plan.json") == []     # once per run
