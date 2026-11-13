@@ -831,6 +831,15 @@ def main():
     doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
     if a.cmd == "status":
         print(json.dumps(status(doc), indent=1))
+        # Nov 13: the rented machines' own logs (each uploads its log when it stops), so a stopped machine can be read
+        done = ls(s3c, b, f"{PFX}{run_id}/done/")
+        log(f"{len(done)} tables done")
+        for k, _ in ls(s3c, b, f"{PFX}{run_id}/logs/"):
+            if not k.rsplit("/", 1)[1].startswith("do-"):
+                continue
+            lines = s3c.get_object(Bucket=b, Key=k)["Body"].read().decode("utf-8", "replace").splitlines()
+            print(f"===== {k} ({len(lines)} lines), last 25:")
+            print("\n".join(lines[-25:]))
         return
     if a.cmd == "reduce":
         est = json.loads(s3c.get_object(Bucket=b, Key=f"{PFX}{run_id}/estimate.json")["Body"].read())
