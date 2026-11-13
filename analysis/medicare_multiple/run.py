@@ -103,6 +103,8 @@ def duck(work, threads=None, mem=None):
     if os.environ.get("R2_ACCESS_KEY_ID"):
         g = lambda k: "".join(os.environ.get(k, "").split())
         ep = (os.environ.get("STORAGE_ENDPOINT") or f"https://{g('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com").replace("https://", "").rstrip("/")
+        if not os.environ.get("HOME"):   # Nov 13: a rented machine's start-up script has no HOME, and DuckDB needs one to install httpfs
+            con.execute(f"set home_directory='{work or '/tmp'}'")
         con.execute("install httpfs; load httpfs")
         con.execute(f"""create or replace secret store (type s3, key_id '{g("R2_ACCESS_KEY_ID")}', secret '{g("R2_SECRET_ACCESS_KEY")}',
                         endpoint '{ep}', region '{os.environ.get("STORAGE_REGION") or "auto"}', url_style 'path')""")
@@ -524,7 +526,7 @@ def _rent(droplets, doc, ref, i, n, helper=False):
     tag = f"h{i}" if helper else f"{i}"
     ud = f"""#!/bin/bash
 exec > /root/boot.log 2>&1
-export DEBIAN_FRONTEND=noninteractive
+export HOME=/root DEBIAN_FRONTEND=noninteractive
 apt-get update -y && apt-get install -y python3-venv git
 python3 -m venv /root/v && /root/v/bin/pip install -q duckdb==1.5.6 boto3 requests
 cat > /root/env.sh <<'ENV'
@@ -746,6 +748,9 @@ def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
         sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
     try:        # Nov 13: Betsy asked how many machines are free; the log says, every time
         log(f"machine slots: {droplets.limit()} on the account, {droplets.room()} free now, {RESERVE_SLOTS} kept for other builds")
+        from collections import Counter     # who holds the slots, by the job part of each machine's name
+        log("machines by job:", dict(Counter(re.sub(r"[-_]?\d+$", "", n.rsplit("-", 1)[0] if n.count("-") > 1 else n)
+                                             for n in droplets.names()).most_common()))
     except Exception as e:
         log("couldn't read the machine slots:", e)
     k = wait_for_slots(droplets, cap, want, a.wait_minutes, sleep)
