@@ -223,11 +223,11 @@ data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [inne
 data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT22379],innetwork-G-QMXCT22379.json,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT22458],innetwork-G-QMXCT22458.json,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT23218],innetwork-G-QMXCT23218.json,2026-11-12,0,,,,,,,,,,,,,,,
-data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT23811],innetwork-G-QMXCT23811.json,2026-11-04,0,,,,,,,,,,,,,,,
-data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT24138],innetwork-G-QMXCT24138.json,2026-11-04,0,,,,,,,,,,,,,,,
-data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT24735],innetwork-G-QMXCT24735.json,2026-11-04,0,,,,,,,,,,,,,,,
-data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT25197],innetwork-G-QMXCT25197.json,2026-11-04,0,,,,,,,,,,,,,,,
-data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT25594],innetwork-G-QMXCT25594.json,2026-11-04,0,,,,,,,,,,,,,,,
+data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT23811],innetwork-G-QMXCT23811.json,2026-11-12,0,,,,,,,,,,,,,,,
+data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT24138],innetwork-G-QMXCT24138.json,2026-11-12,0,,,,,,,,,,,,,,,
+data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT24735],innetwork-G-QMXCT24735.json,2026-11-12,0,,,,,,,,,,,,,,,
+data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT25197],innetwork-G-QMXCT25197.json,2026-11-12,0,,,,,,,,,,,,,,,
+data_c3,Molina-Healthcare-of-Washington,Molina WA marketplace (individual) [innetwork-G-QMXCT25594],innetwork-G-QMXCT25594.json,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,SelectHealth,"SelectHealth, all networks (union of its ID/UT/NV indexes) [S-C42A00000NVX-innetwork-1]",S-C42A00000NVX-innetwork-1.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,SelectHealth,"SelectHealth, all networks (union of its ID/UT/NV indexes) [S-C42A00001NVX-innetwork-1]",S-C42A00001NVX-innetwork-1.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,SelectHealth,"SelectHealth, all networks (union of its ID/UT/NV indexes) [S-C42A00003NVX-innetwork-1]",S-C42A00003NVX-innetwork-1.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
@@ -1014,128 +1014,129 @@ data_c3,providence-health-plan,"Providence Health Plan, all networks (union of i
 data_c3,providence-health-plan,"Providence Health Plan, all networks (union of its October indexes) [ovidence-health-plan_TILLC000002N_in-network-rates] (OR)",2026-10-08_providence-health-plan_TILLC000002N_in-network-rates.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,providence-health-plan,"Providence Health Plan, all networks (union of its October indexes) [ovidence-health-plan_VERAC000001N_in-network-rates] (OR)",2026-10-08_providence-health-plan_VERAC000001N_in-network-rates.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
 data_c3,providence-health-plan,"Providence Health Plan, all networks (union of its October indexes) [providence-health-plan_ELECDMECOM_in-network-rates] (OR)",2026-10-08_providence-health-plan_ELECDMECOM_in-network-rates.json.gz,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIASC000083-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIASC000086-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIASC000089-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIASC000153-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCICLI000023-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDIA000001-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000012-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000016-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000035-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000047-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000053-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000056-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000062-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000074-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000075-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000090-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000092-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000102-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000104-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000108-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000109-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000110-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000131-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000142-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000149-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000165-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000170-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000174-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000184-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000186-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000196-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000199-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000203-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000214-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000216-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000219-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000270-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000273-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000276-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000284-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000288-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIDME000292-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHHC000074-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHHC000093-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHHC000157-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHII000007-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHII000021-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHII000032-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIHII000033-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000001-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000011-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000025-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000028-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000031-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000034-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000043-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000069-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000070-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000082-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000086-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000087-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000091-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000093-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000095-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000097-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000100-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000104-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCILAB000105-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPHA000001-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPHA000002-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPHA000003-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000125-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000140-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000147-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000197-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000331-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000334-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000391-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000417-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000449-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000456-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000466-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000467-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000507-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000508-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000529-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000536-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000637-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000737-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000741-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000755-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000928-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000950-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF000986-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIPRF005010-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRAD000004-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRAD000014-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRAD000016-file-1,2026-11-12,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIASC000083-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIASC000086-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIASC000089-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIASC000153-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCICLI000023-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDIA000001-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000012-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000016-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000035-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000047-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000053-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000056-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000062-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000074-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000075-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000090-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000092-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000102-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000104-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000108-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000109-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000110-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000131-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000142-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000149-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000165-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000170-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000174-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000184-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000186-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000196-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000199-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000203-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000214-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000216-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000219-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000270-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000273-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000276-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000284-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000288-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIDME000292-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHHC000074-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHHC000093-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHHC000157-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHII000007-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHII000021-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHII000032-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIHII000033-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000001-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000011-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000025-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000028-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000031-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000034-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000043-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000069-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000070-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000082-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000086-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000087-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000091-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000093-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000095-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000097-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000100-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000104-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCILAB000105-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPHA000001-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPHA000002-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPHA000003-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000125-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000140-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000147-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000197-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000331-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000334-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000391-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000417-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000449-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000456-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000466-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000467-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000507-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000508-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000529-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000536-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000637-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000737-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000741-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000755-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000928-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000950-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF000986-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIPRF005010-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRAD000004-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRAD000014-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRAD000016-file-1,2026-11-13,0,,,,,,,,,,,,,,,
 data_ct,,,innetwork-G-CCIRAD000018-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRAD000043-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRHB000011-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRHB000014-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIRHB000017-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCISLC000003-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCISLC000013-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCISNF000041-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIURG000027-file-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_ct,,,innetwork-G-CCIURG000039-file-1,2026-11-12,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRAD000043-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRHB000011-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRHB000014-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIRHB000017-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCISLC000003-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCISLC000013-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCISNF000041-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIURG000027-file-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_ct,,,innetwork-G-CCIURG000039-file-1,2026-11-13,0,,,,,,,,,,,,,,,
 data_ct,Aetna Health Inc. - Connecticut,Aetna Health Inc. - Connecticut (pl-22u),2026-10-05_pl-22u-hr23_Aetna-Health-Inc.---Connecticut.json.gz,2026-11-11,1879739842,41419,33805,0.0%,0.0%,0.0%,75.5%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 95.5%, negotiated 3.9%, percentage 0.6%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%"
 data_ct,Aetna Life Insurance Company,Aetna Life Insurance Company (pl-1s7),2026-10-05_pl-1s7-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-11,2482149993,87381,35335,0.0%,0.0%,0.0%,76.8%,100.0%,100.0%,100.0%,100.0%,0.9%,ffs 100.0%,"fee schedule 95.0%, negotiated 4.1%, percentage 0.9%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%"
 data_ct,Aetna Life Insurance Company,Aetna Life Insurance Company (pl-2hl),2026-10-05_pl-2hl-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-11,2482141727,87381,35335,0.0%,0.0%,0.0%,76.8%,100.0%,100.0%,100.0%,100.0%,0.9%,ffs 100.0%,"fee schedule 95.0%, negotiated 4.1%, percentage 0.9%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%"
 data_ct,Aetna Life Insurance Company,Aetna Life Insurance Company (pl-41i),2026-10-05_pl-41i-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-11,2563397319,87381,35335,0.0%,0.0%,0.0%,77.3%,100.0%,100.0%,100.0%,100.0%,0.8%,ffs 100.0%,"fee schedule 95.4%, negotiated 3.8%, percentage 0.8%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%"
 data_ct,Aetna Life Insurance Company,Aetna Life Insurance Company (pl-vk),2026-10-05_pl-vk-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-11,2481548607,87381,35335,0.0%,0.0%,0.0%,76.8%,100.0%,100.0%,100.0%,100.0%,0.9%,ffs 100.0%,"fee schedule 95.0%, negotiated 4.1%, percentage 0.9%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%"
 data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07B0,2026-10_062_07B0_in-network-rates_2_of_2.json.gz,2026-11-01,992952,633,1757,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.5%, negotiated 11.5%",professional 100.0%,"both 88.5%, outpatient 11.5%"
+data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07D0,2026-10_062_07D0_in-network-rates_1_of_2.json.gz,2026-11-13,2482836931,24542,34357,0.0%,0.0%,0.0%,63.5%,100.0%,100.0%,100.0%,100.0%,2.8%,"ffs 100.0%, bundle 0.0%","fee schedule 97.2%, percentage 2.8%, derived 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.4%, both 12.3%, inpatient 0.3%"
 data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07D0,2026-10_062_07D0_in-network-rates_2_of_2.json.gz,2026-11-01,992952,633,1757,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.5%, negotiated 11.5%",professional 100.0%,"both 88.5%, outpatient 11.5%"
 data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07H0,2026-10_062_07H0_in-network-rates_2_of_2.json.gz,2026-11-01,992952,633,1757,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.5%, negotiated 11.5%",professional 100.0%,"both 88.5%, outpatient 11.5%"
-data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07T0,2026-10_062_07T0_in-network-rates_1_of_2.json.gz,2026-11-11,927899349,24542,15573,0.0%,0.0%,0.0%,64.6%,100.0%,100.0%,100.0%,100.0%,1.0%,"ffs 100.0%, bundle 0.0%","fee schedule 99.0%, percentage 1.0%, derived 0.0%, negotiated 0.0%","professional 100.0%, institutional 0.0%","outpatient 86.9%, both 12.9%, inpatient 0.2%"
+data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07T0,2026-10_062_07T0_in-network-rates_1_of_2.json.gz,2026-11-13,927899349,24542,15573,0.0%,0.0%,0.0%,64.6%,100.0%,100.0%,100.0%,100.0%,1.0%,"ffs 100.0%, bundle 0.0%","fee schedule 99.0%, percentage 1.0%, derived 0.0%, negotiated 0.0%","professional 100.0%, institutional 0.0%","outpatient 86.9%, both 12.9%, inpatient 0.2%"
 data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network 062_07T0,2026-10_062_07T0_in-network-rates_2_of_2.json.gz,2026-11-01,992952,633,1757,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.5%, negotiated 11.5%",professional 100.0%,"both 88.5%, outpatient 11.5%"
 data_ct,Anthem Blue Cross and Blue Shield Connecticut,Anthem Connecticut network CT_HYEVMED0000,CT_HYEVMED0000.json.gz,2026-11-09,2441253271,95883,33582,0.0%,0.0%,0.0%,63.5%,100.0%,100.0%,100.0%,100.0%,2.8%,"ffs 100.0%, bundle 0.0%","fee schedule 97.2%, percentage 2.8%, derived 0.0%, negotiated 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.4%, both 12.3%, inpatient 0.3%"
 data_ct,Cigna Health Life Insurance Company,Cigna LocalPlus,2026-10-01_cigna-health-life-insurance-company_localplus_in-network-rates.json.gz,2026-11-12,591554953,23414,31272,0.0%,0.0%,0.0%,32.0%,99.0%,100.0%,100.0%,100.0%,1.4%,ffs 100.0%,"fee schedule 97.6%, percentage 1.4%, derived 0.8%, negotiated 0.1%","professional 98.9%, institutional 1.1%","outpatient 89.9%, both 10.1%, inpatient 0.0%"
 data_ct,Cigna Health Life Insurance Company,Cigna New England GPPO,2026-10-01_cigna-health-life-insurance-company_new-england-gppo_in-network-rates.json.gz,2026-11-01,4074867,16161,142,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 88.7%, both 11.3%, inpatient 0.0%"
-data_ct,Cigna Health Life Insurance Company,Cigna Open Access Plus,2026-10-01_cigna-health-life-insurance-company_national-oap_in-network-rates.json.gz,2026-11-11,614644580,23414,31890,0.0%,0.0%,0.0%,31.9%,99.1%,100.0%,100.0%,100.0%,1.4%,ffs 100.0%,"fee schedule 97.6%, percentage 1.4%, derived 0.8%, negotiated 0.1%","professional 99.0%, institutional 1.0%","outpatient 89.9%, both 10.1%, inpatient 0.0%"
+data_ct,Cigna Health Life Insurance Company,Cigna Open Access Plus,2026-10-01_cigna-health-life-insurance-company_national-oap_in-network-rates.json.gz,2026-11-12,614644580,23414,31890,0.0%,0.0%,0.0%,31.9%,99.1%,100.0%,100.0%,100.0%,1.4%,ffs 100.0%,"fee schedule 97.6%, percentage 1.4%, derived 0.8%, negotiated 0.1%","professional 99.0%, institutional 1.0%","outpatient 89.9%, both 10.1%, inpatient 0.0%"
 data_ct,Cigna Health Life Insurance Company,Cigna PathWell OAP,2026-10-01_cigna-health-life-insurance-company_pathwell-oap_in-network-rates.json.gz,2026-11-11,614644580,23414,31890,0.0%,0.0%,0.0%,31.9%,99.1%,100.0%,100.0%,100.0%,1.4%,ffs 100.0%,"fee schedule 97.6%, percentage 1.4%, derived 0.8%, negotiated 0.1%","professional 99.0%, institutional 1.0%","outpatient 89.9%, both 10.1%, inpatient 0.0%"
 data_ct,Cigna Health Life Insurance Company,Cigna PathWell PPO,2026-10-01_cigna-health-life-insurance-company_pathwell-ppo_in-network-rates.json.gz,2026-11-12,609957144,23414,32337,0.0%,0.0%,0.0%,31.3%,99.1%,100.0%,100.0%,100.0%,1.4%,ffs 100.0%,"fee schedule 97.6%, percentage 1.4%, derived 0.8%, negotiated 0.1%","professional 99.0%, institutional 1.0%","outpatient 90.0%, both 10.0%, inpatient 0.0%"
 data_ct,Connecticare_CCI_COM,"ConnectiCare (FlexPOS, Choice, Compass)",innetwork-G-CCIAMB000002-file-1.json,2026-11-01,10,11,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,0.0%,100.0%,0.0%,ffs 100.0%,per diem 100.0%,professional 100.0%,(blank) 100.0%
@@ -1663,10 +1664,10 @@ data_ct,"United HealthCare Services, Inc.",UnitedHealthcare Core EPO,2026-10-01_
 data_ct,"United HealthCare Services, Inc.",UnitedHealthcare NEXUS ACO Open Access,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_NEXUSACO-OA_453_in-network-rates.json.gz,2026-11-01,504374159,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.1%, inpatient 32.9%"
 data_ct,"United HealthCare Services, Inc.",UnitedHealthcare Select Plus,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_Select-Plus_657_in-network-rates.json.gz,2026-11-01,506791044,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, per diem 0.0%, percentage 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.0%, inpatient 33.0%"
 data_ct,"UnitedHealthcare of Colorado, Inc.",UnitedHealthcare of New England Navigate HMO,2026-10-01_UnitedHealthcare-of-Colorado--Inc-_Insurer_Navigate-HMO_637_in-network-rates.json.gz,2026-11-01,502883885,19070,12425,0.0%,0.0%,0.0%,32.6%,100.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 67.0%, inpatient 33.0%"
-data_full,,,innetwork-G-QMXCT09501,2026-11-12,0,,,,,,,,,,,,,,,
-data_full,,,p_price_transparency_inr_ultra_bronze,2026-11-12,0,,,,,,,,,,,,,,,
-data_full,,,p_price_transparency_inr_ultra_gold,2026-11-12,0,,,,,,,,,,,,,,,
-data_full,,,p_price_transparency_inr_ultra_silver,2026-11-12,0,,,,,,,,,,,,,,,
+data_full,,,innetwork-G-QMXCT09501,2026-11-13,0,,,,,,,,,,,,,,,
+data_full,,,p_price_transparency_inr_ultra_bronze,2026-11-13,0,,,,,,,,,,,,,,,
+data_full,,,p_price_transparency_inr_ultra_gold,2026-11-13,0,,,,,,,,,,,,,,,
+data_full,,,p_price_transparency_inr_ultra_silver,2026-11-13,0,,,,,,,,,,,,,,,
 data_full,Aetna Health Inc. - Texas,Aetna Texas HMO - Open Access Health Network Only,2026-09-05_pl-4wr-hr23_Aetna-Health-Inc.---Texas.json.gz,2026-11-01,1829574424,25988,48778,0.0%,0.0%,0.0%,75.4%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 78.9%, negotiated 19.3%, derived 1.2%, percentage 0.6%","professional 99.8%, institutional 0.2%","both 100.0%, outpatient 0.0%"
 data_full,Aetna Health Inc. - Texas,Aetna Texas HMO - Open Access Health Network Option,2026-09-05_pl-22z-hr23_Aetna-Health-Inc.---Texas.json.gz,2026-11-01,1771929382,25988,48778,0.0%,0.0%,0.0%,75.4%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 78.5%, negotiated 19.7%, derived 1.1%, percentage 0.6%","professional 99.8%, institutional 0.2%","both 100.0%, outpatient 0.0%"
 data_full,Aetna Life Insurance Company,Aetna Choice POS II,2026-10-05_pl-7-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-01,2493255575,74020,53642,0.0%,0.0%,0.0%,76.9%,100.0%,100.0%,100.0%,100.0%,0.5%,ffs 100.0%,"fee schedule 84.6%, negotiated 14.9%, percentage 0.5%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 100.0%, outpatient 0.0%"
@@ -1759,6 +1760,8 @@ data_full,"United HealthCare Services, Inc.",UnitedHealthcare Select Plus,2026-1
 data_full,Wellpoint,Wellpoint Texas Essential (TX_JBLXMED0001),TX_JBLXMED0001.json.gz,2026-11-01,363292615,21762,16978,0.0%,0.0%,0.0%,11.5%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 99.8%, negotiated 0.2%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 99.9%, both 0.1%, inpatient 0.0%"
 data_full,christus health plan,CHRISTUS Health Plan Texas marketplace,2026-10-05_chp_tx_hix_in-network-rates.json,2026-11-01,80261210,21929,6610,0.0%,0.0%,0.0%,40.3%,0.0%,100.0%,0.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,"institutional 63.0%, professional 37.0%",(blank) 100.0%
 data_full,christus health plan,CHRISTUS Health Plan employer networks,2026-10-05_chp_christus_networks_in-network-rates.json,2026-11-01,22053163,185120,1341,0.0%,0.0%,0.0%,41.3%,0.0%,100.0%,0.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,"institutional 63.7%, professional 36.3%",(blank) 100.0%
+data_il,,,2026-10-08_QUARTZ-ONE-ACHIEVE-PLUS--QHBPC-IL-_9049372-HOLMSTROMKENNEDY-PC_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_il,,,2026-10-08_QUARTZ-PERFORMANCE-PLUS--QHBPC-IL-_9031792-BOONE-WINNEBAGO-REGIONAL-OFFICE-OF-EDUCATION-4-1000_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
 data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois Blue Advantage HMO,2026-09-14_Blue-Cross-and-Blue-Shield-of-Illinois_Blue-Advantage-HMO_in-network-rates.json.gz,2026-11-01,99997214,25586,28953,0.0%,0.0%,0.0%,0.0%,30.4%,100.0%,100.0%,100.0%,68.2%,ffs 100.0%,"percentage 68.2%, negotiated 31.8%, per diem 0.0%","institutional 69.6%, professional 30.4%","outpatient 99.8%, inpatient 0.2%"
 data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois Blue High Performance (121_16P0),2026-10_121_16P0_in-network-rates.json.gz,2026-11-01,78855343,26026,24204,0.0%,0.0%,0.0%,0.0%,98.5%,100.0%,100.0%,100.0%,0.8%,ffs 100.0%,"negotiated 99.2%, percentage 0.8%, per diem 0.0%","professional 98.5%, institutional 1.5%","outpatient 99.9%, inpatient 0.1%"
 data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois Blue High Performance Network,2026-09-14_Blue-Cross-and-Blue-Shield-of-Illinois_Blue-High-Performance-Network_in-network-rates.json.gz,2026-11-01,81029700,26026,24204,0.0%,0.0%,0.0%,0.0%,98.5%,100.0%,100.0%,100.0%,0.8%,ffs 100.0%,"negotiated 99.2%, percentage 0.8%, per diem 0.0%","professional 98.5%, institutional 1.5%","outpatient 99.9%, inpatient 0.1%"
@@ -1766,9 +1769,7 @@ data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois Blue Options / Blue
 data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois HMO Illinois,2026-09-14_Blue-Cross-and-Blue-Shield-of-Illinois_HMO-Illinois_in-network-rates.json.gz,2026-11-01,97665179,25586,27631,0.0%,0.0%,0.0%,0.0%,29.3%,100.0%,100.0%,100.0%,69.1%,ffs 100.0%,"percentage 69.1%, negotiated 30.8%, per diem 0.0%","institutional 70.7%, professional 29.3%","outpatient 99.8%, inpatient 0.2%"
 data_il,Blue Cross and Blue Shield of Illinois,"BCBS Illinois PPO (Participating Provider Option, 121_16B0)",2026-10_121_16B0_in-network-rates.json.gz,2026-11-12,575248598,26139,136519,0.0%,0.0%,0.0%,0.0%,92.0%,100.0%,100.0%,100.0%,7.1%,ffs 100.0%,"negotiated 92.9%, percentage 7.1%, per diem 0.0%","professional 92.0%, institutional 8.0%","outpatient 100.0%, inpatient 0.0%"
 data_il,Blue Cross and Blue Shield of Illinois,BCBS Illinois PPO Participating Provider Options,2026-09-14_Blue-Cross-and-Blue-Shield-of-Illinois_PPO-Participating-Provider-Options_in-network-rates.json.gz,2026-11-12,591148699,26139,136519,0.0%,0.0%,0.0%,0.0%,92.2%,100.0%,100.0%,100.0%,7.0%,ffs 100.0%,"negotiated 93.0%, percentage 7.0%, per diem 0.0%","professional 92.2%, institutional 7.8%","outpatient 100.0%, inpatient 0.0%"
-data_il,Cigna Health Life Insurance Company,Cigna LocalPlus,2026-10-01_cigna-health-life-insurance-company_localplus_in-network-rates.json.gz,2026-11-11,877380071,24363,59930,0.0%,0.0%,0.0%,32.1%,97.1%,100.0%,100.0%,100.0%,3.3%,ffs 100.0%,"fee schedule 93.4%, percentage 3.3%, derived 2.9%, negotiated 0.3%","professional 96.8%, institutional 3.2%","outpatient 89.9%, both 10.0%, inpatient 0.0%"
-data_il,QUARTZ,Quartz One Achieve Plus-IL,2026-10-08_QUARTZ-ONE-ACHIEVE-PLUS--QHBPC-IL-_9049372-HOLMSTROMKENNEDY-PC_in-network-rates.zip,2026-11-12,0,,,,,,,,,,,,,,,
-data_il,QUARTZ,Quartz Performance Plus-IL,2026-10-08_QUARTZ-PERFORMANCE-PLUS--QHBPC-IL-_9031792-BOONE-WINNEBAGO-REGIONAL-OFFICE-OF-EDUCATION-4-1000_in-network-rates.zip,2026-11-12,0,,,,,,,,,,,,,,,
+data_il,Cigna Health Life Insurance Company,Cigna LocalPlus,2026-10-01_cigna-health-life-insurance-company_localplus_in-network-rates.json.gz,2026-11-13,877380071,24363,59930,0.0%,0.0%,0.0%,32.1%,97.1%,100.0%,100.0%,100.0%,3.3%,ffs 100.0%,"fee schedule 93.4%, percentage 3.3%, derived 2.9%, negotiated 0.3%","professional 96.8%, institutional 3.2%","outpatient 89.9%, both 10.0%, inpatient 0.0%"
 data_il,UHIC,UnitedHealthcare Choice Plus,2026-10-01_UHIC_Insurer_Choice-Plus_C2_in-network-rates.json.gz,2026-11-11,2796670662,19559,57733,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.1%, inpatient 32.9%"
 data_il,"UMR, Inc.",UMR UnitedHealthcare Choice Plus,2026-10-01_UMR--Inc-_Third-Party-Administrator_UNITEDHEALTHCARE-CHOICE-PLUS_0L_in-network-rates.json.gz,2026-11-11,2798885336,19559,86252,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.1%, inpatient 32.9%"
 data_il,"United HealthCare Services, Inc.",United-HealthCare-Services--Inc- (Navigate-EPO_636),2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_Navigate-EPO_636_in-network-rates.json.gz,2026-11-01,959572503,19559,27150,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.2%, inpatient 32.8%"
@@ -1782,59 +1783,60 @@ data_n5,,,2026-10-01_CDPHP-UBI_in-network-rate,2026-11-01,0,,,,,,,,,,,,,,,
 data_n5,,,2026-10-01_CDPHP_in-network-rate,2026-11-01,0,,,,,,,,,,,,,,,
 data_n5,,,2026-10-01_KFHP_NC-COMMERCIAL_in-network-rates,2026-11-01,0,,,,,,,,,,,,,,,
 data_n5,,,2026-10-01_NEW_MA-COMMERCIAL-01_in-network-rates,2026-11-01,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-BELOIT-ONE--QHBPC-WI-_9023402-SCHOOL-DISTRICT-OF-BELOIT-TURNER_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-CENTRAL-NETWORK-STATE-AND-LOCAL_0000001-91-07-06-P01-S01-ETF-ANNUITANTS-DTL_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-GUNDERSEN-PERFORMANCE--QHBPC-WI-_GHP900806-FLOW-RITE-PIPE---SEWER-SERVICES-LLC_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-LEVEL-FUNDED--QHS-WI-_9049532-BIG-SKY-ENGINEERING-INC_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-ONE--QHBPC-WI-_9007323-RENEWAL-UNLIMITED-INC_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-ONE-ACHIEVE--QHBPC-WI-_04701-J2LB-LLC-DBA-ULLA-EYEWEAR_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-ONE-FOCUS--QHBPC-WI-_9042576-MADISON-METROPOLITAN-SCHOOL-DISTRICT-CLASSIFIED-HMO_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-PCP-RIDER--QHBPC-WI-_9004213-UW-MEDICAL-FOUNDATION-PCP-RIDER_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-UW-HEALTH-NETWORK-STATE-AND-LOCAL_0001131-JC-03-01-P01-S01-UNIVERSITY-OF-WISCONSIN-DTL-HSA-S_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_QUARTZ-WEST-NETWORK-STATE-AND-LOCAL_0000001-99-07-01-P01-S01-ETF-ANNUITANTS-DTL_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-08_TIERED-CHOICE-PLUS-ACHIEVE--QHBPC-WI-_9013598-SIMPSONS-TRACTOR-INC_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-IN_NETWORK_CAP,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-10-IN_NETWORK_FFS,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-11-01_AvMed-Health-Plans_PGMP0000000004_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-11-01_CDPHN_in-network-rate,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-11-01_CDPHP-UBI_in-network-rate,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-11-01_CDPHP_in-network-rate,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,2026-11-01_KFHP_NC-COMMERCIAL_in-network-rates,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,S-FLEXHOSP0012-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,S-FLEXHOSP0013-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,S-NATFLEXQUEST-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000002,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000049,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000056,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000207,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000207_4012810_C0004279648,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000221,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000224,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000234_C0004279648,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000235,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000235_C0004279648,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000239,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000240,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000245,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000246,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000247,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000254,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000256,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000259_4103724_C0004279648,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000260,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000261,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000263,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000264,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000265,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000266,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000267,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000268,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000269,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000270,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000271,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000272,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000274_4198780,2026-11-12,0,,,,,,,,,,,,,,,
-data_n5,,,in-network_PRG000275,2026-11-12,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-BELOIT-ONE--QHBPC-WI-_9023402-SCHOOL-DISTRICT-OF-BELOIT-TURNER_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-CENTRAL-NETWORK-STATE-AND-LOCAL_0000001-91-07-06-P01-S01-ETF-ANNUITANTS-DTL_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-GUNDERSEN-PERFORMANCE--QHBPC-WI-_GHP900806-FLOW-RITE-PIPE---SEWER-SERVICES-LLC_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-LEVEL-FUNDED--QHS-WI-_9049532-BIG-SKY-ENGINEERING-INC_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-ONE--QHBPC-WI-_9007323-RENEWAL-UNLIMITED-INC_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-ONE-ACHIEVE--QHBPC-WI-_04701-J2LB-LLC-DBA-ULLA-EYEWEAR_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-ONE-FOCUS--QHBPC-WI-_9042576-MADISON-METROPOLITAN-SCHOOL-DISTRICT-CLASSIFIED-HMO_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-PCP-RIDER--QHBPC-WI-_9004213-UW-MEDICAL-FOUNDATION-PCP-RIDER_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-UW-HEALTH-NETWORK-STATE-AND-LOCAL_0001131-JC-03-01-P01-S01-UNIVERSITY-OF-WISCONSIN-DTL-HSA-S_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_QUARTZ-WEST-NETWORK-STATE-AND-LOCAL_0000001-99-07-01-P01-S01-ETF-ANNUITANTS-DTL_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-08_TIERED-CHOICE-PLUS-ACHIEVE--QHBPC-WI-_9013598-SIMPSONS-TRACTOR-INC_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-IN_NETWORK_CAP,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-10-IN_NETWORK_FFS,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_AvMed-Health-Plans_PGMP0000000004_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_CDPHN_in-network-rate,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_CDPHP-UBI_in-network-rate,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_CDPHP_in-network-rate,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_KFHP_NC-COMMERCIAL_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,2026-11-01_NEW_MA-COMMERCIAL-01_in-network-rates,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,S-FLEXHOSP0012-innetwork-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,S-FLEXHOSP0013-innetwork-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,S-NATFLEXQUEST-innetwork-1,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000002,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000049,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000056,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000207,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000207_4012810_C0004279648,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000221,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000224,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000234_C0004279648,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000235,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000235_C0004279648,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000239,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000240,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000245,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000246,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000247,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000254,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000256,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000259_4103724_C0004279648,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000260,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000261,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000263,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000264,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000265,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000266,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000267,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000268,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000269,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000270,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000271,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000272,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000274_4198780,2026-11-13,0,,,,,,,,,,,,,,,
+data_n5,,,in-network_PRG000275,2026-11-13,0,,,,,,,,,,,,,,,
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (FLEXASC00003),S-FLEXASC00003-innetwork-1.json,2026-11-01,7,6,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,fee schedule 100.0%,professional 100.0%,outpatient 100.0%
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (FLEXASC00004),S-FLEXASC00004-innetwork-1.json,2026-11-01,7,6,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,fee schedule 100.0%,professional 100.0%,outpatient 100.0%
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (FLEXASCOH001),S-FLEXASCOH001-innetwork-1.json,2026-11-01,7,6,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,fee schedule 100.0%,professional 100.0%,outpatient 100.0%
@@ -1888,19 +1890,20 @@ data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (NATFLEXDAVTA),S-NATFLEXDAVTA-innetwork-1.json,2026-11-01,4,2,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,institutional 100.0%,outpatient 100.0%
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (NATFLEXDVTRL),S-NATFLEXDVTRL-innetwork-1.json,2026-11-01,2006,2421,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,outpatient 100.0%
 data_n5,"AmeriHealth Caritas Next, Florida",AmeriHealth Caritas Next FL Exchange (NATFLEXOPTUM),S-NATFLEXOPTUM-innetwork-1.json,2026-11-01,997,1116,1,0.0%,0.0%,0.0%,0.5%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,outpatient 100.0%
-data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_2_of_9.json.gz,2026-11-11,816768779,14911,114016,0.0%,0.0%,0.0%,15.7%,100.0%,100.0%,100.0%,100.0%,0.4%,ffs 100.0%,"fee schedule 99.6%, percentage 0.4%",professional 100.0%,"outpatient 81.0%, both 18.6%, inpatient 0.4%"
+data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_2_of_9.json.gz,2026-11-13,816768779,14911,114016,0.0%,0.0%,0.0%,15.7%,100.0%,100.0%,100.0%,100.0%,0.4%,ffs 100.0%,"fee schedule 99.6%, percentage 0.4%",professional 100.0%,"outpatient 81.0%, both 18.6%, inpatient 0.4%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_3_of_9.json.gz,2026-11-11,1100336154,19461,116819,0.0%,0.0%,0.0%,16.3%,100.0%,100.0%,100.0%,100.0%,23.9%,ffs 100.0%,"fee schedule 76.1%, percentage 23.9%",professional 100.0%,"outpatient 88.5%, both 9.7%, inpatient 1.8%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_4_of_9.json.gz,2026-11-12,1790469892,18973,142977,0.0%,0.0%,0.0%,30.7%,100.0%,100.0%,100.0%,100.0%,18.5%,ffs 100.0%,"fee schedule 81.5%, percentage 18.5%",professional 100.0%,"outpatient 95.6%, both 2.4%, inpatient 2.0%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_6_of_9.json.gz,2026-11-11,983817706,17600,95243,0.0%,0.0%,0.0%,26.9%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 90.0%, both 8.1%, inpatient 1.9%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_7_of_9.json.gz,2026-11-11,1104898016,22658,79718,0.0%,0.0%,0.0%,29.5%,100.0%,100.0%,100.0%,100.0%,1.8%,ffs 100.0%,"fee schedule 98.2%, percentage 1.8%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.6%, both 10.5%, inpatient 1.9%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_8_of_9.json.gz,2026-11-10,1385665402,29790,68885,0.0%,0.0%,0.0%,26.1%,100.0%,100.0%,100.0%,100.0%,1.6%,"ffs 100.0%, bundle 0.0%","fee schedule 97.7%, percentage 1.6%, per diem 0.5%, negotiated 0.2%","professional 98.9%, institutional 1.1%","outpatient 91.6%, both 6.3%, inpatient 2.1%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (040_05C0),2026-10_040_05C0_in-network-rates_9_of_9.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
-data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_02_08.json.gz,2026-11-11,816878570,14911,116206,0.0%,0.0%,0.0%,15.7%,100.0%,100.0%,100.0%,100.0%,0.4%,ffs 100.0%,"fee schedule 99.6%, percentage 0.4%",professional 100.0%,"outpatient 81.0%, both 18.6%, inpatient 0.4%"
+data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_02_08.json.gz,2026-11-13,816878570,14911,116206,0.0%,0.0%,0.0%,15.7%,100.0%,100.0%,100.0%,100.0%,0.4%,ffs 100.0%,"fee schedule 99.6%, percentage 0.4%",professional 100.0%,"outpatient 81.0%, both 18.6%, inpatient 0.4%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_03_08.json.gz,2026-11-11,1095909616,19461,112151,0.0%,0.0%,0.0%,16.3%,100.0%,100.0%,100.0%,100.0%,23.6%,ffs 100.0%,"fee schedule 76.4%, percentage 23.6%",professional 100.0%,"outpatient 88.4%, both 9.8%, inpatient 1.8%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_04_08.json.gz,2026-11-09,1790256113,18973,142977,0.0%,0.0%,0.0%,30.7%,100.0%,100.0%,100.0%,100.0%,18.5%,ffs 100.0%,"fee schedule 81.5%, percentage 18.5%",professional 100.0%,"outpatient 95.6%, both 2.4%, inpatient 2.0%"
-data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_06_08.json.gz,2026-11-12,983700113,17600,95243,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 90.0%, both 8.1%, inpatient 1.9%"
+data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_06_08.json.gz,2026-11-13,983700113,17600,95243,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 90.0%, both 8.1%, inpatient 1.9%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_07_08.json.gz,2026-11-11,1091577551,19461,79718,0.0%,0.0%,0.0%,29.4%,100.0%,100.0%,100.0%,100.0%,1.7%,ffs 100.0%,"fee schedule 98.3%, percentage 1.7%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.5%, both 10.6%, inpatient 1.9%"
 data_n5,Anthem Blue Cross California,Anthem Blue Cross California network (CA_AHPNMED0000),CA_AHPNMED0000_08_08.json.gz,2026-11-10,1386614424,29790,68885,0.0%,0.0%,0.0%,26.1%,100.0%,100.0%,100.0%,100.0%,1.6%,"ffs 100.0%, bundle 0.0%","fee schedule 97.7%, percentage 1.6%, per diem 0.5%, negotiated 0.2%","professional 98.9%, institutional 1.1%","outpatient 91.6%, both 6.3%, inpatient 2.1%"
+data_n5,Anthem Blue Cross California,CA Blue High Performance (040_05X0),2026-10_040_05X0_in-network-rates_2_of_5.json.gz,2026-11-12,2332465405,22658,111799,0.0%,0.0%,0.0%,25.1%,100.0%,100.0%,100.0%,100.0%,25.0%,ffs 100.0%,"fee schedule 75.0%, percentage 25.0%",professional 100.0%,"outpatient 95.7%, both 2.6%, inpatient 1.7%"
 data_n5,Anthem Blue Cross California,CA Blue High Performance (040_05X0),2026-10_040_05X0_in-network-rates_5_of_5.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
 data_n5,Anthem Blue Cross and Blue Shield Virginia,Anthem Virginia (HealthKeepers) network (425_61B0),2026-10_425_61B0_in-network-rates_10_of_10.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
 data_n5,Anthem Blue Cross and Blue Shield Virginia,Anthem Virginia (HealthKeepers) network (425_61B0),2026-10_425_61B0_in-network-rates_1_of_10.json.gz,2026-11-11,772736201,8429,59966,0.0%,0.0%,0.0%,41.1%,100.0%,100.0%,100.0%,100.0%,0.4%,ffs 100.0%,"fee schedule 99.6%, percentage 0.4%",professional 100.0%,"outpatient 94.5%, both 5.5%"
@@ -1925,12 +1928,13 @@ data_n5,Anthem Blue Cross and Blue Shield Virginia,VA Blue High Performance (425
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (458_68T0),2026-10_458_68T0_in-network-rates_1_of_2.json.gz,2026-11-11,1161018608,24247,21537,0.0%,0.0%,0.0%,54.6%,100.0%,100.0%,100.0%,100.0%,12.5%,"ffs 100.0%, bundle 0.0%","fee schedule 87.5%, percentage 12.5%, derived 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 88.4%, both 10.2%, inpatient 1.4%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (458_68T0),2026-10_458_68T0_in-network-rates_2_of_2.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPFMEDWI00),WI_AHPFMEDWI00_02_04.json.gz,2026-11-12,937802222,22658,36360,0.0%,0.0%,0.0%,58.9%,100.0%,100.0%,100.0%,100.0%,14.7%,ffs 100.0%,"fee schedule 85.3%, percentage 14.7%",professional 100.0%,"outpatient 84.8%, both 14.2%, inpatient 1.1%"
-data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPFMEDWI00),WI_AHPFMEDWI00_03_04.json.gz,2026-11-11,1107799581,22658,34403,0.0%,0.0%,0.0%,57.5%,100.0%,100.0%,100.0%,100.0%,15.1%,ffs 100.0%,"fee schedule 84.9%, percentage 15.1%",professional 100.0%,"outpatient 89.6%, both 9.1%, inpatient 1.3%"
+data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPFMEDWI00),WI_AHPFMEDWI00_03_04.json.gz,2026-11-12,1107799581,22658,34403,0.0%,0.0%,0.0%,57.5%,100.0%,100.0%,100.0%,100.0%,15.1%,ffs 100.0%,"fee schedule 84.9%, percentage 15.1%",professional 100.0%,"outpatient 89.6%, both 9.1%, inpatient 1.3%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPFMEDWI00),WI_AHPFMEDWI00_04_04.json.gz,2026-11-11,1005518342,24542,21573,0.0%,0.1%,0.0%,64.7%,100.0%,100.0%,100.0%,100.0%,3.7%,"ffs 99.9%, bundle 0.1%","fee schedule 96.3%, percentage 3.7%, derived 0.0%, negotiated 0.0%","professional 99.8%, institutional 0.2%","outpatient 83.4%, both 15.7%, inpatient 0.8%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPNMEDWI00),WI_AHPNMEDWI00_01_04.json.gz,2026-11-12,1475428394,22658,57094,0.0%,0.0%,0.0%,42.6%,100.0%,100.0%,100.0%,100.0%,20.6%,ffs 100.0%,"fee schedule 79.4%, percentage 20.6%",professional 100.0%,"outpatient 90.7%, both 7.2%, inpatient 2.1%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPNMEDWI00),WI_AHPNMEDWI00_02_04.json.gz,2026-11-11,986748728,19852,38669,0.0%,0.0%,0.0%,56.1%,100.0%,100.0%,100.0%,100.0%,41.9%,ffs 100.0%,"fee schedule 58.1%, percentage 41.9%",professional 100.0%,"outpatient 89.5%, both 9.1%, inpatient 1.4%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPNMEDWI00),WI_AHPNMEDWI00_03_04.json.gz,2026-11-01,1188237130,22658,33661,0.0%,0.0%,0.0%,59.4%,100.0%,100.0%,100.0%,100.0%,11.2%,ffs 100.0%,"fee schedule 88.8%, percentage 11.2%",professional 100.0%,"outpatient 88.6%, both 10.2%, inpatient 1.2%"
 data_n5,Anthem Blue Cross and Blue Shield Wisconsin,Anthem Wisconsin network (WI_AHPNMEDWI00),WI_AHPNMEDWI00_04_04.json.gz,2026-11-11,909407887,24542,18705,0.0%,0.1%,0.0%,63.1%,100.0%,100.0%,100.0%,100.0%,8.8%,"ffs 99.9%, bundle 0.1%","fee schedule 91.2%, percentage 8.8%, derived 0.0%, negotiated 0.0%","professional 99.8%, institutional 0.2%","outpatient 84.5%, both 14.7%, inpatient 0.8%"
+data_n5,Blue Shield of California,BS California : Blue High Performance (042_04Q0),2026-10_042_04Q0_in-network-rates.json.gz,2026-11-13,1669464987,25385,78602,0.0%,0.0%,0.0%,11.4%,99.7%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 73.5%, negotiated 26.4%, percentage 0.0%, per diem 0.0%","professional 99.7%, institutional 0.3%","both 99.7%, outpatient 0.3%, inpatient 0.0%"
 data_n5,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-10_690_08Q0_in-network-rates_10_of_35.json.gz,2026-11-01,24619458,584,11606,0.0%,0.0%,0.0%,0.3%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,"outpatient 51.9%, inpatient 27.2%, both 20.9%"
 data_n5,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-10_690_08Q0_in-network-rates_11_of_35.json.gz,2026-11-01,36880906,551,12783,0.0%,0.0%,0.0%,4.1%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,"outpatient 52.3%, inpatient 25.7%, both 22.0%"
 data_n5,CareFirst BlueCross BlueShield,CareFirst BCBS BlueEssential (690_08Q0),2026-10_690_08Q0_in-network-rates_12_of_35.json.gz,2026-11-01,43813431,636,12783,0.0%,0.0%,0.0%,25.7%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,"outpatient 47.7%, inpatient 32.6%, both 19.7%"
@@ -2045,10 +2049,17 @@ data_n5,County of Santa Clara DBA Valley Health Plan,Valley Health Plan Covered 
 data_n5,County of Santa Clara DBA Valley Health Plan,Valley Health Plan IHSS Commercial Preferred,d59c182e-d298-486b-894e-19043ac9c024,2026-11-01,1124814684,24198,14899,0.0%,0.0%,0.0%,32.0%,99.8%,100.0%,100.0%,100.0%,21.3%,"ffs 71.2%, capitation 28.8%, bundle 0.0%","negotiated 53.5%, derived 25.3%, percentage 21.3%, per diem 0.0%","both 99.6%, institutional 0.4%","both 79.4%, inpatient 14.3%, outpatient 6.3%"
 data_n5,County of Santa Clara DBA Valley Health Plan,Valley Health Plan SCC Commercial Preferred Retiree,71c14428-b247-4df1-b1d3-879382ba2f1e,2026-11-01,557234760,24198,14899,0.0%,0.0%,0.0%,35.9%,99.6%,100.0%,100.0%,100.0%,25.0%,"ffs 62.0%, capitation 38.0%, bundle 0.0%","negotiated 42.7%, derived 32.3%, percentage 25.0%, per diem 0.0%","both 99.3%, institutional 0.7%","both 77.1%, inpatient 20.5%, outpatient 2.4%"
 data_n5,County of Santa Clara DBA Valley Health Plan,"Valley Health Plan individual and family (Covered California network, Bronze 60 file)",81def17d-51a6-4df9-9ba2-8af21e5173a5,2026-11-01,616902318,24198,14899,0.0%,0.0%,0.0%,33.3%,99.8%,100.0%,100.0%,100.0%,28.5%,"ffs 67.0%, capitation 33.0%, bundle 0.0%","negotiated 43.6%, percentage 28.5%, derived 27.9%, per diem 0.0%","both 98.9%, institutional 1.1%, professional 0.0%","both 78.1%, inpatient 19.3%, outpatient 2.6%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39B0),2026-10_254_39B0_in-network-rates_5_of_7.json.gz,2026-11-13,2433691205,18501,128704,0.0%,0.0%,0.0%,64.0%,100.0%,100.0%,100.0%,100.0%,0.2%,ffs 100.0%,"fee schedule 99.8%, percentage 0.2%",professional 100.0%,"outpatient 98.5%, inpatient 1.3%, both 0.3%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39B0),2026-10_254_39B0_in-network-rates_6_of_7.json.gz,2026-11-13,2205952818,24998,86348,0.0%,0.0%,0.0%,65.2%,100.0%,100.0%,100.0%,100.0%,0.2%,"ffs 100.0%, bundle 0.0%","fee schedule 99.7%, percentage 0.2%, negotiated 0.1%, derived 0.0%","professional 99.8%, institutional 0.2%","outpatient 97.9%, inpatient 1.5%, both 0.5%"
 data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39B0),2026-10_254_39B0_in-network-rates_7_of_7.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
 data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39F0),2026-10_254_39F0_in-network-rates_2_of_6.json.gz,2026-11-09,752795187,4798,184811,0.0%,0.0%,0.0%,43.2%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%",professional 100.0%,"outpatient 88.9%, inpatient 7.9%, both 3.2%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39F0),2026-10_254_39F0_in-network-rates_5_of_6.json.gz,2026-11-13,2621430699,24998,112940,0.0%,0.0%,0.0%,64.7%,100.0%,100.0%,100.0%,100.0%,0.2%,"ffs 100.0%, bundle 0.0%","fee schedule 99.7%, percentage 0.2%, negotiated 0.1%, derived 0.0%","professional 99.9%, institutional 0.1%","outpatient 97.9%, inpatient 1.6%, both 0.5%"
 data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (254_39F0),2026-10_254_39F0_in-network-rates_6_of_6.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (NY_HYBMMED0000),NY_HYBMMED0000_01_06.json.gz,2026-11-13,2043630864,5269,176715,0.0%,0.0%,0.0%,68.9%,100.0%,100.0%,100.0%,100.0%,7.6%,ffs 100.0%,"fee schedule 92.0%, percentage 7.6%, negotiated 0.4%",professional 100.0%,outpatient 100.0%
 data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (NY_HYBMMED0000),NY_HYBMMED0000_02_06.json.gz,2026-11-11,651681673,4105,176715,0.0%,0.0%,0.0%,41.3%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"fee schedule 99.9%, percentage 0.1%",professional 100.0%,"outpatient 93.2%, inpatient 4.8%, both 2.1%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (NY_HYBMMED0000),NY_HYBMMED0000_05_06.json.gz,2026-11-13,2486250027,18501,176715,0.0%,0.0%,0.0%,65.0%,100.0%,100.0%,100.0%,100.0%,0.2%,ffs 100.0%,"fee schedule 99.8%, percentage 0.2%",professional 100.0%,"outpatient 98.4%, inpatient 1.2%, both 0.5%"
+data_n5,Empire BlueCross BlueShield,Anthem New York (Empire BCBS) network (NY_HYBMMED0000),NY_HYBMMED0000_06_06.json.gz,2026-11-13,2396214785,24998,72185,0.0%,0.0%,0.0%,65.0%,100.0%,100.0%,100.0%,100.0%,0.4%,"ffs 100.0%, bundle 0.0%","fee schedule 99.5%, percentage 0.4%, negotiated 0.1%, derived 0.0%","professional 99.9%, institutional 0.1%","outpatient 98.0%, inpatient 1.4%, both 0.6%"
+data_n5,Empire BlueCross BlueShield,NY Blue High Performance (254_39X0),2026-10_254_39X0_in-network-rates_2_of_3.json.gz,2026-11-12,3501974797,24998,90962,0.0%,0.0%,0.0%,64.6%,100.0%,100.0%,100.0%,100.0%,0.3%,"ffs 100.0%, bundle 0.0%","fee schedule 99.6%, percentage 0.3%, negotiated 0.0%, derived 0.0%","professional 99.9%, institutional 0.1%","outpatient 98.3%, inpatient 1.1%, both 0.6%"
 data_n5,Empire BlueCross BlueShield,NY Blue High Performance (254_39X0),2026-10_254_39X0_in-network-rates_3_of_3.json.gz,2026-11-01,25787540,840,34079,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 88.8%, negotiated 11.2%",professional 100.0%,"both 88.8%, outpatient 11.2%"
 data_n5,Excellus BlueCross BlueShield,Excellus BCBS BluePPO (302_42B0),2026-10_302_42B0_in-network-rates_1_of_2.json.gz,2026-11-01,1065529,25546,220,0.0%,0.0%,0.0%,21.5%,18.4%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 92.7%, NEGOTIATED 4.4%, per diem 2.9%","institutional 81.6%, professional 18.4%","outpatient 98.9%, inpatient 1.1%"
 data_n5,Excellus BlueCross BlueShield,Excellus BCBS BluePPO (302_42B0),2026-10_302_42B0_in-network-rates_2_of_2.json.gz,2026-11-01,2342404,35232,291,0.0%,0.0%,0.0%,43.1%,78.5%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 72.3%, NEGOTIATED 27.6%, per diem 0.1%","professional 78.5%, institutional 21.5%","outpatient 92.5%, inpatient 7.5%"
@@ -2066,11 +2077,12 @@ data_n5,Florida Blue,Florida Blue contract file C00413 (myBlue; CPT/HCPCS rates)
 data_n5,Florida Blue,"Florida Blue contract file C00606 (BlueSelect, BlueCare, BlueOptions, myBlue; CPT/HCPCS rates)",C00606.json.gz,2026-11-01,168543,7792,16,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,institutional 100.0%,outpatient 100.0%
 data_n5,Florida Blue,Florida Blue individual BlueOptions (Network Blue PPO),FloridaBlue_IBO_in-network-rates.json.gz,2026-11-01,198571202,34720,8991,0.0%,0.0%,0.0%,8.7%,91.3%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 91.3%, institutional 8.7%","both 99.9%, inpatient 0.1%, outpatient 0.0%"
 data_n5,Florida Blue,Florida Blue individual BlueSelect,FloridaBlue_BCI_in-network-rates.json.gz,2026-11-01,188844760,34720,8004,0.0%,0.0%,0.0%,8.6%,91.0%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 91.0%, institutional 9.0%","both 99.9%, inpatient 0.1%, outpatient 0.0%"
+data_n5,Group Health Cooperative of South Central Wisconsin,GHC-SCW HMO (group and individual marketplace plans),2026-09-28_GHC-SCW_94529WI024002200-BETTER-TOGETHER-HMO-PLATINUM-750-DED-2000-MOOP-WITH-VISION_in-network-rates.json,2026-11-13,2086345965,32775,57075,0.0%,0.0%,0.0%,5.5%,98.1%,100.0%,100.0%,100.0%,97.9%,"ffs 92.0%, capitation 8.0%","percentage 97.9%, negotiated 1.4%, derived 0.4%, per diem 0.2%","both 97.8%, institutional 2.2%","both 99.6%, outpatient 0.3%, inpatient 0.2%"
+data_n5,Group Health Cooperative of South Central Wisconsin,GHC-SCW PPO (all PPO plans; file named for one employer),2026-09-28_GHC-SCW_2302002-HENRY-FARMS--LLC-PPO_in-network-rates.json,2026-11-13,2485474856,32775,58033,0.0%,0.0%,0.0%,4.7%,98.1%,100.0%,100.0%,100.0%,98.2%,"ffs 93.3%, capitation 6.7%","percentage 98.2%, negotiated 1.2%, derived 0.4%, per diem 0.2%","both 97.8%, institutional 2.2%","both 99.6%, outpatient 0.2%, inpatient 0.1%"
 data_n5,Health First Health Plans,Health First individual plans (Individual and High Value networks),2026-09-13_51_in-network-rates.json,2026-11-01,328480693,61084,18137,0.0%,0.0%,0.0%,16.7%,98.6%,100.0%,100.0%,100.0%,33.6%,"ffs 99.7%, capitation 0.3%, bundle 0.0%","negotiated 66.2%, percentage 33.6%, derived 0.3%, per diem 0.0%","professional 92.8%, institutional 6.8%, both 0.4%","outpatient 98.1%, both 1.9%, inpatient 0.0%"
 data_n5,Highmark Blue Shield of Northeastern New York,Highmark Blue Shield of Northeastern NY PPO (800_72A0),2026-10_800_72A0_in-network-rates_01_of_02.json.gz,2026-11-01,180719,5618,11248,100.0%,0.0%,0.0%,73.9%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,derived 100.0%,professional 100.0%,"outpatient 90.2%, both 7.3%, inpatient 2.5%"
 data_n5,Highmark Blue Shield of Northeastern New York,Highmark Blue Shield of Northeastern NY PPO (800_72A0),2026-10_800_72A0_in-network-rates_02_of_02.json.gz,2026-11-01,15757,4248,92,100.0%,0.0%,0.0%,40.8%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,derived 100.0%,institutional 100.0%,"outpatient 95.1%, inpatient 4.9%"
 data_n5,Independent Health Benefits Corporation,"Independent Health individual EPO (iDirect, Standard, Max plans)",2026-09-01_Independent-Health-Benefits-Corporation_EPO_in-network-rates.json.gz,2026-11-01,9774943,10861,16612,0.0%,0.3%,0.0%,34.9%,97.9%,100.0%,0.0%,100.0%,6.5%,"ffs 99.7%, bundle 0.3%","negotiated 93.5%, percentage 6.5%","professional 97.9%, institutional 2.1%",(blank) 100.0%
-data_n5,"Kaiser Foundation Health Plan of the Mid-Atlantic States, Inc.","Kaiser Permanente Mid-Atlantic (VA, DC, MD individual and group)",2026-11-01_NEW_MA-COMMERCIAL-01_in-network-rates.zip,2026-11-12,0,,,,,,,,,,,,,,,
 data_n5,Medica Community Health Plan,Engage by Medica-WI (IMAY),2026-11-01_IMAY_Medica-Community-Health-Plan.json.gz,2026-11-01,7646410,8172,3823,0.0%,0.0%,0.0%,37.0%,100.0%,100.0%,100.0%,100.0%,49.0%,ffs 100.0%,"negotiated 50.7%, percentage 49.0%, derived 0.3%","both 87.4%, institutional 6.4%, professional 6.2%","both 99.9%, outpatient 0.1%, inpatient 0.0%"
 data_n5,Medica Community Health Plan,Essentia Choice Care with Medica-WI (IECC),2026-11-01_IECC_Medica-Community-Health-Plan.json.gz,2026-11-01,2154361,8084,3022,0.0%,0.0%,0.0%,40.3%,100.0%,100.0%,100.0%,100.0%,15.1%,ffs 100.0%,"negotiated 84.7%, percentage 15.1%, derived 0.2%","both 85.4%, institutional 7.5%, professional 7.1%","both 99.9%, inpatient 0.1%, outpatient 0.0%"
 data_n5,Medica Community Health Plan,Medica Individual Choice-WI (ICHO),2026-11-01_ICHO_Medica-Community-Health-Plan.json.gz,2026-11-01,20966107,8352,4852,0.0%,0.0%,0.0%,36.8%,100.0%,100.0%,100.0%,100.0%,24.0%,ffs 100.0%,"negotiated 75.9%, percentage 24.0%, derived 0.1%","both 81.1%, institutional 9.9%, professional 8.9%","both 99.9%, outpatient 0.1%, inpatient 0.0%"
@@ -2089,13 +2101,12 @@ data_n5,UnitedHealthcare of California,UnitedHealthcare of California SignatureV
 data_n5,UnitedHealthcare of California,UnitedHealthcare of California SignatureValue Harmony (SignatureValue-Harmony_SJ),2026-10-01_UnitedHealthcare-of-California_INSURER_SignatureValue-Harmony_SJ_in-network-rates.json.gz,2026-11-11,1036319436,16059,31091,0.0%,0.0%,0.0%,20.8%,100.0%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"negotiated 99.9%, percentage 0.1%","professional 98.9%, institutional 1.1%","outpatient 98.9%, inpatient 1.1%"
 data_n5,Wellpoint,Wellpoint Florida Essential (FL_JBMEMED0001),FL_JBMEMED0001.json.gz,2026-11-12,761745387,21453,28678,0.0%,0.0%,0.0%,18.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 99.5%, negotiated 0.5%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 62.2%, outpatient 37.8%, inpatient 0.0%"
 data_n5,western_health_advantage,Western Health Advantage HMO (Covered California and group plans),WHA_in-network-files.json,2026-11-01,251297,7339,3672,0.0%,0.0%,0.0%,49.1%,43.5%,100.0%,0.0%,100.0%,0.0%,capitation 100.0%,negotiated 100.0%,"institutional 56.5%, professional 43.5%",(blank) 100.0%
-data_nc,,,S-NATNCEXCSID1-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_nc,,,S-NATNCEXDVTRL-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_nc,,,S-NATNCEXINFUC-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_nc,,,S-NATNCEXTRUHR-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
-data_nc,,,S-NCEXHOSP0200-innetwork-1,2026-11-12,0,,,,,,,,,,,,,,,
 data_nc,Aetna Life Insurance Company,Aetna Open Access Managed Choice,2026-09-05_pl-2ua-hr23_Aetna-Life-Insurance-Company.json.gz,2026-11-10,4547153568,27714,101739,0.0%,0.0%,0.0%,73.0%,100.0%,100.0%,100.0%,100.0%,3.3%,ffs 100.0%,"fee schedule 84.3%, derived 8.8%, negotiated 3.6%, percentage 3.3%","professional 99.8%, institutional 0.2%","both 100.0%, outpatient 0.0%, inpatient 0.0%"
+data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NATNCEXCSID1),S-NATNCEXCSID1-innetwork-1.json,2026-11-13,0,,,,,,,,,,,,,,,
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NATNCEXDAVTA),S-NATNCEXDAVTA-innetwork-1.json,2026-11-01,4,2,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,institutional 100.0%,outpatient 100.0%
+data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NATNCEXDVTRL),S-NATNCEXDVTRL-innetwork-1.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NATNCEXINFUC),S-NATNCEXINFUC-innetwork-1.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NATNCEXTRUHR),S-NATNCEXTRUHR-innetwork-1.json,2026-11-13,0,,,,,,,,,,,,,,,
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXAMBU0001),S-NCEXAMBU0001-innetwork-1.json,2026-11-01,11,11,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,outpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXASC00005),S-NCEXASC00005-innetwork-1.json,2026-11-01,1,1,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,institutional 100.0%,outpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXDIAL0001),S-NCEXDIAL0001-innetwork-1.json,2026-11-01,43,39,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,ffs 100.0%,percentage 100.0%,institutional 100.0%,outpatient 100.0%
@@ -2123,6 +2134,7 @@ data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXHOSP0
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXHOSP0024),S-NCEXHOSP0024-innetwork-1.json,2026-11-01,901,1079,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,10.1%,ffs 100.0%,"negotiated 85.7%, percentage 10.1%, per diem 4.2%",institutional 100.0%,inpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXHOSP0026),S-NCEXHOSP0026-innetwork-1.json,2026-11-01,908,1079,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,9.7%,ffs 100.0%,"negotiated 87.0%, percentage 9.7%, per diem 3.3%",institutional 100.0%,inpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXHOSP0100),S-NCEXHOSP0100-innetwork-1.json,2026-11-01,91,99,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,institutional 100.0%,inpatient 100.0%
+data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXHOSP0200),S-NCEXHOSP0200-innetwork-1.json,2026-11-13,0,,,,,,,,,,,,,,,
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXMHSA0001),S-NCEXMHSA0001-innetwork-1.json,2026-11-01,9,3,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,per diem 100.0%,institutional 100.0%,outpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXOONPHYS1),S-NCEXOONPHYS1-innetwork-1.json,2026-11-01,7,6,1,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,outpatient 100.0%
 data_nc,AmeriHealth Caritas Next,AmeriHealth Caritas Next NC Exchange (NCEXRHAB0001),S-NCEXRHAB0001-innetwork-1.json,2026-11-01,170,182,1,0.0%,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,43.5%,ffs 100.0%,"negotiated 56.5%, percentage 43.5%",institutional 100.0%,"inpatient 56.5%, outpatient 43.5%"
@@ -2151,12 +2163,115 @@ data_nc,"United HealthCare Services, Inc.",UnitedHealthcare Core,2026-10-01_Unit
 data_nc,"United HealthCare Services, Inc.",UnitedHealthcare Core EPO,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_Core-EPO_578_in-network-rates.json.gz,2026-11-01,956166343,18832,20875,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.9%, inpatient 32.1%"
 data_nc,"United HealthCare Services, Inc.",UnitedHealthcare NEXUS ACO Open Access,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_NEXUSACO-OA_453_in-network-rates.json.gz,2026-11-01,982021589,18832,21130,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.9%, inpatient 32.1%"
 data_nc,"United HealthCare Services, Inc.",UnitedHealthcare Select Plus,2026-10-01_United-HealthCare-Services--Inc-_Third-Party-Administrator_Select-Plus_657_in-network-rates.json.gz,2026-11-01,954870428,18832,19248,0.0%,0.0%,0.0%,32.6%,99.9%,100.0%,100.0%,100.0%,0.0%,"ffs 100.0%, capitation 0.0%","negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 67.9%, inpatient 32.1%"
-data_s7,,,InNetwork_CCOK_HMO_Group_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
-data_s7,,,InNetwork_CCOK_HMO_Individual_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
-data_s7,,,InNetwork_CCOK_MCO_ASOGroup_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
-data_s7,,,InNetwork_CCOK_PPO_ASOGroup_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
-data_s7,,,InNetwork_CCOK_PPO_Group_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
-data_s7,,,InNetwork_CCOK_PPO_Individual_MachineReadable,2026-11-12,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1107 Ambulance)",in-network-rates-hixplan-prof-1107-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1114 Ambulance)",in-network-rates-hixplan-prof-1114-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1149 Ambulance)",in-network-rates-hixplan-prof-1149-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1377 Suppliers)",in-network-rates-hixplan-prof-1377-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1546 Suppliers)",in-network-rates-hixplan-prof-1546-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 1565 Suppliers)",in-network-rates-hixplan-prof-1565-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 17200 Suppliers)",in-network-rates-hixplan-prof-17200-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 17500 Suppliers)",in-network-rates-hixplan-prof-17500-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18200 Suppliers)",in-network-rates-hixplan-prof-18200-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18500 Suppliers)",in-network-rates-hixplan-prof-18500-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18579 Ambulance)",in-network-rates-hixplan-prof-18579-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18580 Ambulance)",in-network-rates-hixplan-prof-18580-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18584 Ambulance)",in-network-rates-hixplan-prof-18584-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18585 Ambulance)",in-network-rates-hixplan-prof-18585-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18591 Ambulance)",in-network-rates-hixplan-prof-18591-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18595 Ambulance)",in-network-rates-hixplan-prof-18595-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18598 Ambulance)",in-network-rates-hixplan-prof-18598-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18599 Ambulance)",in-network-rates-hixplan-prof-18599-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18602 Ambulance)",in-network-rates-hixplan-prof-18602-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18603 Ambulance)",in-network-rates-hixplan-prof-18603-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18605 Ambulance)",in-network-rates-hixplan-prof-18605-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18606 Ambulance)",in-network-rates-hixplan-prof-18606-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18609 Ambulance)",in-network-rates-hixplan-prof-18609-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18610 Ambulance)",in-network-rates-hixplan-prof-18610-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18611 Ambulance)",in-network-rates-hixplan-prof-18611-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18613 Ambulance)",in-network-rates-hixplan-prof-18613-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18614 Ambulance)",in-network-rates-hixplan-prof-18614-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18616 Ambulance)",in-network-rates-hixplan-prof-18616-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18617 Ambulance)",in-network-rates-hixplan-prof-18617-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18619 Ambulance)",in-network-rates-hixplan-prof-18619-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18620 Ambulance)",in-network-rates-hixplan-prof-18620-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18622 Ambulance)",in-network-rates-hixplan-prof-18622-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18623 Ambulance)",in-network-rates-hixplan-prof-18623-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18625 Ambulance)",in-network-rates-hixplan-prof-18625-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18626 Ambulance)",in-network-rates-hixplan-prof-18626-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18628 Ambulance)",in-network-rates-hixplan-prof-18628-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18629 Ambulance)",in-network-rates-hixplan-prof-18629-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18631 Ambulance)",in-network-rates-hixplan-prof-18631-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18632 Ambulance)",in-network-rates-hixplan-prof-18632-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18634 Ambulance)",in-network-rates-hixplan-prof-18634-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18635 Ambulance)",in-network-rates-hixplan-prof-18635-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18637 Ambulance)",in-network-rates-hixplan-prof-18637-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18637 Suppliers)",in-network-rates-hixplan-prof-18637-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18638 Ambulance)",in-network-rates-hixplan-prof-18638-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18638 Suppliers)",in-network-rates-hixplan-prof-18638-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18641 Ambulance)",in-network-rates-hixplan-prof-18641-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18643 Ambulance)",in-network-rates-hixplan-prof-18643-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18644 Ambulance)",in-network-rates-hixplan-prof-18644-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18646 Ambulance)",in-network-rates-hixplan-prof-18646-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18648 Ambulance)",in-network-rates-hixplan-prof-18648-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18649 Ambulance)",in-network-rates-hixplan-prof-18649-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18652 Ambulance)",in-network-rates-hixplan-prof-18652-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18653 Ambulance)",in-network-rates-hixplan-prof-18653-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18656 Ambulance)",in-network-rates-hixplan-prof-18656-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18657 Ambulance)",in-network-rates-hixplan-prof-18657-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18659 Ambulance)",in-network-rates-hixplan-prof-18659-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18661 Ambulance)",in-network-rates-hixplan-prof-18661-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18662 Ambulance)",in-network-rates-hixplan-prof-18662-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18663 Ambulance)",in-network-rates-hixplan-prof-18663-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18664 Ambulance)",in-network-rates-hixplan-prof-18664-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18668 Ambulance)",in-network-rates-hixplan-prof-18668-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18669 Ambulance)",in-network-rates-hixplan-prof-18669-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18670 Ambulance)",in-network-rates-hixplan-prof-18670-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18672 Ambulance)",in-network-rates-hixplan-prof-18672-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18673 Ambulance)",in-network-rates-hixplan-prof-18673-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18674 Ambulance)",in-network-rates-hixplan-prof-18674-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18675 Ambulance)",in-network-rates-hixplan-prof-18675-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18683 Ambulance)",in-network-rates-hixplan-prof-18683-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18684 Ambulance)",in-network-rates-hixplan-prof-18684-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18686 Ambulance)",in-network-rates-hixplan-prof-18686-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18687 Ambulance)",in-network-rates-hixplan-prof-18687-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18688 Ambulance)",in-network-rates-hixplan-prof-18688-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18692 Ambulance)",in-network-rates-hixplan-prof-18692-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18694 Ambulance)",in-network-rates-hixplan-prof-18694-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18700 Ambulance)",in-network-rates-hixplan-prof-18700-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18701 Ambulance)",in-network-rates-hixplan-prof-18701-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18705 Ambulance)",in-network-rates-hixplan-prof-18705-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18708 Ambulance)",in-network-rates-hixplan-prof-18708-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18709 Ambulance)",in-network-rates-hixplan-prof-18709-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18712 Ambulance)",in-network-rates-hixplan-prof-18712-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18715 Ambulance)",in-network-rates-hixplan-prof-18715-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18717 Ambulance)",in-network-rates-hixplan-prof-18717-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18719 Ambulance)",in-network-rates-hixplan-prof-18719-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18721 Ambulance)",in-network-rates-hixplan-prof-18721-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18723 Ambulance)",in-network-rates-hixplan-prof-18723-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18725 Ambulance)",in-network-rates-hixplan-prof-18725-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18727 Ambulance)",in-network-rates-hixplan-prof-18727-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18729 Ambulance)",in-network-rates-hixplan-prof-18729-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18729 Suppliers)",in-network-rates-hixplan-prof-18729-MC02.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18733 Ambulance)",in-network-rates-hixplan-prof-18733-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18734 Ambulance)",in-network-rates-hixplan-prof-18734-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18741 Ambulance)",in-network-rates-hixplan-prof-18741-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18743 Ambulance)",in-network-rates-hixplan-prof-18743-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18745 Ambulance)",in-network-rates-hixplan-prof-18745-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18749 Ambulance)",in-network-rates-hixplan-prof-18749-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18752 Ambulance)",in-network-rates-hixplan-prof-18752-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18755 Ambulance)",in-network-rates-hixplan-prof-18755-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18757 Ambulance)",in-network-rates-hixplan-prof-18757-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18758 Ambulance)",in-network-rates-hixplan-prof-18758-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18759 Ambulance)",in-network-rates-hixplan-prof-18759-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18760 Ambulance)",in-network-rates-hixplan-prof-18760-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18761 Ambulance)",in-network-rates-hixplan-prof-18761-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18766 Ambulance)",in-network-rates-hixplan-prof-18766-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18767 Ambulance)",in-network-rates-hixplan-prof-18767-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18774 Ambulance)",in-network-rates-hixplan-prof-18774-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18775 Ambulance)",in-network-rates-hixplan-prof-18775-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18778 Ambulance)",in-network-rates-hixplan-prof-18778-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18779 Ambulance)",in-network-rates-hixplan-prof-18779-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
+data_nyhf,Healthfirst Insurance Company,"Healthfirst Leaf plans, NY marketplace (configuration id 18780 Ambulance)",in-network-rates-hixplan-prof-18780-MC09.json,2026-11-13,0,,,,,,,,,,,,,,,
 data_s7,"Alliant Health Plans, Inc.",Alliant Group (HOA network),2026-10-28_alliant-health-plans_in-network-rates-group_hoa.json,2026-11-01,432159230,19336,39189,2.8%,0.0%,0.0%,19.5%,76.8%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"negotiated 99.9%, percentage 0.1%, per diem 0.0%","professional 72.5%, institutional 27.5%",both 100.0%
 data_s7,"Alliant Health Plans, Inc.",Alliant Individual (Care network),2026-10-28_alliant-health-plans_in-network-rates-individual_care.json,2026-11-01,17386016,13349,514,1.4%,0.0%,0.0%,19.9%,91.2%,100.0%,100.0%,100.0%,0.1%,ffs 100.0%,"negotiated 99.9%, percentage 0.1%, per diem 0.0%","professional 50.2%, institutional 49.8%",both 100.0%
 data_s7,"Alliant Health Plans, Inc.",Alliant Individual (Connect network),2026-10-28_alliant-health-plans_in-network-rates-individual_connect.json,2026-11-01,17704346,13837,952,2.8%,0.0%,0.0%,19.6%,91.4%,100.0%,100.0%,100.0%,0.2%,ffs 100.0%,"negotiated 99.8%, percentage 0.2%, per diem 0.0%","professional 50.1%, institutional 49.9%",both 100.0%
@@ -2179,40 +2294,57 @@ data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_GC
 data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_HXJQMED0000 (118 employers),CO_HXJQMED0000.json.gz,2026-11-11,818868948,24542,24161,0.0%,0.0%,0.0%,26.9%,100.0%,100.0%,100.0%,100.0%,2.9%,"ffs 100.0%, bundle 0.0%","fee schedule 96.9%, percentage 2.9%, negotiated 0.1%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 87.7%, both 10.8%, inpatient 1.5%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,"Anthem Colorado network CO_HYLYMED0000 (2,138 employers)",CO_HYLYMED0000.json.gz,2026-11-11,1113660354,24542,35034,0.0%,0.0%,0.0%,26.7%,100.0%,100.0%,100.0%,100.0%,2.4%,"ffs 100.0%, bundle 0.0%","fee schedule 97.4%, percentage 2.4%, negotiated 0.1%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 87.4%, both 11.1%, inpatient 1.5%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_JBEVMED0000 (99 employers),CO_JBEVMED0000.json.gz,2026-11-11,1108798192,24542,34241,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,2.4%,"ffs 100.0%, bundle 0.0%","fee schedule 97.5%, percentage 2.4%, negotiated 0.1%, per diem 0.1%","professional 99.8%, institutional 0.2%","outpatient 87.4%, both 11.1%, inpatient 1.5%"
-data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_JBEXMED0000 (335 employers),CO_JBEXMED0000.json.gz,2026-11-11,1116683027,24542,34241,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,2.4%,"ffs 100.0%, bundle 0.0%","fee schedule 97.6%, percentage 2.4%, negotiated 0.1%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 87.4%, both 11.1%, inpatient 1.5%"
+data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_JBEXMED0000 (335 employers),CO_JBEXMED0000.json.gz,2026-11-12,1116683027,24542,34241,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,2.4%,"ffs 100.0%, bundle 0.0%","fee schedule 97.6%, percentage 2.4%, negotiated 0.1%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 87.4%, both 11.1%, inpatient 1.5%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,Anthem Colorado network CO_JBEYMED0000 (58 employers),CO_JBEYMED0000.json.gz,2026-11-11,1117386951,24542,34241,0.0%,0.0%,0.0%,26.8%,100.0%,100.0%,100.0%,100.0%,2.4%,"ffs 100.0%, bundle 0.0%","fee schedule 97.6%, percentage 2.4%, negotiated 0.1%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 87.4%, both 11.1%, inpatient 1.5%"
-data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_1_of_5.json.gz,2026-11-12,436837157,22658,9154,0.0%,0.0%,0.0%,27.2%,100.0%,100.0%,100.0%,100.0%,4.6%,ffs 100.0%,"fee schedule 95.4%, percentage 4.6%",professional 100.0%,"outpatient 88.1%, both 10.4%, inpatient 1.4%"
+data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_1_of_5.json.gz,2026-11-13,436837157,22658,9154,0.0%,0.0%,0.0%,27.2%,100.0%,100.0%,100.0%,100.0%,4.6%,ffs 100.0%,"fee schedule 95.4%, percentage 4.6%",professional 100.0%,"outpatient 88.1%, both 10.4%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_2_of_5.json.gz,2026-11-01,289506836,20099,4564,0.0%,0.0%,0.0%,27.5%,100.0%,100.0%,100.0%,100.0%,1.2%,ffs 100.0%,"fee schedule 98.8%, percentage 1.2%",professional 100.0%,"outpatient 87.7%, both 10.8%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_3_of_5.json.gz,2026-11-01,18500456,17237,9527,0.0%,0.0%,0.0%,15.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 100.0%, percentage 0.0%",professional 100.0%,"outpatient 79.4%, both 17.7%, inpatient 2.9%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_4_of_5.json.gz,2026-11-01,353087079,23223,11708,0.0%,0.0%,0.0%,27.6%,100.0%,100.0%,100.0%,100.0%,0.9%,"ffs 100.0%, bundle 0.0%","fee schedule 98.9%, percentage 0.9%, negotiated 0.2%, per diem 0.0%","professional 99.6%, institutional 0.4%","outpatient 87.7%, both 10.9%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Colorado,CO Blue High Performance (051_06X0),2026-10_051_06X0_in-network-rates_5_of_5.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_1_of_7.json.gz,2026-11-12,1573372996,22658,85565,0.0%,0.0%,0.0%,46.8%,100.0%,100.0%,100.0%,100.0%,11.0%,"ffs 100.0%, bundle 0.0%","fee schedule 89.0%, percentage 11.0%, negotiated 0.0%",professional 100.0%,"outpatient 91.2%, both 8.0%, inpatient 0.9%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_2_of_7.json.gz,2026-11-13,1197246538,16341,74331,0.0%,0.0%,0.0%,65.1%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 99.4%, percentage 0.6%, negotiated 0.0%",professional 100.0%,"outpatient 86.9%, both 12.3%, inpatient 0.7%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_4_of_7.json.gz,2026-11-11,832107245,20378,46269,0.0%,0.0%,0.0%,58.5%,100.0%,100.0%,100.0%,100.0%,20.0%,ffs 100.0%,"fee schedule 80.0%, percentage 20.0%, negotiated 0.0%",professional 100.0%,"outpatient 86.8%, both 11.0%, inpatient 2.2%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_5_of_7.json.gz,2026-11-13,1826504562,22829,33478,0.0%,0.0%,0.0%,67.6%,100.0%,100.0%,100.0%,100.0%,0.6%,"ffs 100.0%, bundle 0.0%","fee schedule 99.4%, percentage 0.6%, negotiated 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 84.0%, both 14.4%, inpatient 1.7%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_6_of_7.json.gz,2026-11-10,1286757184,25915,25956,0.0%,0.0%,0.0%,67.2%,100.0%,100.0%,100.0%,100.0%,0.5%,"ffs 100.0%, bundle 0.0%","fee schedule 99.1%, percentage 0.5%, negotiated 0.4%, derived 0.0%","professional 99.7%, institutional 0.3%","outpatient 84.9%, both 14.5%, inpatient 0.6%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,Anthem Georgia BlueChoice PPO (BlueCard file),2026-11_102_11B0_in-network-rates_7_of_7.json.gz,2026-11-01,6906332,778,11342,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 80.4%, negotiated 19.6%",professional 100.0%,"both 80.4%, outpatient 19.6%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_2_of_7.json.gz,2026-11-10,986365097,10783,54870,0.0%,0.1%,0.0%,67.1%,100.0%,100.0%,100.0%,100.0%,0.6%,"ffs 99.9%, bundle 0.1%","fee schedule 99.4%, percentage 0.6%",professional 100.0%,"outpatient 83.9%, both 15.9%, inpatient 0.2%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_3_of_7.json.gz,2026-11-13,1407839873,18615,62182,0.0%,0.0%,0.0%,68.9%,100.0%,100.0%,100.0%,100.0%,0.5%,ffs 100.0%,"fee schedule 99.5%, percentage 0.5%, negotiated 0.0%",professional 100.0%,"outpatient 86.0%, both 13.1%, inpatient 0.9%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_4_of_7.json.gz,2026-11-13,1528725835,22658,49880,0.0%,0.0%,0.0%,67.9%,100.0%,100.0%,100.0%,100.0%,1.5%,"ffs 100.0%, bundle 0.0%","fee schedule 98.5%, percentage 1.5%",professional 100.0%,"outpatient 91.8%, both 8.0%, inpatient 0.3%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_5_of_7.json.gz,2026-11-12,620019431,20378,40274,0.0%,0.0%,0.0%,55.0%,100.0%,100.0%,100.0%,100.0%,26.0%,ffs 100.0%,"fee schedule 74.0%, percentage 26.0%",professional 100.0%,"outpatient 88.5%, both 10.8%, inpatient 0.7%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_6_of_7.json.gz,2026-11-13,1984218324,24749,36932,0.0%,0.0%,0.0%,66.6%,100.0%,100.0%,100.0%,100.0%,0.6%,"ffs 100.0%, bundle 0.0%","fee schedule 99.3%, percentage 0.6%, negotiated 0.1%, derived 0.0%","professional 99.9%, institutional 0.1%","outpatient 84.8%, both 13.5%, inpatient 1.7%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11D0 (18,293 employers)",2026-10_102_11D0_in-network-rates_7_of_7.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11M0 (5,196 employers)",2026-10_102_11M0_in-network-rates_2_of_7.json.gz,2026-11-13,1102399186,13246,73429,0.0%,0.0%,0.0%,71.6%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 99.4%, percentage 0.6%",professional 100.0%,"outpatient 80.1%, both 18.7%, inpatient 1.2%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11M0 (5,196 employers)",2026-10_102_11M0_in-network-rates_4_of_7.json.gz,2026-11-12,1236491614,19579,41313,0.0%,0.0%,0.0%,65.4%,100.0%,100.0%,100.0%,100.0%,3.7%,"ffs 100.0%, bundle 0.0%","fee schedule 96.3%, percentage 3.7%, negotiated 0.0%",professional 100.0%,"outpatient 82.9%, both 15.2%, inpatient 1.9%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11M0 (5,196 employers)",2026-10_102_11M0_in-network-rates_5_of_7.json.gz,2026-11-10,1379434321,22829,34001,0.0%,0.0%,0.0%,68.4%,100.0%,100.0%,100.0%,100.0%,0.4%,"ffs 100.0%, bundle 0.0%","fee schedule 99.5%, percentage 0.4%, negotiated 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.6%, both 11.0%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11M0 (5,196 employers)",2026-10_102_11M0_in-network-rates_6_of_7.json.gz,2026-11-11,1242040942,24749,26864,0.0%,0.0%,0.0%,67.6%,100.0%,100.0%,100.0%,100.0%,2.2%,"ffs 100.0%, bundle 0.0%","fee schedule 97.3%, percentage 2.2%, negotiated 0.4%, derived 0.0%","professional 99.6%, institutional 0.4%","outpatient 85.8%, both 13.5%, inpatient 0.7%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network 102_11M0 (5,196 employers)",2026-10_102_11M0_in-network-rates_7_of_7.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPNMEDGA00 (1,491 employers)",GA_AHPNMEDGA00_02_06.json.gz,2026-11-13,1197246538,16341,74331,0.0%,0.0%,0.0%,65.1%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 99.4%, percentage 0.6%, negotiated 0.0%",professional 100.0%,"outpatient 86.9%, both 12.3%, inpatient 0.7%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPNMEDGA00 (1,491 employers)",GA_AHPNMEDGA00_04_06.json.gz,2026-11-11,844082675,20378,46269,0.0%,0.0%,0.0%,57.3%,100.0%,100.0%,100.0%,100.0%,21.8%,ffs 100.0%,"fee schedule 78.2%, percentage 21.8%, negotiated 0.0%",professional 100.0%,"outpatient 87.0%, both 10.8%, inpatient 2.2%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPNMEDGA00 (1,491 employers)",GA_AHPNMEDGA00_05_06.json.gz,2026-11-13,1797557157,22829,33478,0.0%,0.0%,0.0%,67.2%,100.0%,100.0%,100.0%,100.0%,0.6%,"ffs 100.0%, bundle 0.0%","fee schedule 99.4%, percentage 0.6%, negotiated 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 83.9%, both 14.5%, inpatient 1.6%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPNMEDGA00 (1,491 employers)",GA_AHPNMEDGA00_06_06.json.gz,2026-11-10,1265208312,25915,25736,0.0%,0.0%,0.0%,67.3%,100.0%,100.0%,100.0%,100.0%,1.0%,"ffs 100.0%, bundle 0.0%","fee schedule 98.6%, percentage 1.0%, negotiated 0.4%, derived 0.0%","professional 99.7%, institutional 0.3%","outpatient 84.7%, both 14.6%, inpatient 0.8%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPPMEDGAHF (6,224 employers)",GA_AHPPMEDGAHF_02_06.json.gz,2026-11-13,1102399186,13246,73429,0.0%,0.0%,0.0%,71.6%,100.0%,100.0%,100.0%,100.0%,0.6%,ffs 100.0%,"fee schedule 99.4%, percentage 0.6%",professional 100.0%,"outpatient 80.1%, both 18.7%, inpatient 1.2%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPPMEDGAHF (6,224 employers)",GA_AHPPMEDGAHF_04_06.json.gz,2026-11-12,1236491614,19579,41313,0.0%,0.0%,0.0%,65.4%,100.0%,100.0%,100.0%,100.0%,3.7%,"ffs 100.0%, bundle 0.0%","fee schedule 96.3%, percentage 3.7%, negotiated 0.0%",professional 100.0%,"outpatient 82.9%, both 15.2%, inpatient 1.9%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPPMEDGAHF (6,224 employers)",GA_AHPPMEDGAHF_05_06.json.gz,2026-11-10,1379434321,22829,34001,0.0%,0.0%,0.0%,68.4%,100.0%,100.0%,100.0%,100.0%,0.4%,"ffs 100.0%, bundle 0.0%","fee schedule 99.5%, percentage 0.4%, negotiated 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 87.6%, both 11.0%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,"Anthem Georgia network GA_AHPPMEDGAHF (6,224 employers)",GA_AHPPMEDGAHF_06_06.json.gz,2026-11-11,1242040942,24749,26864,0.0%,0.0%,0.0%,67.6%,100.0%,100.0%,100.0%,100.0%,2.2%,"ffs 100.0%, bundle 0.0%","fee schedule 97.3%, percentage 2.2%, negotiated 0.4%, derived 0.0%","professional 99.6%, institutional 0.4%","outpatient 85.8%, both 13.5%, inpatient 0.7%"
+data_s7,Anthem Blue Cross and Blue Shield Georgia,GA Blue High Performance (102_11R0),2026-10_102_11R0_in-network-rates_2_of_3.json.gz,2026-11-13,2052125882,24749,26544,0.0%,0.0%,0.0%,67.5%,100.0%,100.0%,100.0%,100.0%,0.6%,"ffs 100.0%, bundle 0.0%","fee schedule 99.4%, percentage 0.6%, negotiated 0.1%, derived 0.0%","professional 99.9%, institutional 0.1%","outpatient 85.8%, both 12.9%, inpatient 1.3%"
 data_s7,Anthem Blue Cross and Blue Shield Georgia,GA Blue High Performance (102_11R0),2026-10_102_11R0_in-network-rates_3_of_3.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29A0 (29 employers),2026-10_748_29A0_in-network-rates_1_of_4.json.gz,2026-11-13,1239784891,22658,39293,0.0%,0.0%,0.0%,53.2%,100.0%,100.0%,100.0%,100.0%,16.2%,ffs 100.0%,"fee schedule 83.8%, percentage 16.2%",professional 100.0%,"outpatient 90.0%, both 8.7%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29A0 (29 employers),2026-10_748_29A0_in-network-rates_2_of_4.json.gz,2026-11-11,1129876563,22658,29092,0.0%,0.0%,0.0%,62.0%,100.0%,100.0%,100.0%,100.0%,4.7%,ffs 100.0%,"fee schedule 95.3%, percentage 4.7%",professional 100.0%,"outpatient 90.2%, both 9.4%, inpatient 0.4%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29A0 (29 employers),2026-10_748_29A0_in-network-rates_3_of_4.json.gz,2026-11-12,1067405634,24542,19168,0.0%,0.1%,0.0%,67.0%,100.0%,100.0%,100.0%,100.0%,0.8%,"ffs 99.9%, bundle 0.1%","fee schedule 99.1%, percentage 0.8%, negotiated 0.1%, per diem 0.0%","professional 99.8%, institutional 0.2%","outpatient 84.1%, both 15.4%, inpatient 0.5%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29A0 (29 employers),2026-10_748_29A0_in-network-rates_4_of_4.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29M0 (141 employers),2026-10_748_29M0_in-network-rates_1_of_4.json.gz,2026-11-13,1304902908,22658,37702,0.0%,0.0%,0.0%,55.5%,100.0%,100.0%,100.0%,100.0%,14.8%,ffs 100.0%,"fee schedule 85.2%, percentage 14.8%",professional 100.0%,"outpatient 89.8%, both 9.2%, inpatient 0.9%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29M0 (141 employers),2026-10_748_29M0_in-network-rates_2_of_4.json.gz,2026-11-11,997055858,22658,24066,0.0%,0.0%,0.0%,62.2%,100.0%,100.0%,100.0%,100.0%,4.7%,ffs 100.0%,"fee schedule 95.3%, percentage 4.7%",professional 100.0%,"outpatient 88.4%, both 10.7%, inpatient 0.9%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29M0 (141 employers),2026-10_748_29M0_in-network-rates_3_of_4.json.gz,2026-11-11,1029584442,24542,19321,0.0%,0.2%,0.0%,67.1%,100.0%,100.0%,100.0%,100.0%,0.4%,"ffs 99.8%, bundle 0.2%","fee schedule 99.4%, percentage 0.4%, negotiated 0.1%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 83.2%, both 16.4%, inpatient 0.5%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network 748_29M0 (141 employers),2026-10_748_29M0_in-network-rates_4_of_4.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_CEFPMED0000 (11,830 employers)",MO_CEFPMED0000_01_03.json.gz,2026-11-13,1283502793,22658,37702,0.0%,0.0%,0.0%,54.3%,100.0%,100.0%,100.0%,100.0%,16.4%,ffs 100.0%,"fee schedule 83.6%, percentage 16.4%",professional 100.0%,"outpatient 89.4%, both 9.2%, inpatient 1.4%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_CEFPMED0000 (11,830 employers)",MO_CEFPMED0000_02_03.json.gz,2026-11-11,996290794,22658,23597,0.0%,0.0%,0.0%,63.5%,100.0%,100.0%,100.0%,100.0%,2.8%,ffs 100.0%,"fee schedule 97.2%, percentage 2.8%",professional 100.0%,"outpatient 89.3%, both 10.4%, inpatient 0.3%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_CEFPMED0000 (11,830 employers)",MO_CEFPMED0000_03_03.json.gz,2026-11-11,1029376124,24542,19077,0.0%,0.2%,0.0%,67.1%,100.0%,100.0%,100.0%,100.0%,0.5%,"ffs 99.8%, bundle 0.2%","fee schedule 99.4%, percentage 0.5%, negotiated 0.1%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 83.2%, both 16.3%, inpatient 0.5%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_GHRAMEDMO11 (3,128 employers)",MO_GHRAMEDMO11_01_03.json.gz,2026-11-13,1304902908,22658,37702,0.0%,0.0%,0.0%,55.5%,100.0%,100.0%,100.0%,100.0%,14.8%,ffs 100.0%,"fee schedule 85.2%, percentage 14.8%",professional 100.0%,"outpatient 89.8%, both 9.2%, inpatient 0.9%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_GHRAMEDMO11 (3,128 employers)",MO_GHRAMEDMO11_02_03.json.gz,2026-11-11,997055858,22658,24066,0.0%,0.0%,0.0%,62.2%,100.0%,100.0%,100.0%,100.0%,4.7%,ffs 100.0%,"fee schedule 95.3%, percentage 4.7%",professional 100.0%,"outpatient 88.4%, both 10.7%, inpatient 0.9%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,"Anthem Missouri network MO_GHRAMEDMO11 (3,128 employers)",MO_GHRAMEDMO11_03_03.json.gz,2026-11-12,1029584442,24542,19321,0.0%,0.2%,0.0%,67.1%,100.0%,100.0%,100.0%,100.0%,0.4%,"ffs 99.8%, bundle 0.2%","fee schedule 99.4%, percentage 0.4%, negotiated 0.1%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 83.2%, both 16.4%, inpatient 0.5%"
-data_s7,Anthem Blue Cross and Blue Shield Missouri,MO Blue High Performance (748_29S0),2026-10_748_29S0_in-network-rates_1_of_3.json.gz,2026-11-12,1402839623,22658,33629,0.0%,0.0%,0.0%,56.8%,100.0%,100.0%,100.0%,100.0%,12.6%,ffs 100.0%,"fee schedule 87.4%, percentage 12.6%",professional 100.0%,"outpatient 88.5%, both 10.4%, inpatient 1.1%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network MO_GZHAMEDAP76 (298 employers),MO_GZHAMEDAP76.json.gz,2026-11-12,2727769808,24542,35713,0.0%,0.0%,0.0%,60.9%,100.0%,100.0%,100.0%,100.0%,7.3%,"ffs 100.0%, bundle 0.0%","fee schedule 92.7%, percentage 7.3%, negotiated 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 86.5%, both 12.8%, inpatient 0.8%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,Anthem Missouri network MO_HXDRMED0000 (392 employers),MO_HXDRMED0000.json.gz,2026-11-13,2731048235,24542,35713,0.0%,0.0%,0.0%,60.9%,100.0%,100.0%,100.0%,100.0%,7.3%,"ffs 100.0%, bundle 0.0%","fee schedule 92.7%, percentage 7.3%, negotiated 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 86.5%, both 12.8%, inpatient 0.8%"
+data_s7,Anthem Blue Cross and Blue Shield Missouri,MO Blue High Performance (748_29S0),2026-10_748_29S0_in-network-rates_1_of_3.json.gz,2026-11-13,1402839623,22658,33629,0.0%,0.0%,0.0%,56.8%,100.0%,100.0%,100.0%,100.0%,12.6%,ffs 100.0%,"fee schedule 87.4%, percentage 12.6%",professional 100.0%,"outpatient 88.5%, both 10.4%, inpatient 1.1%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,MO Blue High Performance (748_29S0),2026-10_748_29S0_in-network-rates_2_of_3.json.gz,2026-11-11,1282578694,24542,27990,0.0%,0.1%,0.0%,65.5%,100.0%,100.0%,100.0%,100.0%,1.4%,"ffs 99.9%, bundle 0.1%","fee schedule 98.5%, percentage 1.4%, negotiated 0.1%, per diem 0.0%","professional 99.8%, institutional 0.2%","outpatient 84.2%, both 15.3%, inpatient 0.4%"
 data_s7,Anthem Blue Cross and Blue Shield Missouri,MO Blue High Performance (748_29S0),2026-10_748_29S0_in-network-rates_3_of_3.json.gz,2026-11-01,6914174,766,10700,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"fee schedule 81.9%, negotiated 18.1%",professional 100.0%,"both 81.9%, outpatient 18.1%"
 data_s7,BKC,Blue KC Blue Care,2026-09-03_BKC_CBCRC0001_ffs_in-network.json.gz,2026-11-01,155768151,64556,7217,0.0%,0.0%,0.0%,15.9%,100.0%,100.0%,100.0%,0.0%,13.5%,ffs 100.0%,"negotiated 74.9%, percentage 13.5%, fee schedule 11.5%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 91.9%, inpatient 8.1%"
@@ -2224,6 +2356,7 @@ data_s7,BKC,Blue KC BlueSelect Plus EPO,2026-09-03_BKC_QBSPC0002_ffs_in-network.
 data_s7,BKC,Blue KC High Performance,2026-09-03_BKC_WHPNC0001_ffs_in-network.json.gz,2026-11-01,58399085,17568,4591,0.0%,0.0%,0.0%,14.5%,100.0%,100.0%,100.0%,0.0%,12.7%,ffs 100.0%,"negotiated 83.0%, percentage 12.7%, fee schedule 4.3%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 93.7%, inpatient 6.3%"
 data_s7,BKC,Blue KC Preferred-Care Blue (file 1),2026-09-03_BKC_JPCBC0001_ffs_in-network.json.gz,2026-11-01,194976674,17568,8469,0.0%,0.0%,0.0%,16.0%,100.0%,100.0%,100.0%,0.0%,13.7%,ffs 100.0%,"negotiated 75.0%, percentage 13.7%, fee schedule 11.3%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 91.9%, inpatient 8.1%"
 data_s7,BKC,Blue KC Preferred-Care Blue (file 2),2026-09-03_BKC_JPCBC0002_ffs_in-network.json.gz,2026-11-01,196181373,17568,8541,0.0%,0.0%,0.0%,16.0%,100.0%,100.0%,100.0%,0.0%,13.7%,ffs 100.0%,"negotiated 74.8%, percentage 13.7%, fee schedule 11.5%, per diem 0.0%","professional 100.0%, institutional 0.0%","both 91.8%, inpatient 8.2%"
+data_s7,Blue Cross & Blue Shield of Mississippi,BCBS Mississippi Network Blue (BlueCard file),2026-11_230_30B0_in-network-rates.json.gz,2026-11-13,1740380448,102223,10244,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.1%,"ffs 100.0%, bundle 0.0%","fee schedule 99.9%, percentage 0.1%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, inpatient 0.0%, outpatient 0.0%"
 data_s7,Blue Cross and Blue Shield of Alabama,BCBS Alabama : Blue High Performance (510_01I0),2026-10_510_01I0_in-network-rates_10_of_29.json.gz,2026-11-01,104737260,720,25606,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,inpatient 100.0%
 data_s7,Blue Cross and Blue Shield of Alabama,BCBS Alabama : Blue High Performance (510_01I0),2026-10_510_01I0_in-network-rates_11_of_29.json.gz,2026-11-01,124749117,936,25606,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,inpatient 100.0%
 data_s7,Blue Cross and Blue Shield of Alabama,BCBS Alabama : Blue High Performance (510_01I0),2026-10_510_01I0_in-network-rates_12_of_29.json.gz,2026-11-01,256491041,710,25606,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,professional 100.0%,inpatient 100.0%
@@ -2400,6 +2533,12 @@ data_s7,Centene Management Company LLC,Ambetter Mississippi exchange plans,2026-
 data_s7,Centene Management Company LLC,Ambetter Missouri exchange plans,2026-09-28_centene-management-company-llc_ambetter-mo_in-network.json,2026-11-01,43204932,4944,20361,0.3%,0.0%,0.0%,53.4%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.7%, institutional 0.3%","outpatient 100.0%, inpatient 0.0%"
 data_s7,Centene Management Company LLC,Ambetter Oklahoma exchange plans,2026-09-28_centene-management-company-llc_ambetter-ok_in-network.json,2026-11-01,29374667,3358,15057,0.0%,0.0%,0.0%,51.9%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 100.0%, institutional 0.0%","outpatient 100.0%, inpatient 0.0%"
 data_s7,Centene Management Company LLC,Ambetter Tennessee exchange plans,2026-09-28_centene-management-company-llc_ambetter-tn_in-network.json,2026-11-01,80293806,4713,32117,0.1%,0.0%,0.0%,57.8%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"negotiated 100.0%, percentage 0.0%, per diem 0.0%","professional 99.9%, institutional 0.1%","outpatient 100.0%, inpatient 0.0%"
+data_s7,CommunityCare HMO Inc.,CommunityCare HMO Individual,InNetwork_CCOK_HMO_Individual_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
+data_s7,CommunityCare of OK,CommunityCare HMO Group,InNetwork_CCOK_HMO_Group_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
+data_s7,CommunityCare of OK,CommunityCare MCO ASOGroup,InNetwork_CCOK_MCO_ASOGroup_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
+data_s7,CommunityCare of OK,CommunityCare PPO ASOGroup,InNetwork_CCOK_PPO_ASOGroup_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
+data_s7,CommunityCare of OK,CommunityCare PPO Group,InNetwork_CCOK_PPO_Group_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
+data_s7,CommunityCare of OK,CommunityCare PPO Individual,InNetwork_CCOK_PPO_Individual_MachineReadable.zip,2026-11-13,0,,,,,,,,,,,,,,,
 data_s7,Healthcare Highways,Harmony / Balance by Medica-OK (HWY),HWY.json.gz,2026-11-11,481623067,15603,25901,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,negotiated 100.0%,"professional 99.9%, institutional 0.1%",inpatient 100.0%
 data_s7,Medica Central Insurance Company,Medica with SSM Health-MO (IWFN),2026-11-01_IWFN_Medica-Central-Insurance-Company.json.gz,2026-11-01,15196091,11734,834,0.0%,0.0%,0.0%,77.5%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,fee schedule 100.0%,"both 61.6%, professional 19.2%, institutional 19.2%","both 100.0%, inpatient 0.0%"
 data_s7,Medica Insurance Company,Balance by Medica-MO (IBALMO),2026-11-01_IBALMO_Medica-Insurance-Company.json.gz,2026-11-01,34661163,8352,4530,0.0%,0.0%,0.0%,35.5%,100.0%,100.0%,100.0%,100.0%,10.8%,ffs 100.0%,"negotiated 89.1%, percentage 10.8%, derived 0.0%","both 75.0%, institutional 12.9%, professional 12.1%","both 99.8%, outpatient 0.1%, inpatient 0.0%"
@@ -2415,6 +2554,7 @@ data_s7,Oscar Health,Oscar Individual Georgia (065),20261001-oscar-065-in-networ
 data_s7,Oscar Health,Oscar Individual Missouri (029),20261001-oscar-029-in-network.json,2026-11-01,7384649,6959,3230,0.0%,0.0%,0.0%,0.0%,99.7%,100.0%,100.0%,0.0%,0.0%,ffs 100.0%,negotiated 100.0%,"professional 99.7%, institutional 0.3%","both 99.7%, outpatient 0.3%, inpatient 0.0%"
 data_s7,Oscar Health,Oscar Individual Oklahoma (045),20261001-oscar-045-in-network.json,2026-11-01,71177,1446,1243,0.0%,0.0%,0.0%,0.0%,94.7%,100.0%,100.0%,0.0%,0.0%,ffs 100.0%,negotiated 100.0%,"professional 94.7%, institutional 5.3%","both 94.7%, outpatient 5.3%"
 data_s7,Oscar Health,Oscar Individual Tennessee (033),20261001-oscar-033-in-network.json,2026-11-01,7696669,7065,9356,0.0%,0.0%,0.0%,0.0%,99.8%,100.0%,100.0%,0.0%,0.0%,ffs 100.0%,negotiated 100.0%,"professional 99.8%, institutional 0.2%","both 99.8%, outpatient 0.2%, inpatient 0.0%"
+data_tx,Aetna Life Insurance Company,Open Access Aetna Select,2026-10-05_pl-4xo-tr25_Aetna-Life-Insurance-Company.json.gz,2026-11-13,8544108056,77828,153860,0.0%,0.0%,0.0%,76.7%,100.0%,100.0%,100.0%,0.0%,0.5%,ffs 100.0%,"fee schedule 91.8%, negotiated 7.7%, percentage 0.5%, per diem 0.0%","professional 99.9%, institutional 0.1%","both 100.0%, outpatient 0.0%, inpatient 0.0%"
 data_tx,Baylor Scott & White Health Plan,BSWPlusHMO,2026-10-01_BSWPlusHMOINN.json,2026-11-01,4574049,2861,55186,0.0%,0.1%,0.0%,0.0%,98.7%,100.0%,100.0%,100.0%,34.9%,"ffs 99.9%, bundle 0.1%","negotiated 65.1%, percentage 34.9%","professional 98.7%, institutional 1.3%","both 98.7%, outpatient 1.2%, inpatient 0.1%"
 data_tx,Baylor Scott & White Insurance Company,BSWPlusPPO,2026-10-01_BSWPlusPPOINN.json,2026-11-01,3776945,2798,59022,0.0%,0.1%,0.0%,0.0%,98.5%,100.0%,100.0%,100.0%,34.4%,"ffs 99.9%, bundle 0.1%","negotiated 65.6%, percentage 34.4%","professional 98.5%, institutional 1.5%","both 98.5%, outpatient 1.5%, inpatient 0.1%"
 data_tx,Blue Cross and Blue Shield of Texas,BCBSTX Blue Advantage HMO,2026-10-15_Blue-Cross-and-Blue-Shield-of-Texas_Blue-Advantage-HMO_in-network-rates.json.gz,2026-11-11,1297034099,17543,146860,0.0%,0.0%,0.0%,0.0%,93.8%,100.0%,100.0%,100.0%,1.7%,ffs 100.0%,"negotiated 98.2%, percentage 1.7%, per diem 0.1%","professional 93.8%, institutional 6.2%","outpatient 99.0%, inpatient 1.0%"
@@ -2431,8 +2571,8 @@ data_tx,"Community Health Choice, Inc",Community Health Choice marketplace Ultra
 data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_001-of-006.json.gz,2026-11-01,160701715,2718,33199,5.1%,0.0%,0.0%,0.0%,98.7%,100.0%,100.0%,100.0%,0.3%,"ffs 99.1%, bundle 0.9%","negotiated 99.7%, percentage 0.3%, per diem 0.0%","professional 98.7%, institutional 1.3%","both 94.4%, outpatient 5.6%, inpatient 0.0%"
 data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_002-of-006.json.gz,2026-11-01,182998970,2550,25292,0.2%,0.0%,0.0%,0.0%,98.4%,100.0%,100.0%,100.0%,0.2%,"ffs 99.0%, bundle 1.0%","negotiated 99.8%, percentage 0.2%, per diem 0.0%","professional 98.4%, institutional 1.6%","both 93.8%, outpatient 6.2%, inpatient 0.0%"
 data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_003-of-006.json.gz,2026-11-01,215259981,3213,52798,0.6%,0.0%,0.0%,0.0%,98.8%,100.0%,100.0%,100.0%,0.6%,"ffs 99.2%, bundle 0.8%","negotiated 99.4%, percentage 0.6%, per diem 0.0%","professional 98.8%, institutional 1.2%","both 94.1%, outpatient 5.9%, inpatient 0.0%"
-data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_004-of-006.json.gz,2026-11-12,318505623,4838,50380,3.3%,0.0%,0.0%,0.0%,99.3%,100.0%,100.0%,100.0%,3.7%,"ffs 100.0%, bundle 0.0%","negotiated 96.3%, percentage 3.7%, per diem 0.0%","professional 99.3%, institutional 0.7%","both 95.7%, outpatient 4.3%, inpatient 0.0%"
-data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_005-of-006.json.gz,2026-11-12,260291064,5852,52798,8.9%,0.0%,0.0%,0.0%,99.3%,100.0%,100.0%,100.0%,9.2%,"ffs 100.0%, bundle 0.0%","negotiated 90.8%, percentage 9.2%, per diem 0.0%","professional 99.3%, institutional 0.7%","both 96.0%, outpatient 4.0%, inpatient 0.1%"
+data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_004-of-006.json.gz,2026-11-13,318505623,4838,50380,3.3%,0.0%,0.0%,0.0%,99.3%,100.0%,100.0%,100.0%,3.7%,"ffs 100.0%, bundle 0.0%","negotiated 96.3%, percentage 3.7%, per diem 0.0%","professional 99.3%, institutional 0.7%","both 95.7%, outpatient 4.3%, inpatient 0.0%"
+data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_005-of-006.json.gz,2026-11-13,260291064,5852,52798,8.9%,0.0%,0.0%,0.0%,99.3%,100.0%,100.0%,100.0%,9.2%,"ffs 100.0%, bundle 0.0%","negotiated 90.8%, percentage 9.2%, per diem 0.0%","professional 99.3%, institutional 0.7%","both 96.0%, outpatient 4.0%, inpatient 0.1%"
 data_tx,Curative Insurance Company,Curative Network,2026-10-05_curative_in-network-rates_006-of-006.json.gz,2026-11-01,82742617,1998,52798,7.3%,0.0%,0.0%,0.0%,98.5%,100.0%,100.0%,100.0%,7.6%,"ffs 100.0%, bundle 0.0%","negotiated 91.9%, percentage 7.6%, per diem 0.5%","professional 98.5%, institutional 1.5%","both 97.4%, outpatient 1.8%, inpatient 0.8%"
 data_tx,Moda,Moda Select Texas network,ModaTXPriceTrans_20261001.json.gz,2026-11-01,1172308,240,1724,0.0%,0.0%,0.0%,0.0%,100.0%,100.0%,100.0%,100.0%,0.0%,ffs 100.0%,"negotiated 65.0%, per diem 35.0%",professional 100.0%,outpatient 100.0%
 data_tx,"Moda Health Plan, Inc",Moda Select Texas (direct plans),2026-10-01_moda_0243_in-network-rates.json.gz,2026-11-01,233372143,17886,18569,0.0%,0.0%,0.0%,14.1%,87.6%,100.0%,100.0%,100.0%,0.2%,ffs 100.0%,"fee schedule 93.6%, negotiated 6.1%, percentage 0.2%, per diem 0.0%","professional 87.6%, institutional 12.4%","both 87.6%, outpatient 10.4%, inpatient 2.0%"
