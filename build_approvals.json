@@ -70,5 +70,10 @@
   "usd": 150,
   "ok_at": "2026-11-04 00:05",
   "why": "Betsy OK'd $150 (Nov 3, 2026, 6:03 PM CT) for the North Carolina November update, same as the new-state builds"
+ },
+ "mm-tx": {
+  "usd": 50,
+  "ok_at": "2026-11-12 09:50",
+  "why": "Betsy OK'd (Nov 12, 2026) the Texas private-vs-Medicare pilot up to $50 after the estimate came in at $49.96 (4 rented machines about 18.5 hours for the 27 largest insurer tables, $43.60; Backblaze downloads $5.86). Over $40 default (run.py MM_LIMIT_USD)."
  }
 }
