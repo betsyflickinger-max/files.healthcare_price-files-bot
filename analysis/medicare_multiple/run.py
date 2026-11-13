@@ -384,6 +384,13 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
         con.close()
 
 
+def _gh_left(s3c, b, doc, run_id):
+    """How many GitHub-lane tables of this run have no done marker yet."""
+    done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
+    return sum(1 for i in doc["items"] if i["lane"] == "gh"
+               and f"{i['source']}__{i.get('scope', '')}__" + rates.safe_name(i["key"].rsplit("/", 1)[1].rsplit(".", 1)[0]) not in done)
+
+
 def status(doc):
     """How many planned items are finished (done markers in storage)."""
     s3c, b = s3()
@@ -608,8 +615,10 @@ def cmd_start(a, s3c, b, run_id, pk, resumed=False):
     if not _exists(s3c, b, f"{PFX}{run_id}/bench/sources.json"):
         cmd_bench(a)
         _bench_to_storage(s3c, b, a.bench, run_id)
-    # the free GitHub lane: every manual start (it skips tables already done), and a resumed run only if it never ran
-    if not resumed or not _exists(s3c, b, f"{PFX}{run_id}/gh_started.json"):
+    # the free GitHub lane: every manual start (it skips tables already done), and a resumed run if it never ran or if
+    # any of its tables has no done marker (Nov 13, 2026: the first TX lane failed on a DuckDB 1.5.6 parser error, and
+    # the nightly resume would otherwise never re-read those tables)
+    if not resumed or not _exists(s3c, b, f"{PFX}{run_id}/gh_started.json") or _gh_left(s3c, b, doc, run_id):
         s3c.put_object(Bucket=b, Key=f"{PFX}{run_id}/gh_started.json", Body=central_now().isoformat().encode())
         gh_output(gh_go="true", state=",".join(a.states), run=run_id)
     else:

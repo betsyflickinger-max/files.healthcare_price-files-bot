@@ -314,7 +314,7 @@ def _coverage(con, pg, state):
 
 def _methods(con, pg, state):
     """How many listed rates used each method: place of service for doctor fees (and later: market segment, anesthesia)."""
-    q = f"""select 'place of service (doctor fees)' question, source, status, pos method, sum(units) units, count(distinct code) codes
+    q = f"""select 'place of service (doctor fees)' question, source, status, pos as method, sum(units) units, count(distinct code) codes
             from read_parquet('{pg}', union_by_name=true)
             where state = '{state}' and view = 'professional' and rate_kind = 'dollar' group by all
             union all

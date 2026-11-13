@@ -279,7 +279,7 @@ def _units_to_part(con, units_sql, const):
     c = ", ".join(f"'{v}' as {k}" for k, v in const.items())
     # insurer, status, segment and program follow from the network; bucket and code type from the code: carried, not grouped
     part = f"""select {c}, p_state state, any_value(insurer) insurer, network, any_value(status) status, any_value(segment) segment,
-        any_value(segment_method) segment_method, any_value(program) program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
+        any_value(segment_method) segment_method, any_value(program) as program, view, any_value(bucket) bucket, code, any_value(code_type) code_type, modifier, pos, ccn,
         case when rate_kind = 'dollar' and view <> 'none' then medicare_amount end medicare_amount,
         case when rate_kind = 'dollar' then medicare_facility end medicare_facility,
         case when rate_kind = 'dollar' then medicare_office end medicare_office, rate_kind,
@@ -348,7 +348,7 @@ def insurer_units(t, have, membership=None, spec=None, part_k=0, parts=1, seg=No
     else:
         segsql = f"{SEGMENT_SQL.format(x=net)} segment, {SEGMENT_METHOD_SQL.format(x=net)} segment_method"
     return f"""select 1.0 / coalesce(l.repeat_count, 1) w, l.reporting_entity_name insurer, {net} network,
-        {STATUS_SQL.format(x=net)} status, {segsql}, 'commercial' program,
+        {STATUS_SQL.format(x=net)} status, {segsql}, 'commercial' as program,
         case when l.billing_code_type in ('MS-DRG', 'DRG') then ltrim(l.billing_code, '0') else l.billing_code end code,
         case when l.billing_code_type in ('MS-DRG', 'DRG') then 'MS-DRG' when l.billing_code_type like 'CPT%' then 'CPT'
              when l.billing_code_type like 'HCPCS%' then 'HCPCS' else l.billing_code_type end code_type,
@@ -374,7 +374,7 @@ def hospital_units(t, have):
       else 'no negotiated amount' end"""
     return f"""select distinct 1.0 w, {q('hospital_name')} insurer, {q('payer_name')} || ' | ' || {q('plan_name')} network,
         {STATUS_SQL.format(x=payer)} status, {SEGMENT_SQL.format(x=payer)} segment, {SEGMENT_METHOD_SQL.format(x=payer)} segment_method,
-        {PROGRAM_SQL.format(x=payer)} program,
+        {PROGRAM_SQL.format(x=payer)} as program,
         case when upper({q('code_type')}) in ('MS-DRG', 'MSDRG') then ltrim({q('code')}, '0') else upper({q('code')}) end code,
         case when upper({q('code_type')}) in ('MS-DRG', 'MSDRG') then 'MS-DRG' else upper({q('code_type')}) end code_type,
         case when lower({q('billing_class')}) = 'professional' then 'professional' else 'facility' end fee,
@@ -404,7 +404,7 @@ def allowed_units(t, have=None):
       case when {mkt} in ('individual', 'group') then '{sg.TOC.replace("table of contents", "allowed-amount file")}'
         when {idt} = 'hios' or regexp_matches({pid}, '{sg.HIOS_RE}') then '{sg.HIOS}' else {SEGMENT_METHOD_SQL.format(x='r.plan')} end segment_method"""
     return f"""select distinct 1.0 w, r.insurer, r.plan network, 'out-of-network' status, {seg},
-        'commercial' program,
+        'commercial' as program,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then ltrim(r.code, '0') else upper(r.code) end code,
         case when upper(r.code_type) in ('MS-DRG', 'DRG') then 'MS-DRG' else upper(r.code_type) end code_type,
         case when lower(r.billing_class) like 'inst%' then 'facility' else 'professional' end fee,
