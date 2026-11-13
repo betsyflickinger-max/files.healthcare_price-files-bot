@@ -547,11 +547,18 @@ curl -s -X DELETE -H "Authorization: Bearer $DIGITALOCEAN_TOKEN" https://api.dig
 
 
 def _exists(s3c, b, key):
+    """True/False for a stored file. Only 'not found' means False (Nov 13, 2026: when storage's daily cap refused every
+    request, 'refused' read as 'missing', and a start would have rented a second set of machines). Anything else raises."""
     try:
         s3c.head_object(Bucket=b, Key=key)
         return True
-    except Exception:
+    except KeyError:            # the tests' stand-in storage
         return False
+    except Exception as e:
+        code = str(getattr(e, "response", {}).get("Error", {}).get("Code", ""))
+        if code in ("404", "NoSuchKey", "NotFound"):
+            return False
+        raise
 
 
 def _allowed_table(con, s3c, b, it, work):

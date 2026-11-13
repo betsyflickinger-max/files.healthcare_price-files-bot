@@ -742,3 +742,18 @@ def test_allowed_rows_survives_odd_shapes():
         ("99213", "1234567890", "12", 80.0, "11", ""), ("99214", "1111111111", "34", None, "22", "26")]
     assert list(rates.allowed_rows("not a doc", "ins")) == []
     assert list(rates.allowed_rows(dict(out_of_network="text"), "ins")) == []
+
+
+def test_exists_raises_when_storage_refuses():
+    import run as runmod
+    from botocore.exceptions import ClientError
+
+    class S:
+        def __init__(self, code):
+            self.code = code
+
+        def head_object(self, **kw):
+            raise ClientError({"Error": {"Code": self.code, "Message": "x"}}, "HeadObject")
+    assert runmod._exists(S("404"), "b", "k") is False
+    with pytest.raises(ClientError):
+        runmod._exists(S("403"), "b", "k")
