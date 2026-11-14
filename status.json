@@ -1,0 +1,1387 @@
+{
+ "generated_at": "2026-11-14T13:26:01+00:00",
+ "insurers_tx": {
+  "networks": 102,
+  "active": 55,
+  "status": {
+   "new": 4,
+   "running": 51
+  },
+  "not_done": [
+   {
+    "network": "Aetna Life Insurance Company (pl-1s7)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-2hl)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-41i)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-vk)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Texas HMO - Open Access Health Network Option",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Open Access Managed Choice",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Open Access Elect Choice",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Texas HMO - Open Access Health Network Only",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Open Access Aetna Select",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna PPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Choice POS II",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Ambetter Texas exchange plans",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "HCSC: BCBS Texas : Blue High Performance (400_59T0)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Advantage HMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Choice PPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Premier",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX MyBlue Health HMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX ParPlan",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BSWPlusHMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BSWPlusPPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "CHRISTUS Health Plan employer networks",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "CHRISTUS Health Plan Texas marketplace",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna IFP Texas Connect",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna LocalPlus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna Open Access Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna Pathwell OAP",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas marketplace (standard plans)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas (direct plans)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas marketplace",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Oscar Individual Texas HMO (059)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Oscar Individual Texas EPO (064)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Core",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Core EPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare NEXUS ACO Open Access",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Select Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UMR UnitedHealthcare Choice Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "United-HealthCare-Services--Inc- (Navigate-EPO_636)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Choice Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "being read on upfront-fleet-16g-20261112-1450-04 since 2026-11-14 12:24 UTC"
+   },
+   {
+    "network": "Wellpoint Texas Essential (TX_JBLXMED0001)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   }
+  ]
+ },
+ "insurers_dfw": {
+  "networks": 102,
+  "active": 55,
+  "status": {
+   "new": 4,
+   "running": 51
+  },
+  "not_done": [
+   {
+    "network": "Aetna Life Insurance Company (pl-1s7)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-2hl)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-41i)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-vk)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Texas HMO - Open Access Health Network Option",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Open Access Managed Choice",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Open Access Elect Choice",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Texas HMO - Open Access Health Network Only",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Open Access Aetna Select",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna PPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Aetna Choice POS II",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Ambetter Texas exchange plans",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "HCSC: BCBS Texas : Blue High Performance (400_59T0)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Advantage HMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Choice PPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX Blue Premier",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX MyBlue Health HMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BCBSTX ParPlan",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BSWPlusHMO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "BSWPlusPPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "CHRISTUS Health Plan employer networks",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "CHRISTUS Health Plan Texas marketplace",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna IFP Texas Connect",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna LocalPlus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna Open Access Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Cigna Pathwell OAP",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Bronze",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Gold",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Community Health Choice marketplace Ultra Silver",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Curative Network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas marketplace (standard plans)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas (direct plans)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas marketplace",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Moda Select Texas network",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Oscar Individual Texas HMO (059)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "Oscar Individual Texas EPO (064)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Core",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Core EPO",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare NEXUS ACO Open Access",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Select Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UMR UnitedHealthcare Choice Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "being read on upfront-fleet-32g-20261112-1420-02 since 2026-11-13 23:57 UTC"
+   },
+   {
+    "network": "United-HealthCare-Services--Inc- (Navigate-EPO_636)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   },
+   {
+    "network": "UnitedHealthcare Choice Plus",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "being read on upfront-fleet-16g-20261112-1450-04 since 2026-11-14 12:24 UTC"
+   },
+   {
+    "network": "Wellpoint Texas Essential (TX_JBLXMED0001)",
+    "status": "running",
+    "fails": "0",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "in the machine queue, waiting for a free machine"
+   }
+  ]
+ },
+ "insurer_hold": false,
+ "insurer_scopes": {
+  "ar": {
+   "active": 16,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 2,
+    "failed": 6
+   }
+  },
+  "az": {
+   "active": 23,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 3,
+    "failed": 12
+   }
+  },
+  "b1": {
+   "active": 622,
+   "processed": 4,
+   "status": {
+    "new": 23,
+    "running": 589,
+    "failed": 6,
+    "processed": 4
+   }
+  },
+  "b4": {
+   "active": 540,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 487,
+    "failed": 45
+   }
+  },
+  "c1": {
+   "active": 284,
+   "processed": 4,
+   "status": {
+    "new": 198,
+    "failed": 82,
+    "processed": 4
+   }
+  },
+  "c2": {
+   "active": 3648,
+   "processed": 0,
+   "status": {
+    "new": 52,
+    "running": 3579,
+    "failed": 17
+   }
+  },
+  "c3": {
+   "active": 4037,
+   "processed": 566,
+   "status": {
+    "new": 99,
+    "running": 2640,
+    "failed": 732,
+    "processed": 566
+   }
+  },
+  "ct": {
+   "active": 655,
+   "processed": 0,
+   "status": {
+    "new": 631,
+    "running": 24
+   }
+  },
+  "il": {
+   "active": 23,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 15
+   }
+  },
+  "la": {
+   "active": 27,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 13,
+    "failed": 6
+   }
+  },
+  "n5": {
+   "active": 382,
+   "processed": 1,
+   "status": {
+    "new": 24,
+    "running": 357,
+    "processed": 1
+   }
+  },
+  "nc": {
+   "active": 75,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "running": 67
+   }
+  },
+  "nyhf": {
+   "active": 6137,
+   "processed": 0,
+   "status": {
+    "running": 6117,
+    "new": 20
+   }
+  },
+  "s7": {
+   "active": 479,
+   "processed": 0,
+   "status": {
+    "new": 10,
+    "running": 469
+   }
+  },
+  "skipil": {
+   "active": 20,
+   "processed": 20,
+   "status": {
+    "processed": 20
+   }
+  }
+ },
+ "hospitals": {
+  "listed": 5973,
+  "status": {
+   "unchanged": 4843,
+   "no price file found": 525,
+   "link broken": 264,
+   "new - first version saved": 186,
+   "changed - new version saved": 78,
+   "not a price file": 60,
+   "wrong hospital's file": 16,
+   "queued for a rented machine": 1
+  },
+  "total": 5905,
+  "have_file": 5067,
+  "as_of": "2026-11-14"
+ },
+ "code_names": {
+  "cpt_codes": 11916,
+  "named": 11816,
+  "left": 100
+ },
+ "tx_cities": {
+  "abilene": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "amarillo": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "austin": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "beaumont-port-arthur": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "brownsville-harlingen": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "college-station-bryan": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "corpus-christi": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "el-paso": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "houston": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "killeen-temple": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "longview": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "lubbock": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "mcallen": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "midland": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "odessa": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "rest": {
+   "run": "v2",
+   "done": 256,
+   "total": 256
+  },
+  "san-angelo": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "san-antonio": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "small-towns": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "texarkana": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "tyler": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "victoria": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "waco": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "wichita-falls": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  }
+ },
+ "r2": {
+  "objects": 10760476,
+  "gb": 16843.9,
+  "est_usd_month": 252.51,
+  "largest": [],
+  "source": "Cloudflare storage analytics, 2026-11-14",
+  "counted_at": "2026-11-14 12:10 UTC"
+ },
+ "digitalocean": {
+  "month_to_date_usd": 826.91,
+  "credit_left_usd": 0.0,
+  "machines": [
+   {
+    "name": "upfront-fleet-8g-20261112-1310-04",
+    "usd_hour": 0.07143,
+    "created": "2026-11-12T13:11:09Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261112-1310-05",
+    "usd_hour": 0.07143,
+    "created": "2026-11-12T13:11:11Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261112-1310-11",
+    "usd_hour": 0.07143,
+    "created": "2026-11-12T13:11:19Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1410-06",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:10:55Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1420-02",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T14:20:59Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261112-1440-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-12T14:40:55Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1450-01",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T14:50:50Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1450-02",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T14:50:52Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1450-04",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:50:54Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1450-05",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:50:56Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1450-07",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:50:59Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1450-08",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:51:00Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261112-1450-09",
+    "usd_hour": 0.16667,
+    "created": "2026-11-12T14:51:02Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1720-01",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T17:28:42Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1720-02",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T17:28:44Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261112-1720-04",
+    "usd_hour": 0.25,
+    "created": "2026-11-12T17:28:47Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1036-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T10:40:20Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1036-02",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T10:40:22Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1036-04",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T10:40:24Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1541-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T15:42:43Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1541-03",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T15:42:46Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261113-1541-04",
+    "usd_hour": 0.07143,
+    "created": "2026-11-13T15:42:47Z"
+   },
+   {
+    "name": "upfront-fleet-32g-20261114-0946-03",
+    "usd_hour": 0.25,
+    "created": "2026-11-14T09:55:32Z"
+   },
+   {
+    "name": "upfront-fleet-16g-20261114-1132-01",
+    "usd_hour": 0.16667,
+    "created": "2026-11-14T11:33:23Z"
+   }
+  ],
+  "usd_hour_now": 3.631,
+  "machine_limit": 25
+ },
+ "recent_runs": [
+  {
+   "name": "Connecticut Price Finder page",
+   "status": "pending",
+   "conclusion": null,
+   "at": "2026-11-14T13:26:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "pending",
+   "conclusion": null,
+   "at": "2026-11-14T13:25:57Z"
+  },
+  {
+   "name": "Plan Calculator data",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:23:12Z"
+  },
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "pending",
+   "conclusion": null,
+   "at": "2026-11-14T13:23:12Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-14T13:22:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:22:11Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:20:12Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:20:12Z"
+  },
+  {
+   "name": "Connecticut Price Finder page",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-14T13:19:42Z"
+  },
+  {
+   "name": "Visitors (every 15 min, control center)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:17:12Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:16:06Z"
+  },
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-14T13:15:55Z"
+  },
+  {
+   "name": "North Carolina Price Finder page",
+   "status": "pending",
+   "conclusion": null,
+   "at": "2026-11-14T13:11:12Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:10:13Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:10:12Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:09:53Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:07:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:07:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "cancelled",
+   "at": "2026-11-14T13:04:55Z"
+  },
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "completed",
+   "conclusion": "cancelled",
+   "at": "2026-11-14T13:03:12Z"
+  },
+  {
+   "name": "Visitors (every 15 min, control center)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:02:12Z"
+  },
+  {
+   "name": "North Carolina Price Finder page",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-14T13:01:47Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:00:16Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:00:12Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T13:00:12Z"
+  },
+  {
+   "name": "Storage cost check (every 3 hours)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T12:53:12Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T12:52:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T12:52:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T12:50:16Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-14T12:50:12Z"
+  }
+ ]
+}
