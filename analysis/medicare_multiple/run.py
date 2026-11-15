@@ -422,6 +422,31 @@ def helper_stop(order, done_now):
     return stop
 
 
+def queue_loop(s3c, b, doc, run_id, name, run_one, pause=5, sleep=time.sleep):
+    """Nov 15, 2026 (Betsy: ~10 machines, done sooner): the run's rented-lane tables as one shared to-do list. A machine
+    takes the biggest table that is neither done nor claimed: it writes claims/<table> with its name, waits `pause`
+    seconds and reads it back; if another machine wrote after it, it leaves that table and looks again. Claims of
+    machines that no longer exist are cleared by step 'add'. Returns when nothing is left to take."""
+    items = sorted([i for i in doc["items"] if i["lane"] == "do"], key=lambda i: -i["rows"])
+    cpfx, dpfx, n = f"{PFX}{run_id}/claims/", f"{PFX}{run_id}/done/", 0
+    while True:
+        done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, dpfx)}
+        claimed = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, cpfx)}
+        free = [it for it in items if item_name(it) not in done and item_name(it) not in claimed]
+        if not free:
+            log(f"queue: nothing left to take ({n} tables read by {name})")
+            return n
+        it, key = free[0], cpfx + item_name(free[0])
+        s3c.put_object(Bucket=b, Key=key, Body=name.encode())
+        sleep(pause)
+        if s3c.get_object(Bucket=b, Key=key)["Body"].read().decode() != name:
+            log("queue: another machine took", it["key"])
+            continue
+        log(f"queue: {name} takes {it['key']} ({it['rows']:,} rows)")
+        run_one(it)
+        n += 1
+
+
 def _gh_left(s3c, b, doc, run_id):
     """How many GitHub-lane tables of this run have no done marker yet."""
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
@@ -518,12 +543,15 @@ def launch(doc, ref, machines=DO_MACHINES, wait_minutes=0, sleep=time.sleep):
     return made
 
 
-def _rent(droplets, doc, ref, i, n, helper=False):
+def _rent(droplets, doc, ref, i, n, helper=False, queue=None):
     """Rent one machine that clones this repo at `ref`, reads machine i's list (of n), uploads the parts and deletes
-    itself. helper=True: a second machine on list i, reading it from the far end (step 'add')."""
+    itself. helper=True: a second machine on list i, reading it from the far end. queue="q1512-01" (step 'add', Nov 15):
+    a machine that takes tables off the run's shared list until none are left."""
     keys = ["R2_ACCOUNT_ID", "R2_ACCESS_KEY_ID", "R2_SECRET_ACCESS_KEY", "R2_BUCKET", "STORAGE_ENDPOINT", "STORAGE_REGION", "DIGITALOCEAN_TOKEN"]
     env = "\n".join(f"export {k}='{''.join(os.environ.get(k, '').split())}'" for k in keys)
-    tag = f"h{i}" if helper else f"{i}"
+    tag = queue or (f"h{i}" if helper else f"{i}")
+    what = f"--queue --name upfront-mm-{doc['run_id']}-{tag}" if queue else \
+        f"--shard {i} --shards {n}" + (" --helper" if helper else "")
     ud = f"""#!/bin/bash
 exec > /root/boot.log 2>&1
 export HOME=/root DEBIAN_FRONTEND=noninteractive
@@ -536,7 +564,7 @@ ENV
 git clone --depth 1 -b {ref} https://github.com/betsyflickinger-max/files.healthcare_price-files-bot.git /root/r
 cd /root/r
 /root/v/bin/python analysis/medicare_multiple/run.py reduce --state {",".join(doc["states"])} --run {doc["run_id"]} \\
-  --lane do --shard {i} --shards {n}{" --helper" if helper else ""} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
+  --lane do {what} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
 /root/v/bin/python -c "
 import sys; sys.path.insert(0, 'bot'); import store; s3, b = store.r2()
 s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}.log'); s3.upload_file('/root/boot.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}-boot.log')"
@@ -710,58 +738,71 @@ def cmd_resume(a, s3c, b):
 
 
 def cmd_add(a, s3c, b, run_id, pk, sleep=time.sleep):
-    """Nov 13, 2026 (step 'add'): fill a running run up to --machines rented machines. Each list of big tables can have
-    two machines: the first reads it biggest table first; a helper reads it from the smallest table backward and stops
-    before the table the first machine is on, so the two meet in the middle. Looks at which of the run's machines still
-    exist (a machine deletes itself when it finishes or crashes, e.g. when storage's daily cap stops downloads) and
-    rents what is missing: first machines for lists that have none (a helper alone would leave the table in front of
-    it), then helpers. Never more than --machines in all, never the 2 reserved slots, never past the card cap; the
-    approved estimate already counts --machines machines. Waits up to --wait-minutes for free slots, then gives up."""
+    """Nov 15, 2026 (step 'add'): fill a run up to --machines rented machines that take tables off one shared to-do list
+    (queue_loop). Clears claims of machines that no longer exist, so their tables go back on the list. While it waits
+    for slots it asks the insurer queue to make room (bot/fleet/make_room.json, Betsy's choice Nov 15): the queue rents
+    nothing into those slots and frees them by deleting its own machines, least work lost first. The note is removed
+    when the machines are rented or the wait ends. Never past the card cap; waits up to --wait-minutes."""
     lk = f"{PFX}{run_id}/launched.json"
     if not _exists(s3c, b, lk):
         sys.exit("no rented machines are reading this run yet: use step start (or resume) first")
     doc = json.loads(s3c.get_object(Bucket=b, Key=pk)["Body"].read())
-    n = len(json.loads(s3c.get_object(Bucket=b, Key=lk)["Body"].read())["machines"])
     done = {k.rsplit("/", 1)[1] for k, _ in ls(s3c, b, f"{PFX}{run_id}/done/")}
     sys.path.insert(0, str(ROOT / "insurers"))
     import droplets
-    live = {name for _, name, _ in droplets.mine()}
     tag = f"upfront-mm-{run_id}-"
-    want = []           # (priority, rows, list, helper)
-    for i, sh in enumerate(lane_shares(doc, "do", n)):
-        left = [x for x in sh if item_name(x) not in done]
-        first, helper = f"{tag}{i}" in live, f"{tag}h{i}" in live
-        log(f"list {i}: {len(left)} tables not done; first machine {'reading' if first else 'gone'}, "
-            f"helper {'reading' if helper else 'none'}")
-        if left and not first:
-            want.append((0, sum(x["rows"] for x in left), i, False))
-        if len(left) >= 2 and not helper:      # with one table left, the first machine is on it (or will be)
-            want.append((1, -sum(x["rows"] for x in left[1:]), i, True))
-    want.sort(key=lambda w: (w[0], -abs(w[1])))
-    running = sum(1 for nm in live if nm.startswith(tag))
-    cap = max(0, a.machines - running)
-    if not want or not cap:
-        log("nothing to add:", "every list that has work left has its machines" if not want
-            else f"already {running} machines (the most is {a.machines})")
+    live = {name for _, name, _ in droplets.mine() if name.startswith(tag)}
+    cpfx = f"{PFX}{run_id}/claims/"
+    claimed = set()
+    for k, _ in ls(s3c, b, cpfx):
+        t, owner = k.rsplit("/", 1)[1], s3c.get_object(Bucket=b, Key=k)["Body"].read().decode()
+        if t in done:
+            continue
+        if owner in live:
+            claimed.add(t)
+        else:
+            s3c.delete_object(Bucket=b, Key=k)
+            log(f"claim of {owner} (machine gone) cleared: {t} is back on the list")
+    left = [i for i in doc["items"] if i["lane"] == "do" and item_name(i) not in done]
+    open_ = [i for i in left if item_name(i) not in claimed]
+    log(f"{len(left)} big tables not done ({len(claimed)} being read, {len(open_)} on the list); {len(live)} machines running")
+    want = min(max(0, a.machines - len(live)), len(open_))
+    if not want:
+        log("nothing to add:", "nothing left on the list" if not open_ else f"already {len(live)} machines (the most is {a.machines})")
         return []
     if droplets.over_cap():
         sys.exit("card spending cap reached for this month: no machines rented (build_approvals.json _card_cap)")
-    try:        # Nov 13: Betsy asked how many machines are free; the log says, every time
+    from collections import Counter
+    try:
         log(f"machine slots: {droplets.limit()} on the account, {droplets.room()} free now, {RESERVE_SLOTS} kept for other builds")
-        from collections import Counter     # who holds the slots, by the job part of each machine's name
-        log("machines by job:", dict(Counter(re.sub(r"[-_]?\d+$", "", n.rsplit("-", 1)[0] if n.count("-") > 1 else n)
-                                             for n in droplets.names()).most_common()))
+        log("machines by job:", dict(Counter(re.sub(r"-\d{8}(-\d{4})?(-\d+)?$", "", n) for n in droplets.names()).most_common()))
     except Exception as e:
         log("couldn't read the machine slots:", e)
-    k = wait_for_slots(droplets, cap, want, a.wait_minutes, sleep)
-    if k <= 0:
-        log(f"no free machine slots after {a.wait_minutes} minutes (keeping {RESERVE_SLOTS} for other builds): nothing added")
-        return []
-    made = [_rent(droplets, doc, a.ref, i, n, helper=h) for _, _, i, h in want[:k]]
+    note = "bot/fleet/make_room.json"
+    s3c.put_object(Bucket=b, Key=note, Body=json.dumps(dict(
+        slots=want + RESERVE_SLOTS, until=time.time() + (a.wait_minutes + 15) * 60, at=time.time(),
+        **{"for": f"medicare-multiple {run_id}"})).encode())
+    log(f"asked the insurer queue for {want + RESERVE_SLOTS} slots ({want} for this run, {RESERVE_SLOTS} kept free)")
+    made, waited = [], 0
+    try:        # rent as slots open (the queue frees them over its next passes), until `want` or the wait ends
+        while True:
+            k = free_slots(droplets, want - len(made), open_[len(made):])
+            stamp = central_now().strftime("%d%H%M")
+            made += [_rent(droplets, doc, a.ref, 0, 0, queue=f"q{stamp}{j:02d}") for j in range(1, k + 1)]
+            if len(made) >= want or waited + POLL_MINUTES > a.wait_minutes:
+                break
+            log(f"{len(made)} of {want} machines rented; checking for free slots again in {POLL_MINUTES} minutes")
+            sleep(POLL_MINUTES * 60)
+            waited += POLL_MINUTES
+        if not made:
+            log(f"no free machine slots after {a.wait_minutes} minutes: nothing added")
+            return []
+    finally:
+        s3c.delete_object(Bucket=b, Key=note)
+        log("insurer queue note removed: it uses the other slots again")
     hk = f"{PFX}{run_id}/helpers.json"
-    had = json.loads(s3c.get_object(Bucket=b, Key=hk)["Body"].read()) if _exists(s3c, b, hk) else dict(rented=[])
-    had.setdefault("rented", []).append(dict(at=central_now().isoformat(timespec="minutes"), machines=made,
-                                             lists=[[i, "helper" if h else "first"] for _, _, i, h in want[:k]]))
+    had = json.loads(s3c.get_object(Bucket=b, Key=hk)["Body"].read()) if _exists(s3c, b, hk) else {}
+    had.setdefault("rented", []).append(dict(at=central_now().isoformat(timespec="minutes"), machines=made, queue=True))
     s3c.put_object(Bucket=b, Key=hk, Body=json.dumps(had).encode())
     return made
 
@@ -798,6 +839,8 @@ def main():
                     help="start/resume: how long to wait (inside this job) for the start time or for free machine slots before queuing")
     ap.add_argument("--from-storage", action="store_true", help="reduce: read the run's plan and benchmark from storage")
     ap.add_argument("--helper", action="store_true", help="reduce: a second machine on this list, from the far end (step add)")
+    ap.add_argument("--queue", action="store_true", help="reduce: take tables off the run's shared list (step add)")
+    ap.add_argument("--name", default="", help="reduce --queue: this machine's name, written on its claims")
     ap.add_argument("--force", action="store_true", help="summarize even if some planned tables aren't done (they are listed)")
     ap.add_argument("--prov", default="")
     ap.add_argument("--insurer", default="")
@@ -852,6 +895,11 @@ def main():
             sys.exit(f"not reading: estimate ${est['total_usd']} is over ${est['limit_usd']}")
         if a.from_storage or not Path(a.bench, "pfs.csv").exists():
             _bench_from_storage(s3c, b, a.bench, run_id)
+        hosp_npis = [(n, i["ccn"]) for i in doc["items"] if i["source"] == "hospital" for n in i.get("file_npis") or []]
+        if a.queue:
+            queue_loop(s3c, b, doc, run_id, a.name, lambda it: reduce_items(
+                [it], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane, hosp_npis=hosp_npis))
+            return
         mine, stop = lane_shares(doc, a.lane, a.shards)[a.shard], None
         if a.helper:            # step 'add': the same list from the far end, stopping where the first machine is
             order = area_order(mine)

@@ -547,6 +547,43 @@ def retire_old(s3, b, ours, qclaims):
     return gone
 
 
+MAKE_ROOM = "bot/fleet/make_room.json"
+
+
+def make_room_note(s3, b):
+    """Nov 15, 2026 (Betsy): another job (the Texas private-vs-Medicare pilot) can ask the queue for slots by writing
+    bot/fleet/make_room.json {"slots": n, "until": epoch, "for": "..."}. While it is valid the queue rents nothing into
+    those slots and, if they are taken, deletes that many of its own machines (see make_room). (slots, who) or (0, "")."""
+    try:
+        w = json.loads(s3.get_object(Bucket=b, Key=MAKE_ROOM)["Body"].read())
+    except Exception:
+        return 0, ""
+    if time.time() > float(w.get("until", 0)):
+        return 0, ""
+    return max(0, int(w.get("slots", 0))), str(w.get("for", ""))
+
+
+def make_room(s3, b, ours, qclaims, need):
+    """Delete `need` queue machines to free slots for another job, least work lost first: machines with no file, then the
+    ones that took their file most recently. Their files go back in line. Returns the names deleted."""
+    def started(m):
+        held = [c for c in qclaims.values() if str(c.get("droplet_id")) == str(m[0]) or c.get("name") == m[1]]
+        return max((c.get("claimed_at", "") for c in held), default="9999")   # no file: first
+    gone = []
+    for did, name, _c, _s in sorted(ours, key=started, reverse=True)[:need]:
+        try:
+            droplets.delete(did)
+        except Exception as e:
+            print(f"make room: could not delete {name}: {str(e)[:150]}")
+            continue
+        for jid, c in list(qclaims.items()):
+            if str(c.get("droplet_id")) == str(did) or c.get("name") == name:
+                fleet.release(s3, b, jid)
+                qclaims.pop(jid, None)
+        gone.append(name)
+    return gone
+
+
 def fill(s3, b, now):
     """Rent machines for unclaimed queue jobs, up to the account's live limit. Returns [(machine name, job id)]."""
     try:
@@ -574,6 +611,14 @@ def fill(s3, b, now):
         except Exception:
             pass
     qjobs, qclaims = fleet.jobs(s3, b), fleet.claims(s3, b)
+    room, who = make_room_note(s3, b)
+    if room:
+        free -= room
+        print(f"queue: leaving {room} slots for {who}")
+        if free < 0:
+            gone = make_room(s3, b, ours, qclaims, min(-free, room))   # never more than the note asks
+            print(f"queue: deleted {len(gone)} queue machine(s) to make room for {who}: {gone}; their files are back in line")
+            ours = [m for m in ours if m[1] not in gone]
     held = fleet.held_scopes(s3, b, qjobs, everyone)
     for sc, why in held.items():
         print(f"queue: {sc} files not started: {why}")
