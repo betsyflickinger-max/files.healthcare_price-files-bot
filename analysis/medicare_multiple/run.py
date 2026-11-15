@@ -25,6 +25,7 @@ import json
 import math
 import os
 import re
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -366,10 +367,29 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
                     s3c.download_file(b, it["membership"], f"{work}/membership.parquet")
                     mem = f"read_parquet('{work}/membership.parquet')"
                 k = max(1, math.ceil((it.get("rows") or 0) / PASS_ROWS[lane]))
+                pdir = None
+                if k > 1 and lane == "do":
+                    # Nov 15, 2026: each pass used to scan the whole table to keep 1/k of the providers: on an 8.5-billion-
+                    # row Aetna table that was 102 full scans, ~34 minutes each (58 hours a table). Split it once by the
+                    # same hash(NPI) % k on local disk, then each pass reads only its own share (the pass filter still
+                    # applies, and matches every row). Same rows per pass, same labels, same results.
+                    pdir = f"{work}/split"
+                    shutil.rmtree(pdir, ignore_errors=True)
+                    npi = "coalesce(cast(npi as varchar), '')" if "npi" in have else "''"
+                    con.execute(f"copy (select *, hash({npi}) % {k} as mm_part from {t}) to '{pdir}' "
+                                f"(format parquet, partition_by (mm_part), compression zstd)")
+                    os.remove(local)
+                    log(f"  split into {k} shares by provider: {time.time() - t0:,.0f}s")
                 for j in range(k):
                     out = parts / (name + (f"__p{j}" if k > 1 else ""))
                     seg = (it.get("segment"), it.get("segment_method")) if it.get("segment") else None
-                    n = rates.reduce_table(con, rates.insurer_units(t, have, mem, sp, j, k, seg=seg), const, str(out))
+                    tj = t
+                    if pdir:
+                        if not os.path.isdir(f"{pdir}/mm_part={j}"):
+                            log(f"  pass {j + 1}/{k}: no rows in this share")
+                            continue
+                        tj = f"read_parquet('{pdir}/mm_part={j}/*.parquet', hive_partitioning=false)"
+                    n = rates.reduce_table(con, rates.insurer_units(tj, have, mem, sp, j, k, seg=seg), const, str(out))
                     outs.append(out)
                     log(f"  pass {j + 1}/{k}: {n:,} part rows, {time.time() - t0:,.0f}s")
                     if os.environ.get("MM_LOG_KEY") and Path("/root/run.log").exists():   # Nov 15: watch a running machine
@@ -392,6 +412,7 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
             for p in (local, f"{work}/membership.parquet"):
                 if os.path.exists(p):
                     os.remove(p)
+            shutil.rmtree(f"{work}/split", ignore_errors=True)
             log(f"{it['source']} {it['key']}: {len(outs)} part(s), {time.time() - t0:,.0f}s")
             if upload_pfx:
                 for out in outs:
@@ -835,7 +856,7 @@ def _bench_from_storage(s3c, b, bench, run_id):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "resume", "add", "reduce", "status", "summarize", "local"])
+    ap.add_argument("cmd", choices=["bench", "plan", "estimate", "start", "resume", "add", "stop", "reduce", "status", "summarize", "local"])
     ap.add_argument("--state", default="TX", help="two-letter code(s), comma-separated, or ALL")
     ap.add_argument("--run", default="", help="run id (default: <state>-<yyyy-mm>)")
     ap.add_argument("--cache", default="/tmp/mm/cms")
@@ -878,6 +899,14 @@ def main():
         return cmd_resume(a, s3c, b)
     if a.cmd == "add":
         return cmd_add(a, s3c, b, run_id, pk)
+    if a.cmd == "stop":     # Nov 15, 2026: stop this run's rented machines (e.g. to restart them on new code)
+        sys.path.insert(0, str(ROOT / "insurers"))
+        import droplets
+        for did, nm, _ in droplets.mine():
+            if nm.startswith(f"upfront-mm-{run_id}-"):
+                droplets.delete(did)
+                log("stopped", nm)
+        return
     if a.cmd in ("plan", "estimate", "start"):
         if a.cmd == "start" and a.start_after:
             t = start_time(a.start_after)

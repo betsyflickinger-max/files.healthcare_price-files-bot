@@ -21,7 +21,7 @@ on:
   workflow_dispatch:
     inputs:
       step:
-        description: "estimate, start, resume, add, status or summarize"
+        description: "estimate, start, resume, add, stop, status or summarize"
         default: "estimate"
       state:
         description: "Two-letter state code(s), comma separated, or ALL"
@@ -47,7 +47,7 @@ permissions:
 
 concurrency:
   # 'add' and 'status' get their own groups: it must not wait behind the run whose machines it helps (Nov 13)
-  group: medicare-multiple-${{ (inputs.step == 'add' || inputs.step == 'status') && format('{0}-', inputs.step) || '' }}${{ inputs.state || 'nightly' }}
+  group: medicare-multiple-${{ (inputs.step == 'add' || inputs.step == 'status' || inputs.step == 'stop') && format('{0}-', inputs.step) || '' }}${{ inputs.state || 'nightly' }}
   cancel-in-progress: false
 
 env:
@@ -82,14 +82,14 @@ jobs:
         run: |
           set -o pipefail
           case "$STEP" in
-            estimate|start|status|add) python analysis/medicare_multiple/run.py "$STEP" --state "${{ inputs.state }}" $RUN_ARG \
+            estimate|start|status|add|stop) python analysis/medicare_multiple/run.py "$STEP" --state "${{ inputs.state }}" $RUN_ARG \
                                      --ref "${GITHUB_REF_NAME}" --machines "${{ inputs.machines }}" --gh-max-rows "${{ inputs.gh_max_rows }}" \
                                      --start-after "${{ inputs.start_after }}" --wait-minutes "${{ inputs.wait_minutes }}" \
                                      --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
             resume) python analysis/medicare_multiple/run.py resume --wait-minutes "${{ inputs.wait_minutes || '240' }}" \
                                      --work /mnt/mm/work --cache /mnt/mm/cms --bench /mnt/mm/bench | tee -a "$GITHUB_STEP_SUMMARY" ;;
             summarize) echo "summarize runs in its own job" ;;
-            *) echo "step must be estimate, start, resume, add, status or summarize"; exit 1 ;;
+            *) echo "step must be estimate, start, resume, add, stop, status or summarize"; exit 1 ;;
           esac
 
   read-on-github:
