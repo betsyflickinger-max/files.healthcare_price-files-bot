@@ -59,7 +59,10 @@ GH_MAX_ROWS = 800_000_000        # a table up to this many rows is read on a fre
 # Nov 10, 2026 (evidence of use, place of service, anesthesia sorting added): the same made-up table, 8 million rows on 2
 # cores, took 44.9 s instead of 36.5 s (average of two runs each) = 1.23x; the speeds below are the old ones / 1.25.
 ROWS_PER_SEC = {"gh": 240_000, "do": 480_000}       # GitHub 4-core machine; DigitalOcean 8-core machine
-PASS_ROWS = {"gh": 60_000_000, "do": 250_000_000}   # rows per pass (a big table is read in passes split by provider)
+PASS_ROWS = {"gh": 60_000_000, "do": 100_000_000}   # rows per pass (a big table is read in passes split by provider)
+# Nov 15, 2026: "do" was 250M; all ten Texas machines were killed for memory (64 GB) in the first pass of an
+# 8.5-billion-row Aetna table. 100M per pass plus DO_MEM below keeps DuckDB inside the machine and spilling to disk.
+DO_MEM = "40GB"                  # DuckDB memory limit on a rented 64 GB machine (default 80% left no room)
 BYTES_PER_ROW = 4.4              # stored size of insurer tables (biggest Texas table: ~38 GB for 8.6 billion rows)
 DO_SIZE = "m-8vcpu-64gb-intel"   # 64 GB memory, 400 GB disk (price read live from DigitalOcean when a token is set)
 DO_USD_HOUR = 0.60               # used only when the live price can't be read (list price is about $0.50-0.60/hour)
@@ -330,7 +333,7 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
         by_area.setdefault(it.get("area") or "", []).append(it)
     import rate_labels
     for area, its in by_area.items():
-        con = duck(work)
+        con = duck(work, mem=DO_MEM if lane == "do" else None)
         sts = states_of(area, states) if area else [s for s in (cms.STATE_NAMES if "ALL" in states else states)]
         if area:
             rates.register_bench(con, bench, provider_table(con, s3c, b, area, work, hosp_npis), sts)
@@ -437,6 +440,8 @@ def queue_loop(s3c, b, doc, run_id, name, run_one, pause=5, sleep=time.sleep):
             log(f"queue: nothing left to take ({n} tables read by {name})")
             return n
         it, key = free[0], cpfx + item_name(free[0])
+        if _exists(s3c, b, key):   # Nov 15: a listing can lag a few seconds; two machines took the same table
+            continue
         s3c.put_object(Bucket=b, Key=key, Body=name.encode())
         sleep(pause)
         if s3c.get_object(Bucket=b, Key=key)["Body"].read().decode() != name:
@@ -563,8 +568,12 @@ ENV
 . /root/env.sh
 git clone --depth 1 -b {ref} https://github.com/betsyflickinger-max/files.healthcare_price-files-bot.git /root/r
 cd /root/r
+(while sleep 300; do /root/v/bin/python -c "
+import sys; sys.path.insert(0, 'bot'); import store; s3, b = store.r2()
+s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}.log')" 2>/dev/null; done) &
 /root/v/bin/python analysis/medicare_multiple/run.py reduce --state {",".join(doc["states"])} --run {doc["run_id"]} \\
   --lane do {what} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
+echo "exit $? at $(date -u +%H:%M:%S) (137 = killed for memory)" >> /root/run.log; free -g >> /root/run.log
 /root/v/bin/python -c "
 import sys; sys.path.insert(0, 'bot'); import store; s3, b = store.r2()
 s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}.log'); s3.upload_file('/root/boot.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}-boot.log')"
@@ -897,6 +906,7 @@ def main():
             _bench_from_storage(s3c, b, a.bench, run_id)
         hosp_npis = [(n, i["ccn"]) for i in doc["items"] if i["source"] == "hospital" for n in i.get("file_npis") or []]
         if a.queue:
+            log(f"queue machine: DuckDB memory limit {DO_MEM}, {PASS_ROWS['do']:,} rows per pass")
             queue_loop(s3c, b, doc, run_id, a.name, lambda it: reduce_items(
                 [it], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane, hosp_npis=hosp_npis))
             return
