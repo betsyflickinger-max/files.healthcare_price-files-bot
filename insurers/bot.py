@@ -177,7 +177,7 @@ def peek(url):
 
 def stem_of(url):
     """Table name a link produces (same naming as worker.stem / 06f)."""
-    name = url.split("?")[0].rsplit("/", 1)[-1]
+    name = fleet.link_name(url)
     for ext in (".gz", ".json", ".zip", ".7z"):
         if name.endswith(ext):
             name = name[: -len(ext)]

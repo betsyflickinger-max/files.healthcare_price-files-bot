@@ -115,7 +115,8 @@ def one(job, shared=None):
     src, extra = url, []
     if url.split("?")[0].endswith(".7z"):  # BSW posts 7-Zip archives: unpack the rate file first
         src, extra = unpack_7z(url), ["--source-url", url.split("?")[0]]
-    new = stem(Path(src.split("?")[0]).name)
+    import fleet
+    new = stem(fleet.link_name(src) if src.startswith("http") else Path(src).name)
     res = dict(slot=job["slot"], url=url, table=new, prev_table=job.get("prev_table", ""), ok=False)
     if job.get("fields_only") == "1":
         return fields_only(job, src, label, extra, new, res, t0)
@@ -428,13 +429,13 @@ def queue_main():
         sibs = []
         if (SHARE_READS and job.get("kind", "insurer") == "insurer" and job.get("fields_only") != "1"
                 and not os.environ.get("GHA_WORKER") and who["mem"] >= 16):
-            base = job["url"].split("?")[0]
+            base = fleet.link_key(job["url"])
             cl2 = fleet.claims(s3, B)
             for jid2, j2 in js.items():
                 if len(sibs) >= SHARE_MAX - 1:
                     break
                 if (jid2 != job["id"] and jid2 not in cl2 and j2.get("kind", "insurer") == "insurer"
-                        and j2.get("fields_only") != "1" and j2["url"].split("?")[0] == base
+                        and j2.get("fields_only") != "1" and fleet.link_key(j2["url"]) == base
                         and j2["scope"] != job["scope"] and j2["scope"] not in held
                         and j2["scope"] not in {x["scope"] for x in sibs} and j2.get("mem", 8) <= who["mem"]
                         and fleet.claim(s3, B, jid2, who)):
