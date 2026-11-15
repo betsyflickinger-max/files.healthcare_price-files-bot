@@ -401,3 +401,21 @@ def build_shortfall(s3, b):
         return {}
     return {bid: (int(v.get("short", 0)), int(v.get("gen", 0))) for bid, v in fs.items()
             if time.time() - float(v.get("at", 0)) < 20 * 60 and int(v.get("short", 0)) > 0}
+
+
+def link_name(url):
+    """The file name a link points at. Nov 15, 2026: ConnectiCare's links are .../Home/GetFile?FileName=<name>&..., so
+    the name is in the query, not the path (path-only naming gave every ConnectiCare file the table name "GetFile").
+    Same function in insurers/fleet.py and insurers/pipeline/common.py."""
+    from urllib.parse import parse_qs, urlsplit
+    u = urlsplit(url)
+    q = {k.lower(): v for k, v in parse_qs(u.query).items()}
+    return q["filename"][0] if q.get("filename") else u.path.rsplit("/", 1)[-1]
+
+
+def link_key(url):
+    """What makes two links the same file: the link without its query (signed links change), plus the file name when
+    the name lives in the query (ConnectiCare)."""
+    base = url.split("?")[0]
+    n = link_name(url)
+    return base if base.endswith("/" + n) else f"{base}?FileName={n}"

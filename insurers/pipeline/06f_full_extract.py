@@ -33,7 +33,7 @@ from pathlib import Path
 
 import duckdb
 
-from common import DATA, USER_AGENT, download
+from common import DATA, USER_AGENT, download, link_key, link_name
 import caresource  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -393,7 +393,7 @@ def run(source, ctx):
                 print(f"  ! {r['file_url'][:120]}: {e}", flush=True)
         return
     if source.startswith("http"):
-        name = Path(source.split("?")[0]).name
+        name = link_name(source)
         tmp = DATA / ("dl_" + name)
         print(f"Downloading {name} ...", flush=True)
         last = None
@@ -419,7 +419,7 @@ def run(source, ctx):
                 cms = DATA / ("cs_" + stem(name) + ".json.gz")
                 src = str(caresource.convert(str(tmp), str(cms)))
                 tmp.unlink(missing_ok=True)
-            extract(src, {**ctx, "source_url": source.split("?")[0], "source_file": name})
+            extract(src, {**ctx, "source_url": link_key(source), "source_file": name})
         finally:
             tmp.unlink(missing_ok=True)
             if cms:

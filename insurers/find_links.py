@@ -164,6 +164,21 @@ def healthsparq(arg):
     return dict(url=hits[key], how="from the insurer's HealthSparq file list (latest_metadata.json)", http="200", error="", found=True)
 
 
+def connecticare(arg):
+    """Nov 15, 2026: ConnectiCare moved its files (Oct 2026) from fixed links (.../NetworkFilesCCI/In-Network/Current/
+    innetwork-G-<id>-file-1.json, now an error page) to download links on one listing page, which also carries
+    EmblemHealth's New York files (HIP, GHI, EMB). arg = '<listing page>|<file id>' (e.g. CCIPRF000261). Takes the
+    current part-1 file for that id. The page only answers browser-like requests; _get sends the bot's browser name."""
+    page, fid = arg.split("|", 1)
+    names = sorted(set(re.findall(r"FileName=(G-" + re.escape(fid) + r"-innetwork-(\d+)\.json)&(?:amp;)?NetworkType=INN"
+                                   r"&(?:amp;)?FileType=Current", _get(page))), key=lambda x: int(x[1]))
+    if not names:
+        return dict(url="", how="not on ConnectiCare's current file list", http="", error="not listed", found=False)
+    root = page.split("://", 1)[0] + "://" + page.split("://", 1)[1].split("/", 1)[0]
+    return dict(url=f"{root}/Home/GetFile?FileName={names[0][0]}&NetworkType=INN&FileType=Current",
+                how="from ConnectiCare's current file list", http="200", error="", found=True)
+
+
 def find(row, today, since):
     """Returns dict(url, how, http, error). since = date of the file we already have."""
     finder = row.get("finder", "")
@@ -176,6 +191,8 @@ def find(row, today, since):
             return toc_match(row["finder_arg"], today)
         if finder == "healthsparq":
             return healthsparq(row["finder_arg"])
+        if finder == "connecticare":
+            return connecticare(row["finder_arg"])
         if finder == "catalog":   # Oct 16, 2026: link from the newest insurer catalog (insurers/catalog.py), arg insurer|network|part
             import catalog
             ins, net, part = row["finder_arg"].split("|")
