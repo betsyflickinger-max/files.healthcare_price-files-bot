@@ -64,7 +64,9 @@ PASS_ROWS = {"gh": 60_000_000, "do": 100_000_000}   # rows per pass (a big table
 # 8.5-billion-row Aetna table. 100M per pass plus DO_MEM below keeps DuckDB inside the machine and spilling to disk.
 DO_MEM = "40GB"                  # DuckDB memory limit on a rented 64 GB machine (default 80% left no room)
 BYTES_PER_ROW = 4.4              # stored size of insurer tables (biggest Texas table: ~38 GB for 8.6 billion rows)
-DO_SIZE = "m-8vcpu-64gb-intel"   # 64 GB memory, 400 GB disk (price read live from DigitalOcean when a token is set)
+DO_SIZE = "s-8vcpu-32gb-amd"     # 32 GB memory. Nov 15, 2026: the 64 GB size was never rented: DigitalOcean refused it
+# (422) and droplets.create fell back to its 8 GB default, so every machine ran out of memory. This is the size the
+# insurer reader rents every day. The reader sizes its passes from the memory it actually has (reduce --queue).
 DO_USD_HOUR = 0.60               # used only when the live price can't be read (list price is about $0.50-0.60/hour)
 DO_BOOT_H = 0.25                 # boot, install and download per machine
 DO_MACHINES = 4                  # most rented machines this analysis may hold at once (machine_shares.py: never all of them)
@@ -906,7 +908,11 @@ def main():
             _bench_from_storage(s3c, b, a.bench, run_id)
         hosp_npis = [(n, i["ccn"]) for i in doc["items"] if i["source"] == "hospital" for n in i.get("file_npis") or []]
         if a.queue:
-            log(f"queue machine: DuckDB memory limit {DO_MEM}, {PASS_ROWS['do']:,} rows per pass")
+            global DO_MEM
+            ram = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / 1e9
+            DO_MEM = f"{max(2, int(ram * 0.6))}GB"                    # leave room for Python, Parquet writes, the OS
+            PASS_ROWS["do"] = min(PASS_ROWS["do"], int(ram * 2.5e6))  # ~2.5M rows per GB (the GitHub lane: 60M on 16 GB)
+            log(f"queue machine: {ram:.0f} GB memory, DuckDB limit {DO_MEM}, {PASS_ROWS['do']:,} rows per pass")
             queue_loop(s3c, b, doc, run_id, a.name, lambda it: reduce_items(
                 [it], doc["states"], a.bench, a.work, f"{PFX}{run_id}/", spec=not a.no_spec, lane=a.lane, hosp_npis=hosp_npis))
             return
