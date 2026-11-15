@@ -1,0 +1,7 @@
+ccn,name,city,state,type,index_domain,mrf_url,last_key,last_sha256,last_bytes,last_archived_run,found_by
+020001,PROVIDENCE ALASKA MEDICAL CENTER,ANCHORAGE,AK,Acute Care Hospitals,providence.org,https://pricetransparency.providence.org/alaska/live/920016429_standardcharges.json,raw/a.zst,aaa,10,2026-10-05/nat,
+450002,SAMPLE OWN-SITE HOSPITAL,DALLAS,TX,Acute Care Hospitals,,https://www.ownsite-hospital.org/prices/751234567_standardcharges.csv,raw/b.zst,bbb,20,2026-10-05/nat,
+450003,SAMPLE SHARED-HOST HOSPITAL,PLANO,TX,Critical Access Hospitals,,https://files.blob.core.windows.net/x/751234568_standardcharges.json,,,,,
+450004,SAMPLE NO-SITE HOSPITAL,FRISCO,TX,Psychiatric,,,,,,,
+4500,SHORT CCN HOSPITAL,DENTON,TX,Acute Care Hospitals,shortccn.org,,,,,,
+4500055,LONG CCN HOSPITAL,DENTON,TX,Acute Care Hospitals,longccn.org,,,,,,
