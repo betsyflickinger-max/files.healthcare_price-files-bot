@@ -550,6 +550,9 @@ class FakeS3:
     def put_object(self, Bucket, Key, Body):
         self.o[Key] = Body if isinstance(Body, bytes) else Body.encode()
 
+    def delete_object(self, Bucket, Key):
+        self.o.pop(Key, None)
+
     def get_object(self, Bucket, Key):
         import io
         return {"Body": io.BytesIO(self.o[Key])}
@@ -693,39 +696,59 @@ def test_lane_shares_unchanged_by_the_refactor():
     assert got == [[9, 5, 3], [8, 7, 1]]
 
 
-def test_add_rents_what_is_missing(monkeypatch):
+def test_add_fills_the_shared_list_and_asks_the_queue_for_room(monkeypatch):
     import argparse
     import types
     import run as runmod
     s3c = FakeS3()
     rid = "tx-2026-11"
+    P = runmod.PFX + rid
     its = [dict(source="insurer", scope="tx", key=f"k/t{j}.parquet", rows=r, area="dfw", lane="do") for j, r in enumerate([90, 80, 50, 40, 10, 5])]
     doc = {"items": its, "states": ["TX"], "run_id": rid}
-    pk = runmod.PFX + rid + "/plan.json"
-    s3c.put_object("b", pk, json.dumps(doc).encode())
-    a = argparse.Namespace(machines=4, wait_minutes=0, ref="main")
-    live = []
+    s3c.put_object("b", P + "/plan.json", json.dumps(doc).encode())
+    a = argparse.Namespace(machines=10, wait_minutes=20, ref="main")
+    rooms, live, notes = [0, 3, 9], ["upfront-mm-tx-2026-11-q1"], []
     monkeypatch.setitem(sys.modules, "droplets", types.SimpleNamespace(
-        over_cap=lambda: False, room=lambda: 9, limit=lambda: 25, mine=lambda: [(1, nm, "") for nm in live]))
+        over_cap=lambda: False, room=lambda: rooms.pop(0) if len(rooms) > 1 else rooms[0], limit=lambda: 25,
+        mine=lambda: [(1, nm, "") for nm in live], names=lambda: ["upfront-fleet-8g-20261113-0912-01"]))
     with pytest.raises(SystemExit):                     # nothing launched yet: use start
-        runmod.cmd_add(a, s3c, "b", rid, pk)
-    s3c.put_object("b", runmod.PFX + rid + "/launched.json", json.dumps(dict(machines=[11, 12])).encode())
-    shares = runmod.lane_shares(doc, "do", 2)           # [90, 40, 10] and [80, 50, 5]
-    for x in shares[0][:2]:                             # list 0 has one table left: no helper for it
-        s3c.put_object("b", runmod.PFX + rid + "/done/" + runmod.item_name(x), b"1")
+        runmod.cmd_add(a, s3c, "b", rid, P + "/plan.json")
+    s3c.put_object("b", P + "/launched.json", json.dumps(dict(machines=[11, 12])).encode())
+    n = runmod.item_name
+    s3c.put_object("b", P + "/done/" + n(its[0]), b"1")
+    s3c.put_object("b", P + "/claims/" + n(its[1]), b"upfront-mm-tx-2026-11-q1")    # a live machine is on t1
+    s3c.put_object("b", P + "/claims/" + n(its[2]), b"upfront-mm-tx-2026-11-0")     # a dead machine's claim
     rented = []
-    monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n, helper=False: rented.append((i, helper)) or len(rented))
-    live[:] = ["upfront-mm-tx-2026-11-0", "upfront-mm-tx-2026-11-1", "other-job"]
-    runmod.cmd_add(a, s3c, "b", rid, pk)
-    assert rented == [(1, True)]                        # both first machines alive: a helper for list 1 only
-    rented.clear()
-    live[:] = ["upfront-mm-tx-2026-11-h1"]             # storage cap: both first machines crashed and deleted themselves
-    runmod.cmd_add(a, s3c, "b", rid, pk)
-    assert rented == [(1, False), (0, False)]           # first machines back (biggest list first); list 0 needs no helper
-    rented.clear()
-    live[:] = ["upfront-mm-tx-2026-11-0", "upfront-mm-tx-2026-11-1", "upfront-mm-tx-2026-11-h1"]
-    assert runmod.cmd_add(a, s3c, "b", rid, pk) == [] and rented == []
-    assert len(json.loads(s3c.o[runmod.PFX + rid + "/helpers.json"])["rented"]) == 2
+    monkeypatch.setattr(runmod, "_rent", lambda d, doc_, ref, i, n_, helper=False, queue=None:
+                        notes.append("bot/fleet/make_room.json" in s3c.o) or rented.append(queue) or len(rented))
+    made = runmod.cmd_add(a, s3c, "b", rid, P + "/plan.json", sleep=lambda s: None)
+    # 4 open tables (t2 back on the list, t3, t4, t5): room 0, then 3 free -> 1 after the 2 kept, then 9 -> the other 3
+    assert len(made) == 4 and all(q.startswith("q") for q in rented)
+    assert P + "/claims/" + n(its[2]) not in s3c.o and P + "/claims/" + n(its[1]) in s3c.o
+    assert all(notes) and "bot/fleet/make_room.json" not in s3c.o     # the note was up while renting, gone after
+
+
+def test_queue_loop_takes_biggest_open_table_and_backs_off_when_beaten():
+    import run as runmod
+    s3c = FakeS3()
+    rid = "tx-2026-11"
+    P = runmod.PFX + rid
+    its = [dict(source="insurer", scope="tx", key=f"k/t{j}.parquet", rows=r, lane="do") for j, r in enumerate([90, 80, 50])]
+    doc = {"items": its}
+    n = runmod.item_name
+    s3c.put_object("b", P + "/done/" + n(its[0]), b"1")
+    read, beaten = [], [True]
+
+    def sleep(_):           # the first claim gets overwritten by another machine during the pause
+        if beaten[0]:
+            s3c.put_object("b", P + "/claims/" + n(its[1]), b"other")
+            beaten[0] = False
+
+    def run_one(it):
+        read.append(it["key"])
+        s3c.put_object("b", P + "/done/" + n(it), b"1")
+    assert runmod.queue_loop(s3c, "b", doc, rid, "me", run_one, sleep=sleep) == 1
+    assert read == ["k/t2.parquet"]                     # t0 done, t1 lost to "other", t2 taken
 
 
 def test_allowed_rows_survives_odd_shapes():
