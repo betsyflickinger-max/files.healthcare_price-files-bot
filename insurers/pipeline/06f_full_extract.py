@@ -94,7 +94,13 @@ def typed_rates(tbl, con):
     import pyarrow as pa
     con.register("t", tbl)
     try:
-        out = con.execute(RATE_SQL).arrow()
+        res = con.execute(RATE_SQL)
+        # Nov 15, 2026: in DuckDB 1.5 (the pinned 1.5.6) .arrow() returns a RecordBatchReader, not a Table, so the
+        # .select() below raised on the first batch of every file with in-scope prices; the reader then hung on exit
+        # (machine idle at 0% CPU until the 48-hour stuck rule). to_arrow_table() is the 1.5 name for a Table.
+        out = res.to_arrow_table() if hasattr(res, "to_arrow_table") else res.arrow()
+        if hasattr(out, "read_all"):
+            out = out.read_all()
     finally:
         con.unregister("t")
     schema = pa.schema([(f.name, pa.float64() if f.name == "negotiated_rate" else pa.string()) for f in tbl.schema]
@@ -153,6 +159,9 @@ def stream_to_parquet(cmd, dest, consts):
                     descs.setdefault((r["billing_code_type"], r["billing_code"]), r["description"])
                 tbl = tbl.drop_columns(["description"])
             q.put(typed_rates(tbl, rcon))
+    except BaseException:
+        p.kill()   # Nov 15, 2026: without this, an error here left mrfrows blocked on a full pipe and the reader hung
+        raise
     finally:
         q.put(None)
         th.join()
