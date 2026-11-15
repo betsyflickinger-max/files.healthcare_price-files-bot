@@ -372,6 +372,12 @@ def reduce_items(items, states, bench, work, upload_pfx=None, spec=True, lane="g
                     n = rates.reduce_table(con, rates.insurer_units(t, have, mem, sp, j, k, seg=seg), const, str(out))
                     outs.append(out)
                     log(f"  pass {j + 1}/{k}: {n:,} part rows, {time.time() - t0:,.0f}s")
+                    if os.environ.get("MM_LOG_KEY") and Path("/root/run.log").exists():   # Nov 15: watch a running machine
+                        try:
+                            sys.stdout.flush()
+                            s3c.upload_file("/root/run.log", b, os.environ["MM_LOG_KEY"])
+                        except Exception:
+                            pass
             elif it["source"] == "hospital":
                 con.execute("create or replace temp table hosp as select ? ccn, ? state", [it["ccn"], it["state"]])
                 out = parts / name
@@ -570,9 +576,7 @@ ENV
 . /root/env.sh
 git clone --depth 1 -b {ref} https://github.com/betsyflickinger-max/files.healthcare_price-files-bot.git /root/r
 cd /root/r
-(while sleep 300; do /root/v/bin/python -c "
-import sys; sys.path.insert(0, 'bot'); import store; s3, b = store.r2()
-s3.upload_file('/root/run.log', b, '{PFX}{doc["run_id"]}/logs/do-{tag}.log')" 2>/dev/null; done) &
+export MM_LOG_KEY='{PFX}{doc["run_id"]}/logs/do-{tag}.log'   # the reader uploads its log after every pass
 /root/v/bin/python analysis/medicare_multiple/run.py reduce --state {",".join(doc["states"])} --run {doc["run_id"]} \\
   --lane do {what} --work /root/w --bench /root/w/bench --from-storage > /root/run.log 2>&1
 echo "exit $? at $(date -u +%H:%M:%S) (137 = killed for memory)" >> /root/run.log; free -g >> /root/run.log
