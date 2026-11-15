@@ -1,1 +1,27 @@
 ccn,name,city,state,type,domain,found_by,score,location,index_url,accepted
+010782,CLAY COUNTY HOSPITAL,ASHLAND,AL,Rural Emergency Hospital,claycountyhospital.com,osm,100,Clay County Hospital,https://claycountyhospital.com/cms-hpt.txt,yes
+011310,MONROE COUNTY HOSPITAL,MONROEVILLE,AL,Critical Access Hospitals,mchcare.com,osm,100,Monroe County Hospital,https://mchcare.com/cms-hpt.txt,yes
+041337,BAPTIST HEALTH MEDICAL CENTER-STUTTGART,STUTTGART,AR,Critical Access Hospitals,baptist-health.org,osm,100,Baptist Health Medical Center-Stuttgart,https://baptist-health.org/cms-hpt.txt,yes
+090012,CEDAR HILL REGIONAL MEDICAL CENTER,WASHINGTON,DC,Acute Care Hospitals,cedarhillregional.com,guess,100,Cedar Hill Regional Medical Center,https://cedarhillregional.com/cms-hpt.txt,yes
+120028,"NORTH HAWAII COMMUNITY HOSPITAL, INC",KAMUELA,HI,Acute Care Hospitals,queens.org,osm,95,The Queen's North Hawaii Community Hospital,https://queens.org/cms-hpt.txt,yes
+121303,MOLOKAI GENERAL HOSPITAL,KAUNAKAKAI,HI,Critical Access Hospitals,queens.org,osm,100,Molokai General Hospital,https://queens.org/cms-hpt.txt,yes
+141356,GRAHAM HOSPITAL ASSOCIATION,CANTON,IL,Critical Access Hospitals,grahamhealthsystem.org,osm,86,Graham Hospital,https://grahamhealthsystem.org/cms-hpt.txt,yes
+190114,CLAIBORNE MEMORIAL MEDICAL CENTER,HOMER,LA,Acute Care Hospitals,claibornemedical.com,osm,100,Claiborne Memorial Medical Center,https://claibornemedical.com/cms-hpt.txt,yes
+220162,DANA-FARBER CANCER INSTITUTE,BOSTON,MA,Dedicated Cancer Care,dana-farber.org,osm,100,Dana-Farber Cancer Institute,https://dana-farber.org/cms-hpt.txt,yes
+231342,MARSHFIELD MEDICAL CENTER,IRON MOUNTAIN,MI,Critical Access Hospitals,marshfieldclinic.org,osm,92,Marshfield Medical Center Hospital,https://marshfieldclinic.org/cms-hpt.txt,yes
+241339,HENDRICKS COMMUNITY HOSPITAL,HENDRICKS,MN,Critical Access Hospitals,hendrickshosp.org,osm,100,Hendricks Community Hospital,https://hendrickshosp.org/cms-hpt.txt,yes
+270779,GARFIELD COUNTY HEALTH CENTER,JORDAN,MT,Rural Emergency Hospital,garfieldcountymt.gov,sibling,100,Garfield County Health Center,https://garfieldcountymt.gov/cms-hpt.txt,yes
+271313,PIONEER MEDICAL CENTER,BIG TIMBER,MT,Critical Access Hospitals,pmcmt.org,osm,100,PIONEER MEDICAL CENTER,https://pmcmt.org/cms-hpt.txt,yes
+344033,WALTER B JONES CENTER LAKESIDE PSYCHIATRIC HOSPITA,GREENVILLE,NC,Psychiatric,ncdhhs.gov,sibling,99,Walter B. Jones Center Lakeside Psychiatric Hospital,https://ncdhhs.gov/cms-hpt.txt,yes
+350779,NELSON COUNTY HEALTH SYSTEM,MCVILLE,ND,Rural Emergency Hospital,nelsoncountyhealthsystem.org,osm,0,,https://nelsoncountyhealthsystem.org/cms-hpt.txt,yes
+314021,HAMPTON BEHAVIORAL HEALTH CENTER,WESTAMPTON,NJ,Psychiatric,hamptonhospital.com,guess,100,Hampton Behavioral Health Center,https://hamptonhospital.com/cms-hpt.txt,yes
+330354,ROSWELL PARK CANCER INSTITUTE,BUFFALO,NY,Dedicated Cancer Care,roswellpark.org,guess,100,Roswell Park Cancer Institute,https://roswellpark.org/cms-hpt.txt,yes
+331302,ELIZABETHTOWN COMMUNITY HOSPITAL,ELIZABETHTOWN,NY,Critical Access Hospitals,uvmhealth.org,osm,100,Elizabethtown Community Hospital,https://uvmhealth.org/cms-hpt.txt,yes
+390196,HOSPITAL OF THE FOX CHASE CANCER CENTER,PHILADELPHIA,PA,Dedicated Cancer Care,templehealth.org,sibling,92,Fox Chase Cancer Center,https://templehealth.org/cms-hpt.txt,yes
+390431,"CHRISTIANACARE HOSPITAL, WEST GROVE CAMPUS",WEST GROVE,PA,Acute Care Hospitals,christianacareneighborhoodhospitals.org,osm,95,"ChristianaCare Hospital, West Grove",https://christianacareneighborhoodhospitals.org/cms-hpt.txt,yes
+391319,WARREN GENERAL HOSPITAL,WARREN,PA,Critical Access Hospitals,wgh.org,osm,100,Warren General Hospital,https://wgh.org/cms-hpt.txt,yes
+450076,"UNIVERSITY OF TEXAS M D ANDERSON CANCER CENTER,THE",HOUSTON,TX,Dedicated Cancer Care,mdanderson.org,osm,96,University of Texas MD Anderson Cancer Center,https://mdanderson.org/cms-hpt.txt,yes
+490149,RIVERSIDE SMITHFIELD HOSPITAL,SMITHFIELD,VA,Acute Care Hospitals,riversideonline.com,sibling,100,Riverside Smithfield Hospital,https://riversideonline.com/cms-hpt.txt,yes
+491310,STUART COMMUNITY HOSPITAL INC,STUART,VA,Critical Access Hospitals,stuart.health,osm,100,Stuart Community Hospital,https://stuart.health/cms-hpt.txt,yes
+470001,CENTRAL VERMONT MEDICAL CENTER,BARRE,VT,Acute Care Hospitals,cvmc.org,guess,100,Central Vermont Medical Center,https://cvmc.org/cms-hpt.txt,yes
+524047,ROGERS MEMORIAL HOSPITAL INC,WEST ALLIS,WI,Psychiatric,rogersbh.org,osm,91,Rogers Memorial Hospital Oconomowoc,https://rogersbh.org/cms-hpt.txt,yes
