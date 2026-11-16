@@ -25,13 +25,30 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       list: ${{ steps.l.outputs.list }}
+      go: ${{ steps.g.outputs.go }}
     steps:
       - uses: actions/checkout@v4
+      # Nov 16, 2026: the hourly start skips when another state build is already running. Overlapping runs were
+      # cutting each other's insurer jobs off after one hour. Runs started by hand or by a run that ran out of time still go.
+      - id: g
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            n=$(gh run list -R ${{ github.repository }} -w state-builds.yml -s in_progress --json databaseId --jq "[.[] | select(.databaseId != ${{ github.run_id }})] | length" 2>/dev/null || echo 0)
+            if [ "$n" -gt 0 ]; then
+              echo "go=false" >> "$GITHUB_OUTPUT"
+              echo "Another state build is running ($n). Skipping this hourly start."
+              exit 0
+            fi
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
       - id: l
         run: echo "list=$(python3 -c "import json;print(json.dumps([k for k in json.load(open('site/state_scopes.json')) if not k.startswith('_')]))")" >> "$GITHUB_OUTPUT"
 
   insurers:
     needs: scopes
+    if: needs.scopes.outputs.go == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -80,6 +97,8 @@ jobs:
   pages:   # Oct 30, 2026: ONE job for every state's page (site/pages_loop.py): all scopes here plus the seven states (s7),
     # North Carolina and Connecticut, which had their own waiting jobs. GitHub keeps one waiting job per lock and each new
     # one cancelled the last, so per-scope jobs kept wiping each other out. Now every waiting job does the same work.
+    needs: scopes
+    if: needs.scopes.outputs.go == 'true'
     concurrency:
       group: site-build-v2   # the website build's shared lock
       cancel-in-progress: false
