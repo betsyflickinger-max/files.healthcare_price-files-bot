@@ -58,3 +58,13 @@ def test_missing_anchor_is_reported_not_fatal(tmp_path, capsys):
 
 def test_no_control_page(tmp_path):
     assert cr.patch(str(tmp_path)) is False
+
+
+def test_block_has_place_picker_kept_in_url():
+    # Story 1.2 (Nov 16, 2026): one place picker drives every tile and lives in #research?place=XX.
+    block = open(os.path.join(os.path.dirname(__file__), "..", "site", "control_research", "block.html"), encoding="utf-8").read()
+    assert "sel.id = 'rd-place'" in block and "history.replaceState" in block
+    assert "#research?place=" in block and "[A-Za-z]{2}" in block
+    assert "['TX','Texas']" in block and "['US', 'United States']" in block
+    assert "Not available for this place yet." in block
+    assert "startsWith('#research')" in block
