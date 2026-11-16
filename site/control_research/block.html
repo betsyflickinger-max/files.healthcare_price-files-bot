@@ -1,9 +1,10 @@
-<!-- Control center: "Research" tab (Nov 13, 2026; Research Desk v1, story 1.1). Added by site/control_research.py. Reads
+<!-- Control center: "Research" tab (Nov 13, 2026; Research Desk v1, story 1.1; place picker, story 1.2, Nov 16, 2026). Added by site/control_research.py. Reads
      /control/api/data/research_index (storage control/data/research_index.json, written by the research build, story 2.3).
      Private: the whole control center sits behind its login. -->
 <style>
 #rd-card .rd-intro{max-width:46rem}
 #rd-card .rd-built{font-size:12px;color:var(--color-fg-muted,#666);margin:4px 0 12px}
+#rd-card .rd-place{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:14px}
 #rd-card .rd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px}
 #rd-card .rd-empty{border:1px dashed var(--color-border,#ccc);border-radius:8px;padding:18px;color:var(--color-fg-muted,#666)}
 #rd-card .rd-tile{border:1px solid var(--color-border,#ddd);border-radius:8px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;min-width:0}
@@ -14,11 +15,23 @@
 </style>
 <script>
 (() => {
+  // Places the picker offers: "US" (national) plus each state and DC, by postal code.
+  const PLACES = [['US', 'United States'], ['AL','Alabama'],['AK','Alaska'],['AZ','Arizona'],['AR','Arkansas'],['CA','California'],['CO','Colorado'],['CT','Connecticut'],['DE','Delaware'],['DC','District of Columbia'],['FL','Florida'],['GA','Georgia'],['HI','Hawaii'],['ID','Idaho'],['IL','Illinois'],['IN','Indiana'],['IA','Iowa'],['KS','Kansas'],['KY','Kentucky'],['LA','Louisiana'],['ME','Maine'],['MD','Maryland'],['MA','Massachusetts'],['MI','Michigan'],['MN','Minnesota'],['MS','Mississippi'],['MO','Missouri'],['MT','Montana'],['NE','Nebraska'],['NV','Nevada'],['NH','New Hampshire'],['NJ','New Jersey'],['NM','New Mexico'],['NY','New York'],['NC','North Carolina'],['ND','North Dakota'],['OH','Ohio'],['OK','Oklahoma'],['OR','Oregon'],['PA','Pennsylvania'],['RI','Rhode Island'],['SC','South Carolina'],['SD','South Dakota'],['TN','Tennessee'],['TX','Texas'],['UT','Utah'],['VT','Vermont'],['VA','Virginia'],['WA','Washington'],['WV','West Virginia'],['WI','Wisconsin'],['WY','Wyoming']];
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
   const day = (d) => { const t = d ? new Date(/^\d{4}-\d{2}-\d{2}$/.test(d) ? d + 'T12:00:00Z' : d) : null; return t && !isNaN(t) ? t.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : ''; };
 
+  // The place lives in the URL as #research?place=TX, so a reload or a shared link opens the same view.
+  function placeFromHash() {
+    const m = /[?&]place=([A-Za-z]{2})\b/.exec(location.hash || '');
+    const code = m ? m[1].toUpperCase() : 'US';
+    return PLACES.some((p) => p[0] === code) ? code : 'US';
+  }
+
+  let lastData = null;   // the last research_index payload, kept so a new place re-renders without refetching
+
   function render(card, d) {
     const built = card.querySelector('.rd-built'), grid = card.querySelector('.rd-grid');
+    const place = placeFromHash();
     built.textContent = ''; grid.textContent = '';
     const tiles = d && Array.isArray(d.tiles) ? d.tiles : [];
     built.textContent = d && d.built_at ? 'Research data built ' + day(d.built_at) + '.' : 'No research build yet.';
@@ -30,9 +43,15 @@
       const box = el('article', 'rd-tile');
       box.appendChild(el('span', 'lab', t.label || ''));
       box.appendChild(el('h4', '', t.title || t.id || ''));
-      const sub = el('span', 'sub', t.as_of ? 'As of ' + day(t.as_of) : 'No date');
-      if (t.stale) { sub.appendChild(document.createTextNode(' ')); sub.appendChild(el('span', 'rd-stale', 'stale')); }
-      box.appendChild(sub);
+      // A tile says which places it covers in t.places (postal codes). Without that list it is national only.
+      const covered = Array.isArray(t.places) ? t.places.includes(place) : place === 'US';
+      if (!covered) {
+        box.appendChild(el('span', 'sub', 'Not available for this place yet.'));
+      } else {
+        const sub = el('span', 'sub', t.as_of ? 'As of ' + day(t.as_of) : 'No date');
+        if (t.stale) { sub.appendChild(document.createTextNode(' ')); sub.appendChild(el('span', 'rd-stale', 'stale')); }
+        box.appendChild(sub);
+      }
       grid.appendChild(box);
     });
   }
@@ -46,18 +65,28 @@
     h.appendChild(el('h3', '', 'Research'));
     h.appendChild(el('p', 'muted rd-intro', 'Figures for your writing, each with its source, its date and what it leaves out. Built by the bot from public data; nothing here is estimated. Private to this login.'));
     head.appendChild(h); card.appendChild(head);
+    // Place picker: one choice applies to every tile, and the choice is kept in the URL.
+    const bar = el('div', 'rd-place'), label = el('label', '', 'Place '), sel = el('select');
+    sel.id = 'rd-place'; sel.setAttribute('aria-label', 'Place for every research tile');
+    PLACES.forEach((p) => { const o = el('option', '', p[1]); o.value = p[0]; sel.appendChild(o); });
+    sel.addEventListener('change', () => {
+      history.replaceState(null, '', '#research?place=' + sel.value);
+      if (lastData !== null) render(card, lastData);
+    });
+    label.appendChild(sel); bar.appendChild(label); card.appendChild(bar);
     card.appendChild(el('p', 'rd-built'));
     card.appendChild(el('div', 'rd-grid'));
     sec.appendChild(card); pg.appendChild(sec); built = true;
   }
   function load() {
     const card = document.getElementById('rd-card'); if (!card) return;
+    document.getElementById('rd-place').value = placeFromHash();
     card.querySelector('.rd-built').textContent = 'Loading…';
     fetch('/control/api/data/research_index', {cache: 'no-store', credentials: 'same-origin'})
-      .then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => render(card, d));
+      .then((r) => r.ok ? r.json() : null).catch(() => null).then((d) => { lastData = d; render(card, d); });
   }
   window.RDTAB = {show() { if (!built) build(); load(); }};
-  if (location.hash === '#research') {   // opened from a link: switch to the tab once the page is ready
+  if ((location.hash || '').startsWith('#research')) {   // opened from a link (with or without ?place=): switch to the tab once the page is ready
     const go = () => { const b = document.querySelector('[role="tab"][data-tab="research"]'); if (b) b.click(); };
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(go, 300)); else setTimeout(go, 300);
   }
