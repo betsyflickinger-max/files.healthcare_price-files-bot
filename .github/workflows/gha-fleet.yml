@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
+      go: ${{ steps.gate.outputs.go }}
       n: ${{ steps.count.outputs.n }}
     env:
       R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
@@ -30,12 +31,28 @@ jobs:
       R2_SECRET_ACCESS_KEY: ${{ vars.STORAGE_ENDPOINT && secrets.B2_SECRET_ACCESS_KEY || secrets.R2_SECRET_ACCESS_KEY }}
       R2_BUCKET: ${{ vars.STORAGE_ENDPOINT && secrets.B2_BUCKET || secrets.R2_BUCKET }}
     steps:
+      # Nov 16, 2026: a scheduled start skips when another small-files run is already in progress. Runs overlapped
+      # every 20 minutes and waited on the same machine slots. Runs started by hand still go.
+      - id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            n=$(gh run list -R ${{ github.repository }} -w gha-fleet.yml -s in_progress --json databaseId --jq "[.[] | select(.databaseId != ${{ github.run_id }})] | length" 2>/dev/null || echo 0)
+            if [ "$n" -gt 0 ]; then
+              echo "go=false" >> "$GITHUB_OUTPUT"
+              echo "Another small-files run is in progress ($n). Skipping this scheduled start."
+              exit 0
+            fi
+          fi
+          echo "go=true" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - run: pip install boto3==1.35.36
       - id: count
+        if: steps.gate.outputs.go == 'true'
         run: |
           python - <<'EOF' >> "$GITHUB_OUTPUT"
           import os, sys
@@ -55,7 +72,7 @@ jobs:
 
   work:
     needs: check
-    if: needs.check.outputs.n != '0'
+    if: needs.check.outputs.go == 'true' && needs.check.outputs.n != '0'
     strategy:
       fail-fast: false
       matrix:
