@@ -42,6 +42,7 @@ jobs:
       - name: Hospitals tables
         run: python quality/pdc_tables.py tables --work /mnt/pdc --topics hospitals --minutes 60
       - name: Hospital trend tables
+        shell: bash -eo pipefail {0}
         run: python quality/pdc_tables.py trends --work /mnt/pdc | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the hospital report
         run: |
@@ -50,6 +51,7 @@ jobs:
           git add reports/cms-provider-data 2>/dev/null || true
           git diff --cached --quiet || { git commit -qm "CMS hospital trend tables $(date -u +%F)"; git pull -q --rebase origin main; git push -q origin HEAD:main; }
       - name: Every other topic
+        shell: bash -eo pipefail {0}
         run: python quality/pdc_tables.py tables --work /mnt/pdc --minutes 240 | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the reports
         if: always()

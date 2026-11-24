@@ -42,9 +42,23 @@ MONTHS = "january|february|march|april|may|june|july|august|september|october|no
 
 def s3():
     import boto3
-    return boto3.client("s3", endpoint_url=(E.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
+    from botocore.config import Config
+    return boto3.client("s3", config=Config(retries={"max_attempts": 10, "mode": "standard"}, read_timeout=300),
+                        endpoint_url=(E.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
                         aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
                         region_name=E.get("STORAGE_REGION") or "auto")
+
+
+def again(fn, *a, tries=6):
+    """Storage calls drop now and then (Nov 24, 2026: one dropped connection stopped a run). Try again, waiting longer."""
+    for i in range(tries):
+        try:
+            return fn(*a)
+        except Exception as e:
+            if i == tries - 1:
+                raise
+            print(f"storage hiccup ({str(e)[:120]}), trying again", flush=True)
+            time.sleep(15 * (i + 1))
 
 
 def get_csv(c, key):
@@ -213,11 +227,11 @@ def cmd_tables(a):
             left += 1
             continue
         zp = W / "outer.zip"
-        c.download_file(B, r["key"], str(zp))
+        again(c.download_file, B, r["key"], str(zp))
         for rel, p in releases_in(zp, r, W):
             if (r["key"], rel) in done:
                 continue
-            rows = convert_release(con, p, r["topic"], rel, r["key"], W, lambda f, k: c.upload_file(f, B, k))
+            rows = convert_release(con, p, r["topic"], rel, r["key"], W, lambda f, k: again(c.upload_file, f, B, k))
             cat += rows
             new += len(rows)
             done_rows.append(dict(source_zip=r["key"], release=rel, whole_zip=""))
@@ -368,11 +382,11 @@ def cmd_trends(a):
     files = []
     for i, r in enumerate(cat):
         p = W / f"{i}.parquet"
-        c.download_file(B, r["key"], str(p))
+        again(c.download_file, B, r["key"], str(p))
         files.append((r["table"], str(p)))
     st = build_trends(con, files, W)
     for f in ("hospital_general.parquet", "hospital_measures.parquet", "measure_changes.csv"):
-        c.upload_file(str(W / f), B, OUT + "hospitals/" + f)
+        again(c.upload_file, str(W / f), B, OUT + "hospitals/" + f)
     L = ["# Hospital quality over time (CMS), keyed by CCN", "",
          f"Run {TODAY}. Built from every hospitals release CMS has in its archive, {st['first']} to {st['last']}. "
          "Every value is CMS's own; nothing is estimated or averaged. Each row names the CMS zip and file it came from.", "",
