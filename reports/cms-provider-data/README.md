@@ -2,8 +2,8 @@
 
 Run 2026-11-24. Source: CMS archive listing, https://data.cms.gov/provider-data/api/1/archive/aggregate/theme/<topic>/relative. CMS originals are saved untouched in storage under `raw/cms_provider_data/`; the full file list with links and fingerprints is `bot/cms_provider_data/manifest.csv`.
 
-- Saved this run: 4 files (471 MB)
-- Already saved, skipped: 136
+- Saved this run: 0 files (0 MB)
+- Already saved, skipped: 140
 - Failed: 0
 - Not started (time limit, re-run to finish): 0
 
