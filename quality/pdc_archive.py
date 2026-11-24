@@ -44,7 +44,9 @@ UA = {"User-Agent": "files.healthcare price-files-bot (https://github.com/betsyf
 
 def s3():
     import boto3
-    return boto3.client("s3", endpoint_url=(E.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
+    from botocore.config import Config
+    return boto3.client("s3", config=Config(retries={"max_attempts": 10, "mode": "standard"}, read_timeout=300),
+                        endpoint_url=(E.get("STORAGE_ENDPOINT") or f"https://{E['R2_ACCOUNT_ID']}.r2.cloudflarestorage.com"),
                         aws_access_key_id=E["R2_ACCESS_KEY_ID"], aws_secret_access_key=E["R2_SECRET_ACCESS_KEY"],
                         region_name=E.get("STORAGE_REGION") or "auto")
 

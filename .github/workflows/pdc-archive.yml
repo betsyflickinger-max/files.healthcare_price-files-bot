@@ -42,7 +42,8 @@ jobs:
           python-version: "3.12"
       - run: pip install boto3==1.35.36 requests==2.33.0
       - run: sudo mkdir -p /mnt/pdc && sudo chown $USER /mnt/pdc
-      - run: python quality/pdc_archive.py --work /mnt/pdc --topics "${{ inputs.topics }}" | tee -a "$GITHUB_STEP_SUMMARY"
+      - shell: bash -eo pipefail {0}
+        run: python quality/pdc_archive.py --work /mnt/pdc --topics "${{ inputs.topics }}" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Save the report
         if: always()
         run: |
