@@ -357,6 +357,11 @@ def cmd_trends(a):
     c = s3()
     (W / "t.duckdb").unlink(missing_ok=True)
     con = duckdb.connect(str(W / "t.duckdb"))   # on disk: the full history is tens of millions of rows
+    want = {r["key"] for r in get_csv(c, MANIFEST) if r["topic"] == "hospitals"}
+    have = {r["source_zip"] for r in get_csv(c, DONE) if r.get("whole_zip") == "yes"}
+    if want - have:   # never build trends from part of the history and present it as the whole
+        raise SystemExit(f"Hospital tables are not complete yet: {len(want & have)} of {len(want)} saved zips converted. "
+                         "Run the tables step again, then trends.")
     cat = [r for r in get_csv(c, CATALOG) if r["topic"] == "hospitals" and r["status"] == "converted"]
     if not cat:
         raise SystemExit("No hospital tables yet. Run: python quality/pdc_tables.py tables --topics hospitals")
