@@ -14,7 +14,8 @@ saved twice and a monthly run only adds what is new.
                                                       fingerprint, files inside, day downloaded
   reports/cms-provider-data/README.md                 plain-English summary of the run
 
-A file is only saved if the bytes we got equal the size CMS lists and the zip opens. Re-runs skip what the manifest has.
+A file is only saved if the zip opens and its size equals the size CMS lists (or, where CMS's listing is wrong, equals
+what CMS's server sent and every file inside passes the zip's own check; the manifest keeps both sizes). Re-runs skip what the manifest has.
 Run: python quality/pdc_archive.py [--work /mnt/pdc] [--topics hospitals,nursing-homes] [--dry]
 """
 import argparse
@@ -83,7 +84,8 @@ def download(url, path):
             f.write(b)
             h.update(b)
             n += len(b)
-    return h.hexdigest(), n
+        served = int(r.headers.get("Content-Length") or 0)
+    return h.hexdigest(), n, served
 
 
 def load_manifest(c):
@@ -144,11 +146,16 @@ def main():
                 continue
             path = W / url.rsplit("/", 1)[-1]
             try:
-                sha, n = download(url, path)
-                if size and n != size:
-                    raise ValueError(f"got {n} bytes, CMS lists {size}")
+                sha, n, served = download(url, path)
                 with zipfile.ZipFile(path) as z:
                     inside = len(z.namelist())
+                    if size and n != size:
+                        # CMS's listing is sometimes wrong (Nov 24, 2026: 4 files). Accept the file only if it is exactly
+                        # what CMS's server said it was sending and every file inside passes the zip's own check.
+                        bad = z.testzip()
+                        if not served or n != served or bad:
+                            raise ValueError(f"got {n} bytes, CMS lists {size}, server sent {served}, bad file inside: {bad}")
+                        print(f"note   {t} {rel}: CMS lists {size} bytes but the complete file is {n}; saved, both sizes in the manifest", flush=True)
                 key = f"{PREFIX}{t}/{sha[:12]}_{path.name}"
                 c.upload_file(str(path), B, key)
                 row = dict(topic=t, kind=kind, release=rel, url=url, cms_bytes=size, bytes=n, sha256=sha,
