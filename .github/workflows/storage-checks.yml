@@ -1,0 +1,135 @@
+name: Storage checks (old versions vs history, scratch by month; read only)
+# Nov 24, 2026 (Betsy OK'd two read-only checks before any cleanup is proposed):
+#  1. Are the hidden old versions under data/ also kept in history/?
+#  2. What is in work/every-st, by state and month, and how recently was it written?
+# Lists only. It never writes, moves or deletes anything in the bucket.
+on:
+  workflow_dispatch:
+  push:
+    branches: [storage-sizes]
+    paths: ['.github/workflows/storage-checks.yml']
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, time, collections, boto3
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=m.group(1) if m else "us-east-005",
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          GB = 1000 ** 3
+          t0 = time.time()
+
+          def versions(prefix):
+              for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix=prefix, PaginationConfig={"PageSize": 1000}):
+                  for o in page.get("Versions", []):
+                      yield o
+
+          # ---- check 1: hidden old versions under data/ vs history/ ----
+          hist_name_size, hist_etag = set(), set()
+          hist_n = hist_b = 0
+          for o in versions("history/"):
+              hist_name_size.add((o["Key"].rsplit("/", 1)[-1], o["Size"]))
+              hist_etag.add(o["ETag"])
+              hist_n += 1; hist_b += o["Size"]
+          print(f"history/: {hist_n:,} file versions, {hist_b / GB:,.1f} GB ({int(time.time() - t0)} s)", flush=True)
+
+          by_key = collections.defaultdict(list)   # key -> [(last modified, size, etag, is latest)]
+          for o in versions("data/"):
+              by_key[o["Key"]].append((o["LastModified"], o["Size"], o["ETag"], bool(o.get("IsLatest"))))
+          print(f"data/: {len(by_key):,} file names ({int(time.time() - t0)} s)", flush=True)
+
+          CATS = ["A same name and size found in history/",
+                  "B replaced under the same name within 2 days (no history copy)",
+                  "C replaced under the same name after 2+ days (no history copy)",
+                  "D removed from data/, no history copy found"]
+          tot = collections.defaultdict(lambda: [0, 0])                                # category -> files, bytes
+          fold = collections.defaultdict(lambda: collections.defaultdict(int))         # data/<x> -> category -> bytes
+          month = collections.defaultdict(lambda: collections.defaultdict(int))        # yyyy-mm written -> category -> bytes
+          etag_match = [0, 0]
+          examples = collections.defaultdict(list)
+          for key, vs in by_key.items():
+              vs.sort()
+              has_current = any(v[3] for v in vs)
+              parts = key.split("/")
+              f2 = "data/" + (parts[1] if len(parts) > 2 else "(files directly inside)")
+              for i, (lm, size, etag, latest) in enumerate(vs):
+                  if latest:
+                      continue
+                  if etag in hist_etag:
+                      etag_match[0] += 1; etag_match[1] += size
+                  if (parts[-1], size) in hist_name_size:
+                      c = CATS[0]
+                  elif has_current or i + 1 < len(vs):
+                      nxt = vs[i + 1][0] if i + 1 < len(vs) else lm
+                      c = CATS[1] if (nxt - lm).total_seconds() < 2 * 86400 else CATS[2]
+                  else:
+                      c = CATS[3]
+                  tot[c][0] += 1; tot[c][1] += size
+                  fold[f2][c] += size
+                  month[lm.strftime("%Y-%m")][c] += size
+                  if len(examples[c]) < 6 and size > 5 * GB:
+                      examples[c].append(f"{key} ({size / GB:,.1f} GB, written {lm:%Y-%m-%d})")
+
+          out = [f"## Check 1: hidden old versions under data/ ({time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())})", "",
+                 "Read only: nothing was changed.", "",
+                 "| Group | Files | GB |", "|---|---:|---:|"]
+          for c in CATS:
+              out.append(f"| {c} | {tot[c][0]:,} | {tot[c][1] / GB:,.1f} |")
+          out.append(f"| **Total hidden under data/** | {sum(v[0] for v in tot.values()):,} | {sum(v[1] for v in tot.values()) / GB:,.1f} |")
+          out += ["", f"Hidden versions whose fingerprint (ETag) also appears in history/: {etag_match[0]:,} files, {etag_match[1] / GB:,.1f} GB "
+                      "(a stricter match than name and size; big files copied in parts can get a new fingerprint, so this undercounts).", "",
+                  "### By folder (GB)", "", "| Folder | A | B | C | D |", "|---|---:|---:|---:|---:|"]
+          for f2, d in sorted(fold.items(), key=lambda kv: -sum(kv[1].values())):
+              out.append(f"| `{f2}` | " + " | ".join(f"{d[c] / GB:,.1f}" for c in CATS) + " |")
+          out += ["", "### By month the hidden version was written (GB)", "", "| Month | A | B | C | D |", "|---|---:|---:|---:|---:|"]
+          for mo, d in sorted(month.items()):
+              out.append(f"| {mo} | " + " | ".join(f"{d[c] / GB:,.1f}" for c in CATS) + " |")
+          out += ["", "### Examples (over 5 GB)"]
+          for c in CATS:
+              out += [f"- {c}:"] + [f"  - `{e}`" for e in examples[c]]
+          text1 = "\n".join(out) + "\n"
+          print(text1, flush=True)
+
+          # ---- check 2: work/every-st by state and build folder ----
+          grp = collections.defaultdict(lambda: [0, 0, None])     # (slug, sub) -> files, bytes, newest
+          kind = collections.defaultdict(lambda: [0, 0, None])    # sub -> files, bytes, newest
+          n = 0
+          for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix="work/every-st/", PaginationConfig={"PageSize": 1000}):
+              for o in page.get("Contents", []):
+                  p = o["Key"].split("/")
+                  slug = p[2] if len(p) > 3 else "(top)"
+                  sub = p[3] if len(p) > 4 else "(files directly inside)"
+                  for d, k in ((grp, (slug, sub)), (kind, sub)):
+                      d[k][0] += 1; d[k][1] += o["Size"]
+                      if d[k][2] is None or o["LastModified"] > d[k][2]:
+                          d[k][2] = o["LastModified"]
+                  n += 1
+              if n and n % 500000 < 1000:
+                  print(f"work/every-st: {n:,} files listed ({int(time.time() - t0)} s)", flush=True)
+          out = ["## Check 2: work/every-st (scratch files from state page builds)", "",
+                 "### By build folder, all states together", "", "| Build folder | Files | GB | Newest file written |", "|---|---:|---:|---|"]
+          for k, (f, by, nw) in sorted(kind.items(), key=lambda kv: -kv[1][1]):
+              out.append(f"| `{k}` | {f:,} | {by / GB:,.1f} | {nw:%Y-%m-%d} |")
+          out.append(f"| **Total** | {sum(v[0] for v in kind.values()):,} | {sum(v[1] for v in kind.values()) / GB:,.1f} | |")
+          out += ["", "### 40 largest state + build folder pairs", "", "| State | Build folder | Files | GB | Newest file written |", "|---|---|---:|---:|---|"]
+          for (slug, sub), (f, by, nw) in sorted(grp.items(), key=lambda kv: -kv[1][1])[:40]:
+              out.append(f"| {slug} | `{sub}` | {f:,} | {by / GB:,.1f} | {nw:%Y-%m-%d} |")
+          text2 = "\n".join(out) + "\n"
+          print(text2, flush=True)
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as fh:
+              fh.write(text1 + "\n" + text2)
