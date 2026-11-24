@@ -23,4 +23,3 @@ $0 rates and percent-of-charges rates get none of these labels ($0 is already co
 - **Monthly census report** (`reports/census/<month>.md`, section "Rates that may never be used"). The counting runs inside
   each insurer-file census on the rented machines, so it is **off until Betsy switches it on**
   (`IN_CENSUS` in `rate_labels.py`, or `RATE_LABELS=1`). On the biggest files it adds machine time.
-- **Spread report** (`reports/spread/`), which shows every figure with and without the labeled rates.
