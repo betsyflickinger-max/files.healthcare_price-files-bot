@@ -1,0 +1,75 @@
+name: Storage check 1b (are hidden versions identical to the current file; read only)
+# Nov 24, 2026: follow-up to storage-checks.yml. Lists data/ only and reads the bucket's settings.
+# It never writes, moves or deletes anything in the bucket.
+on:
+  workflow_dispatch:
+  push:
+    branches: [storage-sizes]
+    paths: ['.github/workflows/storage-checks-b.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, collections, boto3
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=m.group(1) if m else "us-east-005",
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          GB = 1000 ** 3
+          for name, call in (("versioning", lambda: s3.get_bucket_versioning(Bucket=b)),
+                             ("lifecycle rules", lambda: s3.get_bucket_lifecycle_configuration(Bucket=b)),
+                             ("object lock", lambda: s3.get_object_lock_configuration(Bucket=b))):
+              try:
+                  r = call(); r.pop("ResponseMetadata", None); print(f"bucket setting, {name}: {r}")
+              except Exception as e:
+                  print(f"bucket setting, {name}: could not read ({type(e).__name__}: {str(e)[:160]})")
+          by_key = collections.defaultdict(list)
+          for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix="data/", PaginationConfig={"PageSize": 1000}):
+              for o in page.get("Versions", []):
+                  by_key[o["Key"]].append((o["LastModified"], o["Size"], o["ETag"], bool(o.get("IsLatest"))))
+          G = ["identical to the newer copy (same fingerprint)", "same size as the newer copy, different fingerprint",
+               "different size from the newer copy", "no newer copy (file was removed)"]
+          tot = collections.defaultdict(lambda: [0, 0])
+          cell = collections.defaultdict(lambda: collections.defaultdict(int))   # (written month, gap) -> group -> bytes
+          pair = collections.defaultdict(lambda: [0, 0])                         # (written month, replaced month) -> files, bytes, different size only
+          for key, vs in by_key.items():
+              vs.sort()
+              for i, (lm, size, etag, latest) in enumerate(vs):
+                  if latest:
+                      continue
+                  if i + 1 < len(vs):
+                      nlm, nsize, netag, _ = vs[i + 1]
+                      c = G[0] if etag == netag else G[1] if size == nsize else G[2]
+                      gap = "replaced within 2 days" if (nlm - lm).total_seconds() < 2 * 86400 else "replaced after 2+ days"
+                      if c == G[2]:
+                          p = pair[(lm.strftime("%Y-%m"), nlm.strftime("%Y-%m"))]; p[0] += 1; p[1] += size
+                  else:
+                      c, gap = G[3], "removed"
+                  tot[c][0] += 1; tot[c][1] += size
+                  cell[(lm.strftime("%Y-%m"), gap)][c] += size
+          out = ["## Check 1b: hidden old versions under data/ compared with the copy that replaced them", "",
+                 "| Group | Files | GB |", "|---|---:|---:|"]
+          out += [f"| {c} | {tot[c][0]:,} | {tot[c][1] / GB:,.1f} |" for c in G]
+          out += ["", "### By month written and how fast it was replaced (GB)", "",
+                  "| Written | Replaced | identical | same size | different size | removed |", "|---|---|---:|---:|---:|---:|"]
+          for (mo, gap), d in sorted(cell.items()):
+              out.append(f"| {mo} | {gap} | " + " | ".join(f"{d[c] / GB:,.1f}" for c in G) + " |")
+          out += ["", "### Different-size versions: month written to month replaced", "", "| Written | Replaced | Files | GB |", "|---|---|---:|---:|"]
+          out += [f"| {a} | {z} | {f:,} | {by / GB:,.1f} |" for (a, z), (f, by) in sorted(pair.items())]
+          text = "\n".join(out) + "\n"
+          print(text)
+          open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(text)
