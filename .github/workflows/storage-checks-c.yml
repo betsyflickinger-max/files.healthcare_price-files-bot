@@ -1,0 +1,141 @@
+name: Storage check 3 (what the November rewrites and the build cache are; read only)
+# Nov 24, 2026 (Betsy asked to confirm both). Lists data/, work/every-st/ and the builds' build_env.json files.
+# It never writes, moves or deletes anything in the bucket.
+on:
+  workflow_dispatch:
+  push:
+    branches: [storage-sizes]
+    paths: ['.github/workflows/storage-checks-c.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, json, time, hashlib, statistics, collections, boto3
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=m.group(1) if m else "us-east-005",
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          GB, t0 = 1000 ** 3, time.time()
+          SUM = open(os.environ["GITHUB_STEP_SUMMARY"], "a")
+          def emit(lines):
+              text = "\n".join(lines) + "\n"
+              print(text, flush=True); SUM.write(text + "\n"); SUM.flush()
+
+          # ---------- part 1: which files are rewritten ----------
+          by_key = collections.defaultdict(list)
+          for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix="data/"):
+              for o in page.get("Versions", []):
+                  by_key[o["Key"]].append((o["LastModified"], o["Size"], bool(o.get("IsLatest"))))
+          def kind(key):
+              p = key.split("/")
+              if len(p) > 5 and p[2] == "state":
+                  return f"data/{p[1]}/state/<state>/{p[4]}/"
+              return "/".join(p[:3]) + "/" if len(p) > 3 else "/".join(p[:2]) + "/"
+          grp = collections.defaultdict(lambda: collections.defaultdict(lambda: [0, 0]))   # period -> kind -> files, bytes
+          gaps = collections.defaultdict(list)
+          nver = collections.Counter()
+          heavy = []
+          current_tables = []
+          for key, vs in by_key.items():
+              vs.sort()
+              if vs[-1][2] and "/rates/" in key and key.endswith(".parquet"):
+                  current_tables.append((key, vs[-1][1]))
+              hid = 0
+              for i, (lm, size, latest) in enumerate(vs):
+                  if latest or i + 1 >= len(vs):
+                      continue
+                  nlm = vs[i + 1][0]
+                  period = f"written {lm:%b}, replaced {nlm:%b}"
+                  c = grp[period][kind(key)]; c[0] += 1; c[1] += size
+                  gaps[period].append((nlm - lm).total_seconds() / 3600)
+                  hid += size
+              if len(vs) > 1:
+                  nver[min(len(vs), 10)] += 1
+                  heavy.append((hid, key, vs))
+          out = ["## Part 1: which files under data/ get replaced under the same name", ""]
+          for period in sorted(grp):
+              gp = sorted(gaps[period])
+              out += [f"### {period}: {sum(v[1] for v in grp[period].values()) / GB:,.1f} GB hidden; "
+                      f"time until replaced: middle {statistics.median(gp):,.1f} h, quarter of them under {gp[len(gp) // 4]:,.1f} h, three quarters under {gp[3 * len(gp) // 4]:,.1f} h", "",
+                      "| Kind of file | Hidden files | Hidden GB |", "|---|---:|---:|"]
+              for k, (f, by) in sorted(grp[period].items(), key=lambda kv: -kv[1][1])[:14]:
+                  out.append(f"| `{k}` | {f:,} | {by / GB:,.1f} |")
+              out.append("")
+          out += ["### How many versions a rewritten file has", "", "| Versions (10 = 10 or more) | Files |", "|---:|---:|"]
+          out += [f"| {n} | {c:,} |" for n, c in sorted(nver.items())]
+          out += ["", "### Version history of the 8 files with the most hidden bytes"]
+          for hid, key, vs in sorted(heavy, reverse=True)[:8]:
+              out.append(f"- `{key}`: " + "; ".join(f"{lm:%b %d %H:%M} {size / GB:,.2f} GB" + (" (current)" if latest else "") for lm, size, latest in vs[-12:]))
+          emit(out)
+
+          # ---------- part 2: the build cache ----------
+          def tags(key, size):
+              return {"t" + hashlib.sha1((f"{key}|{size}" + suf).encode()).hexdigest()[:12] for suf in ("", "|label")}
+          live_now = set()
+          for key, size in current_tables:
+              live_now |= tags(key, size)
+          def folders(prefix):
+              for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix=prefix, Delimiter="/"):
+                  for c in page.get("CommonPrefixes", []):
+                      yield c["Prefix"]
+          newest_build, older_build, nb, bad = set(), set(), 0, 0
+          for sp in folders("site/every-st/"):
+              builds = sorted(folders(sp))
+              for bp in builds:
+                  try:
+                      env = json.loads(s3.get_object(Bucket=b, Key=bp + "build_env.json")["Body"].read())
+                  except Exception:
+                      bad += 1
+                      continue
+                  nb += 1
+                  ts = set()
+                  for x in env.get("files", []):
+                      ts |= tags(x[0], x[1])
+                  (newest_build if bp == builds[-1] else older_build).update(ts)
+          print(f"{len(current_tables):,} current rate tables; {nb} builds with a build_env.json, {bad} build folders without ({int(time.time() - t0)} s)", flush=True)
+          G = ["a table that is current now", "a table the newest build of some state used (since replaced)",
+               "a table only older builds used", "no table found (current or in any build list)", "markers and other small files"]
+          tot = collections.defaultdict(lambda: [0, 0])
+          per = collections.defaultdict(lambda: collections.defaultdict(int))
+          sub = collections.defaultdict(lambda: [0, 0])
+          n = 0
+          for page in s3.get_paginator("list_objects_v2").paginate(Bucket=b, Prefix="work/every-st/"):
+              for o in page.get("Contents", []):
+                  p = o["Key"].split("/")
+                  if len(p) < 5 or p[3] != "Acache":
+                      continue
+                  mt = re.match(r"(t[0-9a-f]{12})", p[-1])
+                  if not mt:
+                      c = G[4]
+                  else:
+                      t = mt.group(1)
+                      c = G[0] if t in live_now else G[1] if t in newest_build else G[2] if t in older_build else G[3]
+                  tot[c][0] += 1; tot[c][1] += o["Size"]
+                  per[p[2]][c] += o["Size"]
+                  s_ = sub[p[4] if len(p) > 5 else "(top level)"]; s_[0] += 1; s_[1] += o["Size"]
+                  n += 1
+          out = ["## Part 2: the build cache (work/every-st/<state>/Acache/)", "",
+                 "Each cached file is named for one insurer table (its path and size). It is reused only while a table with that exact path and size exists.", "",
+                 "| The cached work belongs to | Files | GB |", "|---|---:|---:|"]
+          out += [f"| {c} | {tot[c][0]:,} | {tot[c][1] / GB:,.1f} |" for c in G]
+          out += [f"| **Total** | {n:,} | {sum(v[1] for v in tot.values()) / GB:,.1f} |", "",
+                  "### By cache subfolder", "", "| Subfolder | Files | GB |", "|---|---:|---:|"]
+          out += [f"| `{k}` | {f:,} | {by / GB:,.1f} |" for k, (f, by) in sorted(sub.items(), key=lambda kv: -kv[1][1])]
+          out += ["", "### By state (GB), 20 largest", "", "| State | current table | newest build only | older builds only | no table found |", "|---|---:|---:|---:|---:|"]
+          for slug, d in sorted(per.items(), key=lambda kv: -sum(kv[1].values()))[:20]:
+              out.append(f"| {slug} | " + " | ".join(f"{d[c] / GB:,.1f}" for c in G[:4]) + " |")
+          emit(out)

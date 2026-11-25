@@ -1,0 +1,113 @@
+name: Keep replaced DFW tables (copy hidden versions of data/full into history; copies only)
+# Nov 24, 2026 (Betsy OK'd): the bucket's cleanup rule deletes hidden old versions in data/full/ after 30 days. Tables an
+# insurer re-posts under the SAME file name are overwritten in place, so the older table exists only as a hidden version
+# (insurers/worker.py archives to history/ only when the name changes). This copies every hidden version under data/full/
+# that has no copy in history/ to history/insurers/<month replaced>/same-name-replaced/data_full/..., checks the size,
+# and writes a list of what it copied. It never deletes or changes anything in data/.
+on:
+  workflow_dispatch:
+  push:
+    branches: [storage-sizes]
+    paths: ['.github/workflows/history-rescue-data-full.yml']
+permissions:
+  contents: read
+concurrency:
+  group: history-rescue-data-full
+  cancel-in-progress: false
+jobs:
+  rescue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, io, csv, time, collections, boto3
+          from boto3.s3.transfer import TransferConfig
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=m.group(1) if m else "us-east-005",
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          BIG = TransferConfig(multipart_threshold=1 << 30, multipart_chunksize=256 << 20, max_concurrency=4)
+          SRC, GB = "data/full/", 1000 ** 3
+
+          hist = set()
+          for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix="history/"):
+              for o in page.get("Versions", []):
+                  hist.add((o["Key"].rsplit("/", 1)[-1], o["Size"]))
+          by_key = collections.defaultdict(list)   # key -> [(time, kind, size, etag, version id, is latest)]
+          for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix=SRC):
+              for o in page.get("Versions", []):
+                  by_key[o["Key"]].append((o["LastModified"], "v", o["Size"], o["ETag"], o["VersionId"], bool(o.get("IsLatest"))))
+              for o in page.get("DeleteMarkers", []):
+                  by_key[o["Key"]].append((o["LastModified"], "hide", 0, "", o["VersionId"], bool(o.get("IsLatest"))))
+
+          def size_of(key):
+              try:
+                  return s3.head_object(Bucket=b, Key=key)["ContentLength"]
+              except Exception:
+                  return None
+
+          rows, tot = [], collections.Counter()
+          for key, vs in sorted(by_key.items()):
+              vs.sort(key=lambda v: v[0])
+              for i, (lm, kind, size, etag, vid, latest) in enumerate(vs):
+                  if kind != "v" or latest:
+                      continue
+                  if (key.rsplit("/", 1)[-1], size) in hist:
+                      tot["already in history"] += 1; tot["already in history bytes"] += size
+                      continue
+                  replaced = vs[i + 1][0] if i + 1 < len(vs) else lm
+                  rel = key[len(SRC):]
+                  d, _, name = rel.rpartition("/")
+                  stem, dot, ext = name.rpartition(".")
+                  if not dot:
+                      stem, ext = name, ""
+                  dst = (f"history/insurers/{replaced:%Y-%m}/same-name-replaced/data_full/{d + '/' if d else ''}"
+                         f"{stem}~written-{lm:%Y%m%dT%H%M%S}{'.' + ext if ext else ''}")
+                  how = ""
+                  if size_of(dst) == size:
+                      how = "already copied"
+                  else:
+                      try:
+                          s3.copy({"Bucket": b, "Key": key, "VersionId": vid}, b, dst, Config=BIG)
+                          how = "copied"
+                      except Exception as e:
+                          print(f"server-side copy of {key} ({vid}) failed ({type(e).__name__}: {str(e)[:120]}); reading it through instead", flush=True)
+                          try:
+                              body = s3.get_object(Bucket=b, Key=key, VersionId=vid)["Body"]
+                              s3.upload_fileobj(body, b, dst, Config=BIG)
+                              how = "copied (read through)"
+                          except Exception as e2:
+                              how = f"FAILED {type(e2).__name__}: {str(e2)[:120]}"
+                      if not how.startswith("FAILED") and size_of(dst) != size:
+                          how = "FAILED size check"
+                  tot[how.split(" ")[0] if how.startswith("FAILED") else how] += 1
+                  tot[(how.split(" ")[0] if how.startswith("FAILED") else how) + " bytes"] += size
+                  rows.append([key, vid, f"{lm:%Y-%m-%dT%H:%M:%SZ}", f"{replaced:%Y-%m-%dT%H:%M:%SZ}", size, etag.strip('"'), dst, how])
+                  print(f"{how}: {key} ({size / GB:,.2f} GB, written {lm:%Y-%m-%d}, replaced {replaced:%Y-%m-%d})", flush=True)
+
+          buf = io.StringIO()
+          w = csv.writer(buf)
+          w.writerow(["original_key", "version_id", "written_utc", "replaced_utc", "bytes", "etag", "history_copy", "result"])
+          w.writerows(rows)
+          mkey = f"history/insurers/same-name-replaced/manifest_data_full_{time.strftime('%Y-%m-%dT%H%M%SZ', time.gmtime())}.csv"
+          s3.put_object(Bucket=b, Key=mkey, Body=buf.getvalue().encode())
+          out = [f"## Replaced DFW tables kept ({time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime())})", "",
+                 "Copies only: nothing in data/ was deleted or changed.", "", "| Result | Files | GB |", "|---|---:|---:|"]
+          for k in sorted(k for k in tot if not k.endswith(" bytes")):
+              out.append(f"| {k} | {tot[k]:,} | {tot[k + ' bytes'] / GB:,.1f} |")
+          out += ["", f"List of every file: `{mkey}`"]
+          text = "\n".join(out) + "\n"
+          print(text)
+          open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(text)
+          if any(k.startswith("FAILED") for k in tot):
+              raise SystemExit("some copies failed; see the list above")
