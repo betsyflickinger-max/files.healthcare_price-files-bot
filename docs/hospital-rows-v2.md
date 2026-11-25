@@ -5,7 +5,7 @@
 ## What this is
 
 Every month the bot reads each hospital's price file and saves its rows (one row per code, payer and plan) in storage.
-The Price Finder, the reports and the Private price vs Medicare study all use those saved rows.
+The Price Finder, the reports and the research analysis all use those saved rows.
 
 Since January 1, 2026, hospitals have to add four new numbers next to each negotiated rate (CMS's 2026 hospital rule,
 template version 3):
@@ -23,7 +23,7 @@ of the reader. This change teaches that reader the same fields, word for word, a
 
 ## Why it matters
 
-A price file lists every rate in every contract, including rates nobody ever pays. The Private price vs Medicare study
+A price file lists every rate in every contract, including rates nobody ever pays. The research analysis
 (PR #478) only counts a hospital's own rate as "used" when there is evidence. One kind of evidence is the hospital's own
 count of allowed amounts: if the count is above zero, real claims were paid at that rate. Right now that check finds
 nothing, because the saved rows don't carry the count. After this rebuild it can.
@@ -95,7 +95,7 @@ To go back, set `"use"` to `"v1"` again. Both folders stay.
   `bot/fleet/hold_hospitals.txt` exists).
 - Steps: `site/hosp_rebuild.py` (estimate / start / status; `--offline` estimate needs no keys).
 - Setting: `site/hosp_rows.json` and `site/hosp_rows.py`, used by `site/orchestrate.py`, `site/hosp_area.py` and
-  `analysis/medicare_multiple/run.py`. (`site/geo_build.py`, `site/match_pilot.py` and `site/match_handcheck.py` still read
+  the research analysis. (`site/geo_build.py`, `site/match_pilot.py` and `site/match_handcheck.py` still read
   the old rows; the columns they read are identical in both.)
 - Tests: `tests/test_hosp_rows_v2.py`. The old reader is frozen in `tests/fixtures/site_reader_nov11.py`; the tests check
   the live site's rows are byte-for-byte what it wrote before, and that the new columns match `bot/reader.py`.

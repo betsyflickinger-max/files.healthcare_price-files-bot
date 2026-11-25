@@ -7,7 +7,7 @@ With "use": "v1", every reader works exactly as before (one folder). With "use":
 they exist and fall back to its v1 rows otherwise, so a state the rebuild hasn't covered yet keeps its pages and nothing is
 parsed again just because of the switch. Both folders are kept; nothing here deletes anything.
 
-Used by site/orchestrate.py, site/hosp_area.py, site/geo_build.py and analysis/medicare_multiple/run.py.
+Used by site/orchestrate.py, site/hosp_area.py, site/geo_build.py and the research analysis.
 """
 import json
 import os

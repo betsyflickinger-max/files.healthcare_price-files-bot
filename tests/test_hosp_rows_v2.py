@@ -230,7 +230,7 @@ def test_parquet_columns_and_blanks(tmp_path):
     cols = lambda p: [x[0] for x in con.execute(f"describe select * from '{p}'").fetchall()]
     assert cols(tmp_path / "v1.parquet") == H.FIELDS
     assert cols(tmp_path / "v2.parquet") == H.FIELDS_V2
-    # the evidence-of-use test analysis/medicare_multiple/rates.py runs: blank (NULL) counts are not "used"; "0" isn't either
+    # the evidence-of-use test the research analysis runs: blank (NULL) counts are not "used"; "0" isn't either
     counted = con.execute(f"select coalesce(cast(allowed_count as varchar), '') not in ('', '0') from '{tmp_path / 'v2.parquet'}'").fetchall()
     assert [c[0] for c in counted] == [True, True, False, False]
     r = R.compare_files(str(tmp_path / "v1.parquet"), str(tmp_path / "v2.parquet"))
