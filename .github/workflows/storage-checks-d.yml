@@ -1,0 +1,63 @@
+name: Storage check 4 (files rewritten most often; read only)
+# Nov 24, 2026: lists data/ only. It never writes, moves or deletes anything in the bucket.
+on:
+  workflow_dispatch:
+  push:
+    branches: [storage-sizes]
+    paths: ['.github/workflows/storage-checks-d.yml']
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      B2_ENDPOINT: ${{ secrets.B2_ENDPOINT }}
+      B2_BUCKET: ${{ secrets.B2_BUCKET }}
+      B2_ACCESS_KEY_ID: ${{ secrets.B2_ACCESS_KEY_ID }}
+      B2_SECRET_ACCESS_KEY: ${{ secrets.B2_SECRET_ACCESS_KEY }}
+    steps:
+      - run: pip install -q boto3
+      - shell: python
+        run: |
+          import os, re, collections, datetime as dt, boto3
+          g = lambda k: "".join(os.environ.get(k, "").split())
+          ep, b = g("B2_ENDPOINT"), g("B2_BUCKET")
+          if ep and not ep.startswith("http"):
+              ep = "https://" + ep
+          m = re.search(r"s3\.([a-z0-9-]+)\.backblazeb2\.com", ep)
+          s3 = boto3.client("s3", endpoint_url=ep, region_name=m.group(1) if m else "us-east-005",
+                            aws_access_key_id=g("B2_ACCESS_KEY_ID"), aws_secret_access_key=g("B2_SECRET_ACCESS_KEY"))
+          GB = 1000 ** 3
+          now = dt.datetime.now(dt.timezone.utc)
+          by_key = collections.defaultdict(list)
+          for page in s3.get_paginator("list_object_versions").paginate(Bucket=b, Prefix="data/"):
+              for o in page.get("Versions", []):
+                  if "/rates/" in o["Key"]:
+                      by_key[o["Key"]].append((o["LastModified"], o["Size"]))
+          rows = []
+          for key, vs in by_key.items():
+              vs.sort()
+              nov = [v for v in vs if v[0] >= dt.datetime(2026, 11, 1, tzinfo=dt.timezone.utc)]
+              if len(nov) < 3:
+                  continue
+              last7 = [v for v in nov if (now - v[0]).days < 7]
+              last1 = [v for v in nov if (now - v[0]).total_seconds() < 86400]
+              sizes = sorted(v[1] for v in nov)
+              rows.append((sum(v[1] for v in nov[:-1]), key, len(nov), len(last7), len(last1), nov[0][0], nov[-1][0], sizes[0], sizes[-1]))
+          rows.sort(reverse=True)
+          tot = sum(r[0] for r in rows)
+          out = ["## Rate tables written 3 or more times in November", "",
+                 f"{len(rows):,} tables; their replaced copies add up to {tot / GB:,.1f} GB. Showing the 40 with the most replaced bytes.", "",
+                 "| Table | Times written in Nov | In the last 7 days | In the last 24 h | First | Latest | Smallest GB | Largest GB | Replaced GB |",
+                 "|---|---:|---:|---:|---|---|---:|---:|---:|"]
+          for hid, key, n, n7, n1, a, z, s0, s1 in rows[:40]:
+              out.append(f"| `{key}` | {n} | {n7} | {n1} | {a:%b %d %H:%M} | {z:%b %d %H:%M} | {s0 / GB:,.2f} | {s1 / GB:,.2f} | {hid / GB:,.1f} |")
+          fold = collections.defaultdict(lambda: [0, 0, 0])
+          for hid, key, n, n7, n1, *_ in rows:
+              f = fold["/".join(key.split("/")[:2])]; f[0] += 1; f[1] += hid; f[2] += n1
+          out += ["", "| Folder | Tables written 3+ times | Replaced GB | Writes in the last 24 h |", "|---|---:|---:|---:|"]
+          out += [f"| `{k}` | {f:,} | {h / GB:,.1f} | {w:,} |" for k, (f, h, w) in sorted(fold.items(), key=lambda kv: -kv[1][1])]
+          text = "\n".join(out) + "\n"
+          print(text)
+          open(os.environ["GITHUB_STEP_SUMMARY"], "a").write(text)
