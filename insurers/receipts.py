@@ -37,7 +37,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parent / "bot"))
 import store  # noqa: E402
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/price-files-bot)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"}
 FIELDS = ["month", "insurer", "state", "network", "file_kind", "file_name", "url", "bytes", "last_modified", "http",
           "answered", "listed_in", "checked_on", "how"]
 CATALOG = {"anthem": "Anthem (Elevance)", "cigna": "Cigna", "aetna": "Aetna", "hcsc": "BCBS TX/IL/OK/NM/MT (HCSC)"}

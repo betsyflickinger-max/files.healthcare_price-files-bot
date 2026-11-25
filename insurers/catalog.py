@@ -27,7 +27,7 @@ from datetime import date, datetime, timezone
 
 import requests
 
-UA = "Mozilla/5.0 (compatible; price-transparency-research; +https://github.com/betsyflickinger-max/price-files-bot)"
+UA = "Mozilla/5.0 (compatible; price-transparency-research; +https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"
 
 # Each insurer: where its index lives (dated template, newest first) and how to name a network from a file link.
 INSURERS = {

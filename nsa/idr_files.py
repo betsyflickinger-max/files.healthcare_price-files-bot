@@ -46,7 +46,7 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "bot"))
 
 PAGE = "https://www.cms.gov/nosurprises/policies-and-resources/Reports"
-UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/price-files-bot)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"}
 TODAY = date.today().isoformat()
 ROOT = Path(__file__).resolve().parent.parent
 MAN_KEY = "bot/idr/manifest.csv"

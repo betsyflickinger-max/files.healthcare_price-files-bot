@@ -18,7 +18,7 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 import requests, ijson
 
-UA = "Mozilla/5.0 (compatible; price-transparency-research; +https://github.com/betsyflickinger-max/price-files-bot)"
+UA = "Mozilla/5.0 (compatible; price-transparency-research; +https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"
 S = requests.Session(); S.headers["User-Agent"] = UA
 
 
