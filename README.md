@@ -28,7 +28,7 @@ This project was started by a former employee-benefits consultant who spent year
 
 ## Found a missing or broken file?
 
-If you know where a hospital or insurer posts a file we couldn't find, please [open an issue](https://github.com/betsyflickinger-max/price-files-bot/issues/new) with the link. Corrections are welcome too.
+If you know where a hospital or insurer posts a file we couldn't find, please [open an issue](https://github.com/betsyflickinger-max/files.healthcare_price-files-bot/issues/new) with the link. Corrections are welcome too.
 
 ## For developers
 
@@ -42,6 +42,6 @@ Change-detection ideas adapted from [hospital-price-history](https://github.com/
 
 The bot's code is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0). You're free to use, study, change and share it. If you run a modified version, including as a website or service, you must publish your changes under the same license.
 
-Copyright © 2026 Mary Elizabeth (Betsy) Flickinger. For other licensing arrangements, [open an issue](https://github.com/betsyflickinger-max/price-files-bot/issues/new).
+Copyright © 2026 Mary Elizabeth (Betsy) Flickinger. For other licensing arrangements, [open an issue](https://github.com/betsyflickinger-max/files.healthcare_price-files-bot/issues/new).
 
 This license covers the code in this repository. The price data comes from files hospitals and insurers are required to publish.

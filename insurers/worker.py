@@ -287,7 +287,7 @@ def wake_github():
     if not E["BOT_GITHUB_TOKEN"]:
         return
     try:
-        r = requests.post("https://api.github.com/repos/betsyflickinger-max/price-files-bot/actions/workflows/insurers.yml/dispatches",
+        r = requests.post("https://api.github.com/repos/betsyflickinger-max/files.healthcare_price-files-bot/actions/workflows/insurers.yml/dispatches",
                           headers={"Authorization": f"Bearer {E['BOT_GITHUB_TOKEN']}", "Accept": "application/vnd.github+json"},
                           json={"ref": "main", "inputs": {"dry_run": "false", "fill": "true"}}, timeout=30)
         log(f"asked GitHub to fill this slot: HTTP {r.status_code}")

@@ -29,7 +29,7 @@ umask 022
 i=0
 for mem in $SLOTS; do
   i=$((i + 1)); d=/opt/pfb/w$i
-  [ -d $d/.git ] || git clone --depth 1 https://github.com/betsyflickinger-max/price-files-bot.git $d
+  [ -d $d/.git ] || git clone --depth 1 https://github.com/betsyflickinger-max/files.healthcare_price-files-bot.git $d
   git -C $d pull -q --ff-only || true
   (cd $d/insurers/pipeline/mrfrows && PATH=$PATH:/usr/local/go/bin go build -o mrfrows .)
   cat > /etc/systemd/system/pfb-w$i.service <<UNIT

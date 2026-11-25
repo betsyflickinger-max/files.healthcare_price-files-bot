@@ -33,7 +33,7 @@ _lock = threading.Lock()
 def _session():
     if not hasattr(_local, "s"):
         _local.s = requests.Session()
-        _local.s.headers["User-Agent"] = "price-files-bot (+https://github.com/betsyflickinger-max/price-files-bot)"
+        _local.s.headers["User-Agent"] = "price-files-bot (+https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"
     return _local.s
 
 

@@ -77,7 +77,7 @@ SCOPES = {  # name: (state prefix in R2, provider list, where tables go)
     "skipil": ("bot/insurers/skipil/", "data/scope/il_npis_all.parquet", "data/skipil/"),
 }
 NETWORKS = {"s7": "networks_s7.csv", "nc": "networks_nc.csv", "ct": "networks_ct.csv", "il": "networks_il.csv", "n5": "networks_n5.csv", "nyhf": "networks_nyhf.csv", "ar": "networks_ar.csv", "b1": "networks_b1.csv", "la": "networks_la.csv", "b4": "networks_b4.csv", "az": "networks_az.csv", "c1": "networks_c1.csv", "c2": "networks_c2.csv", "c3": "networks_c3.csv", "skipil": "networks_skipil.csv"}  # an area's own network list; dfw and tx use networks.csv
-REPO = "https://github.com/betsyflickinger-max/price-files-bot"
+REPO = "https://github.com/betsyflickinger-max/files.healthcare_price-files-bot"
 FIELDS = ["slot", "insurer", "network_label", "machine_group", "url", "url_date", "table", "etag", "size",
           "file_last_updated_on", "rows", "status", "detail", "last_checked", "last_changed", "processed_on",
           "run_id", "droplet_id", "launched_at", "fails", "problem", "next_url", "reader", "backfill"]

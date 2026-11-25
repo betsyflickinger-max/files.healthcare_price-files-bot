@@ -43,7 +43,7 @@ _sys.path.insert(0, str(_P(__file__).resolve().parent.parent / "bot"))
 from cigna_zip import cigna_index_bytes  # noqa: E402
 
 
-UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/price-files-bot)"}
+UA = {"User-Agent": "Mozilla/5.0 (compatible; price-files-bot; +https://github.com/betsyflickinger-max/files.healthcare_price-files-bot)"}
 TODAY = date.today().isoformat()
 MONTH = TODAY[:7]
 COLS = ["insurer", "plan_sponsor_name", "plan_id", "plan_id_type", "plan_name", "plan_market_type", "issuer_name",
