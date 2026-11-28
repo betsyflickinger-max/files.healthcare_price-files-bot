@@ -1,0 +1,795 @@
+{
+ "generated_at": "2026-11-28T17:02:42+00:00",
+ "insurers_tx": {
+  "networks": 102,
+  "active": 55,
+  "status": {
+   "new": 4,
+   "processed": 37,
+   "failed": 14
+  },
+  "not_done": [
+   {
+    "network": "Aetna Life Insurance Company (pl-1s7)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-2hl)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-41i)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-vk)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "CHRISTUS Health Plan employer networks",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 404 Client Error: Not Found for url: https://chppayment.christushealth.org/document"
+   },
+   {
+    "network": "CHRISTUS Health Plan Texas marketplace",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 404 Client Error: Not Found for url: https://chppayment.christushealth.org/document"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Bronze",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Gold",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Silver",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Bronze",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Gold",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Silver",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:53:41Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "UnitedHealthcare Core",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare Core EPO",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare NEXUS ACO Open Access",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare Select Plus",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UMR UnitedHealthcare Choice Plus",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "United-HealthCare-Services--Inc- (Navigate-EPO_636)",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:24:06Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   }
+  ]
+ },
+ "insurers_dfw": {
+  "networks": 102,
+  "active": 55,
+  "status": {
+   "new": 4,
+   "processed": 37,
+   "failed": 14
+  },
+  "not_done": [
+   {
+    "network": "Aetna Life Insurance Company (pl-1s7)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-2hl)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-41i)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "Aetna Life Insurance Company (pl-vk)",
+    "status": "new",
+    "fails": "0",
+    "launched_at": "",
+    "detail": "not in the newest catalog; keeping the last good tables"
+   },
+   {
+    "network": "CHRISTUS Health Plan employer networks",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 404 Client Error: Not Found for url: https://chppayment.christushealth.org/document"
+   },
+   {
+    "network": "CHRISTUS Health Plan Texas marketplace",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 404 Client Error: Not Found for url: https://chppayment.christushealth.org/document"
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Bronze",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Gold",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Limited Network Silver",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Bronze",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Gold",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "Community Health Choice marketplace Premier Silver",
+    "status": "failed",
+    "fails": "3",
+    "launched_at": "2026-11-18T00:51:37Z",
+    "detail": "insurer's file is cut off: it ends partway through the price list (a problem with the insurer's file, not the reader) | "
+   },
+   {
+    "network": "UnitedHealthcare Core",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare Core EPO",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare NEXUS ACO Open Access",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UnitedHealthcare Select Plus",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "UMR UnitedHealthcare Choice Plus",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   },
+   {
+    "network": "United-HealthCare-Services--Inc- (Navigate-EPO_636)",
+    "status": "failed",
+    "fails": "1",
+    "launched_at": "2026-11-13T22:17:26Z",
+    "detail": "could not check the file: HTTPError: 409 Client Error: Conflict for url: https://mrfstorage.uhc.com/public-mrf/2026-10-0"
+   }
+  ]
+ },
+ "insurer_hold": false,
+ "insurer_scopes": {
+  "ar": {
+   "active": 16,
+   "processed": 0,
+   "status": {
+    "new": 8,
+    "failed": 8
+   }
+  },
+  "az": {
+   "active": 23,
+   "processed": 3,
+   "status": {
+    "new": 8,
+    "processed": 3,
+    "failed": 12
+   }
+  },
+  "b1": {
+   "active": 622,
+   "processed": 306,
+   "status": {
+    "new": 23,
+    "failed": 291,
+    "processed": 306,
+    "running": 2
+   }
+  },
+  "b4": {
+   "active": 540,
+   "processed": 49,
+   "status": {
+    "new": 8,
+    "failed": 97,
+    "processed": 49,
+    "running": 386
+   }
+  },
+  "c1": {
+   "active": 284,
+   "processed": 4,
+   "status": {
+    "new": 198,
+    "failed": 76,
+    "running": 6,
+    "processed": 4
+   }
+  },
+  "c2": {
+   "active": 3648,
+   "processed": 113,
+   "status": {
+    "new": 52,
+    "processed": 113,
+    "running": 3466,
+    "failed": 17
+   }
+  },
+  "c3": {
+   "active": 4037,
+   "processed": 1637,
+   "status": {
+    "new": 99,
+    "processed": 1637,
+    "failed": 1790,
+    "running": 511
+   }
+  },
+  "ct": {
+   "active": 1053,
+   "processed": 875,
+   "status": {
+    "new": 22,
+    "processed": 875,
+    "running": 153,
+    "failed": 3
+   }
+  },
+  "il": {
+   "active": 23,
+   "processed": 13,
+   "status": {
+    "new": 8,
+    "processed": 13,
+    "failed": 2
+   }
+  },
+  "la": {
+   "active": 27,
+   "processed": 7,
+   "status": {
+    "new": 8,
+    "processed": 7,
+    "failed": 12
+   }
+  },
+  "n5": {
+   "active": 382,
+   "processed": 349,
+   "status": {
+    "new": 24,
+    "processed": 349,
+    "failed": 6,
+    "running": 3
+   }
+  },
+  "nc": {
+   "active": 75,
+   "processed": 64,
+   "status": {
+    "new": 8,
+    "processed": 64,
+    "failed": 3
+   }
+  },
+  "nyhf": {
+   "active": 9262,
+   "processed": 9069,
+   "status": {
+    "processed": 9069,
+    "running": 173,
+    "new": 20
+   }
+  },
+  "s7": {
+   "active": 479,
+   "processed": 216,
+   "status": {
+    "new": 10,
+    "processed": 216,
+    "running": 102,
+    "failed": 151
+   }
+  },
+  "skipil": {
+   "active": 20,
+   "processed": 20,
+   "status": {
+    "processed": 20
+   }
+  }
+ },
+ "hospitals": {
+  "listed": 6011,
+  "status": {
+   "unchanged": 4573,
+   "no price file found": 666,
+   "link broken": 648,
+   "not a price file": 118,
+   "changed - new version saved": 2,
+   "queued for a rented machine": 2,
+   "new - first version saved": 2
+  },
+  "total": 5943,
+  "have_file": 4537,
+  "as_of": "2026-11-28"
+ },
+ "code_names": {
+  "cpt_codes": 11916,
+  "named": 11816,
+  "left": 100
+ },
+ "tx_cities": {
+  "abilene": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "amarillo": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "austin": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "beaumont-port-arthur": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "brownsville-harlingen": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "college-station-bryan": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "corpus-christi": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "el-paso": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "houston": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "killeen-temple": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "longview": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "lubbock": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "mcallen": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "midland": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "odessa": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "rest": {
+   "run": "v2",
+   "done": 256,
+   "total": 256
+  },
+  "san-angelo": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "san-antonio": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "small-towns": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "texarkana": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "tyler": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "victoria": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "waco": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  },
+  "wichita-falls": {
+   "run": "v202611",
+   "done": 256,
+   "total": 256
+  }
+ },
+ "r2": {
+  "objects": 10835545,
+  "gb": 16844.1,
+  "est_usd_month": 252.51,
+  "largest": [],
+  "source": "Cloudflare storage analytics, 2026-11-28",
+  "counted_at": "2026-11-28 11:53 UTC"
+ },
+ "digitalocean": {
+  "month_to_date_usd": 1454.38,
+  "credit_left_usd": 0.0,
+  "machines": [
+   {
+    "name": "upfront-fleet-8g-20261128-0410-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T04:11:48Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-0750-05",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T07:52:09Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-0843-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T08:47:14Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-1413-04",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T14:20:30Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-1529-01",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T16:59:41Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-1529-02",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T16:59:42Z"
+   },
+   {
+    "name": "upfront-fleet-8g-20261128-1529-03",
+    "usd_hour": 0.07143,
+    "created": "2026-11-28T16:59:43Z"
+   }
+  ],
+  "usd_hour_now": 0.5,
+  "machine_limit": 25
+ },
+ "recent_runs": [
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-28T17:03:11Z"
+  },
+  {
+   "name": "Visitors (every 15 min, control center)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T17:02:11Z"
+  },
+  {
+   "name": "Connecticut Price Finder page",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T17:01:45Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-28T17:00:11Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T17:00:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-28T16:59:55Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:52:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:52:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:51:55Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:50:11Z"
+  },
+  {
+   "name": "Stuck-build watchdog (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:50:11Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:50:11Z"
+  },
+  {
+   "name": "Visitors (every 15 min, control center)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:47:11Z"
+  },
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:43:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:41:34Z"
+  },
+  {
+   "name": "Seven-state Price Finder pages",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:41:11Z"
+  },
+  {
+   "name": "Dashboard data (hospital and price sides)",
+   "status": "in_progress",
+   "conclusion": null,
+   "at": "2026-11-28T16:40:11Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:40:11Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:40:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:37:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:37:11Z"
+  },
+  {
+   "name": "State Price Finder pages (shared)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:36:11Z"
+  },
+  {
+   "name": "Visitors (every 15 min, control center)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:32:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:31:50Z"
+  },
+  {
+   "name": "Insurer fill",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:30:12Z"
+  },
+  {
+   "name": "Requested codes (common codes first)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:30:11Z"
+  },
+  {
+   "name": "Connecticut Price Finder page",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:26:11Z"
+  },
+  {
+   "name": "Small insurer files (free GitHub machines)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:23:11Z"
+  },
+  {
+   "name": "Board status (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:22:11Z"
+  },
+  {
+   "name": "Storage alarm (every 15 min)",
+   "status": "completed",
+   "conclusion": "success",
+   "at": "2026-11-28T16:22:11Z"
+  }
+ ]
+}
